@@ -1,0 +1,10 @@
+[package]
+name = "backgammon"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+kudchuet = { path = "../../kudchuet" }
+eframe = { version = "0.34", features=["persistence"] }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"

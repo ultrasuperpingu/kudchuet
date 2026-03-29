@@ -1,0 +1,38 @@
+[workspace]
+members = [
+	"kudchuet",
+	"bitboards/bitboard",
+	"bitboards/bitboard_proc_macro",
+#	"games/abalone",
+#	"games/awale",
+	"games/backgammon",
+	"games/bagh_chal",
+	"games/checkers",
+	"games/chess",
+#	"games/connect4",
+	"games/diaballik",
+#	"games/footboard",
+	"games/gomoku",
+	"games/hare_and_hounds",
+	"games/neutron",
+#	"games/reversi",
+	"games/three_musketeers",
+#	"games/yote",
+]
+edition = "2024"
+resolver = "3"
+
+[profile.dev]
+target-cpu = "native"
+
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+#codegen-units = 1
+target-cpu = "native"
+#panic = "abort"
+#incremental = false
+debug = false
+#debug = 2
+#split-debuginfo = "packed"

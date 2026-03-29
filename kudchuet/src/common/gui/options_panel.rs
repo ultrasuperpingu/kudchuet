@@ -1,0 +1,316 @@
+use egui::Id;
+use egui_field_editor::EguiInspect;
+
+#[cfg(not(target_arch = "wasm32"))]
+use crate::common::ai::external_engine::ExternalEngineEntry;
+use crate::common::gui::board_app::GenericBoardApp;
+use crate::common::gui::{BoardGame, BoardMove};
+
+#[derive(PartialEq, Copy, Clone)]
+pub(super) enum RightTab {
+	GameSettings,
+	Settings,
+	Theme,
+	ImportExport,
+	#[cfg(not(target_arch = "wasm32"))]
+	ExternalEngine
+}
+const LABEL_RATIO: f32 = 0.4;
+
+impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
+	where G::M : BoardMove<G> + Send
+{
+	pub(super) fn draw_options_panels(&mut self, ui: &mut egui::Ui) {
+		if let Some(tab) = self.open_right_tab {
+			egui::Panel::right("right_content_panel")
+				.resizable(true)
+				.default_size(200.0)
+				.size_range(100.0..=800.0)
+				.show_inside(ui, |ui| {
+					ui.vertical(|ui| {
+						ui.heading(match tab {
+							RightTab::GameSettings => "🎾 Game Settings",
+							RightTab::Theme => "📜 Theme",
+							RightTab::ImportExport => "🖹 Import/Export",
+							RightTab::Settings => "⚙ Advance Settings",
+							#[cfg(not(target_arch = "wasm32"))]
+							RightTab::ExternalEngine => "🖥 External AI Engine",
+						});
+						ui.separator();
+						
+						egui::ScrollArea::vertical().show(ui, |ui| {
+							match tab {
+								RightTab::GameSettings => {
+									
+								}
+								RightTab::Settings => {
+									let active_engines: Vec<_> = [
+										self.ai_engine_manager.active_player1_engine.clone(),
+										self.ai_engine_manager.active_player2_engine.clone(),
+									]
+										.iter()
+										.filter_map(|e| e.clone())
+										.collect();
+									let mut opts_changed = None;
+									for engine_name in active_engines {
+										if let Ok(engine) = self.ai_engine_manager.ensure_engine(&engine_name) {
+											if let Some(mut opts)= engine.get_options() {
+												let resp = opts.inspect(engine_name.as_str(), "", LABEL_RATIO, false, ui);
+												if resp.changed() {
+													println!("Options changed for engine {} {:?}", engine_name, resp.id);
+													for (k,v) in  &opts.uci {
+														println!("Label {} / id {:?}", k, Id::new(k));
+														if Id::new(k) == resp.id {
+															println!("Option {} changed to {:?}", k, v);
+														}
+													}
+													opts_changed = Some((engine_name, opts));
+												}
+											}
+										}
+									}
+									if let Some((engine_name, opts)) = opts_changed {
+										if let Some(engine) = self.ai_engine_manager.get_engine_mut(&engine_name) {
+											engine.reset_with_options(opts);
+											self.ai_engine_manager.save_all_engine_options(ui.ctx());
+										}
+									}
+									if self.ai_engine_manager.is_thinking() {
+										egui_field_editor::add_button("Stop Thinking", "Stop thinking and return current best move", false, ui, |_ui| {
+											self.ai_engine_manager.stop_thinking();
+										});
+									}
+								}
+								RightTab::Theme => {
+									if self.board_drawer.get_style_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
+										self.board_drawer.save_style(ui.ctx());
+									}
+									if ui.button("Default").clicked() {
+										*self.board_drawer.get_style_mut() = G::default_style();
+										self.board_drawer.save_style(ui.ctx());
+									}
+								}
+								RightTab::ImportExport => {
+									let game = self.game().clone();
+									self.import_export_panel.ui(ui, &game, &mut |game| {
+										self.ai_engine_manager.set_paused(true);
+										self.game_state_manager.reset(game);
+										self.board_drawer.full_reset();
+									});
+								}
+								#[cfg(not(target_arch = "wasm32"))]
+								RightTab::ExternalEngine => {
+									self.draw_external_engine_panel(ui);
+								}
+							}
+						});
+					});
+				});
+		}
+
+		egui::Panel::right("tab_buttons")
+			.resizable(false)
+			.exact_size(40.0)
+			.frame(egui::Frame::NONE.inner_margin(4.0)) 
+			.show_inside(ui, |ui| {
+				ui.vertical_centered(|ui| {
+					ui.add_space(10.0);
+					
+					let mut tab_button = |ui: &mut egui::Ui, tab: RightTab, icon: &str| {
+						let is_selected = self.open_right_tab == Some(tab);
+						let btn = egui::RichText::new(icon).size(20.0);
+						if ui.selectable_label(is_selected, btn).clicked() {
+							if is_selected {
+								self.open_right_tab = None;
+							} else {
+								self.open_right_tab = Some(tab);
+							}
+						}
+					};
+					
+
+					//tab_button(ui, RightTab::GameSettings, "🎲");
+					tab_button(ui, RightTab::GameSettings, "🎾");
+					ui.add_space(8.0);
+					tab_button(ui, RightTab::Theme, "📜");
+					ui.add_space(8.0);
+					tab_button(ui, RightTab::ImportExport, "🖹");
+					ui.add_space(8.0);
+					tab_button(ui, RightTab::Settings, "⚙");
+					#[cfg(not(target_arch = "wasm32"))]
+					{
+						ui.add_space(8.0);
+						tab_button(ui, RightTab::ExternalEngine, "🖥");
+					}
+				});
+			});
+	}
+
+	/*fn draw_uci_option(
+		ui: &mut egui::Ui,
+		engine: &ExternalEngine,
+		opt: &UciOptionConfig,
+	) {
+		match opt {
+			UciOptionConfig::Spin { name, default, min, max } => {
+				if let (Some(min), Some(max)) = (min, max) {
+					let mut val = default.unwrap_or(*min);
+
+					if egui_field_editor::add_number_slider(&mut val, name, "", LABEL_RATIO, false, *min, *max, ui).changed() {
+						let _ = engine.send_msg(UciMessage::SetOption {
+							name: name.clone(),
+							value: Some(val.to_string()),
+						});
+					}
+				}
+			}
+
+			UciOptionConfig::Check { name, default } => {
+				let mut val = default.unwrap_or(false);
+				if egui_field_editor::add_bool(&mut val, name, "", LABEL_RATIO, false, ui).changed() {
+					let _ = engine.send_msg(UciMessage::SetOption {
+						name: name.clone(),
+						value: Some(val.to_string()),
+					});
+				}
+			}
+
+			UciOptionConfig::Combo { name, default, var } => {
+				let mut index = var.iter().enumerate().find(|(_,e)| default.as_ref() == Some(e)).unwrap_or((0,&"".into())).0;
+				if egui_field_editor::add_combobox(&mut index, name, "", LABEL_RATIO, false, var, ui).changed() {
+					let _ = engine.send_msg(UciMessage::SetOption {
+						name: name.clone(),
+						//value: Some(current.clone()),
+						value: Some(var[index].clone()),
+					});
+				}
+			}
+
+			UciOptionConfig::String { name, default } => {
+				let mut val = default.clone().unwrap_or_default();
+				if egui_field_editor::add_string_convertible(&mut val, name, "", LABEL_RATIO, false, ui).changed() {
+					let _ = engine.send_msg(UciMessage::SetOption {
+						name: name.clone(),
+						value: Some(val.clone()),
+					});
+				}
+			}
+
+			UciOptionConfig::Button { name } => {
+				egui_field_editor::add_button(name, "", false, ui, |_ui| {
+					let _ = engine.send_msg(UciMessage::SetOption {
+						name: name.clone(),
+						value: None,
+					});
+				});
+			}
+		}
+	}*/
+	#[cfg(not(target_arch = "wasm32"))]
+	fn draw_external_engine_panel(&mut self, ui: &mut egui::Ui) {
+		ui.label(egui::RichText::new("External Engines").strong());
+		ui.add_space(4.0);
+
+		let mut changed = false;
+		let mut remove_idx: Option<usize> = None;
+		for (i, entry) in self.ai_engine_manager.get_external_providers_mut().iter_mut().enumerate() {
+			if entry.inspect(&entry.name.clone(), "", LABEL_RATIO, false, ui).changed() {
+				changed = true;
+			}
+
+			if ui.button("❌ Delete").clicked() {
+				remove_idx = Some(i);
+			}
+			ui.separator();
+		}
+
+		if let Some(i) = remove_idx {
+			let _ = self.ai_engine_manager.get_external_providers_mut().remove(i);
+			changed = true;
+		}
+
+		if ui.button("➕ Add Engine").clicked() {
+			self.ai_engine_manager.add_external_provider(ExternalEngineEntry {
+				name: "New Engine".into(),
+				path: "".into(),
+				args: "".into()
+			});
+		}
+		if changed {
+			self.ai_engine_manager.save_external_engines(ui.ctx());
+		}
+	}
+}
+
+pub struct ImportExportPanel {
+	pub position_input: String,
+	pub last_error: Option<String>,
+}
+
+impl Default for ImportExportPanel {
+	fn default() -> Self {
+		Self {
+			position_input: String::new(),
+			last_error: None,
+		}
+	}
+}
+impl ImportExportPanel {
+	pub fn ui<G: BoardGame>(
+		&mut self, 
+		ui: &mut egui::Ui, 
+		game: &G,
+		on_position_loaded: &mut dyn FnMut(G)
+	)
+	where <G as minimax::Game>::M: BoardMove<G>
+	{
+		ui.vertical(|ui| {
+			ui.label(egui::RichText::new("Position").strong());
+			
+			ui.add(egui::TextEdit::multiline(&mut self.position_input)
+				//.hint_text("Ex: A valid FEN or equivalent")
+				.desired_rows(5)
+				.font(egui::TextStyle::Monospace));
+
+			ui.add_space(8.0);
+
+			ui.horizontal(|ui| {
+				if ui.button("Show Current Position").clicked() {
+					if let Some(pos) = game.position_to_string() {
+						self.position_input = pos;
+						self.last_error = None;
+					} else {
+						self.last_error=Some("Not supported".into());
+					}
+				}
+
+				if ui.button("📋 Copy to Clipboard").clicked() {
+					ui.ctx().copy_text(self.position_input.clone());
+				}
+			});
+
+			ui.separator();
+			if let Some(err) = &self.last_error {
+				ui.label(egui::RichText::new(format!("Invalid input: {}", err)).color(egui::Color32::RED));
+			}
+			ui.scope(|ui| {
+				ui.visuals_mut().widgets.inactive.bg_fill = egui::Color32::from_rgb(40, 80, 40);
+				if ui.button(egui::RichText::new("📥 Load").strong().color(egui::Color32::WHITE))
+					.on_hover_text("This will reset the current game state!")
+					.clicked() 
+				{
+					match game.get_position_from_string(&self.position_input) {
+						Ok(p) => {
+							on_position_loaded(p);
+							self.last_error = None;
+						}
+						Err(e) => {
+							println!("Error loading FEN: {}", e);
+							self.last_error = Some(e);
+						}
+					}
+				}
+			});
+		});
+	}
+}

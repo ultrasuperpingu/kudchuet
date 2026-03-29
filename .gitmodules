@@ -1,0 +1,7 @@
+[submodule "bitboards"]
+	path = bitboards
+	url = https://github.com/ultrasuperpingu/bitboards
+[submodule "minimax"]
+	path = minimax
+	url = https://github.com/ultrasuperpingu/minimax-rs.git
+	branch = tests

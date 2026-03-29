@@ -1,0 +1,51 @@
+//use abstract_strategy::abalone::ihm::AbaloneApp;
+use kudchuet::abalone::gui::create_board;
+
+
+
+#[cfg(not(target_arch = "wasm32"))]
+fn main() -> eframe::Result<()> {
+	let args: Vec<String> = std::env::args().collect();
+	if args.iter().any(|arg| arg == "--uci") {
+		use kudchuet::abalone::{game::AbaloneMaterialEval, rules::Abalone};
+		use kudchuet::common::{ai::cli_engine::UCILikeCLIEngine, new_move_searcher_static};
+
+		let searcher = new_move_searcher_static::<Abalone, _>(AbaloneMaterialEval {}, 5);
+		let mut cli_engine = UCILikeCLIEngine::new(searcher);
+		cli_engine.process().unwrap();
+		Ok(())
+	} else {
+		eframe::run_native(
+			"Abalone",
+			eframe::NativeOptions::default(),
+			//Box::new(|_cc| Ok(Box::new(AbaloneApp::default()))),
+			Box::new(|_cc| Ok(Box::new(create_board()))),
+		)
+	}
+}
+
+#[cfg(target_arch = "wasm32")]
+use eframe::web_sys;
+#[cfg(target_arch = "wasm32")]
+fn main() {
+	use wasm_bindgen::JsCast;
+
+	let window = web_sys::window().expect("no global `window` exists");
+	let document = window.document().expect("should have a document");
+	let canvas = document
+		.get_element_by_id("canvas_id")
+		.expect("canvas not found")
+		.dyn_into::<web_sys::HtmlCanvasElement>()
+		.expect("element is not a canvas");
+
+	wasm_bindgen_futures::spawn_local(async move {
+		eframe::WebRunner::new()
+			.start(
+				canvas,
+				eframe::WebOptions::default(),
+				Box::new(|_cc| Ok(Box::new(create_board()))),
+			)
+			.await
+			.expect("failed to start eframe");
+	});
+}
