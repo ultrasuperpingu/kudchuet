@@ -4,8 +4,6 @@ pub mod internal_engine;
 pub mod cli_engine;
 pub mod uci;
 pub mod engine_manager;
-pub mod expectiminimax;
-pub mod expectiminimax_alphabeta;
 pub mod incomplete_info_searcher;
 
 use std::{collections::HashMap, fmt::Debug, mem::discriminant, pin::Pin, time::Duration};

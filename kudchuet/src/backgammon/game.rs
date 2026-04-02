@@ -45,23 +45,45 @@ impl minimax::Game for Backgammon {
 		state.hash
 	}
 }
+impl minimax::TurnBasedGame for Backgammon {
+	fn current_player(state: &Self::S) -> i8 {
+		return state.current_player().idx() as i8
+	}
+}
+impl minimax::StochasticGame for Backgammon {
+	fn is_random_move(state: &Self::S) -> bool {
+		state.dice.is_empty()
+	}
 
+	fn get_probability(_state: &Self::S, _mv: Self::M) -> f32 {
+		1.0/36.0
+	}
+}
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
-pub struct BackgammonMaterialEval;
+pub struct BackgammonMaterialEval {
+	turn:i8
+}
 
 impl minimax::Evaluator for BackgammonMaterialEval {
 	type G = Backgammon;
 
 	fn evaluate(&self, state: &Backgammon) -> minimax::Evaluation {
-		if state.current_player == Player::Player1 {
+		if self.turn == Player::Player1.idx() as i8 {
 			state.outside[0] as minimax::Evaluation - state.outside[1] as minimax::Evaluation
 		} else {
 			state.outside[1] as minimax::Evaluation - state.outside[0] as minimax::Evaluation
 		}
 	}
 }
+impl minimax::TurnBasedGameEvaluator for BackgammonMaterialEval {
+	fn set_player_on_trait(&mut self, p: i8) {
+		self.turn = p;
+	}
+}
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
-pub struct BackgammonSimpleEval;
+pub struct BackgammonSimpleEval {
+	turn:i8
+}
 const CONSECUTIVE_BONUS: i16 = 19;
 const ON_BAR_MALUS: i16 = 71;
 const OUT_BONUS: i16 = 103;
@@ -113,7 +135,7 @@ impl minimax::Evaluator for BackgammonSimpleEval {
 				consecutive = 0;
 			}
 		}
-		if state.current_player == Player::Player1 {
+		if self.turn == Player::Player1.idx() as i8 {
 			scorep1 - scorep2
 		} else {
 			scorep2 - scorep1
@@ -128,5 +150,10 @@ fn apply_consecutive_bonus(scorep1: &mut i16, scorep2: &mut i16, consecutive: i1
 		} else {
 			*scorep1 += (consecutive-2)*CONSECUTIVE_BONUS;
 		}
+	}
+}
+impl minimax::TurnBasedGameEvaluator for BackgammonSimpleEval {
+	fn set_player_on_trait(&mut self, p: i8) {
+		self.turn = p;
 	}
 }

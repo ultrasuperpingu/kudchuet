@@ -30,7 +30,7 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 					ui.vertical(|ui| {
 						ui.heading(match tab {
 							RightTab::GameSettings => "🎾 Game Settings",
-							RightTab::Theme => "📜 Theme",
+							RightTab::Theme => "🎨 Theme",
 							RightTab::ImportExport => "🖹 Import/Export",
 							RightTab::Settings => "⚙ Advance Settings",
 							#[cfg(not(target_arch = "wasm32"))]
@@ -132,7 +132,7 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 					//tab_button(ui, RightTab::GameSettings, "🎲");
 					tab_button(ui, RightTab::GameSettings, "🎾");
 					ui.add_space(8.0);
-					tab_button(ui, RightTab::Theme, "📜");
+					tab_button(ui, RightTab::Theme, "🎨");
 					ui.add_space(8.0);
 					tab_button(ui, RightTab::ImportExport, "🖹");
 					ui.add_space(8.0);

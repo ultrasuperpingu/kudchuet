@@ -1428,14 +1428,12 @@ impl minimax::Evaluator for ChessPosEval {
 	type G = ChessBoard;
 
 	fn evaluate(&self, state: &ChessBoard) -> minimax::Evaluation {
-		// --- Valeurs matérielles ---
 		const P: i16 = 100;
 		const N: i16 = 320;
 		const B: i16 = 330;
 		const R: i16 = 500;
 		const Q: i16 = 900;
 
-		// --- Tables positionnelles simplifiées (64 cases) ---
 		const KNIGHT_TABLE: [i16; 64] = [
 			-25,-20,-15,-15,-15,-15,-20,-25,
 			-20,-10,  0,  0,  0,  0,-10,-20,
@@ -1480,7 +1478,6 @@ impl minimax::Evaluator for ChessPosEval {
 			0, 0, 0, 0, 0, 0, 0, 0,
 		];
 
-		// --- Comptage matériel ---
 		let mut w_score = (state.pawns & state.whites).count() as i16 * P +
 						(state.knights & state.whites).count() as i16 * N +
 						(state.bishops & state.whites).count() as i16 * B +
@@ -1493,7 +1490,6 @@ impl minimax::Evaluator for ChessPosEval {
 						(state.rooks & state.blacks).count() as i16 * R +
 						(state.queens & state.blacks).count() as i16 * Q;
 
-		// --- Tables positionnelles ---
 		for sq in state.knights.iter_bits() {
 			let sq = sq as usize;
 			let bb = Bitboard8x8::from_index(sq);
@@ -1522,19 +1518,16 @@ impl minimax::Evaluator for ChessPosEval {
 			if (state.blacks & bb).any() { b_score += PAWN_TABLE[63 - sq] / 2; }
 		}
 
-		// --- Bonus pour mobilité ---
 		let w_mobility = state.legal_moves_template::<true>().len() as i16;
 		let b_mobility = state.legal_moves_template::<false>().len() as i16;
 		w_score += w_mobility;
 		b_score += b_mobility;
 
-		// --- Malus pions doublés ---
 		//let w_files = (0..8).map(|f: u8| ((state.pawns & state.whites) >> f).count() as i16).collect::<Vec<_>>();
 		//let b_files = (0..8).map(|f: u8| ((state.pawns & state.blacks) >> f).count() as i16).collect::<Vec<_>>();
 		//w_score -= w_files.iter().filter(|&&c| c > 1).sum::<i16>() * 20;
 		//b_score -= b_files.iter().filter(|&&c| c > 1).sum::<i16>() * 20;
 
-		// --- Retour du score selon le joueur à jouer ---
 		if state.turn == Color::White { w_score - b_score } else { b_score - w_score }
 	}
 }

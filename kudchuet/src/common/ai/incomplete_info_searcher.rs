@@ -1,18 +1,18 @@
 
-use minimax::{Evaluator, Game, IterativeOptions, Strategy};
+use minimax::{Game, IterativeOptions, StochasticGame, Strategy, TurnBasedGame, TurnBasedGameEvaluator, strategies::expecti_iterative::ExpectiIterativeSearch};
 #[cfg(not(target_arch = "wasm32"))]
 use minimax::strategies::iterative::SearchStopSignal;
 
 use std::fmt::Debug;
-use crate::common::{ConcreteStrategy, ai::{self, AIEngine, AIEngineProvider, AIOptions, expectiminimax_alphabeta::ExpectiMinimaxAlphaBeta}, gui::{BoardGame, BoardMove}};
+use crate::common::{ConcreteStrategy, ai::{self, AIEngine, AIEngineProvider, AIOptions}, gui::{BoardGame, BoardMove}};
 
 
-impl<E> ConcreteStrategy<E::G> for ExpectiMinimaxAlphaBeta<E>
+impl<E> ConcreteStrategy<E::G> for ExpectiIterativeSearch<E>
 where
-	E: Evaluator + Default,
-	E::G: Game,
+	E: TurnBasedGameEvaluator + Default,
+	E::G: TurnBasedGame+StochasticGame,
 	<E::G as Game>::S: Clone + BoardGame,
-	<E::G as Game>::M: Clone,
+	<E::G as Game>::M: Clone + Eq,
 	<<E::G as Game>::S as Game>::M: BoardMove<<E::G as Game>::S>
 {
 	fn get_options(&self) -> AIOptions {
@@ -45,11 +45,11 @@ where
 		println!("ai {} {:?}", self.get_max_depth(), self.get_max_time());
 	}
 	fn stop_search(&self) {
-		self.stop_search_flag().store(true, std::sync::atomic::Ordering::Relaxed);
+		self.next_search_stop_signal().stop_search();
 	}
 	#[cfg(not(target_arch = "wasm32"))]
 	fn next_search_stop_signal(&self) -> SearchStopSignal {
-		SearchStopSignal::from_atomic_bool(self.stop_search_flag())
+		self.next_search_stop_signal()
 	}
 
 	fn root_value(&self) -> minimax::Evaluation {
@@ -87,9 +87,9 @@ where
 }
 impl<G, E> AIEngineProvider<G> for ExpectiMinimaxBuilder<G, E>
 where
-	G: BoardGame + Send + Sync + 'static,
+	G: BoardGame+TurnBasedGame+StochasticGame + Send + Sync + 'static,
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	E: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static + Debug,
+	E: minimax::Evaluator<G = G> +TurnBasedGameEvaluator+ Default + Clone + Send + Sync + Eq + 'static + Debug,
 {
 	//type Engine = crate::common::ai::internal_engine::InternalEngine<G, ExpectiMinimaxAlphaBeta<E>>;
 	type Engine = Box<dyn AIEngine<G>>;
@@ -98,7 +98,7 @@ where
 	}
 	fn build_engine(&self) -> Self::Engine {
 		
-		let mut ai = ExpectiMinimaxAlphaBeta::new(self.evaluator.clone(), IterativeOptions::new());
+		let mut ai = ExpectiIterativeSearch::new(self.evaluator.clone(), IterativeOptions::new());
 		ai.set_max_depth(self.initial_depth);
 		Box::new(crate::common::ai::internal_engine::InternalEngine::new(ai))
 	}

@@ -382,43 +382,7 @@ impl Backgammon {
 			results.insert(*current);
 		}
 	}
-	/*fn gen_moves_recursive(
-		&self,
-		game: &mut Backgammon,
-		dice: &[u8],
-		current: &PlayerMove,
-		results: &mut HashSet<PlayerMove>,
-	) {
-		let mut played_any = false;
 
-		// générer les coups possibles par dé
-		for (i, &die) in dice.iter().enumerate() {
-			let mut possible = game.single_die_moves(die);
-
-			// Normaliser l'ordre des coups : from croissant, puis to croissant
-			possible.sort_by(|a, b| a.cmp(b));
-
-			for (from, to) in possible {
-				game.apply_single_move(from, to);
-				current.push((from, to));
-
-				let mut next_dice = dice.to_vec();
-				next_dice.remove(i);
-
-				self.gen_moves_recursive(game, &next_dice, current, results);
-
-				// backtrack
-				current.len -= 1;
-				game.undo_single_move(from, to);
-
-				played_any = true;
-			}
-		}
-
-		if !played_any {
-			results.insert(current.clone());
-		}
-	}*/
 	fn single_die_moves(&self, die: u8) -> Vec<SingleMove> {
 		let mut moves = Vec::new();
 
