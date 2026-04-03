@@ -190,7 +190,7 @@ where
 						}
 						let pos_clone = pos.clone();
 						let debug_clone = debug;
-						let stop_flag = ai.next_search_stop_signal();
+						let stop_flag = ai.stop_signal();
 
 						let handle = std::thread::spawn(move || {
 							let best_move = ai.choose_move(&pos_clone);

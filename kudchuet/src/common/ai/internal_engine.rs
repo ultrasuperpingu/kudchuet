@@ -75,7 +75,7 @@ where
 	fn choose_move_async(&mut self, game: G) -> Pin<Box<dyn Future<Output = Option<G::M>> + Send>> 
 	{
 		let (tx, rx) = oneshot::channel();
-		self.stop_signal = Some(self.ai.lock().unwrap().next_search_stop_signal());
+		self.stop_signal = Some(self.ai.lock().unwrap().stop_signal());
 		let ai = self.ai.clone(); // Arc<Mutex<AI>>
 		//println!("choosing move (spawn thread)");
 		std::thread::spawn(move || {

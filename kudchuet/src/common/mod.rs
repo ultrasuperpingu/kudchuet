@@ -123,7 +123,7 @@ where
 	fn root_value(&self) -> minimax::Evaluation;
 	fn stop_search(&self) {}
 	#[cfg(not(target_arch = "wasm32"))]
-	fn next_search_stop_signal(&self) -> SearchStopSignal {
+	fn stop_signal(&self) -> SearchStopSignal {
 		SearchStopSignal::new()
 	}
 }
@@ -174,10 +174,10 @@ where
 		println!("ai {} {:?}", self.get_max_depth(), self.get_max_time());
 	}
 	fn stop_search(&self) {
-		self.next_search_stop_signal().stop_search();
+		self.stop_signal().stop_search();
 	}
-	fn next_search_stop_signal(&self) -> SearchStopSignal {
-		self.next_search_stop_signal()
+	fn stop_signal(&self) -> SearchStopSignal {
+		self.stop_signal()
 	}
 
 	fn root_value(&self) -> minimax::Evaluation {

@@ -390,7 +390,7 @@ impl Backgammon {
 		let dir: i32 = if player == Player::Player1 { 1 } else { -1 };
 		let piece = if player == Player::Player1 { 1 } else { -1 };
 
-		// priorité : sortir de la barre
+		// priority: out of bar
 		if self.on_bar[player.idx()] > 0 {
 			let entry = self.entry_point(die);
 
@@ -520,8 +520,7 @@ impl Backgammon {
 	fn undo_single_move(&mut self, mv: &SingleMove) {
 		let player = self.current_player;
 		let piece = if player == Player::Player1 { 1 } else { -1 };
-		
-		// Revenir à l’état avant le move
+
 		if mv.to == P1_OUT {
 			self.outside[0] -= 1;
 		} else if mv.to == P2_OUT {
@@ -620,7 +619,7 @@ mod tests {
 			let moves = game.legal_moves();
 
 			if moves.is_empty() {
-				// aucun coup possible → passer le tour
+				// no move → pass
 				game.switch_player();
 				turn += 1;
 				continue;

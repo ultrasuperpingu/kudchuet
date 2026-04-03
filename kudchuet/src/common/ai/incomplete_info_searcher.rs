@@ -48,7 +48,7 @@ where
 		self.next_search_stop_signal().stop_search();
 	}
 	#[cfg(not(target_arch = "wasm32"))]
-	fn next_search_stop_signal(&self) -> SearchStopSignal {
+	fn stop_signal(&self) -> SearchStopSignal {
 		self.next_search_stop_signal()
 	}
 
