@@ -76,6 +76,7 @@ pub enum CheckerBoardMod {
 #[derive(EguiInspect, Clone, Serialize, Deserialize)]
 pub struct BoardStyle {
 	pub checkerboard_mod: CheckerBoardMod,
+	pub clear_color: Option<egui::Color32>,
 	pub light_color: egui::Color32,
 	pub dark_color: egui::Color32,
 	pub uniform_color: egui::Color32,
@@ -90,6 +91,7 @@ pub struct BoardStyle {
 impl Default for BoardStyle {
 	fn default() -> Self {
 		Self {
+			clear_color: None,
 			checkerboard_mod: CheckerBoardMod::EvenDark,
 			light_color: egui::Color32::from_rgb(240, 217, 181),
 			dark_color: egui::Color32::from_rgb(181, 136, 99),
@@ -118,15 +120,15 @@ impl Default for Shape {
 	}
 }
 impl Shape {
-	pub fn draw(&self, ui: &mut Ui, center: Pos2, cell_size: f32) {
+	pub fn draw(&self, painter: &egui::Painter, center: Pos2, cell_size: f32) {
 		match self {
 			Shape::Circle { color, size, text, text_color , stroke_color} => {
-				ui.painter().circle_filled(center, cell_size * size/2.0, *color);
+				painter.circle_filled(center, cell_size * size/2.0, *color);
 				if let Some(c) = stroke_color.as_ref() {
-					ui.painter().circle_stroke(center, cell_size * size/2.0, egui::Stroke::new(1.0, *c));
+					painter.circle_stroke(center, cell_size * size/2.0, egui::Stroke::new(1.0, *c));
 				}
 				if !text.is_empty() {
-					ui.painter().text(
+					painter.text(
 						center,
 						egui::Align2::CENTER_CENTER,
 							text,
@@ -136,9 +138,9 @@ impl Shape {
 				}
 			},
 			Shape::StrokeCircle { color, size, stroke_width, text, text_color} => {
-				ui.painter().circle_stroke(center, cell_size * size/2.0, egui::Stroke::new(*stroke_width, *color));
+				painter.circle_stroke(center, cell_size * size/2.0, egui::Stroke::new(*stroke_width, *color));
 				if !text.is_empty() {
-					ui.painter().text(
+					painter.text(
 						center,
 						egui::Align2::CENTER_CENTER,
 							text,
@@ -148,7 +150,7 @@ impl Shape {
 				}
 			},
 			Shape::String { text, color } => {
-				ui.painter().text(
+				painter.text(
 					center,
 					egui::Align2::CENTER_CENTER,
 						text,
@@ -158,12 +160,12 @@ impl Shape {
 			},
 			Shape::Rect { color, size, text, text_color, stroke_color } => {
 				let size_vec = Vec2::new(cell_size * size, cell_size * size);
-				ui.painter().rect_filled(Rect::from_center_size(center, size_vec), 0.0, *color);
+				painter.rect_filled(Rect::from_center_size(center, size_vec), 0.0, *color);
 				if let Some(c) = stroke_color.as_ref() {
-					ui.painter().rect_stroke(Rect::from_center_size(center, size_vec), 0.0, egui::Stroke::new(1.0, *c), egui::StrokeKind::Inside);
+					painter.rect_stroke(Rect::from_center_size(center, size_vec), 0.0, egui::Stroke::new(1.0, *c), egui::StrokeKind::Inside);
 				}
 				if !text.is_empty() {
-					ui.painter().text(
+					painter.text(
 						center,
 						egui::Align2::CENTER_CENTER,
 							text,
@@ -173,9 +175,9 @@ impl Shape {
 				}
 			},
 			Shape::StrokeRect { color, size, stroke_width, text, text_color } => {
-				ui.painter().rect_stroke(Rect::from_center_size(center, Vec2::new(cell_size * size, cell_size * size)), 0.0, egui::Stroke::new(*stroke_width, *color), egui::StrokeKind::Inside);
+				painter.rect_stroke(Rect::from_center_size(center, Vec2::new(cell_size * size, cell_size * size)), 0.0, egui::Stroke::new(*stroke_width, *color), egui::StrokeKind::Inside);
 				if !text.is_empty() {
-					ui.painter().text(
+					painter.text(
 						center,
 						egui::Align2::CENTER_CENTER,
 							text,
@@ -192,7 +194,7 @@ pub trait EGUIPieceType {
 		Shape::Circle { color: Color32::BLACK, size: 0.7, text: "N/A".to_owned(), text_color: Color32::WHITE, stroke_color: None }
 	}
 	fn draw(&self, ui: &mut Ui, center: Pos2, cell_size: f32) {
-		self.shape().draw(ui, center, cell_size);
+		self.shape().draw(ui.painter(), center, cell_size);
 	}
 }
 

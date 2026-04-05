@@ -11,6 +11,7 @@ pub mod backgammon;
 pub mod bagh_chal;
 pub mod checkers;
 pub mod chess;
+pub mod chinese_checkers;
 pub mod connect4;
 pub mod diaballik;
 pub mod footboard;

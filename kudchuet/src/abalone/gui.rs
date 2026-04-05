@@ -150,7 +150,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 			//painter.circle_filled(pos, cell_radius, board_color);
 			//painter.circle_stroke(pos, cell_radius, egui::Stroke::new(1.5, outline_color));
 			if let Some(s) = &self.get_style().empty_cell_shape {
-				s.draw(ui, pos, cell_radius * 2.0);
+				s.draw(ui.painter(), pos, cell_radius * 2.0);
 			}
 
 			// marble
@@ -163,7 +163,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 			}
 			if let Some(sel) = self.get_selected() {
 				if Some(sel as usize) == idx(hex) {
-					self.get_style().selected_highlights_shape.draw(ui, pos, cell_radius*2.0);
+					self.get_style().selected_highlights_shape.draw(ui.painter(), pos, cell_radius*2.0);
 					/*painter.circle_stroke(
 						pos,
 						cell_radius * 0.9,
@@ -186,7 +186,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 			let pos = self.coords_to_pixel(&available, size, tx, ty, game.height());
 			let square = egui::Rect::from_center_size(pos, egui::vec2(size, size));
 			
-			self.get_style().legal_highlights_shape.draw(ui, square.center(), size);
+			self.get_style().legal_highlights_shape.draw(ui.painter(), square.center(), size);
 		}
 		if let Some(h) = clicked_hex {
 			idx(h).map(|index| BitboardAbalone::coords_from_index(index))

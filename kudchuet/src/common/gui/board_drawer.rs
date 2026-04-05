@@ -36,6 +36,9 @@ pub trait BoardDrawer<G: BoardGame>
 			egui::pos2(outer_rect.left() + x_offset + left_margin, outer_rect.top()),
 			egui::vec2(board_width, board_height),
 		);
+		if let Some(c) = &self.get_style().clear_color {
+			painter.rect_filled(board_rect, 0.0, *c);
+		}
 		if let Some(pos) = response.interact_pointer_pos() {
 			if can_interact && board_rect.contains(pos) {
 				let (x_coord,y_coord) = self.pixel_to_coords(&board_rect, cell_size, pos, w, h).unwrap();
@@ -77,14 +80,14 @@ pub trait BoardDrawer<G: BoardGame>
 
 				// played highlights
 				if self.get_played_highlights().contains(&G::index_from_coords(x_coord, y_coord)) {
-					self.get_style().played_highlights_shape.draw(ui, square.center(), cell_size);
+					self.get_style().played_highlights_shape.draw(ui.painter(), square.center(), cell_size);
 					//painter.rect_filled(square, 0.0, Color32::from_rgba_unmultiplied(150, 150, 250, 80));
 				}
 				// Pieces
 				if let Some(piece) = game.piece_at(x_coord, y_coord) {
 					piece.draw(ui, square.center(), cell_size);
 				} else if let Some(shape) = self.get_style().empty_cell_shape.as_ref() {
-					shape.draw(ui, square.center(), cell_size);
+					shape.draw(ui.painter(), square.center(), cell_size);
 				}
 			}
 		}
@@ -98,7 +101,7 @@ pub trait BoardDrawer<G: BoardGame>
 			let y = pos.y;
 			let square = egui::Rect::from_min_size(egui::pos2(x, y), egui::vec2(cell_size, cell_size));
 			//painter.rect_stroke(square, 0.0, egui::Stroke::new(3.0, egui::Color32::YELLOW), egui::StrokeKind::Outside);
-			self.get_style().selected_highlights_shape.draw(ui, square.center(), cell_size);
+			self.get_style().selected_highlights_shape.draw(ui.painter(), square.center(), cell_size);
 		}
 		// legal moves highlights
 		for &index in self.get_legal_highlights() {
@@ -110,7 +113,7 @@ pub trait BoardDrawer<G: BoardGame>
 			let y = pos.y;
 			let square = egui::Rect::from_min_size(egui::pos2(x, y), egui::vec2(cell_size, cell_size));
 			
-			self.get_style().legal_highlights_shape.draw(ui, square.center(), cell_size);
+			self.get_style().legal_highlights_shape.draw(ui.painter(), square.center(), cell_size);
 		}
 
 		self.draw_coordinates_aside(&painter, board_rect, cell_size, w, h);
@@ -198,7 +201,7 @@ pub trait BoardDrawer<G: BoardGame>
 	fn set_legal_highlights(&mut self, legal_highlights: Vec<u16>);
 	fn get_played_highlights(&self) -> &Vec<u16>;
 	fn set_played_highlights(&mut self, played_highlights: Vec<u16>);
-	fn full_reset(&mut self) ;
+	fn full_reset(&mut self);
 	fn load_style(&mut self, ctx: &egui::Context) {
 		if let Some(json) = ctx.data_mut(|d| d.get_persisted::<String>("theme".into())) {
 			eprintln!("loading theme: {}", json);
@@ -213,7 +216,6 @@ pub trait BoardDrawer<G: BoardGame>
 		ctx.data_mut(|d| d.insert_persisted("theme".into(), json));
 	}
 }
-
 pub struct DefaultBoardDrawer<G> {
 	style: BoardStyle,
 	square_drawer: Box<dyn SquareDrawer<G>>,
@@ -222,6 +224,19 @@ pub struct DefaultBoardDrawer<G> {
 	legal_highlights: Vec<u16>,
 	played_highlights: Vec<u16>,
 	//intermediate_state: Option<G>,
+}
+impl<G: BoardGame> Default for DefaultBoardDrawer<G>
+	where G::M : BoardMove<G> {
+	fn default() -> Self {
+		Self {
+			style: G::default_style(),
+			square_drawer: Box::new(DefaultSquareDrawer::new()),
+			selected: None,
+			legal_highlights: vec![],
+			played_highlights: vec![],
+			//intermediate_state:None,
+		}
+	}
 }
 impl<G: BoardGame> DefaultBoardDrawer<G>
 	where G::M : BoardMove<G>
@@ -368,6 +383,7 @@ pub trait SquareDrawer<G>
 	}
 }
 
+#[derive(Default)]
 pub struct DefaultSquareDrawer;
 impl DefaultSquareDrawer
 {

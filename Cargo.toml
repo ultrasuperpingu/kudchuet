@@ -9,6 +9,7 @@ members = [
 	"games/bagh_chal",
 	"games/checkers",
 	"games/chess",
+	"games/chinese_checkers",
 	"games/connect4",
 	"games/diaballik",
 	"games/footboard",

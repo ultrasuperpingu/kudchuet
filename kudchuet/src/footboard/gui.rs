@@ -102,16 +102,16 @@ impl EGUIPieceType for Cell {
 		match self {
 			Cell::Empty => unreachable!(),
 			Cell::White => {
-				Shape::Circle{color:Color32::WHITE, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)}.draw(ui, center, cell_size);
+				Shape::Circle{color:Color32::WHITE, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)}.draw(ui.painter(), center, cell_size);
 			},
 			Cell::Black => {
-				Shape::Circle{color:Color32::BLACK, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)}.draw(ui, center, cell_size);
+				Shape::Circle{color:Color32::BLACK, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)}.draw(ui.painter(), center, cell_size);
 			},
 			Cell::WhiteWithBall => {
-				Shape::Circle{color:Color32::WHITE, text: "⚽".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)}.draw(ui, center, cell_size)
+				Shape::Circle{color:Color32::WHITE, text: "⚽".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)}.draw(ui.painter(), center, cell_size)
 			},
 			Cell::BlackWithBall => {
-				Shape::Circle{color:Color32::BLACK, text: "⚽".into(), size: 0.7, text_color: Color32::WHITE, stroke_color: Some(Color32::BLACK)}.draw(ui, center, cell_size);
+				Shape::Circle{color:Color32::BLACK, text: "⚽".into(), size: 0.7, text_color: Color32::WHITE, stroke_color: Some(Color32::BLACK)}.draw(ui.painter(), center, cell_size);
 			},
 			Cell::Ball => {
 				ui.painter().circle_filled(center, cell_size * 0.26, Color32::WHITE);

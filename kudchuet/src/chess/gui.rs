@@ -44,35 +44,35 @@ impl EGUIPieceType for ChessPiece {
 	fn draw(&self, ui: &mut egui::Ui, center: egui::Pos2, cell_size: f32) {
 		match self {
 			ChessPiece::WhitePawn =>   {
-				Shape::draw(&self.shape(), ui, center,cell_size);
-				Shape::draw(&Shape::String { text: "♙".into(), color: Color32::BLACK}, ui, center, cell_size);
+				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
+				Shape::draw(&Shape::String { text: "♙".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
 			},
 			ChessPiece::WhiteRook =>   {
-				Shape::draw(&self.shape(), ui, center,cell_size);
-				Shape::draw(&Shape::String { text: "♖".into(), color: Color32::BLACK}, ui, center, cell_size);
+				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
+				Shape::draw(&Shape::String { text: "♖".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
 			},
 			ChessPiece::WhiteKnight => {
-				Shape::draw(&self.shape(), ui, center,cell_size);
-				Shape::draw(&Shape::String { text: "♘".into(), color: Color32::BLACK}, ui, center, cell_size);
+				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
+				Shape::draw(&Shape::String { text: "♘".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
 			},
 			ChessPiece::WhiteBishop => {
-				Shape::draw(&self.shape(), ui, center,cell_size);
-				Shape::draw(&Shape::String { text: "♗".into(), color: Color32::BLACK}, ui, center, cell_size);
+				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
+				Shape::draw(&Shape::String { text: "♗".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
 			},
 			ChessPiece::WhiteQueen =>  {
-				Shape::draw(&self.shape(), ui, center,cell_size);
-				Shape::draw(&Shape::String { text: "♕".into(), color: Color32::BLACK}, ui, center, cell_size);
+				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
+				Shape::draw(&Shape::String { text: "♕".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
 			},
 			ChessPiece::WhiteKing =>   {
-				Shape::draw(&self.shape(), ui, center,cell_size);
-				Shape::draw(&Shape::String { text: "♔".into(), color: Color32::BLACK}, ui, center, cell_size);
+				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
+				Shape::draw(&Shape::String { text: "♔".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
 			},
-			ChessPiece::BlackPawn =>   Shape::draw(&self.shape(), ui, center,cell_size),
-			ChessPiece::BlackRook =>   Shape::draw(&self.shape(), ui, center,cell_size),
-			ChessPiece::BlackKnight => Shape::draw(&self.shape(), ui, center,cell_size),
-			ChessPiece::BlackBishop => Shape::draw(&self.shape(), ui, center,cell_size),
-			ChessPiece::BlackQueen =>  Shape::draw(&self.shape(), ui, center,cell_size),
-			ChessPiece::BlackKing =>   Shape::draw(&self.shape(), ui, center,cell_size),
+			ChessPiece::BlackPawn =>   Shape::draw(&self.shape(), ui.painter(), center,cell_size),
+			ChessPiece::BlackRook =>   Shape::draw(&self.shape(), ui.painter(), center,cell_size),
+			ChessPiece::BlackKnight => Shape::draw(&self.shape(), ui.painter(), center,cell_size),
+			ChessPiece::BlackBishop => Shape::draw(&self.shape(), ui.painter(), center,cell_size),
+			ChessPiece::BlackQueen =>  Shape::draw(&self.shape(), ui.painter(), center,cell_size),
+			ChessPiece::BlackKing =>   Shape::draw(&self.shape(), ui.painter(), center,cell_size),
 		}
 		
 	}
