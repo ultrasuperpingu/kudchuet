@@ -1,10 +1,11 @@
 use eframe::egui;
 use egui::{Color32, Rect};
+use minimax::Game;
 use crate::bagh_chal::game::BaghChalMaterialEval;
 use crate::common::gui::board_app::GenericBoardApp;
 use crate::common::gui::board_drawer::SquareDrawer;
 use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
-use crate::common::new_move_searcher_vec;
+use crate::common::{Player, new_move_searcher_vec};
 
 use super::*;
 
@@ -61,7 +62,14 @@ impl BoardGame for BaghChal {
 			None
 		}
 	}
-
+	fn result(&self) -> GameResult {
+		match <Self as Game>::get_winner(self) {
+			Some(minimax::Winner::Draw) => GameResult::Draw,
+			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::Player1 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::Player2 {GameResult::Player2} else {GameResult::Player1},
+			None => GameResult::OnGoing,
+		}
+	}
 	fn index_from_coords(x: u8, y: u8) -> u16 {
 		Bitboard5x5::index_from_coords(x, y) as u16
 	}

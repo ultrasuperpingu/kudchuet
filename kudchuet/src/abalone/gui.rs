@@ -2,13 +2,14 @@
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::{Color32, Rect, Vec2};
+use minimax::Game;
 use crate::abalone::bitboard::BitboardAbalone;
 use crate::abalone::game::AbaloneMaterialEval;
 use crate::abalone::rules::{Abalone, Cell, HEXES, Hex, Move, idx};
 use crate::common::gui::board_app::GenericBoardApp;
 use crate::common::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, SquareDrawer};
 use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
-use crate::common::new_move_searcher_vec;
+use crate::common::{GameResult, Player, new_move_searcher_vec};
 
 
 
@@ -84,7 +85,14 @@ impl BoardGame for Abalone {
 			None
 		}
 	}
-
+	fn result(&self) -> GameResult {
+		match <Self as Game>::get_winner(self) {
+			Some(minimax::Winner::Draw) => GameResult::Draw,
+			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::Player1 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::Player2 {GameResult::Player2} else {GameResult::Player1},
+			None => GameResult::OnGoing,
+		}
+	}
 	fn index_from_coords(x: u8, y: u8) -> u16 {
 		BitboardAbalone::index_from_coords(x, y) as u16
 	}

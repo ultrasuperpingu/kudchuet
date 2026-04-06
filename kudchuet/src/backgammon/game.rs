@@ -87,7 +87,7 @@ impl minimax::Evaluator for BackgammonMaterialEval {
 	}
 }
 impl minimax::TurnBasedGameEvaluator for BackgammonMaterialEval {
-	fn set_player_on_trait(&mut self, p: i8) {
+	fn set_evaluated_player(&mut self, p: i8) {
 		self.turn = p;
 	}
 }
@@ -164,7 +164,7 @@ fn apply_consecutive_bonus(scorep1: &mut i16, scorep2: &mut i16, consecutive: i1
 	}
 }
 impl minimax::TurnBasedGameEvaluator for BackgammonSimpleEval {
-	fn set_player_on_trait(&mut self, p: i8) {
+	fn set_evaluated_player(&mut self, p: i8) {
 		self.turn = p;
 	}
 }

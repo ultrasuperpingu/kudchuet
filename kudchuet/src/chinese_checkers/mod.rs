@@ -1,11 +1,12 @@
 mod bitboard;
 pub mod gui;
 pub mod game;
+pub mod fen;
 use std::fmt;
 
 use ::bitboard::BitIter;
 
-use crate::chinese_checkers::bitboard::ChineseCheckerBoard;
+use crate::{chinese_checkers::bitboard::ChineseCheckerBoard, common::{GameResult, gui::BoardGame}};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash)]
 pub enum ChineseCheckersPlayer {
@@ -92,6 +93,18 @@ impl ChineseCheckers {
 		}
 
 		game
+	}
+	pub fn empty() -> Self {
+		Self {
+			red: ChineseCheckerBoard::EMPTY,
+			blue: ChineseCheckerBoard::EMPTY,
+			green: ChineseCheckerBoard::EMPTY,
+			yellow: ChineseCheckerBoard::EMPTY,
+			black: ChineseCheckerBoard::EMPTY,
+			white: ChineseCheckerBoard::EMPTY,
+			nb_players:0,
+			turn: ChineseCheckersPlayer::Red
+		}
 	}
 	const INITIAL_RED: ChineseCheckerBoard = ChineseCheckerBoard::initial_red();
 	const INITIAL_BLUE: ChineseCheckerBoard = ChineseCheckerBoard::initial_blue();
@@ -182,8 +195,8 @@ impl ChineseCheckers {
 			let jump_y = jump_y_i8 as u8;
 
 			if ChineseCheckerBoard::is_playable(jump_x, jump_y) &&
-			self.is_empty(jump_x, jump_y) &&
-			!visited.get(jump_x, jump_y) 
+				self.is_empty(jump_x, jump_y) &&
+				!visited.get(jump_x, jump_y)
 			{
 				results.push((jump_x, jump_y));
 				results.extend(self.jumps_from((jump_x, jump_y), visited));
@@ -199,12 +212,13 @@ impl ChineseCheckers {
 	pub fn generate_moves_for_player(&self, player: ChineseCheckersPlayer) -> Vec<Move> {
 		let mut all_moves = Vec::new();
 		let board = self.board(player);
+		let unowned = ChineseCheckerBoard::unowned_zones_board(player);
 
 		for bit in board.iter_bits() {
 			let (x, y) = ChineseCheckerBoard::coords_from_index(bit as usize);
 
-			// Mouvements simples
-			let neighbours = ChineseCheckerBoard::NEIGHBOURS[y as usize][x as usize];
+			// Simple Moves
+			let neighbours = ChineseCheckerBoard::NEIGHBOURS[y as usize][x as usize] & !unowned;
 			for n_bit in neighbours.iter_bits() {
 				let (nx, ny) = ChineseCheckerBoard::coords_from_index(n_bit as usize);
 				if self.is_empty(nx, ny) {
@@ -212,11 +226,13 @@ impl ChineseCheckers {
 				}
 			}
 
-			// Mouvements par saut
+			// Jump moves
 			let mut visited = ChineseCheckerBoard::EMPTY;
 			for jump_to in self.jumps_from((x, y), &mut visited) {
-				let jump_to_index = ChineseCheckerBoard::index_from_coords(jump_to.0, jump_to.1);
-				all_moves.push(Move{from:bit as u8, to:jump_to_index as u8});
+				if !unowned.get(jump_to.0, jump_to.1) {
+					let jump_to_index = ChineseCheckerBoard::index_from_coords(jump_to.0, jump_to.1);
+					all_moves.push(Move{from:bit as u8, to:jump_to_index as u8});
+				}
 			}
 		}
 		all_moves
@@ -224,31 +240,28 @@ impl ChineseCheckers {
 }
 impl ChineseCheckers {
 
-	pub fn move_piece(
+	pub fn check_legality(
 		&mut self,
 		player: ChineseCheckersPlayer,
 		mv: Move,
 	) -> Result<(), &'static str> {
 		if !ChineseCheckerBoard::is_playable_index(mv.from) {
-			return Err("La case de départ n'est pas jouable");
+			return Err("Invalid from square");
 		}
 		if !ChineseCheckerBoard::is_playable_index(mv.to) {
-			return Err("La case d'arrivée n'est pas jouable");
+			return Err("Invalid to square");
 		}
 
 		let all_before = self.all();
 		if all_before.get_at_index(mv.to as usize) {
-			return Err("La case d'arrivée est occupée");
+			return Err("to square is not empty");
 		}
 
 		let board = self.board_mut(player);
 
 		if !board.get_at_index(mv.from as usize) {
-			return Err("Aucun pion du joueur sur la case de départ");
+			return Err("No Pawn on from square");
 		}
-
-		board.reset_at_index(mv.from as usize);
-		board.set_at_index(mv.to as usize);
 
 		Ok(())
 	}
@@ -284,20 +297,23 @@ impl ChineseCheckers {
 	pub fn play(&mut self, mv: Move) -> Result<(), &'static str> {
 		//let player_board = self.board_mut(self.turn);
 
-		self.move_piece(self.turn, mv)?;
-
-		self.next_turn();
+		self.check_legality(self.turn, mv)?;
+		self.play_unchecked(mv);
 
 		Ok(())
 	}
 	pub fn play_unchecked(&mut self, mv: Move) {
-		let board = self.board_mut(self.turn);
+		self.play_unchecked_for_player(self.turn, mv);
+
+	}
+	pub(crate) fn play_unchecked_for_player(&mut self, p: ChineseCheckersPlayer, mv: Move) {
+		let board = self.board_mut(p);
 		board.reset_at_index(mv.from as usize);
 		board.set_at_index(mv.to as usize);
 		self.next_turn();
 
 	}
-
+	
 	fn next_turn(&mut self) {
 		let active = Self::active_players(self.nb_players);
 		let current_index = active.iter().position(|p| *p == self.turn).unwrap();
@@ -374,7 +390,35 @@ fn test_jump_simple() {
 
 	assert!(
 		moves.contains(&jump_move),
-		"Jump simple non généré ! Moves: {:?}",
+		"Simple jump error ! Moves: {:?}",
 		moves
 	);
+}
+#[test]
+fn test_over() {
+	let mut game = ChineseCheckers::from_fen(
+r##"      .      
+      BB     
+     .BB     
+     BBBB    
+www.B...BGG.G
+ www....G.GGG
+ ww.......GG 
+  w........G 
+  wY.......  
+  .......... 
+ YY.Y....bbb 
+ Y.Y......bbb
+YYYY..R..bbbb
+     R.RR    
+     RRR     
+      RR     
+      R       R6"##).unwrap();
+	assert!(game.result() == GameResult::OnGoing);
+	let legals = game.legal_moves();
+	println!("{legals:?}");
+	let _=game.play(Move{from:162, to: 175});
+	println!("{}", game);
+	println!("{:?}", game.result());
+	assert!(game.result() == GameResult::Player(0));
 }

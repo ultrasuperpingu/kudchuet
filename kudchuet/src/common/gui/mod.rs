@@ -219,14 +219,7 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	}
 	fn do_random(&mut self) {
 	}
-	fn result(&self) -> GameResult {
-		match <Self as Game>::get_winner(self) {
-			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::Player1 {GameResult::Player2} else {GameResult::Player1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::Player2 {GameResult::Player2} else {GameResult::Player1},
-			None => GameResult::OnGoing,
-		}
-	}
+	fn result(&self) -> GameResult;
 	fn current_player(&self) -> Player;
 	fn nb_players(&self) -> u8 {
 		2

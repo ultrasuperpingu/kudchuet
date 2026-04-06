@@ -74,7 +74,7 @@ impl ChineseCheckersMaterialEval {
 	}
 }
 impl TurnBasedGameEvaluator for ChineseCheckersMaterialEval {
-	fn set_player_on_trait(&mut self, p: i8) {
+	fn set_evaluated_player(&mut self, p: i8) {
 		self.0=ChineseCheckersPlayer::from_idx(p as u8);
 	}
 }

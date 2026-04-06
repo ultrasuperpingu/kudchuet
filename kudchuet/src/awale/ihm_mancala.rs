@@ -1,7 +1,7 @@
 use eframe::egui;
 use minimax::Game;
 
-use crate::common::{Player, PlayerType, ai::AIEngine, gui::{BoardGame, BoardMove}, new_move_searcher};
+use crate::common::{GameResult, Player, PlayerType, ai::AIEngine, gui::{BoardGame, BoardMove}, new_move_searcher};
 
 use super::mancala::{Mancala, Move};
 
@@ -42,6 +42,14 @@ impl BoardGame for Mancala {
 
 	fn coords_from_index(_index: u16) -> (u8, u8) {
 		todo!()
+	}
+	fn result(&self) -> GameResult {
+		match <Self as Game>::get_winner(self) {
+			Some(minimax::Winner::Draw) => GameResult::Draw,
+			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::Player1 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::Player2 {GameResult::Player2} else {GameResult::Player1},
+			None => GameResult::OnGoing,
+		}
 	}
 }
 impl BoardMove<Mancala> for Move {

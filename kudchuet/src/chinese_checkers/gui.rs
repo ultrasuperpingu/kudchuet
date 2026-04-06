@@ -51,7 +51,7 @@ impl BoardGame for ChineseCheckers {
 	#[inline(always)]
 	fn result(&self) -> crate::common::GameResult {
 		match self.winner() {
-			Some(_s) => crate::common::GameResult::Player1,
+			Some(p) => crate::common::GameResult::Player(p.idx()),
 			None => crate::common::GameResult::OnGoing,
 		}
 	}
@@ -124,6 +124,12 @@ impl BoardGame for ChineseCheckers {
 		style.show_coordinates_mod=crate::common::gui::CoordMod::None;
 		style.played_highlights_shape=Shape::Rect { color: Color32::from_rgba_unmultiplied(120, 120, 120, 128), size: 1.0, text: "".into(), text_color: Color32::BLACK, stroke_color: None };
 		style
+	}
+	fn get_position_from_string(&self, fen: &String) -> Result<Self, String> {
+		Self::from_fen(fen)
+	}
+	fn position_to_string(&self) -> Option<String> {
+		Some(self.to_fen())
 	}
 }
 #[derive(Default)]
@@ -336,10 +342,25 @@ impl SquareDrawer<ChineseCheckers> for ChineseCheckerSquareDrawer {
 	{
 		painter.rect_filled(*square, 0.0, style.uniform_color);
 		if ChineseCheckerBoard::is_playable(x_coord, y_coord) {
-			if let Some(sh) = &style.empty_cell_shape {
-				sh.draw(painter, square.center(), square.width());
-			} else {
-				painter.circle_stroke(square.center(), square.width()*0.7/2.0, Stroke::new(3.0, style.dark_color));
+			let actives = ChineseCheckers::active_players(_game.nb_players);
+			painter.circle_stroke(square.center(), square.width()*0.7/2.0, Stroke::new(3.0, style.dark_color));
+			if actives.contains(&ChineseCheckersPlayer::Red) && ChineseCheckerBoard::initial_blue().get(x_coord, y_coord) {
+				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::RED);
+			}
+			else if actives.contains(&ChineseCheckersPlayer::Blue) && ChineseCheckerBoard::initial_red().get(x_coord, y_coord) {
+				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::BLUE);
+			}
+			else if actives.contains(&ChineseCheckersPlayer::Yellow) && ChineseCheckerBoard::initial_green().get(x_coord, y_coord) {
+				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::YELLOW);
+			}
+			else if actives.contains(&ChineseCheckersPlayer::Green) && ChineseCheckerBoard::initial_yellow().get(x_coord, y_coord) {
+				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::GREEN);
+			}
+			else if actives.contains(&ChineseCheckersPlayer::Black) && ChineseCheckerBoard::initial_white().get(x_coord, y_coord) {
+				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::BLACK);
+			}
+			else if actives.contains(&ChineseCheckersPlayer::White) && ChineseCheckerBoard::initial_black().get(x_coord, y_coord) {
+				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::WHITE);
 			}
 		}
 	}

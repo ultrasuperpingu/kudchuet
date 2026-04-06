@@ -203,6 +203,16 @@ impl ChineseCheckerBoard {
 			ChineseCheckersPlayer::White => Self::initial_black(),
 		}
 	}
+	pub fn unowned_zones_board(p: ChineseCheckersPlayer) -> Self {
+		match p {
+			ChineseCheckersPlayer::Red => Self::initial_yellow() | Self::initial_green() | Self::initial_black() | Self::initial_white(),
+			ChineseCheckersPlayer::Blue => Self::initial_yellow() | Self::initial_green() | Self::initial_black() | Self::initial_white(),
+			ChineseCheckersPlayer::Green => Self::initial_blue() | Self::initial_red() | Self::initial_black() | Self::initial_white(),
+			ChineseCheckersPlayer::Yellow => Self::initial_blue() | Self::initial_red() | Self::initial_black() | Self::initial_white(),
+			ChineseCheckersPlayer::Black => Self::initial_blue() | Self::initial_red() | Self::initial_yellow() | Self::initial_green(),
+			ChineseCheckersPlayer::White => Self::initial_blue() | Self::initial_red() | Self::initial_yellow() | Self::initial_green(),
+		}
+	}
 }
 impl ChineseCheckerBoard {
 	/// Retourne les voisins jouables de (x,y) sous forme d'un bitboard

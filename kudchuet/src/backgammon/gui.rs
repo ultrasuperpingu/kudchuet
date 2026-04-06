@@ -1,12 +1,13 @@
 use eframe::egui;
 use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke};
+use minimax::Game;
 
 use crate::backgammon::rules::{P1_BAR, P1_OUT, P2_BAR, P2_OUT};
 use crate::common::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
 use crate::common::gui::board_drawer::SquareDrawer;
 use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType, Shape};
 use crate::backgammon::game::{BackgammonMaterialEval, BackgammonSimpleEval};
-use crate::common::Player;
+use crate::common::{GameResult, Player};
 use crate::common::gui::board_app::GenericBoardApp;
 
 use super::rules::{Backgammon, Move};
@@ -104,6 +105,14 @@ impl BoardGame for Backgammon {
 	}
 	fn do_random(&mut self) {
 		self.roll_dice();
+	}
+	fn result(&self) -> GameResult {
+		match <Self as Game>::get_winner(self) {
+			Some(minimax::Winner::Draw) => GameResult::Draw,
+			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::Player1 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::Player2 {GameResult::Player2} else {GameResult::Player1},
+			None => GameResult::OnGoing,
+		}
 	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		if x == 6 {
