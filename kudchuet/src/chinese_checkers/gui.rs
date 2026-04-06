@@ -3,7 +3,7 @@ use egui::{Color32, Stroke};
 use crate::chinese_checkers::bitboard::ChineseCheckerBoard;
 use crate::chinese_checkers::game::ChineseCheckersMaterialEval;
 use crate::chinese_checkers::{ChineseCheckers, ChineseCheckersPlayer, Move};
-use crate::common::ai::{AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
+use crate::common::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
 use crate::common::gui::board_app::GenericBoardApp;
 use crate::common::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, SquareDrawer};
 use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
@@ -58,18 +58,35 @@ impl BoardGame for ChineseCheckers {
 
 	fn current_player(&self) -> crate::common::Player {
 		match self.turn {
-			ChineseCheckersPlayer::Red => crate::common::Player::Player1,
-			ChineseCheckersPlayer::Blue => crate::common::Player::Player2,
-			ChineseCheckersPlayer::Green => todo!(),
-			ChineseCheckersPlayer::Yellow => todo!(),
-			ChineseCheckersPlayer::Black => todo!(),
-			ChineseCheckersPlayer::White => todo!(),
+			ChineseCheckersPlayer::Red => crate::common::Player::Player(0),
+			ChineseCheckersPlayer::Blue => crate::common::Player::Player(1),
+			ChineseCheckersPlayer::Green => crate::common::Player::Player(2),
+			ChineseCheckersPlayer::Yellow => crate::common::Player::Player(3),
+			ChineseCheckersPlayer::Black => crate::common::Player::Player(4),
+			ChineseCheckersPlayer::White => crate::common::Player::Player(5),
 		}
+	}
+	fn nb_players(&self) -> u8 {
+		self.nb_players
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {
 			crate::common::Player::Player1 => "White".into(),
 			crate::common::Player::Player2 => "Black".into(),
+			crate::common::Player::Player(idx) => {
+				let players = Self::active_players(self.nb_players);
+				if idx < players.len() as u8 {
+					return match players[idx as usize] {
+						ChineseCheckersPlayer::Red => "Red",
+						ChineseCheckersPlayer::Blue => "Blue",
+						ChineseCheckersPlayer::Green => "Green",
+						ChineseCheckersPlayer::Yellow => "Yellow",
+						ChineseCheckersPlayer::Black => "Black",
+						ChineseCheckersPlayer::White => "White",
+					}.into()
+				}
+				"".into()
+			}
 			crate::common::Player::RandomMove => unreachable!(),
 		}
 	}
@@ -143,6 +160,9 @@ impl BoardDrawer<ChineseCheckers> for ChineseCheckersBoardDrawer
 			egui::pos2(outer_rect.left() + x_offset + left_margin, outer_rect.top()),
 			egui::vec2(board_width, board_height),
 		);
+		if let Some(c) = &self.get_style().clear_color {
+			painter.rect_filled(board_rect, 0.0, *c);
+		}
 		if let Some(pos) = response.interact_pointer_pos() {
 			if can_interact && board_rect.contains(pos) {
 				let (x_coord,y_coord) = self.pixel_to_coords(&board_rect, cell_size, pos, w, h).unwrap();
@@ -243,9 +263,9 @@ impl BoardDrawer<ChineseCheckers> for ChineseCheckersBoardDrawer
 		let x_off = pos.x - board_rect.left();
 		let y_off = pos.y - board_rect.top();
 
-		let x_visual = (x_off / cell_size).floor() as u8;
 		let y_visual = (h - 1) - (y_off / cell_size).floor() as u8;
-
+		let x_visual = ((x_off - if y_visual % 2 == 0 {0.5*cell_size} else {0.0}) / cell_size).floor() as u8;
+		
 		let (x_coord, y_coord) = if self.get_style().mirrored {
 			(x_visual, h - 1 - y_visual)
 		} else {
@@ -328,10 +348,12 @@ impl SquareDrawer<ChineseCheckers> for ChineseCheckerSquareDrawer {
 	}
 }
 pub fn create_board() -> GenericBoardApp<ChineseCheckers> {
-	let engines: Vec<Box<dyn AIEngineProvider<ChineseCheckers, Engine=Box<dyn AIEngine<ChineseCheckers>>>>> = vec![
-		Box::new(MoveSearcherBuilderDyn::new("Material".into(), ChineseCheckersMaterialEval::new(ChineseCheckersPlayer::Red), 5)),
-	];
-	let mut board=GenericBoardApp::new(ChineseCheckers::default(), engines);
+	//let engines: Vec<Box<dyn AIEngineProvider<ChineseCheckers, Engine=Box<dyn AIEngine<ChineseCheckers>>>>> = vec![
+	//	Box::new(ExpectiMinimaxBuilder::new("Material".into(), ChineseCheckersMaterialEval::new(ChineseCheckersPlayer::Red), 5)),
+	//];
+	let ai_provider = ExpectiMinimaxBuilder::new("Material".into(), ChineseCheckersMaterialEval::default(), 4);
+	let mut board = GenericBoardApp::new(ChineseCheckers::new(6), vec![Box::new(ai_provider)]);
+	//let mut board=GenericBoardApp::new(ChineseCheckers::new(6), engines);
 	board.board_drawer=Box::new(ChineseCheckersBoardDrawer::default());
 	board.board_drawer.set_square_drawer(Box::new(ChineseCheckerSquareDrawer{}));
 	board

@@ -61,6 +61,7 @@ impl minimax::Game for Neutron {
 		match state.result() {
 			GameResult::Draw => Some(minimax::Winner::Draw),
 			GameResult::OnGoing => None,
+			GameResult::Player(_) => unreachable!(),
 			GameResult::Player1 => {
 				if state.turn == Player::Player1 {
 					Some(minimax::Winner::PlayerToMove)

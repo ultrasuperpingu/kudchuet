@@ -56,6 +56,7 @@ pub enum GameResult {
 	#[default]
 	Player1,
 	Player2,
+	Player(u8),
 	Draw,
 	OnGoing
 }
@@ -64,6 +65,7 @@ pub enum Player {
 	#[default]
 	Player1,
 	Player2,
+	Player(u8),
 	RandomMove
 }
 impl Player {
@@ -71,6 +73,7 @@ impl Player {
 		match self {
 			Player::Player1 => Player::Player2,
 			Player::Player2 => Player::Player1,
+			Player::Player(_) => panic!("opponent called on a multiplayer game"),
 			Player::RandomMove => Player::RandomMove,
 		}
 	}
@@ -78,6 +81,7 @@ impl Player {
 		match self {
 			Player::Player1 => 0,
 			Player::Player2 => 1,
+			Player::Player(id) => *id as usize,
 			Player::RandomMove => unreachable!(),
 		}
 	}
@@ -87,6 +91,7 @@ impl Into<GameResult> for Player {
 		match self {
 			Player::Player1 => GameResult::Player1,
 			Player::Player2 => GameResult::Player2,
+			Player::Player(id) => GameResult::Player(id),
 			Player::RandomMove => panic!("Result from random move"),
 		}
 	}
@@ -96,6 +101,7 @@ impl std::fmt::Display for Player {
 		match self {
 			Player::Player1 => f.write_str("Player 1"),
 			Player::Player2 => f.write_str("Player 2"),
+			Player::Player(id) => f.write_str(format!("Player {}", *id).as_str()),
 			Player::RandomMove => f.write_str("Random Move"),
 		}
 	}

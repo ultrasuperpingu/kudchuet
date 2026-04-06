@@ -44,13 +44,14 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 									
 								}
 								RightTab::Settings => {
-									let active_engines: Vec<_> = [
-										self.ai_engine_manager.active_player1_engine.clone(),
-										self.ai_engine_manager.active_player2_engine.clone(),
-									]
-										.iter()
-										.filter_map(|e| e.clone())
-										.collect();
+									let active_engines = self.ai_engine_manager.get_all_engine_names();
+									//let active_engines: Vec<_> = [
+									//	self.ai_engine_manager.active_player1_engine.clone(),
+									//	self.ai_engine_manager.active_player2_engine.clone(),
+									//]
+									//	.iter()
+									//	.filter_map(|e| e.clone())
+									//	.collect();
 									let mut opts_changed = None;
 									for engine_name in active_engines {
 										if let Ok(engine) = self.ai_engine_manager.ensure_engine(&engine_name) {

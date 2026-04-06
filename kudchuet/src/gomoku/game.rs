@@ -41,6 +41,7 @@ impl minimax::Game for Gomoku {
 					Some(minimax::Winner::PlayerToMove)
 				}
 			},
+			GameResult::Player(_) => unreachable!(),
 			GameResult::Draw => unreachable!(),
 		}
 	}

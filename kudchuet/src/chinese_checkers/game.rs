@@ -2,8 +2,10 @@ use std::hash::{DefaultHasher, Hash};
 use std::hash::Hasher;
 
 use bitboard::{BitIter, Bitboard};
+use minimax::{StochasticGame, TurnBasedGame, TurnBasedGameEvaluator};
 
 use crate::chinese_checkers::ChineseCheckersPlayer;
+use crate::common::gui::BoardGame;
 
 //use crate::common::Player;
 use super::{ChineseCheckers, ChineseCheckerBoard, Move};
@@ -42,13 +44,38 @@ impl minimax::Game for ChineseCheckers {
 		hasher.finish()
 	}
 }
+impl TurnBasedGame for ChineseCheckers {
+	fn current_player(state: &Self::S) -> i8 {
+		<Self::S as BoardGame>::current_player(state).idx() as i8
+	}
+	fn get_explicit_winner(state: &Self::S) -> Option<minimax::TurnBasedWinner> {
+		if let Some(w) = state.winner() {
+			Some(minimax::TurnBasedWinner::Player(w.idx() as i8))
+		} else {
+			None
+		}
+	}
+}
+impl StochasticGame for ChineseCheckers {
+	fn is_random_move(_state: &Self::S) -> bool {
+		false
+	}
 
+	fn get_probability(_state: &Self::S, _mv: Self::M) -> f32 {
+		0.0
+	}
+}
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
 pub struct ChineseCheckersMaterialEval(ChineseCheckersPlayer);
 
 impl ChineseCheckersMaterialEval {
 	pub fn new(p:ChineseCheckersPlayer) -> Self {
 		Self(p)
+	}
+}
+impl TurnBasedGameEvaluator for ChineseCheckersMaterialEval {
+	fn set_player_on_trait(&mut self, p: i8) {
+		self.0=ChineseCheckersPlayer::from_idx(p as u8);
 	}
 }
 impl minimax::Evaluator for ChineseCheckersMaterialEval {
@@ -85,7 +112,7 @@ impl minimax::Evaluator for ChineseCheckersMaterialEval {
 
 			let value = 300 - dist + in_target * 20;
 
-			if p == state.turn {
+			if p == self.0 {
 				score += value;
 			} else {
 				score -= value;

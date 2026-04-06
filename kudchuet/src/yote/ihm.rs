@@ -46,10 +46,11 @@ impl eframe::App for YoteApp {
 				ui.selectable_value(&mut self.players[1], PlayerType::Computer, "IA");
 			});
 			match self.game.result() {
-				GameResult::Player1 => {ui.label("🎉 Les Blancs ont gagné");},
-				GameResult::Player2 => {ui.label("🛡️ Les Noirs ont gagné");},
+				GameResult::Player1 => {ui.label("White wins");},
+				GameResult::Player2 => {ui.label("Black winws");},
+				GameResult::Player(_) => {},
 				GameResult::OnGoing => {},
-				GameResult::Draw => {ui.label("🛡️ Match nul");}
+				GameResult::Draw => {ui.label("Draw");}
 			}
 
 			ui.separator();

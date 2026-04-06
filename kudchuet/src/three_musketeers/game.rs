@@ -3,7 +3,7 @@ use bitboard::{BitIter, Bitboard};
 
 use crate::common::{GameResult, bitboards::Bitboard5x5};
 
-use super::{Move, Player, ThreeMusketeers};
+use super::{Move, ThreeMusketeers};
 
 
 
@@ -28,19 +28,20 @@ impl minimax::Game for ThreeMusketeers {
 		match state.result() {
 			GameResult::OnGoing => None,
 			GameResult::Player1 => {
-				if state.turn == Player::Player1 {
+				if state.turn == 0 {
 					Some(minimax::Winner::PlayerToMove)
 				} else {
 					Some(minimax::Winner::PlayerJustMoved)
 				}
 			},
 			GameResult::Player2 => {
-				if state.turn == Player::Player1 {
+				if state.turn == 0 {
 					Some(minimax::Winner::PlayerJustMoved)
 				} else {
 					Some(minimax::Winner::PlayerToMove)
 				}
 			},
+			GameResult::Player(_) => unreachable!(),
 			GameResult::Draw => unreachable!(),
 		}
 	}
@@ -108,7 +109,7 @@ impl minimax::Evaluator for ThreeMusketeersEvalSimple {
 		}
 
 		let score = max as i16-nei as i16;
-		if state.turn == Player::Player2 {
+		if state.turn == 1 {
 			score
 		} else {
 			-score
@@ -135,7 +136,6 @@ impl minimax::Evaluator for ThreeMusketeersEval2 {
 			coords[i] = Bitboard5x5::coords_from_index(m as usize);
 		}
 
-		// 1. Dispersion
 		let mut dispersion = 0;
 		for a in 0..3 {
 			for b in (a+1)..3 {
@@ -147,36 +147,24 @@ impl minimax::Evaluator for ThreeMusketeersEval2 {
 			}
 		}
 
-		// 2. Distance aux bords
 		let mut border_score = 0;
 		for &(x, y) in &coords {
 			let d = x.min(4-x).min(y.min(4-y));
-			border_score += (4 - d) as i32; // plus proche du bord = mieux
+			border_score += (4 - d) as i32;
 		}
 
-		// 3. Liberté de mouvement
 		let mobility = state.legal_moves().len() as i32;
 
-		// Score brut
 		let score =
-			20 * dispersion   // les mousquetaires aiment être dispersés
-		- 15 * pressure as i32     // les gardes aiment mettre la pression
-		+ 10 * border_score        // les mousquetaires aiment les bords
-		+  5 * mobility;           // plus de mobilité = mieux
+			20 * dispersion
+		- 15 * pressure as i32
+		+ 10 * border_score
+		+  5 * mobility;
 
-		// Conditions terminales
-		let score = match state.result() {
-			super::GameResult::OnGoing => score as minimax::Evaluation,
-			super::GameResult::Player1 => minimax::Evaluation::MAX,
-			super::GameResult::Player2 => minimax::Evaluation::MIN,
-			super::GameResult::Draw => unreachable!()
-		};
-
-		// Inversion selon le joueur
-		if state.turn == Player::Player2 {
-			score
+		if state.turn == 1 {
+			score as minimax::Evaluation
 		} else {
-			-score
+			-score as minimax::Evaluation
 		}
 	}
 	
@@ -194,7 +182,6 @@ impl minimax::Evaluator for ThreeMusketeersEvalAdvance {
 	
 	type G=ThreeMusketeers;
 	fn evaluate(&self, state: &ThreeMusketeers) -> minimax::Evaluation {
-		// 1. Pression : nombre de gardes adjacents aux mousquetaires
 		let mut pressure = 0;
 		let mut coords = [(0,0); 3];
 
@@ -203,7 +190,6 @@ impl minimax::Evaluator for ThreeMusketeersEvalAdvance {
 			coords[i] = Bitboard5x5::coords_from_index(m as usize);
 		}
 
-		// 2. Dispersion
 		let mut dispersion = 0;
 		for a in 0..3 {
 			for b in (a+1)..3 {
@@ -215,31 +201,21 @@ impl minimax::Evaluator for ThreeMusketeersEvalAdvance {
 			}
 		}
 
-		// 3. Distance aux bords (bonus énorme)
 		let mut border_score = 0;
 		for &(x, y) in &coords {
 			let d = x.min(4-x).min(y.min(4-y));
 			border_score += (4 - d) as i32;
 		}
 
-		// Score PRO-MOUSQUETAIRES
 		let score =
-			40 * dispersion   // dispersion très récompensée
-			+ 30 * border_score        // bord très récompensé
-			-  5 * pressure as i32;    // pression faiblement pénalisée
+			40 * dispersion
+			+ 30 * border_score
+			-  5 * pressure as i32;
 
-		// Conditions terminales
-		let score = match state.result() {
-			super::GameResult::OnGoing => score as minimax::Evaluation,
-			super::GameResult::Player1 => minimax::Evaluation::MAX,
-			super::GameResult::Player2 => minimax::Evaluation::MIN,
-			super::GameResult::Draw => unreachable!()
-		};
-
-		if state.turn == Player::Player2 {
-			-score
+		if state.turn == 1 {
+			-score as minimax::Evaluation
 		} else {
-			score
+			score as minimax::Evaluation
 		}
 	}
 }

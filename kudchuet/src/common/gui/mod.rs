@@ -228,6 +228,9 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 		}
 	}
 	fn current_player(&self) -> Player;
+	fn nb_players(&self) -> u8 {
+		2
+	}
 
 	fn get_name(&self, p: Player) -> String {
 		p.to_string()

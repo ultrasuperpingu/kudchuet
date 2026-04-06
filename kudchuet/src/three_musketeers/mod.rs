@@ -14,7 +14,7 @@ pub struct Move {
 pub struct ThreeMusketeers {
 	pub musketeers: Bitboard5x5,
 	pub guards: Bitboard5x5,
-	pub turn: Player,
+	pub turn: u8,
 }
 impl Display for ThreeMusketeers {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -50,7 +50,7 @@ impl Default for ThreeMusketeers {
 		Self {
 			musketeers,
 			guards,
-			turn: Player::Player1,
+			turn: 0,
 		}
 	}
 }
@@ -64,7 +64,7 @@ impl ThreeMusketeers {
 		Self {
 			musketeers: Bitboard5x5::empty(),
 			guards: Bitboard5x5::empty(),
-			turn: Player::Player1,
+			turn: 0,
 		}
 	}
 	#[inline(always)]
@@ -83,11 +83,11 @@ impl ThreeMusketeers {
 	pub fn legal_moves_inplace(&self, out: &mut Vec<Move>) {
 		out.clear();
 		match self.turn {
-			Player::Player1 => {
+			0 => {
 				out.reserve(12);
 				self.legal_moves_musketeers_inplace(out)
 			},
-			Player::Player2 => {
+			1 => {
 				out.reserve(24);
 				self.legal_moves_guards_inplace(out)
 			},
@@ -153,15 +153,15 @@ impl ThreeMusketeers {
 		let to = Bitboard5x5::from_index(mv.to as usize);
 		
 		match self.turn {
-			Player::Player1 => {
+			0 => {
 				self.musketeers = (self.musketeers & !from) | to;
 				self.guards = self.guards & !to;
-				self.turn = Player::Player2;
+				self.turn = 1;
 			}
 
-			Player::Player2 => {
+			1 => {
 				self.guards = (self.guards & !from) | to;
-				self.turn = Player::Player1;
+				self.turn = 0;
 			}
 			_ => unreachable!()
 		}
@@ -203,7 +203,7 @@ impl ThreeMusketeers {
 				self.musketeers.reset(x, y);
 				self.guards.set(x, y);
 			},
-			Player::RandomMove => unreachable!(),
+			_ => unreachable!(),
 		}
 	}
 	#[inline]
@@ -214,7 +214,7 @@ impl ThreeMusketeers {
 		if self.guards.is_empty() {
 			return GameResult::Player1;
 		}
-		if self.turn == Player::Player1 {
+		if self.turn == 0 {
 			if !self.has_legal_move_musketeers() {
 				return GameResult::Player1;
 			}
@@ -233,6 +233,7 @@ impl ThreeMusketeers {
 					Some(Player::Player1) => 'm',
 					Some(Player::Player2) => 'g',
 					Some(Player::RandomMove) => unreachable!(),
+					Some(Player::Player(_)) => unreachable!(),
 					None => '.',
 				};
 				row.push(c);
@@ -241,8 +242,8 @@ impl ThreeMusketeers {
 		}
 		let board_str = rows.join("/");
 		let player_str = match self.turn {
-			crate::common::Player::Player1 => "m",
-			crate::common::Player::Player2 => "g",
+			0 => "m",
+			1 => "g",
 			_ => "?",
 		};
 		format!("{} {}", board_str, player_str)
@@ -275,8 +276,8 @@ impl ThreeMusketeers {
 		}
 
 		game.turn = match player_part {
-			"m" => crate::common::Player::Player1,
-			"g" => crate::common::Player::Player2,
+			"m" => 0,
+			"g" => 1,
 			_ => return Err("Invalid player indicator".into()),
 		};
 
@@ -286,13 +287,12 @@ impl ThreeMusketeers {
 #[cfg(test)]
 mod tests {
 	use super::ThreeMusketeers;
-	use super::Player;
 	use super::GameResult;
 		
 	#[test]
 	fn play_one_move() {
 		let mut game = ThreeMusketeers::new();
-		assert_eq!(game.turn, Player::Player1);
+		assert_eq!(game.turn, 0);
 		assert_eq!(game.result(), GameResult::OnGoing);
 
 		let moves = game.legal_moves();
@@ -301,7 +301,7 @@ mod tests {
 		let mv = moves[0];
 		game.play_unchecked(mv);
 
-		assert_eq!(game.turn, Player::Player2);
+		assert_eq!(game.turn, 1);
 	}
 	#[test]
 	fn play() {

@@ -147,16 +147,20 @@ where G::M: BoardMove<G>+Send
 		}
 	}
 	pub(super) fn is_current_player_computer(&self) -> bool {
-		match self.game().current_player() {
+		self.ai_engine_manager.get_player_engine(self.game().current_player()).is_some()
+		/*match self.game().current_player() {
 			Player::Player1 => self.ai_engine_manager.active_player1_engine.is_some(),
 			Player::Player2 => self.ai_engine_manager.active_player2_engine.is_some(),
+			//TODO
+			Player::Player(_) => false,
 			Player::RandomMove => false,
-		}
+		}*/
 	}
 	pub(super) fn is_current_player_random(&self) -> bool {
 		match self.game().current_player() {
 			Player::Player1 => false,
 			Player::Player2 => false,
+			Player::Player(_) => false,
 			Player::RandomMove => true,
 		}
 	}
@@ -221,84 +225,7 @@ where G::M: BoardMove<G>+Send
 		let engines = self.ai_engine_manager.get_all_engine_names();
 		ui.horizontal(|ui| {
 			ui.vertical(|ui| {
-				ui.horizontal(|ui| {
-					ui.label(self.game().get_name(Player::Player1) + ":");
-
-					let current_engine = self.ai_engine_manager.active_player1_engine.as_ref();
-					let mut is_computer = current_engine.is_some();
-
-					if ui.selectable_label(!is_computer, "Human").clicked() {
-						self.ai_engine_manager.active_player1_engine = None;
-						is_computer = false;
-					}
-
-					if ui.selectable_label(is_computer, "Computer").clicked() {
-						if self.ai_engine_manager.active_player1_engine.is_none() {
-							self.ai_engine_manager.active_player1_engine =
-								engines.get(0).cloned();
-						}
-					}
-
-					if is_computer {
-						ui.add_space(8.0);
-
-						let current_engine = self.ai_engine_manager.active_player1_engine.as_ref();
-						let mut selected_engine = current_engine
-							.cloned()
-							.unwrap_or_else(|| engines.get(0).cloned().unwrap_or_default());
-
-						egui::ComboBox::from_id_salt("Player 1 Engine")
-							.selected_text(selected_engine.clone())
-							.show_ui(ui, |ui| {
-								for eng in engines.iter() {
-									ui.selectable_value(&mut selected_engine, eng.clone(), eng);
-								}
-							});
-
-						if Some(&selected_engine) != current_engine {
-							self.ai_engine_manager.active_player1_engine = Some(selected_engine);
-						}
-					}
-				});
-
-				ui.horizontal(|ui| {
-					ui.label(self.game().get_name(Player::Player2) + ":");
-
-					let current_engine = self.ai_engine_manager.active_player2_engine.as_ref();
-					let mut is_computer = current_engine.is_some();
-
-					if ui.selectable_label(!is_computer, "Human").clicked() {
-						self.ai_engine_manager.active_player2_engine = None;
-						is_computer = false;
-					}
-
-					if ui.selectable_label(is_computer, "Computer").clicked() {
-						if self.ai_engine_manager.active_player2_engine.is_none() {
-							self.ai_engine_manager.active_player2_engine = engines.get(0).cloned();
-						}
-					}
-
-					if is_computer {
-						ui.add_space(8.0);
-
-						let current_engine = self.ai_engine_manager.active_player2_engine.as_ref();
-						let mut selected_engine = current_engine
-							.cloned()
-							.unwrap_or_else(|| engines.get(0).cloned().unwrap_or_default());
-
-						egui::ComboBox::from_id_salt("Player 2 Engine")
-							.selected_text(selected_engine.clone())
-							.show_ui(ui, |ui| {
-								for eng in engines.iter() {
-									ui.selectable_value(&mut selected_engine, eng.clone(), eng);
-								}
-							});
-
-						if Some(&selected_engine) != current_engine {
-							self.ai_engine_manager.active_player2_engine = Some(selected_engine);
-						}
-					}
-				});
+				self.draw_players_list(engines, ui);
 			});
 			ui.separator();
 			if self.ai_engine_manager.is_thinking() {
@@ -398,5 +325,56 @@ where G::M: BoardMove<G>+Send
 			}
 		});
 		result
+	}
+
+	fn draw_players_list(&mut self, engines: Vec<String>, ui: &mut Ui) {
+		if self.game().nb_players() == 2 {
+			self.draw_player(Player::Player1, &engines, ui);
+			self.draw_player(Player::Player2, &engines, ui);
+		} else {
+			for i in 0..self.game().nb_players() {
+				self.draw_player(Player::Player(i), &engines, ui);
+			}
+		}
+	}
+	fn draw_player(&mut self, p: Player, engines: &Vec<String>, ui: &mut Ui) {
+		let p_name=self.game().get_name(p);
+		ui.horizontal(|ui| {
+			ui.label(p_name.clone() + ":");
+
+			let current_engine = self.ai_engine_manager.get_player_engine(p).cloned();
+			let mut is_computer = current_engine.is_some();
+
+			if ui.selectable_label(!is_computer, "Human").clicked() {
+				self.ai_engine_manager.set_player_engine(p, None);
+				is_computer = false;
+			}
+
+			if ui.selectable_label(is_computer, "Computer").clicked() {
+				if !is_computer {
+					self.ai_engine_manager.set_player_engine(p, engines.get(0).cloned());
+				}
+			}
+
+			if is_computer {
+				ui.add_space(8.0);
+
+				let current_engine = self.ai_engine_manager.get_player_engine(p).cloned();
+				let mut selected_engine = current_engine.clone()
+					.unwrap_or_else(|| engines.get(0).cloned().unwrap_or_default());
+
+				egui::ComboBox::from_id_salt(format!("{} Engine", p_name))
+					.selected_text(selected_engine.clone())
+					.show_ui(ui, |ui| {
+						for eng in engines.iter() {
+							ui.selectable_value(&mut selected_engine, eng.clone(), eng);
+						}
+					});
+
+				if Some(&selected_engine) != current_engine.as_ref() {
+					self.ai_engine_manager.set_player_engine(p, Some(selected_engine));
+				}
+			}
+		});
 	}
 }

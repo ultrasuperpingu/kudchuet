@@ -30,6 +30,7 @@ impl minimax::Game for FootBoard {
 		match state.result() {
 			crate::common::GameResult::Player1 => if state.turn() == Player::Player2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
 			crate::common::GameResult::Player2 => if state.turn() == Player::Player1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			crate::common::GameResult::Player(_) => unreachable!(),
 			crate::common::GameResult::Draw => Some(minimax::Winner::Draw),
 			crate::common::GameResult::OnGoing => None,
 		}

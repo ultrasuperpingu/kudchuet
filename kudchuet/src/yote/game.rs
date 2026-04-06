@@ -42,6 +42,7 @@ impl minimax::Game for Yote {
 					Some(minimax::Winner::PlayerToMove)
 				}
 			},
+			super::GameResult::Player(_) => unreachable!()
 		}
 	}
 	#[inline]

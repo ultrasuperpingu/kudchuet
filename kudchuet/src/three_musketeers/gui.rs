@@ -59,8 +59,8 @@ impl BoardGame for ThreeMusketeers {
 		self.result()
 	}
 
-	fn current_player(&self) -> crate::common::Player {
-		self.turn
+	fn current_player(&self) -> Player {
+		if self.turn == 0 {Player::Player1} else {Player::Player2}
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {

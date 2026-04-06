@@ -27,8 +27,9 @@ where
 	#[cfg(not(target_arch = "wasm32"))]
 	external_providers: Vec<ExternalEngineEntry>,
 	internal_providers: Vec<Box<dyn AIEngineProvider<G, Engine = Box<dyn AIEngine<G>>>>>,
-	pub(crate) active_player1_engine: Option<String>,
-	pub(crate) active_player2_engine: Option<String>,
+	//pub(crate) active_player1_engine: Option<String>,
+	//pub(crate) active_player2_engine: Option<String>,
+	player_engines: HashMap<Player, Option<String>>,
 	paused: bool,
 	ai_future: Option<Pin<Box<dyn Future<Output = Option<G::M>> + Send>>>,
 }
@@ -44,8 +45,9 @@ where
 			#[cfg(not(target_arch = "wasm32"))]
 			external_providers: Vec::new(),
 			internal_providers: Vec::new(),
-			active_player1_engine: None,
-			active_player2_engine: None,
+			//active_player1_engine: None,
+			//active_player2_engine: None,
+			player_engines: HashMap::new(),
 			paused: false,
 			ai_future: None
 		}
@@ -57,8 +59,9 @@ where
 			#[cfg(not(target_arch = "wasm32"))]
 			external_providers: Vec::new(),
 			internal_providers,
-			active_player1_engine: None,
-			active_player2_engine: None,
+			//active_player1_engine: None,
+			//active_player2_engine: None,
+			player_engines: HashMap::new(),
 			paused: false,
 			ai_future: None,
 		}
@@ -132,19 +135,30 @@ where
 	pub fn get_engine(&self, engine: &String) -> Option<&Box<dyn AIEngine<G>>> {
 		self.engines.get(engine)
 	}
+	pub fn get_player_engine(&self, p:Player) -> Option<&String> {
+		self.player_engines.get(&p)?.as_ref()
+	}
+	pub fn set_player_engine(&mut self, p:Player, engine: Option<String>) {
+		self.player_engines.insert(p,engine);
+	}
 	pub fn get_engine_mut(&mut self, engine: &String) -> Option<&mut Box<dyn AIEngine<G>>> {
 		self.engines.get_mut(engine)
 	}
 	pub fn choose_move(&mut self, game: &G) -> Result<G::M, String> {
-		match game.current_player() {
+		let eng=self.get_player_engine(game.current_player()).cloned();
+		self.choose_move_with(eng.unwrap_or_else(|| "default".into()), game)
+		/*match game.current_player() {
 			Player::Player1 => {
 				self.choose_move_with(self.active_player1_engine.clone().unwrap_or_else(|| "default".into()), game)
 			}
 			Player::Player2 => {
 				self.choose_move_with(self.active_player2_engine.clone().unwrap_or_else(|| "default".into()), game)
 			}
+			Player::Player(_) => {
+				self.choose_move_with(self.active_player2_engine.clone().unwrap_or_else(|| "default".into()), game)
+			}
 			_ => Err("No player to move".into()),
-		}
+		}*/
 	}
 
 	fn choose_move_with(&mut self, ai: String, game: &G) -> Result<G::M, String> {
@@ -159,7 +173,9 @@ where
 	}
 	pub fn choose_move_async(&mut self, game: &G) -> Result<(), String> {
 		let game = game.clone();
-		match game.current_player() {
+		let eng=self.get_player_engine(game.current_player()).cloned();
+		self.choose_move_async_with(eng.unwrap_or_else(|| "default".into()), game)
+		/*match game.current_player() {
 			Player::Player1 => {
 				self.choose_move_async_with(self.active_player1_engine.clone().unwrap_or_else(|| "default".into()), game)
 			}
@@ -167,7 +183,7 @@ where
 				self.choose_move_async_with(self.active_player2_engine.clone().unwrap_or_else(|| "default".into()), game)
 			}
 			_ => Err("No player to move".into()),
-		}
+		}*/
 	}
 
 	pub fn is_thinking(&self) -> bool {
@@ -195,7 +211,12 @@ where
 		}
 	}
 	pub fn stop_thinking(&mut self) {
-		if let Some(engine_name) = self.active_player1_engine.as_ref()
+		
+		for e in &self.engines
+		{
+			e.1.stop_thinking();
+		}
+		/*if let Some(engine_name) = self.active_player1_engine.as_ref()
 		{
 			if let Some(engine) = self.engines.get(engine_name) {
 				engine.stop_thinking();
@@ -206,7 +227,7 @@ where
 			if let Some(engine) = self.engines.get(engine_name) {
 				engine.stop_thinking();
 			}
-		}
+		}*/
 	}
 	//#[cfg(not(target_arch = "wasm32"))]
 	fn choose_move_async_with(&mut self, ai: String, game: G) -> Result<(), String> {

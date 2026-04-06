@@ -361,7 +361,7 @@ impl Checkers10
 				self.white_pawns &= !m.pawn_takes;
 				self.white_queens &= !m.queen_takes;
 			}
-			Player::RandomMove => unreachable!()
+			_ => unreachable!()
 		}
 
 		self.current_player = self.current_player.opponent();
@@ -381,7 +381,7 @@ impl Checkers10
 				self.black_queens |= promoted_black;
 				self.black_pawns &= !promoted_black;
 			}
-			Player::RandomMove => unreachable!()
+			_ => unreachable!()
 		}
 	}
 

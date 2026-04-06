@@ -143,7 +143,7 @@ impl Awale {
 				match self.turn {
 					Player::Player1 => self.score_bottom += seeds,
 					Player::Player2 => self.score_top += seeds,
-					crate::common::Player::RandomMove => unreachable!(),
+					_ => unreachable!(),
 				}
 			} else {
 				break;

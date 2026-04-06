@@ -1350,6 +1350,7 @@ impl minimax::Game for ChessBoard {
 			GameResult::Player1|GameResult::Player2 => Some(minimax::Winner::PlayerJustMoved),
 			GameResult::Draw => Some(minimax::Winner::Draw),
 			GameResult::OnGoing => None,
+			_ => unreachable!(),
 		}
 		//None
 	}

@@ -36,6 +36,7 @@ impl minimax::Game for HareAndHounds {
 		match state.result() {
 			crate::common::GameResult::Player1 => if state.turn() {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
 			crate::common::GameResult::Player2 => if !state.turn() {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			crate::common::GameResult::Player(_) => unreachable!(),
 			crate::common::GameResult::Draw => unreachable!(),
 			crate::common::GameResult::OnGoing => None,
 		}

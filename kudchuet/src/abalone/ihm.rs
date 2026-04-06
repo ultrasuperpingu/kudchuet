@@ -31,7 +31,7 @@ impl AbaloneApp {
 		match self.game.turn {
 			Player::Player1 => self.players[0].is_computer(),
 			Player::Player2 => self.players[1].is_computer(),
-			crate::common::Player::RandomMove => unreachable!(),
+			_ => unreachable!(),
 		}
 	}
 }

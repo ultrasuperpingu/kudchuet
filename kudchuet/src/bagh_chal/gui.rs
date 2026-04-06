@@ -49,7 +49,7 @@ impl BoardGame for BaghChal {
 		match p {
 			crate::common::Player::Player1 => "Goats".into(),
 			crate::common::Player::Player2 => "Tigers".into(),
-			crate::common::Player::RandomMove => unreachable!(),
+			_ => unreachable!(),
 		}
 	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {

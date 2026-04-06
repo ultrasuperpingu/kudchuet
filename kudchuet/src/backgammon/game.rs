@@ -49,6 +49,17 @@ impl minimax::TurnBasedGame for Backgammon {
 	fn current_player(state: &Self::S) -> i8 {
 		return state.current_player().idx() as i8
 	}
+	fn get_explicit_winner(state: &Self::S) -> Option<minimax::TurnBasedWinner> {
+		if state.is_game_over() {
+			if let Some(winner) = state.winner() {
+				Some(minimax::TurnBasedWinner::Player(winner.idx() as i8))
+			} else {
+				Some(minimax::TurnBasedWinner::Draw)
+			}
+		} else {
+			None
+		}
+	}
 }
 impl minimax::StochasticGame for Backgammon {
 	fn is_random_move(state: &Self::S) -> bool {

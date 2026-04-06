@@ -125,7 +125,7 @@ impl BoardGame for ChessBoard {
 		match p {
 			crate::common::Player::Player1 => "White".into(),
 			crate::common::Player::Player2 => "Black".into(),
-			crate::common::Player::RandomMove => unreachable!(),
+			_ => unreachable!(),
 		}
 	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {

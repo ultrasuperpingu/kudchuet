@@ -48,6 +48,7 @@ impl minimax::Game for BaghChal {
 					Some(minimax::Winner::PlayerJustMoved)
 				}
 			},
+			_ => unreachable!(),
 		}
 	}
 

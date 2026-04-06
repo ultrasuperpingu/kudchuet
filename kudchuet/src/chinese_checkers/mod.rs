@@ -17,7 +17,29 @@ pub enum ChineseCheckersPlayer {
 	Black,
 	White,
 }
-
+impl ChineseCheckersPlayer {
+	pub fn from_idx(idx: u8) -> Self {
+		match idx {
+			0 => Self::Red,
+			1 => Self::Blue,
+			2 => Self::Green,
+			3 => Self::Yellow,
+			4 => Self::Black,
+			5 => Self::White,
+			_ => panic!("Invalid Player Index")
+		}
+	}
+	pub fn idx(&self) -> u8 {
+		match self {
+			Self::Red => 0,
+			Self::Blue => 1,
+			Self::Green => 2,
+			Self::Yellow => 3,
+			Self::Black => 4,
+			Self::White => 5,
+		}
+	}
+}
 #[derive(Debug, Clone, Hash)]
 pub struct ChineseCheckers {
 	red: ChineseCheckerBoard,
@@ -81,8 +103,8 @@ impl ChineseCheckers {
 	const FINAL_BLUE: ChineseCheckerBoard = Self::INITIAL_RED;
 	const FINAL_GREEN: ChineseCheckerBoard = Self::INITIAL_YELLOW;
 	const FINAL_YELLOW: ChineseCheckerBoard = Self::INITIAL_GREEN;
-	const FINAL_BLACK: ChineseCheckerBoard = Self::INITIAL_BLACK;
-	const FINAL_WHITE: ChineseCheckerBoard = Self::INITIAL_WHITE;
+	const FINAL_BLACK: ChineseCheckerBoard = Self::INITIAL_WHITE;
+	const FINAL_WHITE: ChineseCheckerBoard = Self::INITIAL_BLACK;
 	
 	pub fn all(&self) -> ChineseCheckerBoard {
 		self.red.clone()
