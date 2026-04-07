@@ -201,10 +201,10 @@ where
 			match Pin::new(fut).poll(&mut cx) {
 				Poll::Ready(mv) => {
 					println!("ai_future finished");
-					self.ai_future = None;          // future terminée => on la supprime
-					ThinkingResult::FinishedThinking(mv)   // retourne le move si prêt
+					self.ai_future = None;
+					ThinkingResult::FinishedThinking(mv)
 				}
-				Poll::Pending => ThinkingResult::Thinking, // pas encore prêt
+				Poll::Pending => ThinkingResult::Thinking,
 			}
 		} else {
 			ThinkingResult::NotThinking

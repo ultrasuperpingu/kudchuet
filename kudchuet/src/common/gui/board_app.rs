@@ -318,6 +318,9 @@ where G::M: BoardMove<G>+Send
 				GameResult::Player2 => {
 					ui.heading(format!("Winner: {}", self.game().get_name(Player::Player2)));
 				}
+				GameResult::Player(id) => {
+					ui.heading(format!("Winner: {}", self.game().get_name(Player::Player(id))));
+				}
 				GameResult::Draw => {
 					ui.heading("Draw Game");
 				}

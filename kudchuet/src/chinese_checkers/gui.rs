@@ -42,9 +42,6 @@ impl BoardGame for ChineseCheckers {
 		17
 	}
 
-	fn legal_moves(&self) -> Vec<Self::M> {
-		self.generate_moves()
-	}
 	fn play(&mut self, mv: Self::M) {
 		let _ = self.play(mv);
 	}

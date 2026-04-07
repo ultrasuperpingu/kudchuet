@@ -1,6 +1,6 @@
 
 use minimax::{Game, IterativeOptions, StochasticGame, Strategy, TurnBasedGame, TurnBasedGameEvaluator, strategies::expecti_iterative::ExpectiIterativeSearch};
-#[cfg(not(target_arch = "wasm32"))]
+//#[cfg(not(target_arch = "wasm32"))]
 use minimax::strategies::iterative::SearchStopSignal;
 
 use std::fmt::Debug;
@@ -44,10 +44,7 @@ where
 		}
 		println!("ai {} {:?}", self.get_max_depth(), self.get_max_time());
 	}
-	fn stop_search(&self) {
-		self.next_search_stop_signal().stop_search();
-	}
-	#[cfg(not(target_arch = "wasm32"))]
+
 	fn stop_signal(&self) -> SearchStopSignal {
 		self.next_search_stop_signal()
 	}

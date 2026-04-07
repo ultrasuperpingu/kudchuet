@@ -1,6 +1,5 @@
 use std::fmt::Debug;
 use minimax::Strategy;
-#[cfg(not(target_arch = "wasm32"))]
 use minimax::strategies::iterative::SearchStopSignal;
 
 
@@ -128,7 +127,7 @@ where
 	fn reset_with_options(&mut self, opts: AIOptions);
 	fn root_value(&self) -> minimax::Evaluation;
 	fn stop_search(&self) {}
-	#[cfg(not(target_arch = "wasm32"))]
+	//#[cfg(not(target_arch = "wasm32"))]
 	fn stop_signal(&self) -> SearchStopSignal {
 		SearchStopSignal::new()
 	}

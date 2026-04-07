@@ -1,3 +1,4 @@
+
 use std::fmt;
 
 use bitboard_proc_macro::BitboardDebug;
@@ -213,15 +214,22 @@ impl ChineseCheckerBoard {
 			ChineseCheckersPlayer::White => Self::initial_blue() | Self::initial_red() | Self::initial_yellow() | Self::initial_green(),
 		}
 	}
+	pub fn initial_zone(p: ChineseCheckersPlayer) -> Self {
+		match p {
+			ChineseCheckersPlayer::Red => Self::initial_red(),
+			ChineseCheckersPlayer::Blue => Self::initial_blue(),
+			ChineseCheckersPlayer::Green => Self::initial_green(),
+			ChineseCheckersPlayer::Yellow => Self::initial_yellow(),
+			ChineseCheckersPlayer::Black => Self::initial_black(),
+			ChineseCheckersPlayer::White => Self::initial_white(),
+		}
+	}
 }
 impl ChineseCheckerBoard {
-	/// Retourne les voisins jouables de (x,y) sous forme d'un bitboard
 	pub const fn neighbours(x: u8, y: u8) -> Self {
 		let mut board = ChineseCheckerBoard::EMPTY;
-		const DELTAS_EVEN: [(i8, i8); 6] = [(-1, 0), (1, 0), (0, -1), (1, -1), (0, 1), (1, 1)];
-		const DELTAS_ODD: [(i8, i8); 6]  = [(-1, 0), (1, 0), (-1, -1), (0, -1), (-1, 1), (0, 1)];
 
-		let deltas = if y % 2 == 0 { DELTAS_EVEN } else { DELTAS_ODD };
+		let deltas = if y % 2 == 0 { Self::DELTAS_EVEN } else { Self::DELTAS_ODD };
 		let mut i = 0;
 		while i < 6 {
 			let nx = x as i8 + deltas[i].0;
@@ -237,14 +245,15 @@ impl ChineseCheckerBoard {
 		board
 	}
 	
-	pub const fn generate_neighbors_table() -> [[ChineseCheckerBoard; 13]; 17] {
-		let mut table = [[ChineseCheckerBoard::EMPTY; 13]; 17];
+	pub const fn generate_neighbors_table() -> [ChineseCheckerBoard;ChineseCheckerBoard::NB_SQUARES] {
+		let mut table = [ChineseCheckerBoard::EMPTY; ChineseCheckerBoard::NB_SQUARES];
 		let mut y = 0;
 		while y < 17 {
 			let mut x = 0;
 			while x < 13 {
 				if PLAYABLE[y][x] {
-					table[y][x] = ChineseCheckerBoard::neighbours(x as u8, y as u8);
+					let index = ChineseCheckerBoard::index_from_coords(x as u8, y as u8);
+					table[index] = ChineseCheckerBoard::neighbours(x as u8, y as u8);
 				}
 				x += 1;
 			}
@@ -252,7 +261,123 @@ impl ChineseCheckerBoard {
 		}
 		table
 	}
-	pub const NEIGHBOURS: [[ChineseCheckerBoard;13];17] = Self::generate_neighbors_table();
+	const DELTAS_EVEN: [(i8, i8); 6] = [(-1, 0), (1, 0), (0, -1), (1, -1), (0, 1), (1, 1)];
+	const DELTAS_ODD: [(i8, i8); 6]  = [(-1, 0), (1, 0), (-1, -1), (0, -1), (-1, 1), (0, 1)];
+
+	pub const NEIGHBOURS: [ChineseCheckerBoard;ChineseCheckerBoard::NB_SQUARES] = Self::generate_neighbors_table();
+	pub const fn jumps(x: u8, y: u8) -> Self {
+		let mut board = ChineseCheckerBoard::EMPTY;
+		
+		let deltas = if y % 2 == 0 { Self::DELTAS_EVEN } else { Self::DELTAS_ODD };
+		let mut i = 0;
+		while i < 6 {
+			let nx = x as i8 + deltas[i].0;
+			let ny = y as i8 + deltas[i].1;
+
+			if nx >= 0 && nx < 13 && ny >= 0 && ny < 17 {
+				if PLAYABLE[ny as usize][nx as usize] {
+					let delta_jump = if ny % 2 == 0 { Self::DELTAS_EVEN } else { Self::DELTAS_ODD }[i];
+
+					let jump_x_i8 = nx as i8 + delta_jump.0;
+					let jump_y_i8 = ny as i8 + delta_jump.1;
+
+					if jump_x_i8 < 0 || jump_x_i8 >= 13 || jump_y_i8 < 0 || jump_y_i8 >= 17 {
+						i+=1;
+						continue;
+					}
+
+					let jump_x = jump_x_i8 as u8;
+					let jump_y = jump_y_i8 as u8;
+
+					if PLAYABLE[jump_y as usize][jump_x as usize]
+					{
+						board.set(jump_x, jump_y);
+					}
+				}
+			}
+			i += 1;
+		}
+		board
+	}
+	pub const fn generate_jump_table() -> [Self; Self::NB_SQUARES] {
+		let mut table = [Self::EMPTY; Self::NB_SQUARES];
+		let mut y = 0;
+		while y < 17 {
+			let mut x = 0;
+			while x < 13 {
+				if PLAYABLE[y][x] {
+					let index = ChineseCheckerBoard::index_from_coords(x as u8, y as u8);
+					table[index] = Self::jumps(x as u8, y as u8);
+				}
+				x += 1;
+			}
+			y += 1;
+		}
+		table
+	}
+	#[inline]
+	pub fn compute_middle(from_x:u8, from_y:u8, jump_x:u8, jump_y:u8, jump_index:usize, from_index:usize) -> usize {
+		let dx = jump_x as i8 - from_x as i8;
+		let dy = jump_y as i8 - from_y as i8;
+
+		if from_y % 2 == 0 {
+			if dy == 0 || dx == dy {
+				(from_index + jump_index) / 2
+			} else {
+				(from_index + jump_index) / 2 + 1
+			}
+		} else {
+			(from_index + jump_index) / 2
+		}
+	}
+	pub const fn generate_middle_table() -> [[u16;ChineseCheckerBoard::NB_SQUARES];ChineseCheckerBoard::NB_SQUARES] {
+		let mut table = [[0; ChineseCheckerBoard::NB_SQUARES]; ChineseCheckerBoard::NB_SQUARES];
+		let mut y = 0;
+		while y < 17 {
+			let mut x = 0;
+			while x < 13 {
+				if PLAYABLE[y][x] {
+					let deltas = if y % 2 == 0 { Self::DELTAS_EVEN } else { Self::DELTAS_ODD };
+					let mut i = 0;
+					while i < 6 {
+						let nx = x as i8 + deltas[i].0;
+						let ny = y as i8 + deltas[i].1;
+
+						if nx >= 0 && nx < 13 && ny >= 0 && ny < 17 {
+							if PLAYABLE[ny as usize][nx as usize] {
+								let delta_jump = if ny % 2 == 0 { Self::DELTAS_EVEN } else { Self::DELTAS_ODD }[i];
+
+								let jump_x_i8 = nx as i8 + delta_jump.0;
+								let jump_y_i8 = ny as i8 + delta_jump.1;
+
+								if jump_x_i8 < 0 || jump_x_i8 >= 13 || jump_y_i8 < 0 || jump_y_i8 >= 17 {
+									i+=1;
+									continue;
+								}
+
+								let jump_x = jump_x_i8 as u8;
+								let jump_y = jump_y_i8 as u8;
+
+								if PLAYABLE[jump_y as usize][jump_x as usize]
+								{
+									let from_index=ChineseCheckerBoard::index_from_coords(x as u8, y as u8);
+									let jump_index=ChineseCheckerBoard::index_from_coords(jump_x, jump_y);
+									let jumped_index=ChineseCheckerBoard::index_from_coords(nx as u8, ny as u8);
+									table[from_index][jump_index]=jumped_index as u16;
+									//println!("{}-{}={}",from_index, jump_index, jumped_index);
+								}
+							}
+						}
+						i += 1;
+					}
+				}
+				x += 1;
+			}
+			y += 1;
+		}
+		table
+	}
+
 }
 
 impl fmt::Display for ChineseCheckerBoard {
@@ -319,4 +444,56 @@ mod tests {
 		
 		println!("Neighbours tests passed!");
 	}
+	
+	#[test]
+	pub fn test_middle_table() {
+		let mut y = 0;
+		while y < 17 {
+			let mut x = 0;
+			while x < 13 {
+				if PLAYABLE[y][x] {
+					let deltas = if y % 2 == 0 { ChineseCheckerBoard::DELTAS_EVEN } else { ChineseCheckerBoard::DELTAS_ODD };
+					let mut i = 0;
+					while i < 6 {
+						let nx = x as i8 + deltas[i].0;
+						let ny = y as i8 + deltas[i].1;
+
+						if nx >= 0 && nx < 13 && ny >= 0 && ny < 17 {
+							if PLAYABLE[ny as usize][nx as usize] {
+								let delta_jump = if ny % 2 == 0 { ChineseCheckerBoard::DELTAS_EVEN } else { ChineseCheckerBoard::DELTAS_ODD }[i];
+
+								let jump_x_i8 = nx as i8 + delta_jump.0;
+								let jump_y_i8 = ny as i8 + delta_jump.1;
+
+								if jump_x_i8 < 0 || jump_x_i8 >= 13 || jump_y_i8 < 0 || jump_y_i8 >= 17 {
+									i+=1;
+									continue;
+								}
+
+								let jump_x = jump_x_i8 as u8;
+								let jump_y = jump_y_i8 as u8;
+
+								if PLAYABLE[jump_y as usize][jump_x as usize]
+								{
+									let from_index=ChineseCheckerBoard::index_from_coords(x as u8, y as u8);
+									let jump_index=ChineseCheckerBoard::index_from_coords(jump_x, jump_y);
+									let jumped_index=ChineseCheckerBoard::index_from_coords(nx as u8, ny as u8);
+									let (from_x, from_y) = ChineseCheckerBoard::coords_from_index(from_index);
+									let (jump_x, jump_y) = ChineseCheckerBoard::coords_from_index(jump_index);
+
+									let mid = ChineseCheckerBoard::compute_middle(from_x, from_y, jump_x, jump_y, jump_index, from_index);
+									println!("{}-{}={} or {}",from_index, jump_index, jumped_index, mid);
+									assert!(jumped_index == mid);
+								}
+							}
+						}
+						i += 1;
+					}
+				}
+				x += 1;
+			}
+			y += 1;
+		}
+	}
+	
 }
