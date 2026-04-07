@@ -73,9 +73,18 @@ pub enum CheckerBoardMod {
 	EvenDark,
 	OddDark
 }
+
+#[derive(EguiInspect, Default, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
+pub enum HalfSizeOffsetMod {
+	#[default]
+	None,
+	Even,
+	Odd
+}
 #[derive(EguiInspect, Clone, Serialize, Deserialize)]
 pub struct BoardStyle {
 	pub checkerboard_mod: CheckerBoardMod,
+	pub half_size_offset_mod: HalfSizeOffsetMod,
 	pub clear_color: Option<egui::Color32>,
 	pub light_color: egui::Color32,
 	pub dark_color: egui::Color32,
@@ -92,6 +101,7 @@ impl Default for BoardStyle {
 	fn default() -> Self {
 		Self {
 			clear_color: None,
+			half_size_offset_mod: HalfSizeOffsetMod::None,
 			checkerboard_mod: CheckerBoardMod::EvenDark,
 			light_color: egui::Color32::from_rgb(240, 217, 181),
 			dark_color: egui::Color32::from_rgb(181, 136, 99),

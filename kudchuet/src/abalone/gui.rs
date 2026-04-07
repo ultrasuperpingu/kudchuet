@@ -214,7 +214,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 		egui::Pos2::new(board_rect.center().x + x, board_rect.center().y + y)
 	}
 
-	fn get_square_drawer(&self) -> &Box<dyn SquareDrawer<Abalone>> {
+	fn get_square_drawer(&self) -> &dyn SquareDrawer<Abalone> {
 		self.0.get_square_drawer()
 	}
 

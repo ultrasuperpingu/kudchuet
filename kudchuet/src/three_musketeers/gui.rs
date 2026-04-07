@@ -90,6 +90,13 @@ impl BoardGame for ThreeMusketeers {
 		style.light_color=Color32::from_rgb(200, 200, 250);
 		style.dark_color=Color32::from_rgb(40, 40, 100);
 		style.show_coordinates_mod=crate::common::gui::CoordMod::FileRankOnSquare;
+		style.played_highlights_shape=Shape::Rect {
+			color: Color32::from_rgba_unmultiplied(200,200,90,120),
+			size: 1.0,
+			text: "".into(),
+			text_color: Color32::BLACK,
+			stroke_color: None
+		};
 		//style.square_stroke_color=Some(egui::Color32::BLACK);
 		style
 	}

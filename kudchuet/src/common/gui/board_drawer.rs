@@ -1,6 +1,6 @@
 use egui::{Color32, Painter, Pos2, Rect};
 
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, HalfSizeOffsetMod};
 
 
 pub trait BoardDrawer<G: BoardGame>
@@ -10,16 +10,26 @@ pub trait BoardDrawer<G: BoardGame>
 		let mut click = None;
 		let w = game.width();
 		let h = game.height();
+		let style = self.get_style();
 		
-		let avail_w = ui.available_width().max(10.0)* if self.get_style().show_coordinates_mod.is_aside() {0.90} else {1.0};
-		let avail_h = ui.available_height().max(10.0)* if self.get_style().show_coordinates_mod.is_aside() {0.90} else {1.0};
-		let cell_size = (avail_w / w as f32).min(avail_h / h as f32);
+		let avail_w = ui.available_width().max(10.0)* if style.show_coordinates_mod.is_aside() {0.90} else {1.0};
+		let avail_h = ui.available_height().max(10.0)* if style.show_coordinates_mod.is_aside() {0.90} else {1.0};
+		let cell_size = if style.half_size_offset_mod == HalfSizeOffsetMod::None {
+			(avail_w / w as f32).min(avail_h / h as f32)
+		} else {
+			(avail_w / (w as f32+0.5)).min(avail_h / h as f32)
+		};
+		let board_width = if style.half_size_offset_mod == HalfSizeOffsetMod::None {
+			cell_size * w as f32
+		} else {
+			cell_size * (w as f32 + 0.5)
+		};
 
-		let board_width  = cell_size * w as f32;
+		//let board_width  = cell_size * w as f32;
 		let board_height  = cell_size * h as f32;
 
-		let left_margin = if self.get_style().show_coordinates_mod.is_aside() {cell_size * 0.6} else {0.0};
-		let bottom_margin = if self.get_style().show_coordinates_mod.is_aside() {cell_size * 0.6} else {0.0};
+		let left_margin = if style.show_coordinates_mod.is_aside() {cell_size * 0.6} else {0.0};
+		let bottom_margin = if style.show_coordinates_mod.is_aside() {cell_size * 0.6} else {0.0};
 
 		let x_offset = (avail_w - board_width) / 2.0;
 		//let y_offset = (avail_h - board_height) / 2.0;
@@ -36,7 +46,7 @@ pub trait BoardDrawer<G: BoardGame>
 			egui::pos2(outer_rect.left() + x_offset + left_margin, outer_rect.top()),
 			egui::vec2(board_width, board_height),
 		);
-		if let Some(c) = &self.get_style().clear_color {
+		if let Some(c) = &style.clear_color {
 			painter.rect_filled(board_rect, 0.0, *c);
 		}
 		if let Some(pos) = response.interact_pointer_pos() {
@@ -64,11 +74,11 @@ pub trait BoardDrawer<G: BoardGame>
 				);
 
 				// Background
-				self.get_square_drawer().draw(&painter, &self.get_style(), &game, &square, x_coord, y_coord);
+				self.get_square_drawer().draw(&painter, &style, &game, &square, x_coord, y_coord);
 			}
 		}
 		// Overlay
-		self.get_square_drawer().draw_overlay(&painter, &self.get_style(), &game, &board_rect, cell_size);
+		self.get_square_drawer().draw_overlay(&painter, &style, &game, &board_rect, cell_size);
 		for y_coord in 0..h {
 			for x_coord in 0..w {
 				let pos = Self::coords_to_pixel(&self, &board_rect, cell_size, x_coord, y_coord, h);
@@ -80,13 +90,13 @@ pub trait BoardDrawer<G: BoardGame>
 
 				// played highlights
 				if self.get_played_highlights().contains(&G::index_from_coords(x_coord, y_coord)) {
-					self.get_style().played_highlights_shape.draw(ui.painter(), square.center(), cell_size);
+					style.played_highlights_shape.draw(ui.painter(), square.center(), cell_size);
 					//painter.rect_filled(square, 0.0, Color32::from_rgba_unmultiplied(150, 150, 250, 80));
 				}
 				// Pieces
 				if let Some(piece) = game.piece_at(x_coord, y_coord) {
 					piece.draw(ui, square.center(), cell_size);
-				} else if let Some(shape) = self.get_style().empty_cell_shape.as_ref() {
+				} else if let Some(shape) = style.empty_cell_shape.as_ref() {
 					shape.draw(ui.painter(), square.center(), cell_size);
 				}
 			}
@@ -101,7 +111,7 @@ pub trait BoardDrawer<G: BoardGame>
 			let y = pos.y;
 			let square = egui::Rect::from_min_size(egui::pos2(x, y), egui::vec2(cell_size, cell_size));
 			//painter.rect_stroke(square, 0.0, egui::Stroke::new(3.0, egui::Color32::YELLOW), egui::StrokeKind::Outside);
-			self.get_style().selected_highlights_shape.draw(ui.painter(), square.center(), cell_size);
+			style.selected_highlights_shape.draw(ui.painter(), square.center(), cell_size);
 		}
 		// legal moves highlights
 		for &index in self.get_legal_highlights() {
@@ -113,7 +123,7 @@ pub trait BoardDrawer<G: BoardGame>
 			let y = pos.y;
 			let square = egui::Rect::from_min_size(egui::pos2(x, y), egui::vec2(cell_size, cell_size));
 			
-			self.get_style().legal_highlights_shape.draw(ui.painter(), square.center(), cell_size);
+			style.legal_highlights_shape.draw(ui.painter(), square.center(), cell_size);
 		}
 
 		self.draw_coordinates_aside(&painter, board_rect, cell_size, w, h);
@@ -162,7 +172,12 @@ pub trait BoardDrawer<G: BoardGame>
 			(x_coord, y_coord)
 		};
 
-		let x = board_rect.left() + x_visual as f32 * cell_size;
+		let x = board_rect.left() + x_visual as f32 * cell_size + 
+			match self.get_style().half_size_offset_mod {
+				HalfSizeOffsetMod::None => 0.0,
+				HalfSizeOffsetMod::Even => if y_coord % 2 == 0 {0.5*cell_size} else {0.0},
+				HalfSizeOffsetMod::Odd => if y_coord % 2 == 1 {0.5*cell_size} else {0.0},
+			};
 		let y = board_rect.top() + (h - 1 - y_visual) as f32 * cell_size;
 
 		Pos2::new(x, y)
@@ -174,8 +189,12 @@ pub trait BoardDrawer<G: BoardGame>
 		let x_off = pos.x - board_rect.left();
 		let y_off = pos.y - board_rect.top();
 
-		let x_visual = (x_off / cell_size).floor() as u8;
 		let y_visual = (h - 1) - (y_off / cell_size).floor() as u8;
+		let x_visual = match self.get_style().half_size_offset_mod {
+			HalfSizeOffsetMod::None => (x_off / cell_size).floor() as u8,
+			HalfSizeOffsetMod::Even => ((x_off - if y_visual % 2 == 0 {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
+			HalfSizeOffsetMod::Odd => ((x_off - if y_visual % 2 == 1 {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
+		};
 
 		let (x_coord, y_coord) = if self.get_style().mirrored {
 			(x_visual, h - 1 - y_visual)
@@ -189,7 +208,7 @@ pub trait BoardDrawer<G: BoardGame>
 			None
 		}
 	}
-	fn get_square_drawer(&self) -> &Box<dyn SquareDrawer<G>>;
+	fn get_square_drawer(&self) -> &dyn SquareDrawer<G>;
 	fn set_square_drawer(&mut self, sq_drawer: Box<dyn SquareDrawer<G>>);
 	fn get_style(&self) -> &BoardStyle;
 	fn get_style_mut(&mut self) -> &mut BoardStyle;
@@ -255,8 +274,8 @@ impl<G: BoardGame> DefaultBoardDrawer<G>
 impl<G: BoardGame> BoardDrawer<G> for DefaultBoardDrawer<G>
 	where G::M: BoardMove<G>
 {
-	fn get_square_drawer(&self) -> &Box<dyn SquareDrawer<G>> {
-		&self.square_drawer
+	fn get_square_drawer(&self) -> &dyn SquareDrawer<G> {
+		&*self.square_drawer
 	}
 
 	fn set_square_drawer(&mut self, sq_drawer: Box<dyn SquareDrawer<G>>) {
@@ -355,9 +374,14 @@ pub trait SquareDrawer<G>
 					);
 				}
 				if y_coord == 0 {
+					let (pos, anchor) = if style.mirrored {
+						(square.right_top(), egui::Align2::RIGHT_TOP)
+					} else {
+						(square.right_bottom(), egui::Align2::RIGHT_BOTTOM)
+					};
 					painter.text(
-						square.right_bottom(),
-						egui::Align2::RIGHT_BOTTOM,
+						pos,
+						anchor,
 						(b'a' + x_coord) as char,
 						egui::FontId { size: square.width() * 0.2, family: egui::FontFamily::Monospace },
 						txt_color
