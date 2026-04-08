@@ -29,14 +29,14 @@ impl minimax::Game for Yote {
 			super::GameResult::Draw => Some(minimax::Winner::Draw),
 			super::GameResult::OnGoing => None,
 			super::GameResult::Player1 => {
-				if state.turn == Player::Player1 {
+				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerToMove)
 				} else {
 					Some(minimax::Winner::PlayerJustMoved)
 				}
 			},
 			super::GameResult::Player2 => {
-				if state.turn == Player::Player1 {
+				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerJustMoved)
 				} else {
 					Some(minimax::Winner::PlayerToMove)
@@ -81,7 +81,7 @@ impl minimax::Evaluator for YoteMaterialEval {
 	
 	type G=Yote;
 	fn evaluate(&self, state: &Yote) -> minimax::Evaluation {
-		if state.turn == Player::Player1 {
+		if state.turn == Player::PLAYER1 {
 			state.white_pawns_count()as minimax::Evaluation - state.black_pawns_count()as minimax::Evaluation 
 		} else {
 			state.black_pawns_count() as minimax::Evaluation - state.white_pawns_count() as minimax::Evaluation

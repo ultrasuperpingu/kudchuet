@@ -11,8 +11,8 @@ pub enum Cell {
 impl Cell {
 	pub fn from_player(p: Player) -> Cell {
 		match p {
-			Player::Player1 => Cell::Black,
-			Player::Player2 => Cell::White,
+			Player::PLAYER1 => Cell::Black,
+			Player::PLAYER2 => Cell::White,
 			_ => unreachable!(),
 		}
 	}
@@ -172,7 +172,7 @@ impl Default for Abalone {
 }
 impl Abalone {
 	pub fn new_standard() -> Self {
-		let mut game = Abalone { white: BitboardAbalone::from_storage(0), black:BitboardAbalone::from_storage(0), turn: Player::Player1, black_out: 0, white_out: 0, };
+		let mut game = Abalone { white: BitboardAbalone::from_storage(0), black:BitboardAbalone::from_storage(0), turn: Player::PLAYER1, black_out: 0, white_out: 0, };
 
 		for q in -4..=0 {
 			game.set_cell(Hex { q: q + 4, r: -4 }, Cell::Black);
@@ -287,9 +287,9 @@ impl Abalone {
 	}
 	pub fn winner(&self) -> Option<Player> {
 		if self.black_out >= 6 {
-			Some(Player::Player2)
+			Some(Player::PLAYER2)
 		} else if self.white_out >= 6 {
-			Some(Player::Player1)
+			Some(Player::PLAYER1)
 		} else {
 			None
 		}
@@ -434,7 +434,7 @@ fn test_play_push_bb() {
 impl Abalone {
 	pub fn legal_moves_inplace(&self, out: &mut Vec<Move>) {
 		out.clear();
-		let my_marbles = if self.turn == Player::Player1 {
+		let my_marbles = if self.turn == Player::PLAYER1 {
 			self.black
 		} else {
 			self.white
@@ -518,7 +518,7 @@ impl Abalone {
 			line
 		}
 	fn detect_line_bitboard(&self, start_idx: usize, dir_idx: usize) -> BitboardAbalone {
-		let player_bits = if self.turn == Player::Player1 { self.black } else { self.white };
+		let player_bits = if self.turn == Player::PLAYER1 { self.black } else { self.white };
 		let ray = RAYS[dir_idx][start_idx];
 		
 		let ally_on_ray = player_bits & ray;
@@ -549,7 +549,7 @@ impl Abalone {
 		}
 	}
 	fn detect_line_bitboard2(&self, start: usize, dir: usize) -> BitboardAbalone {
-		let player = if self.turn == Player::Player1 { self.black } else { self.white };
+		let player = if self.turn == Player::PLAYER1 { self.black } else { self.white };
 		let occ = self.black | self.white;
 
 		let start_bit = BitboardAbalone::from_index(start);
@@ -571,10 +571,8 @@ impl Abalone {
 	}
 	fn mask_before(idx: usize, forward: bool) -> BitboardAbalone {
 		if forward {
-			// Bits de 0 à idx-1
 			BitboardAbalone::from_storage((1u64 << idx) - 1)
 		} else {
-			// Bits de idx+1 à 63
 			BitboardAbalone::from_storage(!( (1u64 << (idx + 1)) - 1 ))
 		}
 	}

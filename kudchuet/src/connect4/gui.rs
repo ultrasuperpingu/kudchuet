@@ -66,14 +66,14 @@ impl BoardGame for ConnectFour {
 		
 		match self.player_turn() {
 			Cell::Empty => panic!(),
-			Cell::PlayerOne => Player::Player1,
-			Cell::PlayerTwo => Player::Player2,
+			Cell::PlayerOne => Player::PLAYER1,
+			Cell::PlayerTwo => Player::PLAYER2,
 		}
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {
-			crate::common::Player::Player1 => "Yellow".into(),
-			crate::common::Player::Player2 => "Red".into(),
+			crate::common::Player::PLAYER1 => "Yellow".into(),
+			crate::common::Player::PLAYER2 => "Red".into(),
 			_ => unreachable!(),
 		}
 	}

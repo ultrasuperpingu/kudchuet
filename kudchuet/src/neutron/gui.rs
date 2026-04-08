@@ -10,8 +10,8 @@ use super::*;
 impl Player {
 	pub fn piece(&self) -> Piece {
 		match self {
-			Player::Player1 => Piece::White,
-			Player::Player2 => Piece::Black,
+			Player::Player(0) => Piece::White,
+			Player::Player(1) => Piece::Black,
 			_ => unreachable!(),
 		}
 	}

@@ -37,8 +37,8 @@ impl minimax::Game for Diaballik {
 	}
 	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
 		match state.result() {
-			crate::common::GameResult::Player1 => if state.turn() == Player::Player2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			crate::common::GameResult::Player2 => if state.turn() == Player::Player1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			crate::common::GameResult::Player1 => if state.turn() == Player::PLAYER2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			crate::common::GameResult::Player2 => if state.turn() == Player::PLAYER1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
 			crate::common::GameResult::Player(_) => unreachable!(),
 			crate::common::GameResult::Draw => unreachable!(),
 			crate::common::GameResult::OnGoing => None,
@@ -78,7 +78,7 @@ impl minimax::Evaluator for DiaballikEvalMaterial {
 		for p in state.player2.iter_bits() {
 			score -= (6-p/7) as Evaluation * 10;
 		}
-		if state.turn == Player::Player1 {
+		if state.turn == Player::PLAYER1 {
 			score
 		} else {
 			-score

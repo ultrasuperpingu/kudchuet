@@ -52,7 +52,7 @@ impl CheckersEval {
 impl minimax::Evaluator for CheckersEval {
 	type G = Checkers10;
 	fn evaluate(&self, state: &Checkers10) -> minimax::Evaluation {
-		if state.current_player == Player::Player1 {
+		if state.current_player == Player::PLAYER1 {
 			state.whites().count() as minimax::Evaluation - state.blacks().count() as minimax::Evaluation
 		} else {
 			state.blacks().count() as minimax::Evaluation - state.whites().count() as minimax::Evaluation

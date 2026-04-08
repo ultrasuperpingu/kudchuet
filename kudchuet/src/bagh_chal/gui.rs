@@ -42,14 +42,14 @@ impl BoardGame for BaghChal {
 	fn current_player(&self) -> crate::common::Player {
 		
 		match self.tigers_turn() {
-			false => crate::common::Player::Player1,
-			true => crate::common::Player::Player2,
+			false => crate::common::Player::PLAYER1,
+			true => crate::common::Player::PLAYER2,
 		}
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {
-			crate::common::Player::Player1 => "Goats".into(),
-			crate::common::Player::Player2 => "Tigers".into(),
+			crate::common::Player::PLAYER1 => "Goats".into(),
+			crate::common::Player::PLAYER2 => "Tigers".into(),
 			_ => unreachable!(),
 		}
 	}
@@ -65,8 +65,8 @@ impl BoardGame for BaghChal {
 	fn result(&self) -> GameResult {
 		match <Self as Game>::get_winner(self) {
 			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::Player1 {GameResult::Player2} else {GameResult::Player1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::Player2 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::Player2} else {GameResult::Player1},
 			None => GameResult::OnGoing,
 		}
 	}

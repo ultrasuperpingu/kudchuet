@@ -117,14 +117,14 @@ impl BoardGame for ChessBoard {
 
 	fn current_player(&self) -> crate::common::Player {
 		match self.turn() {
-			Color::White => crate::common::Player::Player1,
-			Color::Black => crate::common::Player::Player2,
+			Color::White => crate::common::Player::PLAYER1,
+			Color::Black => crate::common::Player::PLAYER2,
 		}
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {
-			crate::common::Player::Player1 => "White".into(),
-			crate::common::Player::Player2 => "Black".into(),
+			crate::common::Player::PLAYER1 => "White".into(),
+			crate::common::Player::PLAYER2 => "Black".into(),
 			_ => unreachable!(),
 		}
 	}

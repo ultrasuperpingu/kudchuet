@@ -28,14 +28,14 @@ impl minimax::Game for Gomoku {
 		match state.result() {
 			GameResult::OnGoing => None,
 			GameResult::Player1 => {
-				if state.turn == Player::Player1 {
+				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerToMove)
 				} else {
 					Some(minimax::Winner::PlayerJustMoved)
 				}
 			},
 			GameResult::Player2 => {
-				if state.turn == Player::Player1 {
+				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerJustMoved)
 				} else {
 					Some(minimax::Winner::PlayerToMove)
@@ -87,7 +87,7 @@ impl minimax::Evaluator for GomokuEvalSimple {
 	type G = Gomoku;
 	fn evaluate(&self, state: &Gomoku) -> minimax::Evaluation {
 		let score = 0 as i16;
-		if state.turn == Player::Player2 {
+		if state.turn == Player::PLAYER2 {
 			score
 		} else {
 			-score

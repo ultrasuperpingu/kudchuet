@@ -72,7 +72,7 @@ impl Abalone {
 		fen.pop(); // last '/'
 
 		fen.push(' ');
-		fen.push(if self.turn == Player::Player1 { 'b' } else { 'w' });
+		fen.push(if self.turn == Player::PLAYER1 { 'b' } else { 'w' });
 
 		fen.push(' ');
 		fen.push_str(&self.black_out.to_string());
@@ -91,8 +91,8 @@ impl Abalone {
 		let white_out_part = parts.next().ok_or("Missing white_out in FEN")?;
 
 		let turn = match turn_part {
-			"b" => Player::Player1,
-			"w" => Player::Player2,
+			"b" => Player::PLAYER1,
+			"w" => Player::PLAYER2,
 			_ => return Err(format!("Invalid turn '{}'", turn_part)),
 		};
 

@@ -55,7 +55,7 @@ impl Neutron {
 			white:Bitboard5x5::SOUTH_BORDER,
 			black:Bitboard5x5::NORTH_BORDER,
 			neutron:Bitboard5x5::CENTER,
-			turn: Player::Player1,
+			turn: Player::PLAYER1,
 			move_count: 0,
 			hash: 0,
 		};
@@ -105,8 +105,8 @@ impl Neutron {
 		out.clear();
 
 		let my_pawns = match self.turn {
-			Player::Player1 => self.white,
-			Player::Player2 => self.black,
+			Player::PLAYER1 => self.white,
+			Player::PLAYER2 => self.black,
 			_ => unreachable!(),
 		};
 
@@ -162,12 +162,12 @@ impl Neutron {
 		for i in self.white.iter_bits() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][0]; }
 		for i in self.black.iter_bits() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][1]; }
 		h ^= Self::ZOBRIST_KEYS.neutron[self.neutron.lsb() as usize];
-		if self.turn == Player::Player2 { h ^= Self::ZOBRIST_KEYS.turn; }
+		if self.turn == Player::PLAYER2 { h ^= Self::ZOBRIST_KEYS.turn; }
 		h
 	}
 
 	fn update_hash_pawn_move(&mut self, m: &Move) {
-		let p_idx = if self.turn == Player::Player1 { 0 } else { 1 };
+		let p_idx = if self.turn == Player::PLAYER1 { 0 } else { 1 };
 		self.hash ^= Self::ZOBRIST_KEYS.pieces[m.pawn.0 as usize][p_idx];
 		self.hash ^= Self::ZOBRIST_KEYS.pieces[m.pawn.1 as usize][p_idx];
 	}
@@ -219,8 +219,8 @@ impl Neutron {
 	#[inline]
 	pub fn play(&mut self, mv: &Move) {
 		let bb = match self.turn {
-			Player::Player1 => &mut self.white,
-			Player::Player2 => &mut self.black,
+			Player::PLAYER1 => &mut self.white,
+			Player::PLAYER2 => &mut self.black,
 			_ => unreachable!()
 		};
 		bb.reset_at_index(mv.pawn.0 as usize);
@@ -309,8 +309,8 @@ impl Neutron {
 
 		if moves.is_empty() {
 			match self.turn {
-				Player::Player1 => GameResult::Player1,
-				Player::Player2 => GameResult::Player2,
+				Player::PLAYER1 => GameResult::Player1,
+				Player::PLAYER2 => GameResult::Player2,
 				_ => unreachable!()
 			}
 		} else {
@@ -338,8 +338,8 @@ impl Neutron {
 		}
 		fen.push(' ');
 		fen.push(match self.turn {
-			Player::Player1 => '1',
-			Player::Player2 => '2',
+			Player::PLAYER1 => '1',
+			Player::PLAYER2 => '2',
 			_ => unreachable!(),
 		});
 		fen
@@ -385,8 +385,8 @@ impl Neutron {
 		}
 
 		let turn = match turn_part {
-			"1" => Player::Player1,
-			"2" => Player::Player2,
+			"1" => Player::PLAYER1,
+			"2" => Player::PLAYER2,
 			_ => return Err(format!("Invalid player '{}' in FEN", turn_part)),
 		};
 

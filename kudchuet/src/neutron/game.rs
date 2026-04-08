@@ -14,7 +14,7 @@ impl minimax::Game for Neutron {
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
 		state.legal_moves_inplace(moves);
 		if !(state.neutron & Bitboard5x5::SOUTH_BORDER).is_empty() {
-			return if state.turn == Player::Player1 {
+			return if state.turn == Player::PLAYER1 {
 						Some(minimax::Winner::PlayerToMove)
 					} else {
 						Some(minimax::Winner::PlayerJustMoved)
@@ -22,7 +22,7 @@ impl minimax::Game for Neutron {
 		}
 
 		if !(state.neutron & Bitboard5x5::NORTH_BORDER).is_empty() {
-			return if state.turn == Player::Player1 {
+			return if state.turn == Player::PLAYER1 {
 						Some(minimax::Winner::PlayerJustMoved)
 					} else {
 						Some(minimax::Winner::PlayerToMove)
@@ -30,15 +30,15 @@ impl minimax::Game for Neutron {
 		}
 		if moves.is_empty() {
 			match state.turn {
-				Player::Player1 =>  {
-					if state.turn == Player::Player1 {
+				Player::PLAYER1 =>  {
+					if state.turn == Player::PLAYER1 {
 						Some(minimax::Winner::PlayerToMove)
 					} else {
 						Some(minimax::Winner::PlayerJustMoved)
 					}
 				},
-				Player::Player2 => {
-					if state.turn == Player::Player1 {
+				Player::PLAYER2 => {
+					if state.turn == Player::PLAYER1 {
 						Some(minimax::Winner::PlayerJustMoved)
 					} else {
 						Some(minimax::Winner::PlayerToMove)
@@ -63,14 +63,14 @@ impl minimax::Game for Neutron {
 			GameResult::OnGoing => None,
 			GameResult::Player(_) => unreachable!(),
 			GameResult::Player1 => {
-				if state.turn == Player::Player1 {
+				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerToMove)
 				} else {
 					Some(minimax::Winner::PlayerJustMoved)
 				}
 			},
 			GameResult::Player2 => {
-				if state.turn == Player::Player1 {
+				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerJustMoved)
 				} else {
 					Some(minimax::Winner::PlayerToMove)

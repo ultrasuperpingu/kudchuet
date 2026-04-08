@@ -54,7 +54,7 @@ impl AwaleMaterialEval {
 impl minimax::Evaluator for AwaleMaterialEval {
 	type G = Awale;
 	fn evaluate(&self, state: &Awale) -> minimax::Evaluation {
-		if state.turn == Player::Player1 {
+		if state.turn == Player::PLAYER1 {
 			state.score_bottom as minimax::Evaluation - state.score_top as minimax::Evaluation
 		} else {
 			state.score_top as minimax::Evaluation - state.score_bottom as minimax::Evaluation

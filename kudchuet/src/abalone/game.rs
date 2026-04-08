@@ -61,7 +61,7 @@ impl AbaloneMaterialEval {
 impl minimax::Evaluator for AbaloneMaterialEval {
 	type G = Abalone;
 	fn evaluate(&self, state: &Abalone) -> minimax::Evaluation {
-		if state.turn == Player::Player1 {
+		if state.turn == Player::PLAYER1 {
 			state.black_out as minimax::Evaluation - state.white_out as minimax::Evaluation
 		} else {
 			state.white_out as minimax::Evaluation - state.black_out as minimax::Evaluation

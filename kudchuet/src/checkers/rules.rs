@@ -114,7 +114,7 @@ impl Rules {
 	pub fn international() -> Self {
 		Self {
 			queen_long_moves: true,
-			first_player: Player::Player1,
+			first_player: Player::PLAYER1,
 			pawns_takes_backward: true,
 			queen_en_passant: false,
 			maximal_take_mandatory: true,
@@ -128,7 +128,7 @@ impl Rules {
 	pub fn english_draughts() -> Self {
 		Self {
 			queen_long_moves: false,
-			first_player: Player::Player2,
+			first_player: Player::PLAYER2,
 			pawns_takes_backward: false,
 			queen_en_passant: false,
 			maximal_take_mandatory: false,
@@ -183,7 +183,7 @@ impl Default for Checkers10 {
 		}
 
 		Self {
-			current_player: Player::Player1,
+			current_player: Player::PLAYER1,
 			white_pawns: Bitboard5x10Checkers10(white_pawns),
 			black_pawns: Bitboard5x10Checkers10(black_pawns),
 			white_queens: Bitboard5x10Checkers10(0),
@@ -241,7 +241,7 @@ impl Checkers10
 {
 	pub fn empty() -> Self {
 		Self {
-			current_player: Player::Player1,
+			current_player: Player::PLAYER1,
 			white_pawns: Bitboard5x10Checkers10::EMPTY,
 			black_pawns: Bitboard5x10Checkers10::EMPTY,
 			white_queens: Bitboard5x10Checkers10::EMPTY,
@@ -353,11 +353,11 @@ impl Checkers10
 
 		// remove captured pieces
 		match self.current_player {
-			Player::Player1 => {
+			Player::PLAYER1 => {
 				self.black_pawns &= !m.pawn_takes;
 				self.black_queens &= !m.queen_takes;
 			}
-			Player::Player2 => {
+			Player::PLAYER2 => {
 				self.white_pawns &= !m.pawn_takes;
 				self.white_queens &= !m.queen_takes;
 			}
@@ -371,12 +371,12 @@ impl Checkers10
 	fn try_promote(&mut self) {
 		
 		match self.current_player {
-			Player::Player1 => {
+			Player::PLAYER1 => {
 				let promoted_white = self.white_pawns & Bitboard5x10Checkers10::SOUTH_BORDER;
 				self.white_queens |= promoted_white;
 				self.white_pawns &= !promoted_white;
 			}
-			Player::Player2 => {
+			Player::PLAYER2 => {
 				let promoted_black = self.black_pawns & Bitboard5x10Checkers10::NORTH_BORDER;
 				self.black_queens |= promoted_black;
 				self.black_pawns &= !promoted_black;
@@ -401,7 +401,7 @@ impl Checkers10
 	pub fn legal_moves_for_piece_inplace(&self, moves: &mut Vec<Move>, cell_index:u8) {
 		debug_assert!(self.white_pawns.0 & self.black_pawns.0 & self.white_queens.0 & self.black_queens.0 == 0);
 		let full_mask = self.all_pieces();
-		if self.current_player == Player::Player1 {
+		if self.current_player == Player::PLAYER1 {
 			if self.white_pawns.get_at_index(cell_index as usize) {
 				self.pawn_moves(cell_index, moves, full_mask,self.black_pawns, self.black_queens, -1);
 			} else {
@@ -766,14 +766,14 @@ impl Checkers10
 
 
 	fn self_pieces(&self) -> Bitboard5x10Checkers10 {
-		if self.current_player == Player::Player1 {
+		if self.current_player == Player::PLAYER1 {
 			self.whites()
 		} else {
 			self.blacks()
 		}
 	}
 	fn move_piece(&mut self, start: u8, dest: u8) {
-		if self.current_player == Player::Player1 {
+		if self.current_player == Player::PLAYER1 {
 			if self.white_pawns.get_at_index(start as usize) {
 				self.white_pawns.reset_at_index(start as usize);
 				self.white_pawns.set_at_index(dest as usize);
@@ -793,14 +793,14 @@ impl Checkers10
 	}
 
 	pub fn is_victory(&self) -> bool {
-		if self.current_player == Player::Player1 {
+		if self.current_player == Player::PLAYER1 {
 			self.whites().is_empty() || self.legal_moves().is_empty()
 		} else {
 			self.blacks().is_empty() || self.legal_moves().is_empty()
 		}
 	}
 	pub fn is_loose(&self) -> bool {
-		if self.current_player == Player::Player2 {
+		if self.current_player == Player::PLAYER2 {
 			self.whites().is_empty() || self.legal_moves().is_empty()
 		} else {
 			self.blacks().is_empty() || self.legal_moves().is_empty()
@@ -835,7 +835,7 @@ use super::{Bitboard5x10Checkers10, Checkers10, Move};
 	#[test]
 	fn test_checkers2() {
 		let mut board = Checkers10 {
-			current_player: super::Player::Player1,
+			current_player: super::Player::PLAYER1,
 			white_pawns: Bitboard5x10Checkers10(0b00100_00000_00000_00000_00000_00000_00000_00000_00000_00000u64),
 			black_pawns: Bitboard5x10Checkers10(0b00000_00100_00000_01000_00000_01110_00000_01110_00000_00000u64),
 			white_queens: Bitboard5x10Checkers10(0),
@@ -853,7 +853,7 @@ use super::{Bitboard5x10Checkers10, Checkers10, Move};
 	#[test]
 	fn test_checkers3() {
 		let mut board = Checkers10 {
-			current_player: super::Player::Player1,
+			current_player: super::Player::PLAYER1,
 			white_pawns: Bitboard5x10Checkers10(0),
 			black_pawns: Bitboard5x10Checkers10(0b00000_00011_00000_00000_00100_01000_00110_00000_01000_00000u64),
 			white_queens: Bitboard5x10Checkers10(0b00000_00000_00100_00000_00000_00000_00000_00000_00000_00000u64),

@@ -79,7 +79,7 @@ impl minimax::Evaluator for BackgammonMaterialEval {
 	type G = Backgammon;
 
 	fn evaluate(&self, state: &Backgammon) -> minimax::Evaluation {
-		if self.turn == Player::Player1.idx() as i8 {
+		if self.turn == Player::PLAYER1.idx() as i8 {
 			state.outside[0] as minimax::Evaluation - state.outside[1] as minimax::Evaluation
 		} else {
 			state.outside[1] as minimax::Evaluation - state.outside[0] as minimax::Evaluation
@@ -146,7 +146,7 @@ impl minimax::Evaluator for BackgammonSimpleEval {
 				consecutive = 0;
 			}
 		}
-		if self.turn == Player::Player1.idx() as i8 {
+		if self.turn == Player::PLAYER1.idx() as i8 {
 			scorep1 - scorep2
 		} else {
 			scorep2 - scorep1

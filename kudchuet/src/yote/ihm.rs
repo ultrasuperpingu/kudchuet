@@ -63,9 +63,9 @@ impl eframe::App for YoteApp {
 				self.selection = SelectionState::None;
 			}
 			ui.separator();
-			self.draw_reserve(ui, Player::Player1);
+			self.draw_reserve(ui, Player::PLAYER1);
 			self.draw_board(ui);
-			self.draw_reserve(ui, Player::Player2);
+			self.draw_reserve(ui, Player::PLAYER2);
 
 		});
 	}
@@ -73,21 +73,21 @@ impl eframe::App for YoteApp {
 impl YoteApp {
 	pub fn is_current_player_computer(&self) -> bool {
 		match self.game.turn {
-			Player::Player1 => self.players[0].is_computer(),
-			Player::Player2 => self.players[1].is_computer(),
+			Player::PLAYER1 => self.players[0].is_computer(),
+			Player::PLAYER2 => self.players[1].is_computer(),
 			_ => unreachable!()
 		}
 	}
 	fn draw_reserve(&mut self, ui: &mut egui::Ui, player: Player) {
 		let count = match player {
-			Player::Player1 => self.game.reserve_white,
-			Player::Player2 => self.game.reserve_black,
+			Player::PLAYER1 => self.game.reserve_white,
+			Player::PLAYER2 => self.game.reserve_black,
 			_ => unreachable!()
 		};
 
 		let color = match player {
-			Player::Player1 => egui::Color32::from_rgb(240, 240, 255),
-			Player::Player2 => egui::Color32::from_rgb(20, 20, 20),
+			Player::PLAYER1 => egui::Color32::from_rgb(240, 240, 255),
+			Player::PLAYER2 => egui::Color32::from_rgb(20, 20, 20),
 			_ => unreachable!()
 		};
 
@@ -326,12 +326,12 @@ impl YoteApp {
 
 		// 3) Sinon, sélectionner une pièce du joueur courant
 		match self.game.turn {
-			Player::Player1 => {
+			Player::PLAYER1 => {
 				if (self.game.white.storage() & (1 << idx)) != 0 {
 					self.selection = SelectionState::PieceSelected(idx);
 				}
 			}
-			Player::Player2 => {
+			Player::PLAYER2 => {
 				if (self.game.black.storage() & (1 << idx)) != 0 {
 					self.selection = SelectionState::PieceSelected(idx);
 				}

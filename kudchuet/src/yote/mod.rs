@@ -99,7 +99,7 @@ impl Yote {
 			black:Bitboard6x5::empty(),
 			reserve_black:12,
 			reserve_white:12,
-			turn: Player::Player1,
+			turn: Player::PLAYER1,
 			hash: 0,
 			rules: YoteRules::default()
 		};
@@ -134,10 +134,10 @@ impl Yote {
 		out.clear();
 		
 		let (myself, other, other_reserve) = match self.turn {
-			Player::Player1 => {
+			Player::PLAYER1 => {
 				(self.white, self.black, self.reserve_black)
 			},
-			Player::Player2 => {
+			Player::PLAYER2 => {
 				(self.black, self.white, self.reserve_white)
 			},
 			_ => unreachable!()
@@ -180,7 +180,7 @@ impl Yote {
 		}
 
 		if !self.rules.mandatory_takes() || out.is_empty() {
-			if self.turn == Player::Player1 && self.reserve_white > 0 || self.turn == Player::Player2 && self.reserve_black > 0 {
+			if self.turn == Player::PLAYER1 && self.reserve_white > 0 || self.turn == Player::PLAYER2 && self.reserve_black > 0 {
 				for index in (self.free()).iter_bits() {
 					out.push(Move::Add { index: index as u8 });
 				}
@@ -203,7 +203,7 @@ impl Yote {
 		}
 		hash ^= HASHES[61 + self.reserve_white as usize];
 		hash ^= HASHES[74 + self.reserve_black as usize];
-		if self.turn == Player::Player1 {
+		if self.turn == Player::PLAYER1 {
 			hash ^= HASHES[0];
 		}
 		hash
@@ -249,7 +249,7 @@ impl Yote {
 			Move::Add { index } => 
 			{
 				let index = index as usize;
-				if self.turn == Player::Player1 {
+				if self.turn == Player::PLAYER1 {
 					self.white.set_at_index(index);
 					self.reserve_white-=1;
 					// remove turn mask
@@ -278,7 +278,7 @@ impl Yote {
 			{
 				let from = from as usize;
 				let to = to as usize;
-				if self.turn == Player::Player1 {
+				if self.turn == Player::PLAYER1 {
 					self.white.reset_at_index(from);
 					self.white.set_at_index(to);
 					// remove turn mask
@@ -306,7 +306,7 @@ impl Yote {
 				} else {
 					-1
 				};
-				if self.turn == Player::Player1 {
+				if self.turn == Player::PLAYER1 {
 					self.white.reset_at_index(from);
 					self.white.set_at_index(to);
 					self.black.reset_at_index(middle_cell(from,to));
@@ -399,7 +399,7 @@ fn test_add_moves() {
 	g.play(Move::Add { index: 0 });
 	assert!(g.white.get_at_index(0));
 	assert_eq!(g.reserve_white, 11);
-	assert_eq!(g.turn, Player::Player2);
+	assert_eq!(g.turn, Player::PLAYER2);
 }
 #[test]
 fn test_simple_move() {

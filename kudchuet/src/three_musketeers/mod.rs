@@ -186,20 +186,20 @@ impl ThreeMusketeers {
 	#[inline]
 	pub fn get_cell(&self, x: u8, y: u8) -> Option<Player> {
 		if self.musketeers.get(x, y) {
-			Some(Player::Player1)
+			Some(Player::PLAYER1)
 		} else if self.guards.get(x, y) {
-			Some(Player::Player2)
+			Some(Player::PLAYER2)
 		} else {
 			None
 		}
 	}
 	fn set_cell(&mut self, x: u8, y: u8, player:Player) {
 		match player {
-			Player::Player1 => {
+			Player::PLAYER1 => {
 				self.musketeers.set(x, y);
 				self.guards.reset(x, y);
 			},
-			Player::Player2 => {
+			Player::PLAYER2 => {
 				self.musketeers.reset(x, y);
 				self.guards.set(x, y);
 			},
@@ -230,8 +230,8 @@ impl ThreeMusketeers {
 			let mut row = String::new();
 			for x in 0..5 {
 				let c = match self.get_cell(x, y) {
-					Some(Player::Player1) => 'm',
-					Some(Player::Player2) => 'g',
+					Some(Player::PLAYER1) => 'm',
+					Some(Player::PLAYER2) => 'g',
 					Some(Player::RandomMove) => unreachable!(),
 					Some(Player::Player(_)) => unreachable!(),
 					None => '.',
@@ -264,8 +264,8 @@ impl ThreeMusketeers {
 					return Err("Too many columns".into());
 				}
 				let player = match ch {
-					'm' => Some(Player::Player1),
-					'g' => Some(Player::Player2),
+					'm' => Some(Player::PLAYER1),
+					'g' => Some(Player::PLAYER2),
 					'.' => None,
 					_ => return Err(format!("Invalid character: {}", ch)),
 				};

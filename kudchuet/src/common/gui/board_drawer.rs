@@ -87,17 +87,21 @@ pub trait BoardDrawer<G: BoardGame>
 					pos,
 					egui::vec2(cell_size, cell_size),
 				);
-
+				let sq_index = G::index_from_coords(x_coord, y_coord);
 				// played highlights
-				if self.get_played_highlights().contains(&G::index_from_coords(x_coord, y_coord)) {
+				if self.get_played_highlights().contains(&sq_index) {
 					style.played_highlights_shape.draw(ui.painter(), square.center(), cell_size);
 					//painter.rect_filled(square, 0.0, Color32::from_rgba_unmultiplied(150, 150, 250, 80));
 				}
 				// Pieces
 				if let Some(piece) = game.piece_at(x_coord, y_coord) {
+					// TODO: use PieceDrawer
 					piece.draw(ui, square.center(), cell_size);
 				} else if let Some(shape) = style.empty_cell_shape.as_ref() {
-					shape.draw(ui.painter(), square.center(), cell_size);
+					// check unplayable square
+					if sq_index != u16::MAX {
+						shape.draw(ui.painter(), square.center(), cell_size);
+					}
 				}
 			}
 		}
@@ -421,4 +425,13 @@ impl<G> SquareDrawer<G> for DefaultSquareDrawer
 		G::M: BoardMove<G> 
 {
 	
+}
+
+pub trait PieceDrawer<G>
+	where G: BoardGame,
+		G::M: BoardMove<G> {
+	fn draw(&self, painter: &Painter, _style: &BoardStyle, _game: &G, piece: G::PieceType, square: &Rect, _x_coord: u8, _y_coord: u8)
+	{
+		piece.shape().draw(painter, square.center(), square.width());
+	}
 }

@@ -8,8 +8,8 @@ impl Backgammon {
 		let bar_str = format!("bar:{}-{}", self.on_bar[0], self.on_bar[1]);
 		let off_str = format!("off:{}-{}", self.outside[0], self.outside[1]);
 		let current = match self.current_player {
-			Player::Player1 => "P1",
-			Player::Player2 => "P2",
+			Player::PLAYER1 => "P1",
+			Player::PLAYER2 => "P2",
 			_ => "RND",
 		};
 		let mut parts = vec![board_str, bar_str, off_str, format!("current:{}", current)];
@@ -58,8 +58,8 @@ impl Backgammon {
 		let current_str = parts.next().ok_or("Missing current part")?;
 		let cur = current_str.strip_prefix("current:").ok_or("Invalid current prefix")?;
 		game.current_player = match cur {
-			"P1" => Player::Player1,
-			"P2" => Player::Player2,
+			"P1" => Player::PLAYER1,
+			"P2" => Player::PLAYER2,
 			_ => return Err(format!("Invalid current player: {}", cur)),
 		};
 

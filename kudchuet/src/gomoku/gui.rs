@@ -56,8 +56,8 @@ impl BoardGame for Gomoku {
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {
-			crate::common::Player::Player1 => "Black".into(),
-			crate::common::Player::Player2 => "White".into(),
+			crate::common::Player::PLAYER1 => "Black".into(),
+			crate::common::Player::PLAYER2 => "White".into(),
 			_ => unreachable!(),
 		}
 	}

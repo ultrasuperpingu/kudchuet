@@ -72,7 +72,7 @@ impl BoardMove<FootBoard> for Move {
 			//let from = clicks[i];
 			//let to = clicks[i+1];
 
-			if player == Player::Player1 {
+			if player == Player::PLAYER1 {
 				if let Some(a) = self.0[i/2] {
 					FootBoard::play_action(&a, &mut sim.player1, &mut sim.ball);
 				} 

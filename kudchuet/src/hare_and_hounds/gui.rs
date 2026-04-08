@@ -61,14 +61,14 @@ impl BoardGame for HareAndHounds {
 	fn current_player(&self) -> crate::common::Player {
 		
 		match self.turn() {
-			true => crate::common::Player::Player2,
-			false => crate::common::Player::Player1,
+			true => crate::common::Player::PLAYER2,
+			false => crate::common::Player::PLAYER1,
 		}
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {
-			crate::common::Player::Player1 => "Hounds".into(),
-			crate::common::Player::Player2 => "Har".into(),
+			crate::common::Player::PLAYER1 => "Hounds".into(),
+			crate::common::Player::PLAYER2 => "Har".into(),
 			_ => unreachable!()
 		}
 	}

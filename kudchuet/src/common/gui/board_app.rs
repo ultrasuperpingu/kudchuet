@@ -148,18 +148,9 @@ where G::M: BoardMove<G>+Send
 	}
 	pub(super) fn is_current_player_computer(&self) -> bool {
 		self.ai_engine_manager.get_player_engine(self.game().current_player()).is_some()
-		/*match self.game().current_player() {
-			Player::Player1 => self.ai_engine_manager.active_player1_engine.is_some(),
-			Player::Player2 => self.ai_engine_manager.active_player2_engine.is_some(),
-			//TODO
-			Player::Player(_) => false,
-			Player::RandomMove => false,
-		}*/
 	}
 	pub(super) fn is_current_player_random(&self) -> bool {
 		match self.game().current_player() {
-			Player::Player1 => false,
-			Player::Player2 => false,
 			Player::Player(_) => false,
 			Player::RandomMove => true,
 		}
@@ -312,12 +303,6 @@ where G::M: BoardMove<G>+Send
 			}
 
 			match result {
-				GameResult::Player1 => {
-					ui.heading(format!("Winner: {}", self.game().get_name(Player::Player1)));
-				}
-				GameResult::Player2 => {
-					ui.heading(format!("Winner: {}", self.game().get_name(Player::Player2)));
-				}
 				GameResult::Player(id) => {
 					ui.heading(format!("Winner: {}", self.game().get_name(Player::Player(id))));
 				}
@@ -331,13 +316,8 @@ where G::M: BoardMove<G>+Send
 	}
 
 	fn draw_players_list(&mut self, engines: Vec<String>, ui: &mut Ui) {
-		if self.game().nb_players() == 2 {
-			self.draw_player(Player::Player1, &engines, ui);
-			self.draw_player(Player::Player2, &engines, ui);
-		} else {
-			for i in 0..self.game().nb_players() {
-				self.draw_player(Player::Player(i), &engines, ui);
-			}
+		for i in 0..self.game().nb_players() {
+			self.draw_player(Player::Player(i), &engines, ui);
 		}
 	}
 	fn draw_player(&mut self, p: Player, engines: &Vec<String>, ui: &mut Ui) {

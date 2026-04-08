@@ -177,14 +177,14 @@ impl FootBoard {
 			score1:0,
 			score2:0,
 		};
-		s.reset_after_goal(Player::Player1);
+		s.reset_after_goal(Player::PLAYER1);
 		s
 	}
 	#[inline]
 	pub fn play_unchecked(&mut self, mvs: &Move) {
 		for m in mvs.0 {
 			if let Some(a) = m {
-				if self.turn() == Player::Player1 {
+				if self.turn() == Player::PLAYER1 {
 					Self::play_action(&a, &mut self.player1, &mut self.ball);
 				} else {
 					Self::play_action(&a, &mut self.player2, &mut self.ball);
@@ -193,10 +193,10 @@ impl FootBoard {
 		}
 		if (Bitboard9x13::from_index(self.ball as usize) & Bitboard9x13::PLAYER1_GOAL).any() {
 			self.score2 += 1;
-			self.reset_after_goal(Player::Player1);
+			self.reset_after_goal(Player::PLAYER1);
 		} else if (Bitboard9x13::from_index(self.ball as usize) & Bitboard9x13::PLAYER2_GOAL).any() {
 			self.score1 += 1;
-			self.reset_after_goal(Player::Player2);
+			self.reset_after_goal(Player::PLAYER2);
 		}
 		self.turn += 1;
 	}
@@ -223,11 +223,11 @@ impl FootBoard {
 	const fn reset_after_goal(&mut self, p: Player) {
 		self.ball = 58;
 		match p {
-			Player::Player1 => {
+			Player::PLAYER1 => {
 				self.player1 = Bitboard9x13::from_storage(0b000110000_010000010_000000000_000010000_001000100_000010000_000000000);
 				self.player2 = Bitboard9x13::from_storage(0b000010000_001000100_000010000_000101000_010000010_000000000_000000000_000000000_000000000_000000000_000000000_000000000);
 			},
-			Player::Player2 => {
+			Player::PLAYER2 => {
 				self.player1 = Bitboard9x13::from_storage(0b000000000_010000010_000101000_000010000_001000100_000010000_000000000);
 				self.player2 = Bitboard9x13::from_storage(0b000010000_001000100_000010000_000000000_010000010_000110000_000000000_000000000_000000000_000000000_000000000_000000000);
 			}
@@ -273,7 +273,7 @@ impl FootBoard {
 		}
 		// empty move is legal
 		moves.push(Move([None;ACTION_PER_MOVE]));
-		let (mine, theirs) = if self.turn() == Player::Player1 {
+		let (mine, theirs) = if self.turn() == Player::PLAYER1 {
 			(self.player1, self.player2)
 		} else {
 			(self.player2, self.player1)
@@ -322,7 +322,7 @@ impl FootBoard {
 			}
 			if (opponent_mask & ball_mask).any() {
 				//tackle
-				let tackle_mask = if self.turn() == Player::Player1 {Bitboard9x13::PLAYER1_TACKLE_POS_MASK[p as usize]} else {Bitboard9x13::PLAYER2_TACKLE_POS_MASK[p as usize]};
+				let tackle_mask = if self.turn() == Player::PLAYER1 {Bitboard9x13::PLAYER1_TACKLE_POS_MASK[p as usize]} else {Bitboard9x13::PLAYER2_TACKLE_POS_MASK[p as usize]};
 				if (tackle_mask & ball_mask).any() {
 					if let Some(direction) = Bitboard9x13::get_direction(p as u8, ball) {
 						let ray = Self::ray_from_direction(ball, direction);
@@ -442,14 +442,14 @@ impl FootBoard {
 	}
 	#[inline(always)]
 	pub fn turn(&self) -> Player {
-		if self.turn%2 == 0 { Player::Player1 } else { Player::Player2 }
+		if self.turn%2 == 0 { Player::PLAYER1 } else { Player::PLAYER2 }
 	}
 	pub fn ball_owner(&self) -> Option<Player> {
 		let ball_mask = Bitboard9x13::from_index(self.ball as usize);
 		if (ball_mask & self.player1).any() {
-			Some(Player::Player1)
+			Some(Player::PLAYER1)
 		} else if (ball_mask & self.player2).any() {
-			Some(Player::Player2)
+			Some(Player::PLAYER2)
 		} else {
 			None
 		}

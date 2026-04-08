@@ -36,7 +36,7 @@ impl BoardMove<Diaballik> for Move {
 			let from = clicks[i] as u8;
 			let to = clicks[i+1] as u8;
 
-			if player == Player::Player1 {
+			if player == Player::PLAYER1 {
 				if from == sim.ball_player1 {
 					sim.ball_player1 = to;
 				} 

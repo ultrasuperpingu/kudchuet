@@ -59,27 +59,29 @@ pub enum GameResult {
 	Draw,
 	OnGoing
 }
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Player {
-	#[default]
-	Player1,
-	Player2,
 	Player(u8),
 	RandomMove
 }
+impl Default for Player {
+	fn default() -> Self {
+		Player::Player(0)
+	}
+}
 impl Player {
+	pub const PLAYER1: Self = Self::Player(0);
+	pub const PLAYER2: Self = Self::Player(1);
 	pub fn opponent(&self) -> Self {
 		match self {
-			Player::Player1 => Player::Player2,
-			Player::Player2 => Player::Player1,
+			Player::Player(0) => Player::PLAYER2,
+			Player::Player(1) => Player::PLAYER1,
 			Player::Player(_) => panic!("opponent called on a multiplayer game"),
 			Player::RandomMove => Player::RandomMove,
 		}
 	}
 	pub fn idx(&self) -> usize {
 		match self {
-			Player::Player1 => 0,
-			Player::Player2 => 1,
 			Player::Player(id) => *id as usize,
 			Player::RandomMove => unreachable!(),
 		}
@@ -88,8 +90,6 @@ impl Player {
 impl Into<GameResult> for Player {
 	fn into(self) -> GameResult {
 		match self {
-			Player::Player1 => GameResult::Player1,
-			Player::Player2 => GameResult::Player2,
 			Player::Player(id) => GameResult::Player(id),
 			Player::RandomMove => panic!("Result from random move"),
 		}
@@ -98,9 +98,7 @@ impl Into<GameResult> for Player {
 impl std::fmt::Display for Player {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Player::Player1 => f.write_str("Player 1"),
-			Player::Player2 => f.write_str("Player 2"),
-			Player::Player(id) => f.write_str(format!("Player {}", *id).as_str()),
+			Player::Player(id) => f.write_str(format!("Player {}", *id+1).as_str()),
 			Player::RandomMove => f.write_str("Random Move"),
 		}
 	}

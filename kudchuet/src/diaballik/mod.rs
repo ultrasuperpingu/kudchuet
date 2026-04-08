@@ -59,7 +59,7 @@ impl Default for Diaballik {
 			player2: Bitboard7x7::NORTH_BORDER,
 			ball_player1: 3,
 			ball_player2: 45,
-			turn: Player::Player1,
+			turn: Player::PLAYER1,
 			hash: 0
 		};
 		s.hash = s.compute_zobrist();
@@ -71,7 +71,7 @@ impl Diaballik {
 	pub fn play_unchecked(&mut self, moves: &Move) {
 		for m in moves.0 {
 			if let Some(a) = m {
-				if self.turn == Player::Player1 {
+				if self.turn == Player::PLAYER1 {
 					Self::play_action(&a, &mut self.player1, &mut self.ball_player1);
 				} else {
 					Self::play_action(&a, &mut self.player2, &mut self.ball_player2);
@@ -100,7 +100,7 @@ impl Diaballik {
 		self.update_hash_turn();
 		for m in moves.0.iter().rev() {
 			if let Some(a) = m {
-				if self.turn == Player::Player1 {
+				if self.turn == Player::PLAYER1 {
 					Self::undo_action(a, &mut self.player1, &mut self.ball_player1);
 				} else {
 					Self::undo_action(a, &mut self.player2, &mut self.ball_player2);
@@ -125,7 +125,7 @@ impl Diaballik {
 	pub fn legal_moves(&self, moves:&mut Vec<Move>) {
 		// empty move is legal
 		moves.push(Move([None,None,None]));
-		let (mine, theirs,ball) = if self.turn == Player::Player1 {
+		let (mine, theirs,ball) = if self.turn == Player::PLAYER1 {
 			(self.player1, self.player2, self.ball_player1)
 		} else {
 			(self.player2, self.player1, self.ball_player2)
@@ -191,22 +191,22 @@ impl Diaballik {
 	}
 	#[inline]
 	pub fn result(&self) -> GameResult {
-		if self.turn == Player::Player2 && self.ball_player1 > 41 {
+		if self.turn == Player::PLAYER2 && self.ball_player1 > 41 {
 			GameResult::Player1
 		}
-		else if self.turn == Player::Player1 && self.ball_player2 < 7 {
+		else if self.turn == Player::PLAYER1 && self.ball_player2 < 7 {
 			GameResult::Player2
 		} else {
 			// Anti-Game (Blocking) Rules
-			if self.is_blocking(Player::Player1) { return GameResult::Player2; }
-			if self.is_blocking(Player::Player2) { return GameResult::Player1; }
+			if self.is_blocking(Player::PLAYER1) { return GameResult::Player2; }
+			if self.is_blocking(Player::PLAYER2) { return GameResult::Player1; }
 			GameResult::OnGoing
 		}
 	}
 	fn is_blocking(&self, p: Player) -> bool {
 		let (me, opponent) = match p {
-			Player::Player1 => (self.player1, self.player2),
-			Player::Player2 => (self.player2, self.player1),
+			Player::PLAYER1 => (self.player1, self.player2),
+			Player::PLAYER2 => (self.player2, self.player1),
 			_ => unreachable!(),
 		};
 
@@ -226,7 +226,7 @@ impl Diaballik {
 				if row.abs_diff(p_row) > 1 { return false; }
 			}
 
-			let opponent_idx = if p == Player::Player1 {
+			let opponent_idx = if p == Player::PLAYER1 {
 				idx + Bitboard7x7::V_OFFSET
 			} else {
 				idx.wrapping_sub(Bitboard7x7::V_OFFSET)
@@ -242,8 +242,8 @@ impl Diaballik {
 	}
 	pub fn is_blocking2(&self, p: Player) -> bool {
 		let (me, opponent) = match p {
-			Player::Player1 => (self.player1, self.player2),
-			Player::Player2 => (self.player2, self.player1),
+			Player::PLAYER1 => (self.player1, self.player2),
+			Player::PLAYER2 => (self.player2, self.player1),
 			_ => unreachable!(),
 		};
 
@@ -262,7 +262,7 @@ impl Diaballik {
 
 		if (flood & Bitboard7x7::EAST_BORDER.storage()) == 0 { return false; }
 
-		let front_attack = if p == Player::Player1 {
+		let front_attack = if p == Player::PLAYER1 {
 			(flood << Bitboard7x7::V_OFFSET) & opponent.storage()
 		} else {
 			(flood >> Bitboard7x7::V_OFFSET) & opponent.storage()
@@ -361,7 +361,7 @@ impl Diaballik {
 		for i in self.player2.iter_bits() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][1]; }
 		h ^= Self::ZOBRIST_KEYS.ball[self.ball_player1 as usize][0];
 		h ^= Self::ZOBRIST_KEYS.ball[self.ball_player2 as usize][1];
-		if self.turn == Player::Player2 { h ^= Self::ZOBRIST_KEYS.turn; }
+		if self.turn == Player::PLAYER2 { h ^= Self::ZOBRIST_KEYS.turn; }
 		h
 	}
 
@@ -373,7 +373,7 @@ impl Diaballik {
 		}
 	}
 	fn update_hash_action(&mut self, action: &Action) {
-		let p_idx = if self.turn == Player::Player1 { 0 } else { 1 };
+		let p_idx = if self.turn == Player::PLAYER1 { 0 } else { 1 };
 
 		match action {
 			Action::Move { from, to } => {
@@ -436,8 +436,8 @@ impl Diaballik {
 
 		fen.push(' ');
 		fen.push(match self.turn {
-			Player::Player1 => 'w',
-			Player::Player2 => 'b',
+			Player::PLAYER1 => 'w',
+			Player::PLAYER2 => 'b',
 			_ => unreachable!(),
 		});
 
@@ -516,8 +516,8 @@ impl Diaballik {
 		}
 
 		let turn = match turn_part {
-			"w" => Player::Player1,
-			"b" => Player::Player2,
+			"w" => Player::PLAYER1,
+			"b" => Player::PLAYER2,
 			_ => return Err("Invalid turn".into()),
 		};
 

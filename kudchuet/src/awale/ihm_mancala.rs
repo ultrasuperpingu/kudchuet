@@ -26,9 +26,9 @@ impl BoardGame for Mancala {
 
 	fn current_player(&self) -> Player {
 		if self.to_move {
-			Player::Player2
+			Player::PLAYER2
 		} else {
-			Player::Player1
+			Player::PLAYER1
 		}
 	}
 
@@ -46,8 +46,8 @@ impl BoardGame for Mancala {
 	fn result(&self) -> GameResult {
 		match <Self as Game>::get_winner(self) {
 			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::Player1 {GameResult::Player2} else {GameResult::Player1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::Player2 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::Player2} else {GameResult::Player1},
 			None => GameResult::OnGoing,
 		}
 	}

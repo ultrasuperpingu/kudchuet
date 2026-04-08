@@ -16,7 +16,7 @@ impl Default for Awale {
 			pits: [4; 12],
 			score_bottom: 0,
 			score_top: 0,
-			turn: Player::Player1,
+			turn: Player::PLAYER1,
 			game_over: false,
 		}
 	}
@@ -37,8 +37,8 @@ impl Display for Awale {
 impl Awale {
 	fn pits_of(&self, p: Player) -> std::ops::Range<usize> {
 		match p {
-			Player::Player1 => 0..6,
-			Player::Player2 => 6..12,
+			Player::PLAYER1 => 0..6,
+			Player::PLAYER2 => 6..12,
 			_ => unreachable!(),
 		}
 	}
@@ -141,8 +141,8 @@ impl Awale {
 			if seeds == 2 || seeds == 3 {
 				self.pits[pos] = 0;
 				match self.turn {
-					Player::Player1 => self.score_bottom += seeds,
-					Player::Player2 => self.score_top += seeds,
+					Player::PLAYER1 => self.score_bottom += seeds,
+					Player::PLAYER2 => self.score_top += seeds,
 					_ => unreachable!(),
 				}
 			} else {
@@ -163,7 +163,7 @@ impl Awale {
 		}
 
 		// Si le prochain joueur n’a plus de graines
-		if self.turn == Player::Player2 {
+		if self.turn == Player::PLAYER2 {
 			let bottom_empty = (0..6).all(|i| self.pits[i] == 0);
 			if bottom_empty {
 				// On ramasse tout ce qui reste
@@ -190,9 +190,9 @@ impl Awale {
 	pub fn winner(&self) -> Option<Player> {
 		if self.game_over {
 			if self.score_bottom > self.score_top {
-				Some(Player::Player1)
+				Some(Player::PLAYER1)
 			} else if self.score_bottom < self.score_top {
-				Some(Player::Player2)
+				Some(Player::PLAYER2)
 			} else {
 				None
 			}
@@ -236,7 +236,7 @@ mod tests {
 		assert!(awale.pits == [4,4,4,4,4,4,4,4,4,4,4,4]);
 		assert!(awale.score_bottom == 0);
 		assert!(awale.score_top == 0);
-		assert!(awale.turn == Player::Player1);
+		assert!(awale.turn == Player::PLAYER1);
 		assert!(awale.game_over == false);
 	}
 	#[test]
@@ -264,11 +264,11 @@ mod tests {
 	fn test_awale_12_seed_rule() {
 		let mut awale = Awale::default();
 		awale.pits = [0,0,0,0,0,13,2,2,1,2,2,5];
-		awale.turn = Player::Player1;
+		awale.turn = Player::PLAYER1;
 		assert!(awale.play(5));
 		assert!(awale.pits == [1,1,1,1,1,0,4,4,2,3,3,6]);
 		awale.pits = [0,0,0,0,0,24,2,2,1,2,2,5];
-		awale.turn = Player::Player1;
+		awale.turn = Player::PLAYER1;
 		assert!(awale.play(5));
 		assert!(awale.pits == [2,2,2,2,2,0,5,5,3,4,4,7]);
 	}
@@ -278,7 +278,7 @@ mod tests {
 
 		//capture
 		awale.pits = [0,0,0,0,0,5,1,1,1,2,2,5];
-		awale.turn = Player::Player1;
+		awale.turn = Player::PLAYER1;
 		awale.score_bottom = 0;
 		awale.score_top = 0;
 		awale.game_over = false;
@@ -288,7 +288,7 @@ mod tests {
 
 		//no capture on owned pits
 		awale.pits = [1,0,0,0,0,7,1,1,1,2,2,2];
-		awale.turn = Player::Player1;
+		awale.turn = Player::PLAYER1;
 		awale.score_bottom = 0;
 		awale.score_top = 0;
 		awale.game_over = false;
@@ -298,19 +298,19 @@ mod tests {
 
 		// capture all (not allowed)
 		awale.pits = [0,0,0,0,0,6,1,1,1,2,2,2];
-		awale.turn = Player::Player1;
+		awale.turn = Player::PLAYER1;
 		awale.score_bottom = 0;
 		awale.score_top = 0;
 		awale.game_over = false;
 		assert!(awale.play(5) == false);
 		awale.pits = [0,0,0,0,0,17,1,1,1,2,2,2];
-		awale.turn = Player::Player1;
+		awale.turn = Player::PLAYER1;
 		awale.score_bottom = 0;
 		awale.score_top = 0;
 		awale.game_over = false;
 		assert!(awale.play(5) == false);
 		awale.pits = [0,0,0,0,0,28,1,1,1,2,2,2];
-		awale.turn = Player::Player1;
+		awale.turn = Player::PLAYER1;
 		awale.score_bottom = 0;
 		awale.score_top = 0;
 		awale.game_over = false;

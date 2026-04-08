@@ -112,8 +112,8 @@ impl BoardMove<Yote> for Move {
 impl EGUIPieceType for Player {
 	fn shape(&self) -> Shape {
 		match self {
-			Player::Player2 => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: None},
-			Player::Player1 => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: None},
+			Player::Player(1) => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: None},
+			Player::Player(0) => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: None},
 			_ => unreachable!()
 		}
 	}
@@ -150,9 +150,9 @@ impl BoardGame for Yote {
 
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		if self.white.get(x, y) {
-			Some(Player::Player1)
+			Some(Player::PLAYER1)
 		} else if self.black.get(x, y) {
-			Some(Player::Player2)
+			Some(Player::PLAYER2)
 		} else {
 			None
 		}

@@ -60,19 +60,19 @@ impl BoardGame for ThreeMusketeers {
 	}
 
 	fn current_player(&self) -> Player {
-		if self.turn == 0 {Player::Player1} else {Player::Player2}
+		if self.turn == 0 {Player::PLAYER1} else {Player::PLAYER2}
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {
-			crate::common::Player::Player1 => "Musketeers".into(),
-			crate::common::Player::Player2 => "Guards".into(),
+			crate::common::Player::PLAYER1 => "Musketeers".into(),
+			crate::common::Player::PLAYER2 => "Guards".into(),
 			_ => unreachable!()
 		}
 	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		match self.get_cell(x, y) {
-			Some(Player::Player1) => Some(ThreeMPiece::Musketeer),
-			Some(Player::Player2) => Some(ThreeMPiece::Guard),
+			Some(Player::PLAYER1) => Some(ThreeMPiece::Musketeer),
+			Some(Player::PLAYER2) => Some(ThreeMPiece::Guard),
 			_ => None,
 		}
 	}

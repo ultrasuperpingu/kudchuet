@@ -81,11 +81,11 @@ impl Gomoku {
 	#[inline]
 	pub fn play_unchecked(&mut self, mv: Move) {
 		match self.turn {
-			Player::Player2 => {
+			Player::PLAYER2 => {
 				self.white.set_at_index(mv.to as usize);
 			}
 
-			Player::Player1 => {
+			Player::PLAYER1 => {
 				self.black.set_at_index(mv.to as usize);
 			}
 			_ => unreachable!()
@@ -133,7 +133,7 @@ mod tests {
 	#[test]
 	fn play_one_move() {
 		let mut game = Gomoku::new();
-		assert_eq!(game.turn, Player::Player1);
+		assert_eq!(game.turn, Player::PLAYER1);
 		assert_eq!(game.result(), GameResult::OnGoing);
 
 		let moves = game.legal_moves();
@@ -142,7 +142,7 @@ mod tests {
 		let mv = moves[0];
 		game.play_unchecked(mv);
 
-		assert_eq!(game.turn, Player::Player2);
+		assert_eq!(game.turn, Player::PLAYER2);
 	}
 	#[test]
 	fn play() {

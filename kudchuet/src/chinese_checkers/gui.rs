@@ -5,7 +5,7 @@ use crate::chinese_checkers::game::ChineseCheckersMaterialEval;
 use crate::chinese_checkers::{ChineseCheckers, ChineseCheckersPlayer, Move};
 use crate::common::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
 use crate::common::gui::board_app::GenericBoardApp;
-use crate::common::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, SquareDrawer};
+use crate::common::gui::board_drawer::SquareDrawer;
 use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
 
 
@@ -68,8 +68,8 @@ impl BoardGame for ChineseCheckers {
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {
-			crate::common::Player::Player1 => "White".into(),
-			crate::common::Player::Player2 => "Black".into(),
+			crate::common::Player::PLAYER1 => "White".into(),
+			crate::common::Player::PLAYER2 => "Black".into(),
 			crate::common::Player::Player(idx) => {
 				let players = Self::active_players(self.nb_players);
 				if idx < players.len() as u8 {

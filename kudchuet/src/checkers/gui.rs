@@ -50,7 +50,7 @@ impl BoardGame for Checkers10 {
 
 	fn result(&self) -> crate::common::GameResult {
 		if self.is_over() {
-			if self.player_turn() == Player::Player1 {
+			if self.player_turn() == Player::PLAYER1 {
 				crate::common::GameResult::Player1
 			} else {
 				crate::common::GameResult::Player2

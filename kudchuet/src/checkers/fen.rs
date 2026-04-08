@@ -11,8 +11,8 @@ impl Checkers10 {
 		}
 
 		board.current_player = match parts[0].to_uppercase().as_str() {
-			"W" => Player::Player1,
-			"B" => Player::Player2,
+			"W" => Player::PLAYER1,
+			"B" => Player::PLAYER2,
 			_ => return Err(format!("Invalid trait : {}", parts[0])),
 		};
 
@@ -55,7 +55,7 @@ impl Checkers10 {
 	pub fn to_fen(&self) -> String {
 		let mut fen = String::new();
 
-		fen.push_str(if self.current_player == Player::Player1 { "W:" } else { "B:" });
+		fen.push_str(if self.current_player == Player::PLAYER1 { "W:" } else { "B:" });
 
 		fen.push('W');
 		let mut w_pieces = Vec::new();

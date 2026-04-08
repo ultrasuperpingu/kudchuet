@@ -1,7 +1,6 @@
-//pub mod game;
-pub mod ihm;
-pub mod rules;
-pub mod game;
+
 pub mod bitboard;
-pub mod gui;
 pub mod fen;
+pub mod game;
+pub mod gui;
+pub mod rules;

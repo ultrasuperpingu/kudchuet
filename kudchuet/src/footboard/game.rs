@@ -28,8 +28,8 @@ impl minimax::Game for FootBoard {
 	}
 	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
 		match state.result() {
-			crate::common::GameResult::Player1 => if state.turn() == Player::Player2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			crate::common::GameResult::Player2 => if state.turn() == Player::Player1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			crate::common::GameResult::Player1 => if state.turn() == Player::PLAYER2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			crate::common::GameResult::Player2 => if state.turn() == Player::PLAYER1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
 			crate::common::GameResult::Player(_) => unreachable!(),
 			crate::common::GameResult::Draw => Some(minimax::Winner::Draw),
 			crate::common::GameResult::OnGoing => None,
@@ -63,7 +63,7 @@ impl minimax::Evaluator for FootboardEvalDumb {
 		} else if owner.is_some() {
 			score -= 100;
 		}
-		if state.turn() == Player::Player1 {
+		if state.turn() == Player::PLAYER1 {
 			score
 		} else {
 			-score

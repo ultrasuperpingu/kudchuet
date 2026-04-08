@@ -46,7 +46,7 @@ where
 	}
 
 	fn stop_signal(&self) -> SearchStopSignal {
-		self.next_search_stop_signal()
+		self.stop_signal()
 	}
 
 	fn root_value(&self) -> minimax::Evaluation {

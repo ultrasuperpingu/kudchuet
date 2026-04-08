@@ -27,8 +27,6 @@ where
 	#[cfg(not(target_arch = "wasm32"))]
 	external_providers: Vec<ExternalEngineEntry>,
 	internal_providers: Vec<Box<dyn AIEngineProvider<G, Engine = Box<dyn AIEngine<G>>>>>,
-	//pub(crate) active_player1_engine: Option<String>,
-	//pub(crate) active_player2_engine: Option<String>,
 	player_engines: HashMap<Player, Option<String>>,
 	paused: bool,
 	ai_future: Option<Pin<Box<dyn Future<Output = Option<G::M>> + Send>>>,
@@ -45,8 +43,6 @@ where
 			#[cfg(not(target_arch = "wasm32"))]
 			external_providers: Vec::new(),
 			internal_providers: Vec::new(),
-			//active_player1_engine: None,
-			//active_player2_engine: None,
 			player_engines: HashMap::new(),
 			paused: false,
 			ai_future: None
@@ -59,8 +55,6 @@ where
 			#[cfg(not(target_arch = "wasm32"))]
 			external_providers: Vec::new(),
 			internal_providers,
-			//active_player1_engine: None,
-			//active_player2_engine: None,
 			player_engines: HashMap::new(),
 			paused: false,
 			ai_future: None,
@@ -147,18 +141,6 @@ where
 	pub fn choose_move(&mut self, game: &G) -> Result<G::M, String> {
 		let eng=self.get_player_engine(game.current_player()).cloned();
 		self.choose_move_with(eng.unwrap_or_else(|| "default".into()), game)
-		/*match game.current_player() {
-			Player::Player1 => {
-				self.choose_move_with(self.active_player1_engine.clone().unwrap_or_else(|| "default".into()), game)
-			}
-			Player::Player2 => {
-				self.choose_move_with(self.active_player2_engine.clone().unwrap_or_else(|| "default".into()), game)
-			}
-			Player::Player(_) => {
-				self.choose_move_with(self.active_player2_engine.clone().unwrap_or_else(|| "default".into()), game)
-			}
-			_ => Err("No player to move".into()),
-		}*/
 	}
 
 	fn choose_move_with(&mut self, ai: String, game: &G) -> Result<G::M, String> {
@@ -175,15 +157,6 @@ where
 		let game = game.clone();
 		let eng=self.get_player_engine(game.current_player()).cloned();
 		self.choose_move_async_with(eng.unwrap_or_else(|| "default".into()), game)
-		/*match game.current_player() {
-			Player::Player1 => {
-				self.choose_move_async_with(self.active_player1_engine.clone().unwrap_or_else(|| "default".into()), game)
-			}
-			Player::Player2 => {
-				self.choose_move_async_with(self.active_player2_engine.clone().unwrap_or_else(|| "default".into()), game)
-			}
-			_ => Err("No player to move".into()),
-		}*/
 	}
 
 	pub fn is_thinking(&self) -> bool {
@@ -211,23 +184,16 @@ where
 		}
 	}
 	pub fn stop_thinking(&mut self) {
-		
+		//TODO: find currently thinking engine
 		for e in &self.engines
 		{
 			e.1.stop_thinking();
 		}
-		/*if let Some(engine_name) = self.active_player1_engine.as_ref()
-		{
-			if let Some(engine) = self.engines.get(engine_name) {
-				engine.stop_thinking();
-			}
-		}
-		if let Some(engine_name) = self.active_player2_engine.as_ref()
-		{
-			if let Some(engine) = self.engines.get(engine_name) {
-				engine.stop_thinking();
-			}
-		}*/
+	}
+	pub fn cancel_thinking(&mut self) {
+		self.stop_thinking();
+		// TODO: avoid doing this (thread leak??)
+		self.ai_future=None
 	}
 	//#[cfg(not(target_arch = "wasm32"))]
 	fn choose_move_async_with(&mut self, ai: String, game: G) -> Result<(), String> {

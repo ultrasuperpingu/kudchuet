@@ -95,7 +95,7 @@ impl Backgammon {
 				h ^= Self::ZOBRIST.on_bar[i][n];
 			}
 		}
-		if self.current_player == Player::Player2 {
+		if self.current_player == Player::PLAYER2 {
 			h ^= Self::ZOBRIST.turn;
 		}
 		h
@@ -180,7 +180,7 @@ impl Default for Backgammon {
 			board,
 			on_bar: [0, 0],
 			outside: [0, 0],
-			current_player: Player::Player1,
+			current_player: Player::PLAYER1,
 			dice: ArrayVec::new(),
 			rng: utils::Rng::new(),
 			hash: 0,
@@ -269,9 +269,9 @@ impl Backgammon {
 
 	pub fn winner(&self) -> Option<Player> {
 		if self.outside[0] == 15 {
-			Some(Player::Player1)
+			Some(Player::PLAYER1)
 		} else if self.outside[1] == 15 {
-			Some(Player::Player2)
+			Some(Player::PLAYER2)
 		} else {
 			None
 		}
@@ -285,13 +285,13 @@ impl Backgammon {
 		}
 	}
 	fn current_sign(&self) -> i8 {
-		if self.current_player == Player::Player1 { 1 } else { -1 }
+		if self.current_player == Player::PLAYER1 { 1 } else { -1 }
 	}
 
 	fn entry_point(&self, die: u8) -> u8 {
 		match self.current_player {
-			Player::Player1 => die - 1,
-			Player::Player2 => 24 - die,
+			Player::PLAYER1 => die - 1,
+			Player::PLAYER2 => 24 - die,
 			_ => unreachable!(),
 		}
 	}
@@ -310,10 +310,10 @@ impl Backgammon {
 
 		for i in 0..24 {
 			if self.board[i] * sign > 0 {
-				if self.current_player == Player::Player1 && i < 18 {
+				if self.current_player == Player::PLAYER1 && i < 18 {
 					return false;
 				}
-				if self.current_player == Player::Player2 && i > 5 {
+				if self.current_player == Player::PLAYER2 && i > 5 {
 					return false;
 				}
 			}
@@ -387,15 +387,15 @@ impl Backgammon {
 		let mut moves = Vec::new();
 
 		let player = self.current_player;
-		let dir: i32 = if player == Player::Player1 { 1 } else { -1 };
-		let piece = if player == Player::Player1 { 1 } else { -1 };
+		let dir: i32 = if player == Player::PLAYER1 { 1 } else { -1 };
+		let piece = if player == Player::PLAYER1 { 1 } else { -1 };
 
 		// priority: out of bar
 		if self.on_bar[player.idx()] > 0 {
 			let entry = self.entry_point(die);
 
 			if let Some(capture) = self.can_land(entry) {
-				moves.push(SingleMove::new(if player == Player::Player1 {P1_BAR} else {P2_BAR}, entry, capture));
+				moves.push(SingleMove::new(if player == Player::PLAYER1 {P1_BAR} else {P2_BAR}, entry, capture));
 			}
 
 			return moves;
@@ -438,26 +438,26 @@ impl Backgammon {
 	}
 	pub(crate) fn apply_single_move(&mut self, from: u8, to: u8) {
 		let player = self.current_player;
-		let piece = if player == Player::Player1 { 1 } else { -1 };
+		let piece = if player == Player::PLAYER1 { 1 } else { -1 };
 		
 		// Remove pawn
 		if from == P1_BAR {
-			debug_assert!(player == Player::Player1);
+			debug_assert!(player == Player::PLAYER1);
 			self.on_bar[0] -= 1;
 		} else if from == P2_BAR {
-			debug_assert!(player == Player::Player2);
+			debug_assert!(player == Player::PLAYER2);
 			self.on_bar[1] -= 1;
 		} else {
 			self.board[from as usize] -= piece;
 		}
 
 		if to == P1_OUT {
-			debug_assert!(player == Player::Player1);
+			debug_assert!(player == Player::PLAYER1);
 			self.outside[0] += 1;
 			return;
 		}
 		else if to == P2_OUT {
-			debug_assert!(player == Player::Player2);
+			debug_assert!(player == Player::PLAYER2);
 			self.outside[1] += 1;
 			return;
 		}
@@ -519,7 +519,7 @@ impl Backgammon {
 	}
 	fn undo_single_move(&mut self, mv: &SingleMove) {
 		let player = self.current_player;
-		let piece = if player == Player::Player1 { 1 } else { -1 };
+		let piece = if player == Player::PLAYER1 { 1 } else { -1 };
 
 		if mv.to == P1_OUT {
 			self.outside[0] -= 1;
