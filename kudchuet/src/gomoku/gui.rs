@@ -76,13 +76,14 @@ impl BoardGame for Gomoku {
 		Goban::coords_from_index(index as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.checkerboard_mod=crate::common::gui::CheckerBoardMod::None;
-		style.uniform_color=Color32::from_rgb(215, 180, 140);
-		style.light_color=Color32::from_rgb(200, 200, 250);
-		style.dark_color=Color32::from_rgb(40, 40, 40);
-		style.show_coordinates_mod=crate::common::gui::CoordMod::NumbersAside;
-		style
+		BoardStyle {
+			checkerboard_mod: crate::common::gui::CheckerBoardMod::None,
+			uniform_color: Color32::from_rgb(215, 180, 140),
+			light_color: Color32::from_rgb(200, 200, 250),
+			dark_color: Color32::from_rgb(40, 40, 40),
+			show_coordinates_mod: crate::common::gui::CoordMod::NumbersAside,
+			..Default::default()
+		}
 	}
 }
 pub struct GobanSquareDrawer;

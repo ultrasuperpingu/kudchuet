@@ -142,14 +142,15 @@ impl BoardGame for FootBoard {
 		Bitboard9x13::coords_from_index(i as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.checkerboard_mod=CheckerBoardMod::None;
-		style.uniform_color=Color32::DARK_GREEN;
-		style.dark_color=Color32::BLACK;
-		style.light_color=Color32::WHITE;
-		style.square_stroke_color=Some(Color32::BLACK);
-		style.show_coordinates_mod=CoordMod::FileRankAside;
-		style
+		BoardStyle {
+			checkerboard_mod: CheckerBoardMod::None,
+			uniform_color: Color32::DARK_GREEN,
+			dark_color: Color32::BLACK,
+			light_color: Color32::WHITE,
+			square_stroke_color: Some(Color32::BLACK),
+			show_coordinates_mod: CoordMod::FileRankAside,
+			..Default::default()
+		}
 	}
 }
 

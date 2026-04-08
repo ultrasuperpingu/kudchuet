@@ -166,12 +166,13 @@ impl BoardGame for Yote {
 		Bitboard6x5::coords_from_index(index as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.checkerboard_mod=crate::common::gui::CheckerBoardMod::None;
-		style.uniform_color=Color32::from_rgb(235, 230, 220);
-		style.show_coordinates_mod=crate::common::gui::CoordMod::FileRankAside;
-		style.square_stroke_color=Some(egui::Color32::BLACK);
-		style
+		BoardStyle {
+			checkerboard_mod: crate::common::gui::CheckerBoardMod::None,
+			uniform_color: Color32::from_rgb(235, 230, 220),
+			show_coordinates_mod: crate::common::gui::CoordMod::FileRankAside,
+			square_stroke_color: Some(egui::Color32::BLACK),
+			..Default::default()
+		}
 	}
 }
 

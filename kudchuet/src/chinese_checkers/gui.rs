@@ -116,13 +116,14 @@ impl BoardGame for ChineseCheckers {
 		ChineseCheckerBoard::coords_from_index(index as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.uniform_color=egui::Color32::from_rgb(200, 190, 125);
-		style.show_coordinates_mod=crate::common::gui::CoordMod::None;
-		style.played_highlights_shape=Shape::Rect { color: Color32::from_rgba_unmultiplied(120, 120, 120, 128), size: 1.0, text: "".into(), text_color: Color32::BLACK, stroke_color: None };
-		style.half_size_offset_mod = crate::common::gui::HalfSizeOffsetMod::Even;
-		style.clear_color = Some(egui::Color32::from_rgb(200, 190, 125));
-		style
+		BoardStyle {
+			uniform_color: egui::Color32::from_rgb(200, 190, 125),
+			show_coordinates_mod: crate::common::gui::CoordMod::None,
+			played_highlights_shape: Shape::Rect { color: Color32::from_rgba_unmultiplied(120, 120, 120, 128), size: 1.0, text: "".into(), text_color: Color32::BLACK, stroke_color: None },
+			half_size_offset_mod: crate::common::gui::HalfSizeOffsetMod::Even,
+			clear_color: Some(egui::Color32::from_rgb(200, 190, 125)),
+			..Default::default()
+		}
 	}
 	fn get_position_from_string(&self, fen: &String) -> Result<Self, String> {
 		Self::from_fen(fen)

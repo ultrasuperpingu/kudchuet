@@ -120,12 +120,13 @@ impl BoardGame for Diaballik {
 		Bitboard7x7::coords_from_index(i as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.checkerboard_mod=crate::common::gui::CheckerBoardMod::None;
-		style.uniform_color=Color32::LIGHT_BLUE;
-		style.square_stroke_color=Some(Color32::BLUE);
-		style.show_coordinates_mod=crate::common::gui::CoordMod::NumbersOnSquare;
-		style
+		BoardStyle {
+			checkerboard_mod: crate::common::gui::CheckerBoardMod::None,
+			uniform_color: Color32::LIGHT_BLUE,
+			square_stroke_color: Some(Color32::BLUE),
+			show_coordinates_mod: crate::common::gui::CoordMod::NumbersOnSquare,
+			..Default::default()
+		}
 	}
 }
 

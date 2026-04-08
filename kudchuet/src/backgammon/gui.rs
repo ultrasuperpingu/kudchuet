@@ -246,14 +246,15 @@ impl BoardGame for Backgammon {
 		Some(self.to_position_notation())
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.checkerboard_mod = crate::common::gui::CheckerBoardMod::OddDark;
-		style.uniform_color = Color32::from_rgb(40, 70, 125);
-		style.dark_color = Color32::from_rgb(60, 45, 30);
-		style.light_color = Color32::from_rgb(200, 175, 140);
-		style.show_coordinates_mod = crate::common::gui::CoordMod::None;
-		style.square_stroke_color = None;
-		style
+		BoardStyle {
+			checkerboard_mod: crate::common::gui::CheckerBoardMod::OddDark,
+			uniform_color: Color32::from_rgb(40, 70, 125),
+			dark_color: Color32::from_rgb(60, 45, 30),
+			light_color: Color32::from_rgb(200, 175, 140),
+			show_coordinates_mod: crate::common::gui::CoordMod::None,
+			square_stroke_color: None,
+			..Default::default()
+		}
 	}
 }
 fn dice_string(dice: u8) -> String {

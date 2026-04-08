@@ -84,21 +84,22 @@ impl BoardGame for ThreeMusketeers {
 		Bitboard5x5::coords_from_index(index as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.checkerboard_mod=crate::common::gui::CheckerBoardMod::EvenDark;
-		//style.uniform_color=Color32::from_rgb(235, 230, 220);
-		style.light_color=Color32::from_rgb(200, 200, 250);
-		style.dark_color=Color32::from_rgb(40, 40, 100);
-		style.show_coordinates_mod=crate::common::gui::CoordMod::FileRankOnSquare;
-		style.played_highlights_shape=Shape::Rect {
-			color: Color32::from_rgba_unmultiplied(200,200,90,120),
-			size: 1.0,
-			text: "".into(),
-			text_color: Color32::BLACK,
-			stroke_color: None
-		};
-		//style.square_stroke_color=Some(egui::Color32::BLACK);
-		style
+		BoardStyle {
+			checkerboard_mod: crate::common::gui::CheckerBoardMod::EvenDark,
+			//uniform_color: Color32::from_rgb(235, 230, 220),
+			light_color: Color32::from_rgb(200, 200, 250),
+			dark_color: Color32::from_rgb(40, 40, 100),
+			show_coordinates_mod: crate::common::gui::CoordMod::FileRankOnSquare,
+			played_highlights_shape: Shape::Rect {
+				color: Color32::from_rgba_unmultiplied(200,200,90,120),
+				size: 1.0,
+				text: "".into(),
+				text_color: Color32::BLACK,
+				stroke_color: None
+			},
+			//square_stroke_color: Some(egui::Color32::BLACK),
+			..Default::default()
+		}
 	}
 	fn position_to_string(&self) -> Option<String> {
 		Some(self.to_fen())

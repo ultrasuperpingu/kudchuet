@@ -87,10 +87,11 @@ impl BoardGame for HareAndHounds {
 		Board::coords_from_index(i as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.show_coordinates_mod=crate::common::gui::CoordMod::NumbersAside;
-		//style.checkerboard_mod=crate::common::gui::CheckerBoardMod::None;
-		style
+		BoardStyle {
+			show_coordinates_mod: crate::common::gui::CoordMod::NumbersAside,
+			//checkerboard_mod: crate::common::gui::CheckerBoardMod::None,
+			..Default::default()
+		}
 	}
 }
 

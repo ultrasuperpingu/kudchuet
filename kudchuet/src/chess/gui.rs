@@ -156,12 +156,13 @@ impl BoardGame for ChessBoard {
 		Err("Not Supported".into())
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.dark_color=egui::Color32::from_rgb(105, 105, 185);
-		style.light_color=Color32::from_rgb(240, 240, 250);
-		style.show_coordinates_mod=crate::common::gui::CoordMod::FileRankOnSquare;
-		style.played_highlights_shape=Shape::Rect { color: Color32::from_rgba_unmultiplied(120, 120, 120, 128), size: 1.0, text: "".into(), text_color: Color32::BLACK, stroke_color: None };
-		style
+		BoardStyle {
+			dark_color: egui::Color32::from_rgb(105, 105, 185),
+			light_color: Color32::from_rgb(240, 240, 250),
+			show_coordinates_mod: crate::common::gui::CoordMod::FileRankOnSquare,
+			played_highlights_shape: Shape::Rect { color: Color32::from_rgba_unmultiplied(120, 120, 120, 128), size: 1.0, text: "".into(), text_color: Color32::BLACK, stroke_color: None },
+			..Default::default()
+		}
 	}
 }
 #[derive(EguiInspect)]

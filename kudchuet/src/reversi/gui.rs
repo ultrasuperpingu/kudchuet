@@ -94,12 +94,13 @@ impl BoardGame for Reversi {
 		Bitboard8x8::coords_from_index(index as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.checkerboard_mod=crate::common::gui::CheckerBoardMod::None;
-		style.uniform_color=Color32::from_rgb(0, 120, 0);
-		style.show_coordinates_mod=crate::common::gui::CoordMod::FileRankOnSquare;
-		style.square_stroke_color=Some(egui::Color32::BLACK);
-		style
+		BoardStyle {
+			checkerboard_mod: crate::common::gui::CheckerBoardMod::None,
+			uniform_color: Color32::from_rgb(0, 120, 0),
+			show_coordinates_mod: crate::common::gui::CoordMod::FileRankOnSquare,
+			square_stroke_color: Some(egui::Color32::BLACK),
+			..Default::default()
+		}
 	}
 }
 

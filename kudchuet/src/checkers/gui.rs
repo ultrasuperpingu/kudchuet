@@ -117,13 +117,14 @@ impl BoardGame for Checkers10 {
 	}
 	
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.checkerboard_mod=crate::common::gui::CheckerBoardMod::OddDark;
-		style.uniform_color=Color32::from_rgb(235, 230, 220);
-		style.show_coordinates_mod=crate::common::gui::CoordMod::NumbersOnSquare;
-		style.square_stroke_color=Some(egui::Color32::BLACK);
-		style.mirrored = true;
-		style
+		BoardStyle {
+			checkerboard_mod: crate::common::gui::CheckerBoardMod::OddDark,
+			uniform_color: Color32::from_rgb(235, 230, 220),
+			show_coordinates_mod: crate::common::gui::CoordMod::NumbersOnSquare,
+			square_stroke_color: Some(egui::Color32::BLACK),
+			mirrored: true,
+			..Default::default()
+		}
 	}
 }
 

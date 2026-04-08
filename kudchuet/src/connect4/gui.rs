@@ -93,12 +93,13 @@ impl BoardGame for ConnectFour {
 		Bitboard7x7Col::coords_from_index(i as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.dark_color=Color32::from_rgb(0, 0, 150);
-		style.light_color=Color32::from_rgb(0, 0, 150);
-		style.empty_cell_shape = Some(Shape::Circle { color: Color32::from_rgb(20, 20, 80), size: 0.7, text: "".into(), text_color: egui::Color32::BLACK, stroke_color: Some(egui::Color32::BLACK) });
-		style.show_coordinates_mod=crate::common::gui::CoordMod::NumbersAside;
-		style
+		BoardStyle {
+			dark_color: Color32::from_rgb(0, 0, 150),
+			light_color: Color32::from_rgb(0, 0, 150),
+			empty_cell_shape: Some(Shape::Circle { color: Color32::from_rgb(20, 20, 80), size: 0.7, text: "".into(), text_color: egui::Color32::BLACK, stroke_color: Some(egui::Color32::BLACK) }),
+			show_coordinates_mod: crate::common::gui::CoordMod::NumbersAside,
+			..Default::default()
+		}
 	}
 }
 

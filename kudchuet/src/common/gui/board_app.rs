@@ -84,7 +84,7 @@ impl<G: BoardGame+Sync+Send+'static> eframe::App for GenericBoardApp<G>
 				}
 			}
 			if let Some(candidates) = self.input_handler.pending_moves().clone() {
-				match self.ask_select_between_multiple_moves(ui.ctx(), &candidates) {
+				match self.ask_select_between_multiple_moves(ui.ctx(), candidates) {
 					MultipleMoveSelectionResult::Pending => {}
 					MultipleMoveSelectionResult::Cancelled=> {
 						self.input_handler.reset(&mut self.board_drawer, &self.game_state_manager);
@@ -192,7 +192,7 @@ where G::M: BoardMove<G>+Send
 						ui.add_space(12.0);
 					
 						for mv in candidates {
-							let label = self.game().move_to_string(&mv)
+							let label = self.game().move_to_string(mv)
 								.unwrap_or_else(|| format!("{:?}", mv));
 
 							if ui.button(label).clicked() {
@@ -216,7 +216,7 @@ where G::M: BoardMove<G>+Send
 		let engines = self.ai_engine_manager.get_all_engine_names();
 		ui.horizontal(|ui| {
 			ui.vertical(|ui| {
-				self.draw_players_list(engines, ui);
+				self.draw_players_list(&engines, ui);
 			});
 			ui.separator();
 			if self.ai_engine_manager.is_thinking() {
@@ -294,7 +294,7 @@ where G::M: BoardMove<G>+Send
 
 			// end turn btn
 			let exact_matches : Vec<G::M> = self.input_handler.matching_moves().iter().filter(|m| m.click_sequence(self.game()) == self.input_handler.current_clicks().clone()).copied().collect();
-			if exact_matches.len() > 0 && ui.button("End Turn").clicked() {
+			if !exact_matches.is_empty() && ui.button("End Turn").clicked() {
 				if exact_matches.len() > 1 {
 					self.input_handler.set_pending_moves(exact_matches);
 				} else if exact_matches.len() == 1 {
@@ -315,12 +315,12 @@ where G::M: BoardMove<G>+Send
 		result
 	}
 
-	fn draw_players_list(&mut self, engines: Vec<String>, ui: &mut Ui) {
+	fn draw_players_list(&mut self, engines: &[String], ui: &mut Ui) {
 		for i in 0..self.game().nb_players() {
-			self.draw_player(Player::Player(i), &engines, ui);
+			self.draw_player(Player::Player(i), engines, ui);
 		}
 	}
-	fn draw_player(&mut self, p: Player, engines: &Vec<String>, ui: &mut Ui) {
+	fn draw_player(&mut self, p: Player, engines: &[String], ui: &mut Ui) {
 		let p_name=self.game().get_name(p);
 		ui.horizontal(|ui| {
 			ui.label(p_name.clone() + ":");
@@ -335,7 +335,7 @@ where G::M: BoardMove<G>+Send
 
 			if ui.selectable_label(is_computer, "Computer").clicked() {
 				if !is_computer {
-					self.ai_engine_manager.set_player_engine(p, engines.get(0).cloned());
+					self.ai_engine_manager.set_player_engine(p, engines.first().cloned());
 				}
 			}
 
@@ -344,7 +344,7 @@ where G::M: BoardMove<G>+Send
 
 				let current_engine = self.ai_engine_manager.get_player_engine(p).cloned();
 				let mut selected_engine = current_engine.clone()
-					.unwrap_or_else(|| engines.get(0).cloned().unwrap_or_default());
+					.unwrap_or_else(|| engines.first().cloned().unwrap_or_default());
 
 				egui::ComboBox::from_id_salt(format!("{} Engine", p_name))
 					.selected_text(selected_engine.clone())

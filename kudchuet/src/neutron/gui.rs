@@ -89,11 +89,12 @@ impl BoardGame for Neutron {
 		Bitboard5x5::coords_from_index(index as usize)
 	}
 	fn default_style() -> BoardStyle {
-		let mut style = BoardStyle::default();
-		style.dark_color=egui::Color32::from_rgb(181, 136, 99);
-		style.light_color=Color32::from_rgb(240, 217, 181);
-		style.show_coordinates_mod=crate::common::gui::CoordMod::FileRankOnSquare;
-		style
+		BoardStyle {
+			dark_color: egui::Color32::from_rgb(181, 136, 99),
+			light_color: Color32::from_rgb(240, 217, 181),
+			show_coordinates_mod: crate::common::gui::CoordMod::FileRankOnSquare,
+			..Default::default()
+		}
 	}
 	fn position_to_string(&self) -> Option<String> {
 		Some(self.to_fen())
