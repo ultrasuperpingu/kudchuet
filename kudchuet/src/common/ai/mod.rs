@@ -229,10 +229,10 @@ impl Into<UciValue> for UciOptionConfig {
 	fn into(self) -> UciValue {
 		match self {
 			UciOptionConfig::Check { name:_, default } => UciValue::Bool(default.map_or(false, |v| v)),
-			UciOptionConfig::Spin { name:_, default, min, max } => UciValue::Spin(default.map_or(0, |v| v.into()), min, max),
-			UciOptionConfig::Combo { name:_, default, var } => UciValue::Combo(default.map_or("".to_string(), |v| v.into()), var),
+			UciOptionConfig::Spin { name:_, default, min, max } => UciValue::Spin(default.map_or(0, |v| v), min, max),
+			UciOptionConfig::Combo { name:_, default, var } => UciValue::Combo(default.map_or("".to_string(), |v| v), var),
 			UciOptionConfig::Button { name:_ } => UciValue::Button,
-			UciOptionConfig::String { name:_, default } => UciValue::String(default.map_or("".to_string(), |v| v.into())),
+			UciOptionConfig::String { name:_, default } => UciValue::String(default.map_or("".to_string(), |v| v)),
 		}
 	}
 }
@@ -247,10 +247,7 @@ impl UciValue {
 		}
 	}
 	pub fn set_bool(&mut self, val: bool) {
-		match self {
-			UciValue::Bool(v) => *v = val,
-			_ => {},
-		}
+		if let UciValue::Bool(v) = self { *v = val }
 	}
 }
 fn inspect_uci_value(
@@ -324,8 +321,7 @@ pub struct AIOptions {
 }
 impl From<AIOptions> for minimax::IterativeOptions {
 	fn from(value: AIOptions) -> Self {
-		let v = Self::new().with_table_byte_size(value.table_megabyte_size * 1024 * 1024);
-		v
+		Self::new().with_table_byte_size(value.table_megabyte_size * 1024 * 1024)
 	}
 }
 impl From<minimax::IterativeOptions> for AIOptions {

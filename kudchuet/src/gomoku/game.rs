@@ -86,7 +86,7 @@ impl GomokuEvalSimple {
 impl minimax::Evaluator for GomokuEvalSimple {
 	type G = Gomoku;
 	fn evaluate(&self, state: &Gomoku) -> minimax::Evaluation {
-		let score = 0 as i16;
+		let score = 0;
 		if state.turn == Player::PLAYER2 {
 			score
 		} else {

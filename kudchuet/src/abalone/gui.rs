@@ -7,7 +7,7 @@ use crate::abalone::bitboard::BitboardAbalone;
 use crate::abalone::game::AbaloneMaterialEval;
 use crate::abalone::rules::{Abalone, Cell, HEXES, Hex, Move, idx};
 use crate::common::gui::board_app::GenericBoardApp;
-use crate::common::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, SquareDrawer};
+use crate::common::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, PieceDrawer, SquareDrawer};
 use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
 use crate::common::{GameResult, Player, new_move_searcher_vec};
 
@@ -197,7 +197,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 			self.get_style().legal_highlights_shape.draw(ui.painter(), square.center(), size);
 		}
 		if let Some(h) = clicked_hex {
-			idx(h).map(|index| BitboardAbalone::coords_from_index(index))
+			idx(h).map(BitboardAbalone::coords_from_index)
 		} else {
 			None
 		}
@@ -220,6 +220,18 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 
 	fn set_square_drawer(&mut self, sq_drawer: Box<dyn SquareDrawer<Abalone>>) {
 		self.0.set_square_drawer(sq_drawer)
+	}
+
+	fn get_piece_drawer(&self) -> &dyn PieceDrawer<Abalone> {
+		self.0.get_piece_drawer()
+	}
+
+	fn get_piece_drawer_mut(&mut self) -> &mut dyn PieceDrawer<Abalone> {
+		self.0.get_piece_drawer_mut()
+	}
+
+	fn set_piece_drawer(&mut self, sq_drawer: Box<dyn PieceDrawer<Abalone>>) {
+		self.0.set_piece_drawer(sq_drawer)
 	}
 
 	fn get_style(&self) -> &BoardStyle {

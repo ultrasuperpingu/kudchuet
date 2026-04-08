@@ -117,8 +117,8 @@ impl ChessBoard {
 			if sq.len() != 2 {
 				return Err("Invalid FEN: En passant square is invalid".into());
 			}
-			let file = (sq.as_bytes()[0] - b'a') as u8;
-			let rank = (sq.as_bytes()[1] - b'1') as u8;
+			let file = sq.as_bytes()[0] - b'a';
+			let rank = sq.as_bytes()[1] - b'1';
 			if file > 7 || rank > 7 {
 				return Err("Invalid FEN: En passant square is out of bound".into());
 			}
@@ -215,8 +215,8 @@ impl ChessBoard {
 		// En passant
 		fen.push(' ');
 		if let Some(Square(sq)) = self.ep_square {
-			let file = (sq % 8) as u8;
-			let rank = (sq / 8) as u8;
+			let file = sq % 8;
+			let rank = sq / 8;
 			fen.push((b'a' + file) as char);
 			fen.push((b'1' + rank) as char);
 		} else {

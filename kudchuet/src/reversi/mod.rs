@@ -336,8 +336,7 @@ impl Reversi {
 		let mut moves = Bitboard8x8::empty();
 		
 
-		for dir in 0..8 {
-			let shift = DIR_SHIFT_FUNCS[dir];
+		for shift in &DIR_SHIFT_FUNCS {
 			//let mask = Bitboard8x8::from_storage(DIR_MASK[dir]);
 
 			// pions adverses adjacents dans la direction
@@ -424,7 +423,7 @@ impl Reversi {
 
 #[cfg(test)]
 mod tests {
-	use bitboard::Bitboard;
+	//use bitboard::Bitboard;
 
 	use crate::common::bitboards::Bitboard8x8;
 	use super::Cell;

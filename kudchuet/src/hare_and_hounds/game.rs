@@ -95,7 +95,7 @@ impl minimax::Evaluator for HareAndHoundsEval {
 		let avg_dist = if count > 0 { dist_sum / count } else { 0 };
 
 		// 3. Progression du lièvre vers la droite (colonne)
-		let hare_col = Board::column(hare as u8) as i16;
+		let hare_col = Board::column(hare) as i16;
 
 		// Score final :
 		// + liberté du lièvre

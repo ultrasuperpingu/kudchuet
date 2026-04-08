@@ -8,6 +8,7 @@ pub mod ex_connect4;
 use std::{fmt, io, str::FromStr};
 
 use ::bitboard::Bitboard;
+use serde_json::to_vec;
 
 use crate::common::bitboards::Bitboard7x7Col;
 //pub use solver::{score, Solver};
@@ -261,7 +262,7 @@ impl ConnectFour {
 	pub fn legal_moves(&self) -> Vec<Column> {
 		let mut moves = [Column(0); 7];
 		let n = self.legal_moves_array(&mut moves);
-		moves[0..n].iter().copied().collect()
+		moves[0..n].to_vec()
 	}
 
 	#[inline]

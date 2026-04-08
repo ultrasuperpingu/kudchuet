@@ -51,11 +51,7 @@ impl TurnBasedGame for ChineseCheckers {
 		<Self::S as BoardGame>::current_player(state).idx() as i8
 	}
 	fn get_explicit_winner(state: &Self::S) -> Option<minimax::TurnBasedWinner> {
-		if let Some(w) = state.winner() {
-			Some(minimax::TurnBasedWinner::Player(w.idx() as i8))
-		} else {
-			None
-		}
+		state.winner().map(|w| minimax::TurnBasedWinner::Player(w.idx() as i8))
 	}
 }
 impl StochasticGame for ChineseCheckers {

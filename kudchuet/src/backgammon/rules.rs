@@ -76,7 +76,7 @@ impl Backgammon {
 		for (i, &count) in self.board.iter().enumerate() {
 			if count != 0 {
 				let sign = if count > 0 { 0 } else { 1 };
-				let abs_count = count.abs() as usize;
+				let abs_count = count.unsigned_abs() as usize;
 				for n in 0..abs_count {
 					//println!("board[{}][{}][{}]",i, sign, n);
 					h ^= Self::ZOBRIST.board[i][sign][n];
@@ -115,7 +115,7 @@ impl Backgammon {
 				self.hash ^= Self::ZOBRIST.on_bar[1][(self.on_bar[1]-1) as usize];
 			}
 			f if f < 24 => {
-				let abs_count_from = self.board[f as usize].abs() as usize;
+				let abs_count_from = self.board[f as usize].unsigned_abs() as usize;
 				if abs_count_from > 0 {
 					self.hash ^= Self::ZOBRIST.board[f as usize][piece_sign][abs_count_from-1];
 				}
@@ -216,6 +216,11 @@ pub const P2_OUT: u8 = u8::MAX-3;
 pub struct PlayerMove {
 	pub moves: [SingleMove; 4],
 	pub len: u8,
+}
+impl Default for PlayerMove {
+	fn default() -> Self {
+		Self::new()
+	}
 }
 impl PlayerMove {
 	pub fn new() -> Self {
@@ -334,7 +339,7 @@ impl Backgammon {
 			return results;
 		}
 		let mut player_res = HashSet::new();
-		self.gen_moves_recursive(&mut self.clone(), &mut self.dice.clone(), &mut PlayerMove::new(), &mut player_res);
+		self.gen_moves_recursive(&self.clone(), &self.dice.clone(), &PlayerMove::new(), &mut player_res);
 
 		let max_len = player_res.iter().map(|m| m.len).max().unwrap_or(0);
 

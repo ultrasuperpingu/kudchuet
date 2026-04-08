@@ -1,10 +1,12 @@
 use eframe::egui;
 use egui::Color32;
+use egui_field_editor::EguiInspect;
 use crate::chess::mychess::ChessPosEval;
 use crate::chess::{Color, Move, Square, mychess::ChessMaterialEval};
 use crate::common::ai::{AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
 use crate::common::bitboards::Bitboard8x8;
 use crate::common::gui::board_app::GenericBoardApp;
+use crate::common::gui::board_drawer::PieceDrawer;
 use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
 
 use super::mychess::ChessBoard;
@@ -40,41 +42,6 @@ impl EGUIPieceType for ChessPiece {
 			ChessPiece::BlackQueen =>  Shape::String { text: "♛".into(), color: Color32::BLACK },
 			ChessPiece::BlackKing =>   Shape::String { text: "♚".into(), color: Color32::BLACK },
 		}
-	}
-	fn draw(&self, ui: &mut egui::Ui, center: egui::Pos2, cell_size: f32) {
-		match self {
-			ChessPiece::WhitePawn =>   {
-				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
-				Shape::draw(&Shape::String { text: "♙".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
-			},
-			ChessPiece::WhiteRook =>   {
-				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
-				Shape::draw(&Shape::String { text: "♖".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
-			},
-			ChessPiece::WhiteKnight => {
-				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
-				Shape::draw(&Shape::String { text: "♘".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
-			},
-			ChessPiece::WhiteBishop => {
-				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
-				Shape::draw(&Shape::String { text: "♗".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
-			},
-			ChessPiece::WhiteQueen =>  {
-				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
-				Shape::draw(&Shape::String { text: "♕".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
-			},
-			ChessPiece::WhiteKing =>   {
-				Shape::draw(&self.shape(), ui.painter(), center,cell_size);
-				Shape::draw(&Shape::String { text: "♔".into(), color: Color32::BLACK}, ui.painter(), center, cell_size);
-			},
-			ChessPiece::BlackPawn =>   Shape::draw(&self.shape(), ui.painter(), center,cell_size),
-			ChessPiece::BlackRook =>   Shape::draw(&self.shape(), ui.painter(), center,cell_size),
-			ChessPiece::BlackKnight => Shape::draw(&self.shape(), ui.painter(), center,cell_size),
-			ChessPiece::BlackBishop => Shape::draw(&self.shape(), ui.painter(), center,cell_size),
-			ChessPiece::BlackQueen =>  Shape::draw(&self.shape(), ui.painter(), center,cell_size),
-			ChessPiece::BlackKing =>   Shape::draw(&self.shape(), ui.painter(), center,cell_size),
-		}
-		
 	}
 }
 #[derive(Clone, PartialEq, Eq, Copy)]
@@ -173,7 +140,7 @@ impl BoardGame for ChessBoard {
 		Some(game)
 	}
 	fn get_position_from_string(&self, pos_str: &String) -> Result<Self, String> {
-		Ok(Self::from_fen(pos_str)?)
+		Self::from_fen(pos_str)
 	}
 	fn move_from_string(&self, m_str: &String) -> Result<Self::M, String> {
 		let res= self.san_to_move(m_str);
@@ -197,11 +164,53 @@ impl BoardGame for ChessBoard {
 		style
 	}
 }
+#[derive(EguiInspect)]
+struct ChessPieceDrawer;
+impl PieceDrawer<ChessBoard> for ChessPieceDrawer {
+	fn draw(&self, painter: &egui::Painter, _style: &BoardStyle, _game: &ChessBoard, piece: <ChessBoard as BoardGame>::PieceType, square: &egui::Rect, _x_coord: u8, _y_coord: u8) {
+		let center = square.center();
+		let cell_size = square.width();
+		match piece {
+			ChessPiece::WhitePawn =>   {
+				Shape::draw(&piece.shape(), painter, center,cell_size);
+				Shape::draw(&Shape::String { text: "♙".into(), color: Color32::BLACK}, painter, center, cell_size);
+			},
+			ChessPiece::WhiteRook =>   {
+				Shape::draw(&piece.shape(), painter, center,cell_size);
+				Shape::draw(&Shape::String { text: "♖".into(), color: Color32::BLACK}, painter, center, cell_size);
+			},
+			ChessPiece::WhiteKnight => {
+				Shape::draw(&piece.shape(), painter, center,cell_size);
+				Shape::draw(&Shape::String { text: "♘".into(), color: Color32::BLACK}, painter, center, cell_size);
+			},
+			ChessPiece::WhiteBishop => {
+				Shape::draw(&piece.shape(), painter, center,cell_size);
+				Shape::draw(&Shape::String { text: "♗".into(), color: Color32::BLACK}, painter, center, cell_size);
+			},
+			ChessPiece::WhiteQueen =>  {
+				Shape::draw(&piece.shape(), painter, center,cell_size);
+				Shape::draw(&Shape::String { text: "♕".into(), color: Color32::BLACK}, painter, center, cell_size);
+			},
+			ChessPiece::WhiteKing =>   {
+				Shape::draw(&piece.shape(), painter, center,cell_size);
+				Shape::draw(&Shape::String { text: "♔".into(), color: Color32::BLACK}, painter, center, cell_size);
+			},
+			ChessPiece::BlackPawn =>   Shape::draw(&piece.shape(), painter, center,cell_size),
+			ChessPiece::BlackRook =>   Shape::draw(&piece.shape(), painter, center,cell_size),
+			ChessPiece::BlackKnight => Shape::draw(&piece.shape(), painter, center,cell_size),
+			ChessPiece::BlackBishop => Shape::draw(&piece.shape(), painter, center,cell_size),
+			ChessPiece::BlackQueen =>  Shape::draw(&piece.shape(), painter, center,cell_size),
+			ChessPiece::BlackKing =>   Shape::draw(&piece.shape(), painter, center,cell_size),
+		}
+		
+	}
+}
 pub fn create_board() -> GenericBoardApp<ChessBoard> {
 	let engines: Vec<Box<dyn AIEngineProvider<ChessBoard, Engine=Box<dyn AIEngine<ChessBoard>>>>> = vec![
 		Box::new(MoveSearcherBuilderDyn::new("Material".into(), ChessMaterialEval{}, 5)),
 		Box::new(MoveSearcherBuilderDyn::new("Simple".into(), ChessPosEval{}, 5)),
 	];
-	let board=GenericBoardApp::new(ChessBoard::default(), engines);
+	let mut board=GenericBoardApp::new(ChessBoard::default(), engines);
+	board.board_drawer.set_piece_drawer(Box::new(ChessPieceDrawer{}));
 	board
 }

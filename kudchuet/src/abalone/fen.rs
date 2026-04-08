@@ -114,7 +114,7 @@ impl Abalone {
 
 		for (ri, row) in rows.iter().enumerate() {
 			let r = ri as i8 - 4;
-			let expected_len = 9 - r.abs() as usize;
+			let expected_len = 9 - r.unsigned_abs() as usize;
 
 			if row.len() != expected_len {
 				return Err(format!(

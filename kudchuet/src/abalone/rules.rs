@@ -538,15 +538,10 @@ impl Abalone {
 
 		let consecutive_mask = ray & Self::mask_before(first_obstacle_idx as usize, forward);
 		
-		let final_line = ally_on_ray & consecutive_mask;
-		
-		final_line
+		ally_on_ray & consecutive_mask
 	}
 	fn dir_is_forward(dir_idx: usize) -> bool {
-		match dir_idx {
-			0 | 1 | 5 => true,
-			_ => false,
-		}
+		matches!(dir_idx, 0 | 1 | 5)
 	}
 	fn detect_line_bitboard2(&self, start: usize, dir: usize) -> BitboardAbalone {
 		let player = if self.turn == Player::PLAYER1 { self.black } else { self.white };

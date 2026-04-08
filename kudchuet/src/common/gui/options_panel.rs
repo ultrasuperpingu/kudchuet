@@ -90,6 +90,15 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 										*self.board_drawer.get_style_mut() = G::default_style();
 										self.board_drawer.save_style(ui.ctx());
 									}
+									if self.board_drawer.get_piece_drawer().has_custom_properties() {
+										if self.board_drawer.get_piece_drawer_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
+											self.board_drawer.save_style(ui.ctx());
+										}
+										if ui.button("Default").clicked() {
+											self.board_drawer.get_piece_drawer_mut().set_default();
+											self.board_drawer.save_style(ui.ctx());
+										}
+									}
 								}
 								RightTab::ImportExport => {
 									let game = self.game().clone();
@@ -147,66 +156,6 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 			});
 	}
 
-	/*fn draw_uci_option(
-		ui: &mut egui::Ui,
-		engine: &ExternalEngine,
-		opt: &UciOptionConfig,
-	) {
-		match opt {
-			UciOptionConfig::Spin { name, default, min, max } => {
-				if let (Some(min), Some(max)) = (min, max) {
-					let mut val = default.unwrap_or(*min);
-
-					if egui_field_editor::add_number_slider(&mut val, name, "", LABEL_RATIO, false, *min, *max, ui).changed() {
-						let _ = engine.send_msg(UciMessage::SetOption {
-							name: name.clone(),
-							value: Some(val.to_string()),
-						});
-					}
-				}
-			}
-
-			UciOptionConfig::Check { name, default } => {
-				let mut val = default.unwrap_or(false);
-				if egui_field_editor::add_bool(&mut val, name, "", LABEL_RATIO, false, ui).changed() {
-					let _ = engine.send_msg(UciMessage::SetOption {
-						name: name.clone(),
-						value: Some(val.to_string()),
-					});
-				}
-			}
-
-			UciOptionConfig::Combo { name, default, var } => {
-				let mut index = var.iter().enumerate().find(|(_,e)| default.as_ref() == Some(e)).unwrap_or((0,&"".into())).0;
-				if egui_field_editor::add_combobox(&mut index, name, "", LABEL_RATIO, false, var, ui).changed() {
-					let _ = engine.send_msg(UciMessage::SetOption {
-						name: name.clone(),
-						//value: Some(current.clone()),
-						value: Some(var[index].clone()),
-					});
-				}
-			}
-
-			UciOptionConfig::String { name, default } => {
-				let mut val = default.clone().unwrap_or_default();
-				if egui_field_editor::add_string_convertible(&mut val, name, "", LABEL_RATIO, false, ui).changed() {
-					let _ = engine.send_msg(UciMessage::SetOption {
-						name: name.clone(),
-						value: Some(val.clone()),
-					});
-				}
-			}
-
-			UciOptionConfig::Button { name } => {
-				egui_field_editor::add_button(name, "", false, ui, |_ui| {
-					let _ = engine.send_msg(UciMessage::SetOption {
-						name: name.clone(),
-						value: None,
-					});
-				});
-			}
-		}
-	}*/
 	#[cfg(not(target_arch = "wasm32"))]
 	fn draw_external_engine_panel(&mut self, ui: &mut egui::Ui) {
 		ui.label(egui::RichText::new("External Engines").strong());

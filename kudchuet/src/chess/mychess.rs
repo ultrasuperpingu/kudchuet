@@ -743,7 +743,7 @@ impl ChessBoard {
 
 		// échec simple
 		block_mask |= checkers; // capture possible
-		return (true, checkers, block_mask);
+		(true, checkers, block_mask)
 	}
 
 
@@ -1231,7 +1231,7 @@ impl ChessBoard {
 		}
 		// TODO: BUG ep_square is set even if no capture is possible
 		if let Some(ep) = self.ep_square {
-			h ^= Self::ZOBRIST_KEYS.en_passant[ep.file() as usize];
+			h ^= Self::ZOBRIST_KEYS.en_passant[ep.file()];
 		}
 		if self.turn == Color::Black { h ^= Self::ZOBRIST_KEYS.turn; }
 		h
@@ -1267,7 +1267,7 @@ impl ChessBoard {
 
 		// --- 3. REMOVE OLD EN PASSANT ---
 		if let Some(ep) = ep_square_prev {
-			self.hash ^= Self::ZOBRIST_KEYS.en_passant[ep.file() as usize];
+			self.hash ^= Self::ZOBRIST_KEYS.en_passant[ep.file()];
 		}
 
 		// --- 4. REMOVE OLD CASTLING RIGHTS ---
@@ -1319,7 +1319,7 @@ impl ChessBoard {
 		// --- 8. NEW EN PASSANT ---
 		if let Some(ep) = self.ep_square {
 			// TODO: check capture ok
-			self.hash ^= Self::ZOBRIST_KEYS.en_passant[ep.file() as usize];
+			self.hash ^= Self::ZOBRIST_KEYS.en_passant[ep.file()];
 		}
 	}
 	fn update_hash_turn(&mut self) {
@@ -1339,7 +1339,7 @@ impl minimax::Game for ChessBoard {
 		} else {
 			b.legal_moves_inplace::<false>(&mut array, &mut len);
 		}
-		moves.extend_from_slice(&mut array[..len]);
+		moves.extend_from_slice(&array[..len]);
 		// TODO: check winner
 		Self::get_winner(b)
 	}

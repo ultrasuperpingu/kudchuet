@@ -95,35 +95,7 @@ impl EGUIPieceType for Cell {
 			Cell::Black => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
 			Cell::WhiteWithBall => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "⚽".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
 			Cell::BlackWithBall => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "⚽".into(), text_color: Color32::WHITE, stroke_color: Some(Color32::BLACK)},
-			Cell::Ball => Shape::String { text: "⚽".into(), color: Color32::BLACK },
-		}
-	}
-	fn draw(&self, ui: &mut egui::Ui, center: egui::Pos2, cell_size: f32) {
-		match self {
-			Cell::Empty => unreachable!(),
-			Cell::White => {
-				Shape::Circle{color:Color32::WHITE, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)}.draw(ui.painter(), center, cell_size);
-			},
-			Cell::Black => {
-				Shape::Circle{color:Color32::BLACK, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)}.draw(ui.painter(), center, cell_size);
-			},
-			Cell::WhiteWithBall => {
-				Shape::Circle{color:Color32::WHITE, text: "⚽".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)}.draw(ui.painter(), center, cell_size)
-			},
-			Cell::BlackWithBall => {
-				Shape::Circle{color:Color32::BLACK, text: "⚽".into(), size: 0.7, text_color: Color32::WHITE, stroke_color: Some(Color32::BLACK)}.draw(ui.painter(), center, cell_size);
-			},
-			Cell::Ball => {
-				ui.painter().circle_filled(center, cell_size * 0.26, Color32::WHITE);
-					ui.painter().text(
-						center,
-						egui::Align2::CENTER_CENTER,
-							"⚽",
-							egui::FontId::monospace(cell_size * 0.6),
-							Color32::BLACK
-						);
-				//Shape::String { text: "⚽".into(), color: Color32::BLACK }.draw(ui, center, cell_size);
-			},
+			Cell::Ball => Shape::Circle { color: Color32::WHITE, size: 0.52, text: "⚽".into(), text_color: Color32::BLACK, stroke_color: None },
 		}
 	}
 }
@@ -237,7 +209,7 @@ impl SquareDrawer<FootBoard> for FootboardSquareDrawer
 			
 		];
 		painter.text(board_rect.left_bottom(), Align2::LEFT_BOTTOM, _game.score1.to_string()+" - "+_game.score2.to_string().as_str(), FontId::monospace(cell_size*0.8), Color32::WHITE);
-		painter.text(board_rect.right_bottom(), Align2::RIGHT_BOTTOM, (90 as f32 - (_game.turn as f32 / 30.0) * 90.0).round().to_string() +":00", FontId::monospace(cell_size*0.8), Color32::WHITE);
+		painter.text(board_rect.right_bottom(), Align2::RIGHT_BOTTOM, (90.0 - (_game.turn as f32 / 30.0) * 90.0).round().to_string() +":00", FontId::monospace(cell_size*0.8), Color32::WHITE);
 		painter.line(points, stroke);
 	}
 }

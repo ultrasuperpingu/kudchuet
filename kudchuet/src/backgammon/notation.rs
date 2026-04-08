@@ -97,7 +97,7 @@ impl PlayerMove {
 		Some(parts.join(" "))
 	}
 
-	pub fn from_notation(m_str: &String) -> Result<Self, String> {
+	pub fn from_notation(m_str: &str) -> Result<Self, String> {
 		let mut pmove = PlayerMove{ moves:[SingleMove::default();4] , len: 0 };
 
 		for token in m_str.split_whitespace() {

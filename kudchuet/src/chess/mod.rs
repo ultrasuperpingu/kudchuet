@@ -100,8 +100,8 @@ impl Square {
 		if !(b'a'..=b'h').contains(&file) { return None; }
 		if !(b'1'..=b'8').contains(&rank) { return None; }
 
-		let file_idx = (file - b'a') as u8;
-		let rank_idx = (rank - b'1') as u8;
+		let file_idx = file - b'a';
+		let rank_idx = rank - b'1';
 
 		Some(Square(rank_idx * 8 + file_idx))
 	}

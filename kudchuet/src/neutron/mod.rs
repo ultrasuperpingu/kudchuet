@@ -130,7 +130,7 @@ impl Neutron {
 		for neutron_to in neutron_moves.iter_bits() {
 			for pawn_from in my_pawns.iter_bits() {
 				let mut occ_after = blockers;
-				occ_after.reset_at_index(neutron_idx as usize);
+				occ_after.reset_at_index(neutron_idx);
 				occ_after.set_at_index(neutron_to as usize);
 				let moves = get_slide_moves(pawn_from as u8, occ_after);
 				for pawn_to in moves.iter_bits() {
@@ -250,15 +250,15 @@ impl Neutron {
 		if index == self.get_neutron_index() {
 			for m in legals {
 				if let Some(neutron) = m.neutron.as_ref() {
-					if !pos.contains(&(*neutron as u8)) {
-						pos.push(*neutron as u8);
+					if !pos.contains(neutron) {
+						pos.push(*neutron);
 					}
 				}
 			}
 		} else {
 			for m in legals {
 				if m.pawn.0 as usize == index {
-					pos.push(m.pawn.1 as u8);
+					pos.push(m.pawn.1);
 				}
 			}
 		}

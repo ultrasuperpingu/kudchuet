@@ -30,7 +30,7 @@ impl BoardMove<Yote> for Move {
 					Move::Take { from:_, to, supplement_pawn: _ } => highlights.push(*to as u16),
 				};
 			}
-			if highlights.len() > 0 {
+			if !highlights.is_empty() {
 				return MoveResult::Incomplete{
 					selected:None,
 					highlights,
@@ -67,7 +67,7 @@ impl BoardMove<Yote> for Move {
 					},
 				};
 			}
-			if highlights.len() > 0 {
+			if !highlights.is_empty() {
 				return MoveResult::Incomplete{
 					selected: None,
 					highlights,

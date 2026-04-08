@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use egui::{Color32, Pos2, Rect, Ui, Vec2};
+use egui::{Color32, Pos2, Rect, Vec2};
 use egui_field_editor::EguiInspect;
 use minimax::Game;
 use serde::{Deserialize, Serialize};
@@ -203,9 +203,9 @@ pub trait EGUIPieceType {
 	fn shape(&self) -> Shape {
 		Shape::Circle { color: Color32::BLACK, size: 0.7, text: "N/A".to_owned(), text_color: Color32::WHITE, stroke_color: None }
 	}
-	fn draw(&self, ui: &mut Ui, center: Pos2, cell_size: f32) {
-		self.shape().draw(ui.painter(), center, cell_size);
-	}
+	//fn draw(&self, ui: &mut Ui, center: Pos2, cell_size: f32) {
+	//	self.shape().draw(ui.painter(), center, cell_size);
+	//}
 }
 
 pub trait BoardGame : Game<S = Self>+Default+Clone

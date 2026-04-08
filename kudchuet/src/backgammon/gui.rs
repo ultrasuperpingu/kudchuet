@@ -122,14 +122,14 @@ impl BoardGame for Backgammon {
 			return self.out_piece(y);
 		}
 		let index = match y {
-			5|6|7|8|9 => {
+			5..=9 => {
 				if x == 6 {
 					u8::MAX
 				} else {
 					12 + col(x)
 				}
 			},
-			0|1|2|3|4 => {
+			0..=4 => {
 				if x == 6 {
 					u8::MAX
 				} else {
@@ -160,41 +160,25 @@ impl BoardGame for Backgammon {
 		let content = self.board[index];
 
 		if content > 0 {
-			if y == 0 {
+			if y == 0 || y == 9 {
 				if content > 5 {
 					Some(Piece::Player1(content as u8 - 4))
 				} else {
 					Some(Piece::Player1(1))
 				}
-			} else if y == 9 {
-				if content > 5 {
-					Some(Piece::Player1(content as u8 - 4))
-				} else {
-					Some(Piece::Player1(1))
-				}
-			} else if y < 5 && y < content as u8 {
-				Some(Piece::Player1(1))
-			} else if y >= 5 && 9 - y < content as u8 {
+			} else if y < 5 && y < content as u8 || y >= 5 && 9 - y < content as u8{
 				Some(Piece::Player1(1))
 			} else {
 				None
 			}
 		} else if content < 0 {
-			if y == 0 {
+			if y == 0 || y == 9 {
 				if -content > 5 {
 					Some(Piece::Player2(-content as u8 - 4))
 				} else {
 					Some(Piece::Player2(1))
 				}
-			} else if y == 9 {
-				if -content > 5 {
-					Some(Piece::Player2((-content) as u8 - 4))
-				} else {
-					Some(Piece::Player2(1))
-				}
-			} else if y < 5 && y < (-content) as u8 {
-				Some(Piece::Player2(1))
-			} else if y >= 5 && 9 - y < -content as u8 {
+			} else if y < 5 && y < (-content) as u8 || y >= 5 && 9 - y < -content as u8 {
 				Some(Piece::Player2(1))
 			} else {
 				None
@@ -244,14 +228,13 @@ impl BoardGame for Backgammon {
 		let line = index as u8 / 12;
 		let mut col = index as u8 % 12;
 		
-		let res = if line == 0 {
+		if line == 0 {
 			if col > 5 { col+=1; }
 			(12-col, 0)
 		} else {
 			if col > 5 { col+=1; }
 			(col, 9)
-		};
-		res
+		}
 	}
 	fn play_random(&mut self) {
 		self.roll_dice();

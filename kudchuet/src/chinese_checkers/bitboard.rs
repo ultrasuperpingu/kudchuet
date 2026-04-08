@@ -28,7 +28,7 @@ const PLAYABLE: [[bool; 13]; 17] = [
 
 #[bitboard(width = 13, height = 17)]
 #[derive(Default)]
-#[derive(BitboardDebug, Copy, Hash)]
+#[derive(BitboardDebug, Copy)]
 pub struct ChineseCheckerBoard;
 
 impl ChineseCheckerBoard {
@@ -229,7 +229,7 @@ impl ChineseCheckerBoard {
 	pub const fn neighbours(x: u8, y: u8) -> Self {
 		let mut board = ChineseCheckerBoard::EMPTY;
 
-		let deltas = if y % 2 == 0 { Self::DELTAS_EVEN } else { Self::DELTAS_ODD };
+		let deltas = if y.is_multiple_of(2) { Self::DELTAS_EVEN } else { Self::DELTAS_ODD };
 		let mut i = 0;
 		while i < 6 {
 			let nx = x as i8 + deltas[i].0;
@@ -268,7 +268,7 @@ impl ChineseCheckerBoard {
 	pub const fn jumps(x: u8, y: u8) -> Self {
 		let mut board = ChineseCheckerBoard::EMPTY;
 		
-		let deltas = if y % 2 == 0 { Self::DELTAS_EVEN } else { Self::DELTAS_ODD };
+		let deltas = if y.is_multiple_of(2) { Self::DELTAS_EVEN } else { Self::DELTAS_ODD };
 		let mut i = 0;
 		while i < 6 {
 			let nx = x as i8 + deltas[i].0;
@@ -278,8 +278,8 @@ impl ChineseCheckerBoard {
 				if PLAYABLE[ny as usize][nx as usize] {
 					let delta_jump = if ny % 2 == 0 { Self::DELTAS_EVEN } else { Self::DELTAS_ODD }[i];
 
-					let jump_x_i8 = nx as i8 + delta_jump.0;
-					let jump_y_i8 = ny as i8 + delta_jump.1;
+					let jump_x_i8 = nx + delta_jump.0;
+					let jump_y_i8 = ny + delta_jump.1;
 
 					if jump_x_i8 < 0 || jump_x_i8 >= 13 || jump_y_i8 < 0 || jump_y_i8 >= 17 {
 						i+=1;
@@ -320,7 +320,7 @@ impl ChineseCheckerBoard {
 		let dx = jump_x as i8 - from_x as i8;
 		let dy = jump_y as i8 - from_y as i8;
 
-		if from_y % 2 == 0 {
+		if from_y.is_multiple_of(2) {
 			if dy == 0 || dx == dy {
 				(from_index + jump_index) / 2
 			} else {
@@ -347,8 +347,8 @@ impl ChineseCheckerBoard {
 							if PLAYABLE[ny as usize][nx as usize] {
 								let delta_jump = if ny % 2 == 0 { Self::DELTAS_EVEN } else { Self::DELTAS_ODD }[i];
 
-								let jump_x_i8 = nx as i8 + delta_jump.0;
-								let jump_y_i8 = ny as i8 + delta_jump.1;
+								let jump_x_i8 = nx + delta_jump.0;
+								let jump_y_i8 = ny + delta_jump.1;
 
 								if jump_x_i8 < 0 || jump_x_i8 >= 13 || jump_y_i8 < 0 || jump_y_i8 >= 17 {
 									i+=1;

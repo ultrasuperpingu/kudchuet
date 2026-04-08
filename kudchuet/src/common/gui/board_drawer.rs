@@ -1,4 +1,5 @@
 use egui::{Color32, Painter, Pos2, Rect};
+use egui_field_editor::EguiInspect;
 
 use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, HalfSizeOffsetMod};
 
@@ -95,8 +96,7 @@ pub trait BoardDrawer<G: BoardGame>
 				}
 				// Pieces
 				if let Some(piece) = game.piece_at(x_coord, y_coord) {
-					// TODO: use PieceDrawer
-					piece.draw(ui, square.center(), cell_size);
+					self.get_piece_drawer().draw(ui.painter(), self.get_style(), game, piece, &square, x_coord, y_coord);
 				} else if let Some(shape) = style.empty_cell_shape.as_ref() {
 					// check unplayable square
 					if sq_index != u16::MAX {
@@ -214,6 +214,9 @@ pub trait BoardDrawer<G: BoardGame>
 	}
 	fn get_square_drawer(&self) -> &dyn SquareDrawer<G>;
 	fn set_square_drawer(&mut self, sq_drawer: Box<dyn SquareDrawer<G>>);
+	fn get_piece_drawer(&self) -> &dyn PieceDrawer<G>;
+	fn get_piece_drawer_mut(&mut self) -> &mut dyn PieceDrawer<G>;
+	fn set_piece_drawer(&mut self, sq_drawer: Box<dyn PieceDrawer<G>>);
 	fn get_style(&self) -> &BoardStyle;
 	fn get_style_mut(&mut self) -> &mut BoardStyle;
 	fn set_style(&mut self, style: BoardStyle);
@@ -242,6 +245,7 @@ pub trait BoardDrawer<G: BoardGame>
 pub struct DefaultBoardDrawer<G> {
 	style: BoardStyle,
 	square_drawer: Box<dyn SquareDrawer<G>>,
+	piece_drawer: Box<dyn PieceDrawer<G>>,
 
 	selected: Option<u16>,
 	legal_highlights: Vec<u16>,
@@ -254,6 +258,7 @@ impl<G: BoardGame> Default for DefaultBoardDrawer<G>
 		Self {
 			style: G::default_style(),
 			square_drawer: Box::new(DefaultSquareDrawer::new()),
+			piece_drawer: Box::new(DefaultPieceDrawer::new()),
 			selected: None,
 			legal_highlights: vec![],
 			played_highlights: vec![],
@@ -268,6 +273,7 @@ impl<G: BoardGame> DefaultBoardDrawer<G>
 		Self {
 			style: G::default_style(),
 			square_drawer: Box::new(DefaultSquareDrawer::new()),
+			piece_drawer: Box::new(DefaultPieceDrawer::new()),
 			selected: None,
 			legal_highlights: vec![],
 			played_highlights: vec![],
@@ -284,6 +290,16 @@ impl<G: BoardGame> BoardDrawer<G> for DefaultBoardDrawer<G>
 
 	fn set_square_drawer(&mut self, sq_drawer: Box<dyn SquareDrawer<G>>) {
 		self.square_drawer = sq_drawer;
+	}
+	fn get_piece_drawer(&self) -> &dyn PieceDrawer<G> {
+		&*self.piece_drawer
+	}
+	fn get_piece_drawer_mut(&mut self) -> &mut dyn PieceDrawer<G> {
+		&mut *self.piece_drawer
+	}
+
+	fn set_piece_drawer(&mut self, sq_drawer: Box<dyn PieceDrawer<G>>) {
+		self.piece_drawer = sq_drawer;
 	}
 
 	fn get_style(&self) -> &BoardStyle {
@@ -427,11 +443,32 @@ impl<G> SquareDrawer<G> for DefaultSquareDrawer
 	
 }
 
-pub trait PieceDrawer<G>
+pub trait PieceDrawer<G> : EguiInspect
 	where G: BoardGame,
 		G::M: BoardMove<G> {
 	fn draw(&self, painter: &Painter, _style: &BoardStyle, _game: &G, piece: G::PieceType, square: &Rect, _x_coord: u8, _y_coord: u8)
 	{
 		piece.shape().draw(painter, square.center(), square.width());
 	}
+	fn has_custom_properties(&self) -> bool {
+		false
+	}
+	fn set_default(&mut self) {
+	}
+}
+
+#[derive(Default, EguiInspect)]
+pub struct DefaultPieceDrawer;
+impl DefaultPieceDrawer
+{
+	pub fn new() -> Self {
+		Self { }
+	}
+}
+
+impl<G> PieceDrawer<G> for DefaultPieceDrawer
+	where G: BoardGame,
+		G::M: BoardMove<G> 
+{
+	
 }

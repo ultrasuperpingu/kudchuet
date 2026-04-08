@@ -10,7 +10,7 @@ impl minimax::Game for Backgammon {
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> std::option::Option<minimax::Winner> {
 		*moves = state.legal_moves();
-		return Self::get_winner(state);
+		Self::get_winner(state)
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -47,7 +47,7 @@ impl minimax::Game for Backgammon {
 }
 impl minimax::TurnBasedGame for Backgammon {
 	fn current_player(state: &Self::S) -> i8 {
-		return state.current_player().idx() as i8
+		state.current_player().idx() as i8
 	}
 	fn get_explicit_winner(state: &Self::S) -> Option<minimax::TurnBasedWinner> {
 		if state.is_game_over() {

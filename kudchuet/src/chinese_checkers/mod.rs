@@ -41,7 +41,7 @@ impl ChineseCheckersPlayer {
 		}
 	}
 }
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone)]
 pub struct ChineseCheckers {
 	red: ChineseCheckerBoard,
 	blue: ChineseCheckerBoard,

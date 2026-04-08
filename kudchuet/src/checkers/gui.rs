@@ -75,7 +75,7 @@ impl BoardGame for Checkers10 {
 	}
 
 	fn index_from_coords(x: u8, y: u8) -> u16 {
-		if let Some(index) = Checkers10::coords_to_index(x as u8, y as u8) {
+		if let Some(index) = Checkers10::coords_to_index(x, y) {
 			index as u16
 		} else {
 			100
@@ -88,7 +88,7 @@ impl BoardGame for Checkers10 {
 		Some(self.to_fen())
 	}
 	fn get_position_from_string(&self, pos_str: &String) -> Result<Self, String> {
-		Ok(Checkers10::from_fen(pos_str)?)
+		Checkers10::from_fen(pos_str)
 	}
 	fn move_to_string(&self, m: &Move) -> Option<String> {
 		if m.is_simple() {

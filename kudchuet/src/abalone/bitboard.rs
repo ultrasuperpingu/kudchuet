@@ -11,7 +11,7 @@ pub struct BitboardAbalone;
 impl std::fmt::Display for BitboardAbalone {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		for r in -4..=4i8 {
-			let indent = r.abs() as usize;
+			let indent = r.unsigned_abs() as usize;
 			write!(f, "{:width$}", "", width = indent)?;
 
 			for q in -4..=4 {

@@ -47,7 +47,7 @@ impl Bitboard9x13 {
 		let mut i=Self::NB_SQUARES-1;
 		let mut mask = Self::EMPTY.storage();
 		while i as u8 >= (sq / Self::WIDTH + 1) * Self::WIDTH {
-			mask |= Self::from_index(i as usize).storage();
+			mask |= Self::from_index(i).storage();
 			i-=1;
 		}
 		Bitboard9x13::from_storage(mask)
@@ -131,10 +131,7 @@ pub enum Action {
 }
 impl Action {
 	pub fn is_move(&self) -> bool {
-		match self {
-			Action::Move{..} => true,
-			_ => false
-		}
+		matches!(self, Action::Move{..})
 	}
 	pub fn from(&self) -> u8 {
 		match self {
@@ -182,13 +179,11 @@ impl FootBoard {
 	}
 	#[inline]
 	pub fn play_unchecked(&mut self, mvs: &Move) {
-		for m in mvs.0 {
-			if let Some(a) = m {
-				if self.turn() == Player::PLAYER1 {
-					Self::play_action(&a, &mut self.player1, &mut self.ball);
-				} else {
-					Self::play_action(&a, &mut self.player2, &mut self.ball);
-				}
+		for a in mvs.0.into_iter().flatten() {
+			if self.turn() == Player::PLAYER1 {
+				Self::play_action(&a, &mut self.player1, &mut self.ball);
+			} else {
+				Self::play_action(&a, &mut self.player2, &mut self.ball);
 			}
 		}
 		if (Bitboard9x13::from_index(self.ball as usize) & Bitboard9x13::PLAYER1_GOAL).any() {
@@ -442,7 +437,7 @@ impl FootBoard {
 	}
 	#[inline(always)]
 	pub fn turn(&self) -> Player {
-		if self.turn%2 == 0 { Player::PLAYER1 } else { Player::PLAYER2 }
+		if self.turn.is_multiple_of(2) { Player::PLAYER1 } else { Player::PLAYER2 }
 	}
 	pub fn ball_owner(&self) -> Option<Player> {
 		let ball_mask = Bitboard9x13::from_index(self.ball as usize);

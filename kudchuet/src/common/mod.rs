@@ -87,9 +87,9 @@ impl Player {
 		}
 	}
 }
-impl Into<GameResult> for Player {
-	fn into(self) -> GameResult {
-		match self {
+impl From<Player> for GameResult {
+	fn from(val: Player) -> Self {
+		match val {
 			Player::Player(id) => GameResult::Player(id),
 			Player::RandomMove => panic!("Result from random move"),
 		}

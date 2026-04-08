@@ -155,7 +155,7 @@ impl ThreeMusketeers {
 		match self.turn {
 			0 => {
 				self.musketeers = (self.musketeers & !from) | to;
-				self.guards = self.guards & !to;
+				self.guards &= !to;
 				self.turn = 1;
 			}
 
@@ -248,7 +248,7 @@ impl ThreeMusketeers {
 		};
 		format!("{} {}", board_str, player_str)
 	}
-	fn from_fen(pos_str: &String) -> Result<Self, String> {
+	fn from_fen(pos_str: &str) -> Result<Self, String> {
 		let mut game = ThreeMusketeers::empty();
 		let mut parts = pos_str.split_whitespace();
 		let board_part = parts.next().ok_or("Missing board part")?;
@@ -256,11 +256,11 @@ impl ThreeMusketeers {
 
 	
 		for (y, row) in board_part.split('/').enumerate() {
-			if y >= 5 as usize {
+			if y >= 5 {
 				return Err("Too many rows".into());
 			}
 			for (x, ch) in row.chars().enumerate() {
-				if x >= 5 as usize {
+				if x >= 5 {
 					return Err("Too many columns".into());
 				}
 				let player = match ch {

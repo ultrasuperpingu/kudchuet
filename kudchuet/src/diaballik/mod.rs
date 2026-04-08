@@ -69,16 +69,14 @@ impl Default for Diaballik {
 impl Diaballik {
 	#[inline]
 	pub fn play_unchecked(&mut self, moves: &Move) {
-		for m in moves.0 {
-			if let Some(a) = m {
-				if self.turn == Player::PLAYER1 {
-					Self::play_action(&a, &mut self.player1, &mut self.ball_player1);
-				} else {
-					Self::play_action(&a, &mut self.player2, &mut self.ball_player2);
-				}
+		for a in moves.0.iter().flatten() {
+			if self.turn == Player::PLAYER1 {
+				Self::play_action(a, &mut self.player1, &mut self.ball_player1);
+			} else {
+				Self::play_action(a, &mut self.player2, &mut self.ball_player2);
 			}
 		}
-		self.update_hash_move(&moves);
+		self.update_hash_move(moves);
 		self.turn = self.turn.opponent();
 		self.update_hash_turn();
 	}
@@ -98,16 +96,14 @@ impl Diaballik {
 	pub fn undo_unchecked(&mut self, moves: &Move) {
 		self.turn = self.turn.opponent();
 		self.update_hash_turn();
-		for m in moves.0.iter().rev() {
-			if let Some(a) = m {
-				if self.turn == Player::PLAYER1 {
-					Self::undo_action(a, &mut self.player1, &mut self.ball_player1);
-				} else {
-					Self::undo_action(a, &mut self.player2, &mut self.ball_player2);
-				}
+		for a in moves.0.iter().rev().flatten() {
+			if self.turn == Player::PLAYER1 {
+				Self::undo_action(a, &mut self.player1, &mut self.ball_player1);
+			} else {
+				Self::undo_action(a, &mut self.player2, &mut self.ball_player2);
 			}
 		}
-		self.update_hash_move(&moves);
+		self.update_hash_move(moves);
 	}
 	#[inline(always)]
 	pub(crate) fn undo_action(a:&Action, player_mask: &mut Bitboard7x7, ball: &mut u8) {
@@ -366,10 +362,8 @@ impl Diaballik {
 	}
 
 	fn update_hash_move(&mut self, m: &Move) {
-		for a in m.0 {
-			if let Some(a) = a {
-				self.update_hash_action(&a);
-			}
+		for a in m.0.into_iter().flatten() {
+			self.update_hash_action(&a);
 		}
 	}
 	fn update_hash_action(&mut self, action: &Action) {

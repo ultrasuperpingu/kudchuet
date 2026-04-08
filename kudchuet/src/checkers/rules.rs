@@ -395,7 +395,7 @@ impl Checkers10
 	}
 	pub fn legal_moves_for_piece(&self, cell_index:u8) -> Vec<Move> {
 		let mut moves = vec![];
-		self.legal_moves_for_piece_inplace(&mut moves, cell_index as u8);
+		self.legal_moves_for_piece_inplace(&mut moves, cell_index);
 		moves
 	}
 	pub fn legal_moves_for_piece_inplace(&self, moves: &mut Vec<Move>, cell_index:u8) {
@@ -514,7 +514,7 @@ impl Checkers10
 		for i in range {
 			let jump = jumps[i];
 			if jump.1 == Bitboard5x10Checkers10::NB_SQUARES as u8 { continue; }
-			if ((jump.0 & all_pieces).is_empty() || start_cell_index == jump.1 as u8) && !already_taken.get_at_index(jump.2 as usize){
+			if ((jump.0 & all_pieces).is_empty() || start_cell_index == jump.1) && !already_taken.get_at_index(jump.2 as usize){
 				let is_queen = opponent_queens.get_at_index(jump.2 as usize);
 				let is_pawn = opponent_pawns.get_at_index(jump.2 as usize);
 				if is_queen || is_pawn {
