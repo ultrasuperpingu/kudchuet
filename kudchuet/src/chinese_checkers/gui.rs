@@ -68,8 +68,6 @@ impl BoardGame for ChineseCheckers {
 	}
 	fn get_name(&self, p: crate::common::Player) -> String {
 		match p {
-			crate::common::Player::PLAYER1 => "White".into(),
-			crate::common::Player::PLAYER2 => "Black".into(),
 			crate::common::Player::Player(idx) => {
 				let players = Self::active_players(self.nb_players);
 				if idx < players.len() as u8 {
