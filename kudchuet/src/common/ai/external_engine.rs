@@ -213,7 +213,7 @@ impl ExternalEngine
 
 			while start.elapsed() < timeout {
 				if let Ok(msgs) = self.messages.read() {
-					if msgs.iter().any(|m| predicate(m)) {
+					if msgs.iter().any(&predicate) {
 						return Ok(());
 					}
 				}
@@ -321,7 +321,7 @@ where
 	fn choose_move(&self, game: &G) -> Option<G::M> {
 		self.set_position(game);
 		let go = if self.options.max_time > 0.0 {
-			if self.options.max_depth <= 0 {
+			if self.options.max_depth == 0 {
 				UciMessage::Go {
 					time_control: Some(UciTimeControl::MoveTime(
 						Duration::from_secs_f32(self.options.max_time)
@@ -337,7 +337,7 @@ where
 				}
 			}
 		} else {
-			if self.options.max_depth <= 0 {
+			if self.options.max_depth == 0 {
 				UciMessage::Go {
 					time_control: None,
 					search_control: Some(UciSearchControl::depth(self.options.max_depth)),
@@ -377,7 +377,7 @@ where
 	{
 		self.set_position(&game);
 		let go = if self.options.max_time > 0.0 {
-			if self.options.max_depth <= 0 {
+			if self.options.max_depth == 0 {
 				UciMessage::Go {
 					time_control: Some(UciTimeControl::MoveTime(
 						Duration::from_secs_f32(self.options.max_time)
@@ -393,7 +393,7 @@ where
 				}
 			}
 		} else {
-			if self.options.max_depth <= 0 {
+			if self.options.max_depth == 0 {
 				UciMessage::Go {
 					time_control: None,
 					search_control: Some(UciSearchControl::depth(self.options.max_depth)),

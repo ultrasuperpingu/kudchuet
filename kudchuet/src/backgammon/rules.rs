@@ -142,7 +142,7 @@ impl Backgammon {
 				self.hash ^= Self::ZOBRIST.outside[1][self.outside[1] as usize];
 			}
 			t if t < 24 => {
-				let count = if m.captured { 0 } else { self.board[t as usize].abs() as usize };
+				let count = if m.captured { 0 } else { self.board[t as usize].unsigned_abs() as usize };
 				self.hash ^= Self::ZOBRIST.board[t as usize][piece_sign][count];
 			}
 			_ => {}
@@ -353,7 +353,7 @@ impl Backgammon {
 
 		//}
 		//TODO: higher bearing off
-		res.into_iter().map(|m| Move::Player(m)).collect()
+		res.into_iter().map(Move::Player).collect()
 	}
 	fn gen_moves_recursive(
 		&self,

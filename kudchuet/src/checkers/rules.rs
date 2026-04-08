@@ -693,7 +693,7 @@ impl Checkers10
 				
 				let ray_from_victim = ray_table[first_blocker_idx];
 
-				let obstacles_behind = ray_from_victim & all_pieces &! Bitboard5x10Checkers10::from_index(start_cell_index as usize);
+				let obstacles_behind = ray_from_victim & all_pieces & !Bitboard5x10Checkers10::from_index(start_cell_index as usize);
 				
 				let landing_mask = if obstacles_behind.is_empty() {
 					ray_from_victim

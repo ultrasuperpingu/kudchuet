@@ -8,7 +8,6 @@ pub mod ex_connect4;
 use std::{fmt, io, str::FromStr};
 
 use ::bitboard::Bitboard;
-use serde_json::to_vec;
 
 use crate::common::bitboards::Bitboard7x7Col;
 //pub use solver::{score, Solver};

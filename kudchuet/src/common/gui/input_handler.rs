@@ -30,7 +30,11 @@ pub struct InputHandler<G: Game> {
 	matching_moves: Vec<G::M>,
 	intermediate_state: Option<G>
 }
-
+impl<G: Game> Default for InputHandler<G> {
+	fn default() -> Self {
+		Self::new()
+	}
+}
 impl<G: Game> InputHandler<G> {
 	pub fn new() -> Self {
 		Self { clicks: Vec::new(), pending_moves:None, matching_moves: vec![], intermediate_state:None }
@@ -93,7 +97,7 @@ impl<G: Game> InputHandler<G> {
 				drawer.set_selected(selected.clone());
 				drawer.set_legal_highlights(highlights.clone());
 				self.matching_moves = matching_moves.clone();
-				if self.matching_moves.len() > 0 {
+				if !self.matching_moves.is_empty() {
 					self.intermediate_state = self.matching_moves[0].compute_intermediate_state(game_manager.game(), &self.clicks).clone();
 				}
 				custom_result

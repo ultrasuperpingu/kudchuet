@@ -121,7 +121,7 @@ impl Bitboard9x13 {
 	pub const PLAYER2_TACKLE_POS_MASK: [Self; Self::NB_SQUARES] = Self::generate_black_tackle_position_table();
 	pub const BEHIND_GOALS : Self = Bitboard9x13::from_storage(Bitboard9x13::NORTH_BORDER.storage()|Bitboard9x13::SOUTH_BORDER.storage());
 	pub const PLAYER1_GOAL : Self = Bitboard9x13::from_storage(0b000111000);
-	pub const PLAYER2_GOAL : Self = Bitboard9x13::from_storage(0b000111000 << 9*12);
+	pub const PLAYER2_GOAL : Self = Bitboard9x13::from_storage(0b000111000 << (9*12));
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

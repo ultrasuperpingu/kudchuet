@@ -91,8 +91,8 @@ where
 							"Mtdf" => {
 								if let Some(value) = &value {
 									if let Ok(value) = value.parse::<bool>() {
-										if let Some(v) = opts.uci.get_mut(&"Mtdf".to_string()) {
-											v.set_bool(value.into());
+										if let Some(v) = opts.uci.get_mut("Mtdf") {
+											v.set_bool(value);
 										}
 										if debug {
 											println!("{}", UciMessage::Info(vec![UciInfoAttribute::String(format!("Setting mtdf to {}", value))]));

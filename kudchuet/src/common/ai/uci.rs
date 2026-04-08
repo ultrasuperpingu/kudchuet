@@ -148,11 +148,11 @@ impl UciMessage {
 			"stop" => UciMessage::Stop,
 			"ponderhit" => UciMessage::PonderHit,
 			"debug" => {
-				let on = tokens.get(1).map_or(false, |v| *v == "on");
+				let on = tokens.get(1).is_some_and(|v| *v == "on");
 				UciMessage::Debug(on)
 			}
 			"register" => {
-				if tokens.get(1).map_or(false, |v| *v == "later") {
+				if tokens.get(1).is_some_and(|v| *v == "later") {
 					UciMessage::register_later()
 				} else {
 					let mut name = None;
@@ -854,8 +854,8 @@ impl UciMessage{
 			UciMessage::SetOption { value, .. } => {
 				if let Some(val) = value {
 					let pr = str::parse(val.as_str());
-					if pr.is_ok() {
-						return Some(pr.unwrap());
+					if let Ok(v) = pr {
+						return Some(v);
 					}
 				}
 
@@ -872,8 +872,8 @@ impl UciMessage{
 			UciMessage::SetOption { value, .. } => {
 				if let Some(val) = value {
 					let pr = str::parse(val.as_str());
-					if pr.is_ok() {
-						return Some(pr.unwrap());
+					if let Ok(v) = pr {
+						return Some(v);
 					}
 				}
 
@@ -885,10 +885,7 @@ impl UciMessage{
 
 	/// Return `true` if this `UciMessage` is of variant `UnknownMessage`.
 	pub fn is_unknown(&self) -> bool {
-		match self {
-			UciMessage::Unknown(..) => true,
-			_ => false
-		}
+		matches!(self, UciMessage::Unknown(..))
 	}
 }
 
@@ -936,7 +933,7 @@ impl Serializable for UciMessage{
 					s += format!("fen {}", uci_fen.as_str()).as_str();
 				}
 
-				if moves.len() > 0 {
+				if !moves.is_empty() {
 					s += String::from(" moves").as_str();
 
 					for m in moves {
@@ -947,10 +944,10 @@ impl Serializable for UciMessage{
 				s
 			}
 			UciMessage::SetOption { name, value } => {
-				let mut s: String = String::from(format!("setoption name {}", name));
+				let mut s: String = format!("setoption name {}", name);
 
 				if let Some(val) = value {
-					if val.len() == 0 {
+					if val.is_empty() {
 						s += " value <empty>";
 					} else {
 						s += format!(" value {}", *val).as_str();
@@ -1043,7 +1040,7 @@ impl Serializable for UciMessage{
 			UciMessage::UciOk => String::from("uciok"),
 			UciMessage::ReadyOk => String::from("readyok"),
 			UciMessage::BestMove { best_move, ponder } => {
-				let mut s = String::from(format!("bestmove {}", *best_move));
+				let mut s = format!("bestmove {}", *best_move);
 
 				if let Some(p) = ponder {
 					s += format!(" ponder {}", *p).as_str();
@@ -1305,7 +1302,7 @@ impl Serializable for UciOptionConfig {
 	/// assert_eq!(m.serialize(), "option name Nullmove type check default true");
 	/// ```
 	fn serialize(&self) -> String {
-		let mut s = String::from(format!("option name {} type {}", self.get_name(), self.get_type_str()));
+		let mut s = format!("option name {} type {}", self.get_name(), self.get_type_str());
 		match self {
 			UciOptionConfig::Check { default, .. } => {
 				if let Some(def) = default {
@@ -1483,7 +1480,7 @@ impl UciInfoAttribute{
 impl Serializable for UciInfoAttribute{
 	/// Returns the attribute serialized as a String.
 	fn serialize(&self) -> String {
-		let mut s = format!("{}", self.get_name());
+		let mut s = self.get_name().to_string();
 		match self {
 			UciInfoAttribute::Depth(depth) => s += format!(" {}", *depth).as_str(),
 			UciInfoAttribute::SelDepth(depth) => s += format!(" {}", *depth).as_str(),
@@ -1702,13 +1699,11 @@ impl From<UciMessage> for ByteVecUciMessage{
 		}
 	}
 }
-
-impl Into<UciMessage> for ByteVecUciMessage{
-	fn into(self) -> UciMessage{
-		self.message
+impl From<ByteVecUciMessage> for UciMessage{
+	fn from(val: ByteVecUciMessage) -> Self {
+		val.message
 	}
 }
-
 impl AsRef<UciMessage> for ByteVecUciMessage{
 	fn as_ref(&self) -> &UciMessage{
 		&self.message

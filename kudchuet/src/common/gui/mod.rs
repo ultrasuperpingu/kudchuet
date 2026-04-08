@@ -278,7 +278,7 @@ pub trait BoardMove<G : Game> : std::fmt::Debug + Sized + Copy
 	fn played_highlights(&self, state: &G) -> Vec<u16> {
 		self.click_sequence(state)
 	}
-	fn handle_clicks_interaction(state: &G, legals: &[G::M], clicks: &Vec<u16>) -> MoveResult<G> 
+	fn handle_clicks_interaction(state: &G, legals: &[G::M], clicks: &[u16]) -> MoveResult<G> 
 		where
 			G: BoardGame,G::M: BoardMove<G> 
 	{
@@ -309,7 +309,7 @@ pub trait BoardMove<G : Game> : std::fmt::Debug + Sized + Copy
 				0 => MoveResult::Invalid,
 				1 => MoveResult::Created {
 					mv: exact_matches[0],
-					highlights_played: clicks.clone(),
+					highlights_played: clicks.to_owned(),
 				},
 				_ => MoveResult::ChoiceRequired {
 					candidates: exact_matches,

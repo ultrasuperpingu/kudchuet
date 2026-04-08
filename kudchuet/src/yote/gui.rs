@@ -11,7 +11,7 @@ use super::{game::YoteMaterialEval, Move, Yote, Player};
 
 impl BoardMove<Yote> for Move {
 	
-	fn handle_clicks_interaction(_state: &Yote, legals: &[Move], clicks: &Vec<u16>) -> MoveResult<Yote> {
+	fn handle_clicks_interaction(_state: &Yote, legals: &[Move], clicks: &[u16]) -> MoveResult<Yote> {
 		if clicks.len() == 1 {
 			let cindex = clicks[0] as u8;
 			let filtered = legals.iter().filter(|m| match m {

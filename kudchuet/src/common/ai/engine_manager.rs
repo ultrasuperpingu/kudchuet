@@ -12,10 +12,7 @@ pub enum ThinkingResult<M> {
 }
 impl<M> ThinkingResult<M> {
 	pub fn is_true(&self) -> bool {
-		match self {
-			ThinkingResult::NotThinking => false,
-			_ => true,
-		}
+		!matches!(self, ThinkingResult::NotThinking)
 	}
 }
 pub struct EngineManager<G: BoardGame+Sync>
@@ -31,7 +28,14 @@ where
 	paused: bool,
 	ai_future: Option<Pin<Box<dyn Future<Output = Option<G::M>> + Send>>>,
 }
-
+impl<G: BoardGame + Clone+Sync+Send+'static> Default for EngineManager<G>
+where
+		G::M: BoardMove<G>+Send,
+{
+	fn default() -> Self {
+		Self::new()
+	}
+}
 impl<G: BoardGame + Clone+Sync+Send+'static> EngineManager<G>
 where
 	G::M: BoardMove<G>+Send,

@@ -225,10 +225,10 @@ pub enum UciValue {
 	String(String),
 	Combo(String, Vec<String>),
 }
-impl Into<UciValue> for UciOptionConfig {
-	fn into(self) -> UciValue {
-		match self {
-			UciOptionConfig::Check { name:_, default } => UciValue::Bool(default.map_or(false, |v| v)),
+impl From<UciOptionConfig> for UciValue {
+	fn from(val: UciOptionConfig) -> Self {
+		match val {
+			UciOptionConfig::Check { name:_, default } => UciValue::Bool(default.is_some_and(|v| v)),
 			UciOptionConfig::Spin { name:_, default, min, max } => UciValue::Spin(default.map_or(0, |v| v), min, max),
 			UciOptionConfig::Combo { name:_, default, var } => UciValue::Combo(default.map_or("".to_string(), |v| v), var),
 			UciOptionConfig::Button { name:_ } => UciValue::Button,
@@ -421,7 +421,7 @@ impl AIOptions {
 					self.uci.insert(name.clone(), UciValue::Spin(default.unwrap_or(0), *min, *max));
 				}
 				UciOptionConfig::Combo { name, default, var } => {
-					self.uci.insert(name.clone(), UciValue::Combo(default.clone().unwrap_or_else(|| var.get(0).cloned().unwrap_or_default()), var.clone()));
+					self.uci.insert(name.clone(), UciValue::Combo(default.clone().unwrap_or_else(|| var.first().cloned().unwrap_or_default()), var.clone()));
 				}
 				UciOptionConfig::String { name, default } => {
 					self.uci.insert(name.clone(), UciValue::String(default.clone().unwrap_or_default()));

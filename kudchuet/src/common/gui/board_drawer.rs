@@ -67,7 +67,7 @@ pub trait BoardDrawer<G: BoardGame>
 		}
 		for y_coord in 0..h {
 			for x_coord in 0..w {
-				let pos = Self::coords_to_pixel(&self, &board_rect, cell_size, x_coord, y_coord, h);
+				let pos = Self::coords_to_pixel(self, &board_rect, cell_size, x_coord, y_coord, h);
 
 				let square = egui::Rect::from_min_size(
 					pos,
@@ -75,14 +75,14 @@ pub trait BoardDrawer<G: BoardGame>
 				);
 
 				// Background
-				self.get_square_drawer().draw(&painter, &style, &game, &square, x_coord, y_coord);
+				self.get_square_drawer().draw(&painter, style, game, &square, x_coord, y_coord);
 			}
 		}
 		// Overlay
-		self.get_square_drawer().draw_overlay(&painter, &style, &game, &board_rect, cell_size);
+		self.get_square_drawer().draw_overlay(&painter, style, game, &board_rect, cell_size);
 		for y_coord in 0..h {
 			for x_coord in 0..w {
-				let pos = Self::coords_to_pixel(&self, &board_rect, cell_size, x_coord, y_coord, h);
+				let pos = Self::coords_to_pixel(self, &board_rect, cell_size, x_coord, y_coord, h);
 
 				let square = egui::Rect::from_min_size(
 					pos,
@@ -110,7 +110,7 @@ pub trait BoardDrawer<G: BoardGame>
 			let (sx, sy) = G::coords_from_index(sindex);
 			//let x = board_rect.left() + sx as f32 * cell_size;
 			//let y = board_rect.top() + (h - 1 - sy) as f32 * cell_size;
-			let pos = Self::coords_to_pixel(&self, &board_rect, cell_size, sx, sy, h);
+			let pos = Self::coords_to_pixel(self, &board_rect, cell_size, sx, sy, h);
 			let x = pos.x;
 			let y = pos.y;
 			let square = egui::Rect::from_min_size(egui::pos2(x, y), egui::vec2(cell_size, cell_size));
@@ -122,7 +122,7 @@ pub trait BoardDrawer<G: BoardGame>
 			let (tx, ty) = G::coords_from_index(index);
 			//let x = board_rect.left() + tx as f32 * cell_size;
 			//let y = board_rect.top() + (h - 1 - ty) as f32 * cell_size;
-			let pos = Self::coords_to_pixel(&self, &board_rect, cell_size, tx, ty, h);
+			let pos = Self::coords_to_pixel(self, &board_rect, cell_size, tx, ty, h);
 			let x = pos.x;
 			let y = pos.y;
 			let square = egui::Rect::from_min_size(egui::pos2(x, y), egui::vec2(cell_size, cell_size));
@@ -140,7 +140,7 @@ pub trait BoardDrawer<G: BoardGame>
 		}
 
 		for file in 0..w {
-			let pos = Self::coords_to_pixel(&self, &board_rect, cell_size, file, 0, h);
+			let pos = Self::coords_to_pixel(self, &board_rect, cell_size, file, 0, h);
 			//let x = board_rect.left() + (file as f32 + 0.5) * cell_size;
 			let x = pos.x + 0.5 * cell_size;
 			let y = board_rect.bottom() + 2.0;
@@ -155,7 +155,7 @@ pub trait BoardDrawer<G: BoardGame>
 		}
 
 		for rank in (0..h).rev() {
-			let pos = Self::coords_to_pixel(&self, &board_rect, cell_size, 0, rank, h);
+			let pos = Self::coords_to_pixel(self, &board_rect, cell_size, 0, rank, h);
 			let x = board_rect.left() - 6.0;
 			//let y = board_rect.top() + ((h-1-rank) as f32 + 0.5) * cell_size;
 			let y = pos.y + 0.5 * cell_size;
@@ -179,8 +179,8 @@ pub trait BoardDrawer<G: BoardGame>
 		let x = board_rect.left() + x_visual as f32 * cell_size + 
 			match self.get_style().half_size_offset_mod {
 				HalfSizeOffsetMod::None => 0.0,
-				HalfSizeOffsetMod::Even => if y_coord % 2 == 0 {0.5*cell_size} else {0.0},
-				HalfSizeOffsetMod::Odd => if y_coord % 2 == 1 {0.5*cell_size} else {0.0},
+				HalfSizeOffsetMod::Even => if y_coord.is_multiple_of(2) {0.5*cell_size} else {0.0},
+				HalfSizeOffsetMod::Odd => if !y_coord.is_multiple_of(2) {0.5*cell_size} else {0.0},
 			};
 		let y = board_rect.top() + (h - 1 - y_visual) as f32 * cell_size;
 
@@ -196,8 +196,8 @@ pub trait BoardDrawer<G: BoardGame>
 		let y_visual = (h - 1) - (y_off / cell_size).floor() as u8;
 		let x_visual = match self.get_style().half_size_offset_mod {
 			HalfSizeOffsetMod::None => (x_off / cell_size).floor() as u8,
-			HalfSizeOffsetMod::Even => ((x_off - if y_visual % 2 == 0 {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
-			HalfSizeOffsetMod::Odd => ((x_off - if y_visual % 2 == 1 {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
+			HalfSizeOffsetMod::Even => ((x_off - if y_visual.is_multiple_of(2) {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
+			HalfSizeOffsetMod::Odd => ((x_off - if !y_visual.is_multiple_of(2) {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
 		};
 
 		let (x_coord, y_coord) = if self.get_style().mirrored {
@@ -364,7 +364,7 @@ pub trait SquareDrawer<G>
 				}
 			},
 			super::CheckerBoardMod::OddDark => {
-				if (x_coord + y_coord) % 2 == 0 {
+				if (x_coord + y_coord).is_multiple_of(2) {
 					(style.light_color, Color32::BLACK)
 				} else {
 					(style.dark_color, Color32::WHITE)

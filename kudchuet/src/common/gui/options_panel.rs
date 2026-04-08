@@ -191,20 +191,12 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 		}
 	}
 }
-
+#[derive(Default)]
 pub struct ImportExportPanel {
 	pub position_input: String,
 	pub last_error: Option<String>,
 }
 
-impl Default for ImportExportPanel {
-	fn default() -> Self {
-		Self {
-			position_input: String::new(),
-			last_error: None,
-		}
-	}
-}
 impl ImportExportPanel {
 	pub fn ui<G: BoardGame>(
 		&mut self, 
