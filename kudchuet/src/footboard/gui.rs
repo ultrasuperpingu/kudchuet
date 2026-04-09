@@ -1,9 +1,11 @@
 use eframe::egui;
-use egui::{Align2, Color32, FontId, Rect, Vec2};
+use egui::{Align2, Color32, FontId, Rect, Stroke, Vec2};
+use egui_field_editor::EguiInspect;
 use crate::common::bitboards::Bitboard9x13;
-use crate::common::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
+use crate::common::gui::board_drawer::{DefaultSquareDrawer, PieceDrawer, SquareDrawer};
 use crate::common::{Player, new_move_searcher_vec};
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, Shape};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use crate::common::gui::shapes::{Shape, StrokeData, TextData};
 
 use crate::common::gui::board_app::GenericBoardApp;
 use crate::footboard::Action;
@@ -91,11 +93,38 @@ impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
 			Cell::Empty => unreachable!(),
-			Cell::White => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Cell::Black => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Cell::WhiteWithBall => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "⚽".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Cell::BlackWithBall => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "⚽".into(), text_color: Color32::WHITE, stroke_color: Some(Color32::BLACK)},
-			Cell::Ball => Shape::Circle { color: Color32::WHITE, size: 0.52, text: "⚽".into(), text_color: Color32::BLACK, stroke_color: None },
+			Cell::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
+			Cell::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
+			Cell::WhiteWithBall => Shape::Circle {
+				fill_color: Some(Color32::YELLOW),
+				size: 0.7,
+				text: Some(TextData {
+					text: "⚽".into(),
+					color: Color32::BLACK,
+					size: 0.5,
+				}),
+				stroke: Some(StrokeData::default())
+			},
+			Cell::BlackWithBall => Shape::Circle {
+				fill_color: Some(Color32::YELLOW),
+				size: 0.7,
+				text: Some(TextData {
+					text: "⚽".into(),
+					color: Color32::WHITE,
+					size: 0.5,
+				}),
+				stroke: Some(StrokeData::default())
+			},
+			Cell::Ball => Shape::Circle {
+				fill_color: Some(Color32::WHITE),
+				size: 0.52,
+				text: Some(TextData {
+					text: "⚽".into(),
+					color: Color32::WHITE,
+					size: 0.5,
+				}),
+				stroke: None
+			},
 		}
 	}
 }
@@ -214,10 +243,171 @@ impl SquareDrawer<FootBoard> for FootboardSquareDrawer
 		painter.line(points, stroke);
 	}
 }
+#[derive(EguiInspect)]
+struct FootboardPieceDrawer {
+	#[inspect(slider(min=0.0, max=1.0))]
+	size: f32,
+	p1_color1: Color32,
+	p1_color2: Option<Color32>,
+	p1_color3: Option<Color32>,
+	#[inspect(slider(min=0.0, max=1.0))]
+	p1_angle: f32,
+	#[inspect(slider(min=0.0, max=1.0))]
+	p1_width: f32,
+	p2_color1: Color32,
+	p2_color2: Option<Color32>,
+	p2_color3: Option<Color32>,
+	#[inspect(slider(min=0.0, max=1.0))]
+	p2_angle: f32,
+	#[inspect(slider(min=0.0, max=1.0))]
+	p2_width: f32,
+	p1_stroke: Option<Stroke>,
+	p2_stroke: Option<Stroke>,
+}
+impl FootboardPieceDrawer {
+	fn new() -> Self {
+		Self{
+			size:1.0,
+			p1_color1: Color32::from_rgb(250, 250, 250),
+			p1_color2: Some(Color32::from_rgb(0, 157, 222)),
+			p1_color3: None,//Some(Color32::from_rgb(250, 250, 250)),
+			p1_angle: 0.38,
+			p1_width: 0.5,
+			p2_color1: Color32::from_rgb(5, 45, 177),
+			p2_color2: Some(Color32::from_rgb(244, 0, 14)),
+			p2_color3: Some(Color32::from_rgb(5, 45, 177)),
+			p2_angle: 0.25,
+			p2_width: 0.5,
+			p1_stroke: None,
+			p2_stroke: None,
+		}
+	}
+}
+
+impl FootboardPieceDrawer {
+	fn draw_weighted_stripped_circle(
+		painter: &egui::Painter,
+		center: egui::Pos2,
+		radius: f32,
+		colors: &[Color32],
+		weights: &[f32], // sum = 1.0
+		angle: f32,      // 0..1
+	) {
+		let steps = 64;
+		let epsilon = 2.0;
+
+		let dir = egui::Vec2::angled(angle * std::f32::consts::TAU);
+		let normal = egui::vec2(-dir.y, dir.x);
+
+		let total_width = radius * 2.0;
+
+		let mut offset = -total_width / 2.0;
+
+		for (color, weight) in colors.iter().zip(weights.iter()) {
+			let band_width = weight * total_width;
+
+			let min = offset;
+			let max = offset + band_width;
+
+			let mut points = Vec::new();
+
+			for i in 0..=steps {
+				let theta = i as f32 / steps as f32 * std::f32::consts::TAU;
+				let p = center + egui::Vec2::new(theta.cos(), theta.sin()) * radius;
+
+				let proj = (p - center).dot(normal);
+
+				if proj >= min - epsilon && proj <= max + epsilon {
+					points.push(p);
+				}
+			}
+
+			if points.len() >= 3 {
+				painter.add(egui::Shape::convex_polygon(
+					points,
+					*color,
+					egui::Stroke::NONE,
+				));
+			}
+
+			offset += band_width;
+		}
+	}
+}
+impl PieceDrawer<FootBoard> for FootboardPieceDrawer
+{
+	fn draw(&self, painter: &egui::Painter, _style: &BoardStyle, _game: &FootBoard, piece: <FootBoard as BoardGame>::PieceType, square: &Rect, _x_coord: u8, _y_coord: u8)
+	{
+		//piece.shape().draw(painter, square.center(), square.width());
+		match piece {
+			Cell::White => {
+				if let (Some(c2), Some(c3)) = (self.p1_color2,self.p1_color3) {
+					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p1_color1,c2, c3], &[(1.0-self.p1_width)/2.0,self.p1_width, (1.0-self.p1_width)/2.0], self.p1_angle);
+					
+				}
+				else if let Some(c2) = self.p1_color2 {
+					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p1_color1,c2], &[self.p1_width,1.0-self.p1_width],self.p1_angle);
+				}
+				else {
+					painter.circle_filled(square.center(), square.width()/2.0 * self.size, self.p1_color1);
+				}
+			},
+			Cell::Black => {
+				if let (Some(c2), Some(c3)) = (self.p2_color2,self.p2_color3) {
+					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p2_color1,c2, c3], &[(1.0-self.p2_width)/2.0,self.p2_width, (1.0-self.p2_width)/2.0], self.p2_angle);
+				}
+				else if let Some(c2) = self.p2_color2 {
+					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p2_color1,c2], &[self.p2_width,1.0-self.p2_width],self.p2_angle);
+				}
+				else {
+					painter.circle_filled(square.center(), square.width()/2.0 * self.size, self.p2_color1);
+				}
+			},
+			Cell::WhiteWithBall => {
+				if let (Some(c2), Some(c3)) = (self.p1_color2,self.p1_color3) {
+					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p1_color1,c2, c3], &[(1.0-self.p1_width)/2.0,self.p1_width, (1.0-self.p1_width)/2.0], self.p1_angle);
+				}
+				else if let Some(c2) = self.p1_color2 {
+					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p1_color1,c2], &[self.p1_width,1.0-self.p1_width],self.p1_angle);
+				}
+				else {
+					painter.circle_filled(square.center(), square.width()/2.0 * self.size, self.p1_color1);
+				}
+				painter.text(square.center(), Align2::CENTER_CENTER, "⚽", FontId::monospace(square.width() * 0.8), Color32::BLACK);
+			},
+			Cell::BlackWithBall => {
+				if let (Some(c2), Some(c3)) = (self.p2_color2,self.p2_color3) {
+					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p2_color1,c2, c3], &[(1.0-self.p2_width)/2.0,self.p2_width, (1.0-self.p2_width)/2.0], self.p2_angle);
+				}
+				else if let Some(c2) = self.p2_color2 {
+					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p2_color1,c2], &[self.p2_width,1.0-self.p2_width],self.p2_angle);
+				}
+				else {
+					painter.circle_filled(square.center(), square.width()/2.0 * self.size, self.p2_color1);
+				}
+				painter.text(square.center(), Align2::CENTER_CENTER, "⚽", FontId::monospace(square.width() * 0.8), Color32::BLACK);
+			},
+			Cell::Ball => {
+				piece.shape().draw(painter, square.center(), square.width());
+			},
+			Cell::Empty => {
+			},
+		}
+	}
+
+	fn has_custom_properties(&self) -> bool {
+		true
+	}
+
+	fn set_default(&mut self) {
+		*self=Self::new();
+	}
+}
 pub fn create_board() -> GenericBoardApp<FootBoard> {
 	let mut board=GenericBoardApp::new(FootBoard::default(), new_move_searcher_vec("Dumb".into(), FootboardEvalDumb{}, 3));
 	board.depth = 3;
 	board.max_depth = 6;
 	board.board_drawer.set_square_drawer(Box::new(FootboardSquareDrawer::new()));
+	board.board_drawer.set_piece_drawer(Box::new(FootboardPieceDrawer::new()));
 	board
 }

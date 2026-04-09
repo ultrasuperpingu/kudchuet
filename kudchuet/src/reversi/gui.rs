@@ -2,7 +2,8 @@
 use eframe::egui;
 use egui::Color32;
 
-use crate::common::{bitboards::Bitboard8x8, gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape}, new_move_searcher_vec};
+use crate::common::{bitboards::Bitboard8x8, gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType}, new_move_searcher_vec};
+use crate::common::gui::shapes::Shape;
 
 use crate::common::gui::board_app::GenericBoardApp;
 use super::{game::ReversiEval};
@@ -23,8 +24,8 @@ impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
 			Cell::Empty => unreachable!(),
-			Cell::White => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: None},
-			Cell::Black => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: None},
+			Cell::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: None },
+			Cell::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: None },
 		}
 	}
 }

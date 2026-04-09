@@ -433,3 +433,6 @@ impl AIOptions {
 		}
 	}
 }
+pub fn eval_to_percent(cp:i16) -> f32 {
+	1.0 / (1.0 + -(cp as f32 / 200.0).exp())
+}

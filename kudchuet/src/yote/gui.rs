@@ -3,7 +3,8 @@ use bitboard::Bitboard;
 use eframe::egui;
 use egui::Color32;
 
-use crate::common::{GameResult, bitboards::Bitboard6x5, gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape}, new_move_searcher_vec};
+use crate::common::{GameResult, bitboards::Bitboard6x5, gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType}, new_move_searcher_vec};
+use crate::common::gui::shapes::Shape;
 use crate::common::gui::input_handler::MoveResult;
 
 use crate::common::gui::board_app::GenericBoardApp;
@@ -112,8 +113,8 @@ impl BoardMove<Yote> for Move {
 impl EGUIPieceType for Player {
 	fn shape(&self) -> Shape {
 		match self {
-			Player::Player(1) => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: None},
-			Player::Player(0) => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: None},
+			Player::Player(1) => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: None },
+			Player::Player(0) => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: None },
 			_ => unreachable!()
 		}
 	}

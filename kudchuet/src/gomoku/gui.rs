@@ -2,11 +2,11 @@
 use eframe::egui;
 use egui::{Color32, Stroke};
 
-use crate::common::{bitboards::Goban, gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape, board_drawer::SquareDrawer}, new_move_searcher_vec};
+use crate::common::{bitboards::Goban, gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, board_drawer::SquareDrawer}, new_move_searcher_vec};
+use crate::common::gui::shapes::Shape;
 use crate::gomoku::{Cell, Gomoku, Move, game::GomokuEvalSimple};
 
 use crate::common::gui::board_app::GenericBoardApp;
-//use super::{game::ThreeMusketeersEvalAdvance};
 
 impl BoardMove<Gomoku> for Move {
 	fn from(&self) -> Option<u16> {
@@ -20,8 +20,8 @@ impl BoardMove<Gomoku> for Move {
 impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
-			Cell::White => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "".into(), text_color: Color32::WHITE, stroke_color: None},
-			Cell::Black => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: None},
+			Cell::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: None },
+			Cell::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: None },
 			Cell::Empty => unreachable!(),
 		}
 	}
@@ -90,55 +90,56 @@ pub struct GobanSquareDrawer;
 impl SquareDrawer<Gomoku> for GobanSquareDrawer {
 	fn draw(&self, painter: &egui::Painter, style: &crate::common::gui::BoardStyle, _game: &Gomoku, square: &egui::Rect, x_coord:u8,y_coord:u8) {
 		painter.rect_filled(*square, 0.0, style.uniform_color);
+		let stroke = Stroke::new(2.0, style.dark_color);
 		if x_coord == 0 {
 			if y_coord == 0 {
 				let lines=vec![square.center_top(), square.center()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 				let lines=vec![square.center(), square.right_center()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 			} else if y_coord == 18 {
 				let lines=vec![square.center(), square.center_bottom()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 				let lines=vec![square.center(), square.right_center()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 			} else {
 				let lines=vec![square.center_top(), square.center_bottom()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 				let lines=vec![square.center(), square.right_center()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 			}
 		} else if x_coord == 18 {
 			if y_coord == 0 {
 				let lines=vec![square.center_top(), square.center()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 				let lines=vec![square.center(), square.left_center()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 			} else if y_coord == 18 {
 				let lines=vec![square.center(), square.center_bottom()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 				let lines=vec![square.center(), square.left_center()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 			} else {
 				let lines=vec![square.center_top(), square.center_bottom()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 				let lines=vec![square.center(), square.left_center()];
-				painter.line(lines, Stroke::new(2.0, style.dark_color));
+				painter.line(lines, stroke);
 			}
 		} else if y_coord == 0 {
 			let lines=vec![square.center_top(), square.center()];
-			painter.line(lines, Stroke::new(2.0, style.dark_color));
+			painter.line(lines, stroke);
 			let lines=vec![square.right_center(), square.left_center()];
-			painter.line(lines, Stroke::new(2.0, style.dark_color));
+			painter.line(lines, stroke);
 		} else if y_coord == 18 {
 			let lines=vec![square.center_bottom(), square.center()];
-			painter.line(lines, Stroke::new(2.0, style.dark_color));
+			painter.line(lines, stroke);
 			let lines=vec![square.right_center(), square.left_center()];
-			painter.line(lines, Stroke::new(2.0, style.dark_color));
+			painter.line(lines, stroke);
 		} else {
 			let lines=vec![square.center_top(), square.center_bottom()];
-			painter.line(lines, Stroke::new(2.0, style.dark_color));
+			painter.line(lines, stroke);
 			let lines=vec![square.right_center(), square.left_center()];
-			painter.line(lines, Stroke::new(2.0, style.dark_color));
+			painter.line(lines, stroke);
 			if x_coord == 9 && y_coord == 9 ||
 				x_coord == 3 && y_coord == 9 || x_coord == 9 && y_coord == 3 ||
 				x_coord == 15 && y_coord == 9|| x_coord == 9 && y_coord == 15 ||

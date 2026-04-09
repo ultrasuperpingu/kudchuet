@@ -1,10 +1,11 @@
 use std::fmt::Debug;
 
-use egui::{Color32, Pos2, Rect, Vec2};
+use egui::{Color32, Stroke};
 use egui_field_editor::EguiInspect;
 use minimax::Game;
 use serde::{Deserialize, Serialize};
-use crate::common::gui::input_handler::MoveResult;
+use crate::common::gui::shapes::StrokeData;
+use crate::common::gui::{input_handler::MoveResult, shapes::Shape};
 use crate::common::gui::board_drawer::BoardDrawer;
 
 
@@ -16,6 +17,7 @@ pub mod board_drawer;
 pub mod options_panel;
 pub mod game_state_manager;
 pub mod input_handler;
+pub mod shapes;
 
 #[derive(EguiInspect, Clone, PartialEq, Eq, Copy, Debug, Serialize, Deserialize)]
 pub enum CoordMod {
@@ -75,16 +77,16 @@ pub enum CheckerBoardMod {
 }
 
 #[derive(EguiInspect, Default, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
-pub enum HalfSizeOffsetMod {
+pub enum RowOffsetPattern {
 	#[default]
-	None,
-	Even,
-	Odd
+	NoOffset,
+	EvenRowsShifted,
+	OddRowsShifted
 }
 #[derive(EguiInspect, Clone, Serialize, Deserialize)]
 pub struct BoardStyle {
 	pub checkerboard_mod: CheckerBoardMod,
-	pub half_size_offset_mod: HalfSizeOffsetMod,
+	pub row_offset_pattern: RowOffsetPattern,
 	pub clear_color: Option<egui::Color32>,
 	pub light_color: egui::Color32,
 	pub dark_color: egui::Color32,
@@ -101,7 +103,7 @@ impl Default for BoardStyle {
 	fn default() -> Self {
 		Self {
 			clear_color: None,
-			half_size_offset_mod: HalfSizeOffsetMod::None,
+			row_offset_pattern: RowOffsetPattern::NoOffset,
 			checkerboard_mod: CheckerBoardMod::EvenDark,
 			light_color: egui::Color32::from_rgb(240, 217, 181),
 			dark_color: egui::Color32::from_rgb(181, 136, 99),
@@ -109,99 +111,36 @@ impl Default for BoardStyle {
 			show_coordinates_mod: CoordMod::FileRankAside,
 			square_stroke_color: None,
 			empty_cell_shape: None,
-			selected_highlights_shape: Shape::StrokeRect { color: egui::Color32::YELLOW, size: 1.0, text: "".into(), text_color: Color32::BLACK, stroke_width: 3.0 },
-			legal_highlights_shape: Shape::Circle { color: egui::Color32::from_rgb(50, 50, 150), size: 0.3, text: "".into(), text_color: Color32::BLACK, stroke_color: None },
-			played_highlights_shape: Shape::Rect { color: Color32::from_rgba_unmultiplied(150, 150, 250, 80), size: 1.0, text: "".into(), text_color: Color32::BLACK, stroke_color: None },
+			selected_highlights_shape: Shape::Rect {
+				fill_color: None,
+				size: 1.0,
+				text: None,
+				stroke: Some(StrokeData { stroke: Stroke::new( 3.0, egui::Color32::YELLOW), kind: egui::StrokeKind::Inside})
+			},
+			legal_highlights_shape: Shape::Circle {
+				fill_color: Some(egui::Color32::from_rgb(50, 50, 150)),
+				size: 0.3,
+				text: None,
+				stroke: None
+			},
+			played_highlights_shape: Shape::Rect {
+				fill_color: Some(Color32::from_rgba_unmultiplied(150, 150, 250, 80)),
+				size: 1.0,
+				text: None,
+				stroke: None
+			},
 			mirrored: false,
-		}
-	}
-}
-#[derive(Clone, EguiInspect, PartialEq, Serialize, Deserialize)]
-pub enum Shape {
-	Circle{color: Color32, size: f32, text:String, text_color: Color32, stroke_color: Option<Color32>},
-	StrokeCircle{color: Color32, size: f32, stroke_width: f32,  text:String, text_color: Color32},
-	Rect{color: Color32, size: f32, text:String, text_color: Color32, stroke_color: Option<Color32>},
-	StrokeRect{color: Color32, size: f32, stroke_width: f32,  text:String, text_color: Color32},
-	String{text:String, color:Color32}
-}
-impl Default for Shape {
-	fn default() -> Self {
-		Shape::Circle { color: Color32::WHITE, text: "".into(), size: 0.7, text_color: Color32::WHITE, stroke_color: None }
-	}
-}
-impl Shape {
-	pub fn draw(&self, painter: &egui::Painter, center: Pos2, cell_size: f32) {
-		match self {
-			Shape::Circle { color, size, text, text_color , stroke_color} => {
-				painter.circle_filled(center, cell_size * size/2.0, *color);
-				if let Some(c) = stroke_color.as_ref() {
-					painter.circle_stroke(center, cell_size * size/2.0, egui::Stroke::new(1.0, *c));
-				}
-				if !text.is_empty() {
-					painter.text(
-						center,
-						egui::Align2::CENTER_CENTER,
-							text,
-							egui::FontId::monospace(cell_size* size * 0.5),
-							*text_color
-						);
-				}
-			},
-			Shape::StrokeCircle { color, size, stroke_width, text, text_color} => {
-				painter.circle_stroke(center, cell_size * size/2.0, egui::Stroke::new(*stroke_width, *color));
-				if !text.is_empty() {
-					painter.text(
-						center,
-						egui::Align2::CENTER_CENTER,
-							text,
-							egui::FontId::monospace(cell_size * size * 0.5),
-							*text_color
-					);
-				}
-			},
-			Shape::String { text, color } => {
-				painter.text(
-					center,
-					egui::Align2::CENTER_CENTER,
-						text,
-						egui::FontId::proportional(cell_size * 0.8),
-						*color
-				);
-			},
-			Shape::Rect { color, size, text, text_color, stroke_color } => {
-				let size_vec = Vec2::new(cell_size * size, cell_size * size);
-				painter.rect_filled(Rect::from_center_size(center, size_vec), 0.0, *color);
-				if let Some(c) = stroke_color.as_ref() {
-					painter.rect_stroke(Rect::from_center_size(center, size_vec), 0.0, egui::Stroke::new(1.0, *c), egui::StrokeKind::Inside);
-				}
-				if !text.is_empty() {
-					painter.text(
-						center,
-						egui::Align2::CENTER_CENTER,
-							text,
-							egui::FontId::monospace(cell_size * 0.5),
-							*text_color
-						);
-				}
-			},
-			Shape::StrokeRect { color, size, stroke_width, text, text_color } => {
-				painter.rect_stroke(Rect::from_center_size(center, Vec2::new(cell_size * size, cell_size * size)), 0.0, egui::Stroke::new(*stroke_width, *color), egui::StrokeKind::Inside);
-				if !text.is_empty() {
-					painter.text(
-						center,
-						egui::Align2::CENTER_CENTER,
-							text,
-							egui::FontId::monospace(cell_size * 0.5),
-							*text_color
-					);
-				}
-			},
 		}
 	}
 }
 pub trait EGUIPieceType {
 	fn shape(&self) -> Shape {
-		Shape::Circle { color: Color32::BLACK, size: 0.7, text: "N/A".to_owned(), text_color: Color32::WHITE, stroke_color: None }
+		Shape::Circle {
+			fill_color: Some(Color32::BLACK),
+			size: 0.7,
+			text: None,
+			stroke: None
+		}
 	}
 	//fn draw(&self, ui: &mut Ui, center: Pos2, cell_size: f32) {
 	//	self.shape().draw(ui.painter(), center, cell_size);

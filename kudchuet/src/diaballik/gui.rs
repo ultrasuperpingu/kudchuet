@@ -3,7 +3,8 @@ use eframe::egui;
 use egui::Color32;
 use crate::common::bitboards::Bitboard7x7;
 use crate::common::{Player, new_move_searcher_vec};
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType};
+use crate::common::gui::shapes::{Shape, StrokeData, TextData};
 
 use crate::common::gui::board_app::GenericBoardApp;
 use crate::diaballik::Action;
@@ -70,10 +71,28 @@ impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
 			Cell::Empty => unreachable!(),
-			Cell::White => Shape::Circle{color:Color32::WHITE, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Cell::Black => Shape::Circle{color:Color32::BLACK, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Cell::WhiteWithBall => Shape::Circle{color:Color32::WHITE, text: "⚽".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Cell::BlackWithBall => Shape::Circle{color:Color32::BLACK, text: "⚽".into(), size: 0.7, text_color: Color32::WHITE, stroke_color: Some(Color32::BLACK)},
+			Cell::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
+			Cell::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
+			Cell::WhiteWithBall => Shape::Circle {
+				fill_color: Some(Color32::YELLOW),
+				size: 0.7,
+				text: Some(TextData {
+					text: "⚽".into(),
+					color: Color32::BLACK,
+					size: 0.5,
+				}),
+				stroke: Some(StrokeData::default())
+			},
+			Cell::BlackWithBall => Shape::Circle {
+				fill_color: Some(Color32::YELLOW),
+				size: 0.7,
+				text: Some(TextData {
+					text: "⚽".into(),
+					color: Color32::WHITE,
+					size: 0.5,
+				}),
+				stroke: Some(StrokeData::default())
+			}
 		}
 	}
 }

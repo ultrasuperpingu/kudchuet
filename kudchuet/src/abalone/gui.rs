@@ -1,14 +1,15 @@
 
 use bitboard::Bitboard;
 use eframe::egui;
-use egui::{Color32, Rect, Vec2};
+use egui::{Color32, Rect, Stroke, Vec2};
 use minimax::Game;
 use crate::abalone::bitboard::BitboardAbalone;
 use crate::abalone::game::AbaloneMaterialEval;
 use crate::abalone::rules::{Abalone, Cell, HEXES, Hex, Move, idx};
 use crate::common::gui::board_app::GenericBoardApp;
 use crate::common::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, PieceDrawer, SquareDrawer};
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType};
+use crate::common::gui::shapes::{Shape, StrokeData};
 use crate::common::{GameResult, Player, new_move_searcher_vec};
 
 
@@ -49,8 +50,18 @@ impl BoardMove<Abalone> for Move {
 impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
-			Cell::White => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Cell::Black => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
+			Cell::White => Shape::Circle{
+				fill_color: Some(Color32::WHITE),
+				size: 0.7,
+				text: None,
+				stroke: Some(StrokeData { stroke: Stroke::new(3.0, Color32::BLACK), kind: egui::StrokeKind::Inside })
+			},
+			Cell::Black => Shape::Circle{
+				fill_color:Some(Color32::BLACK),
+				size: 0.7,
+				text: None,
+				stroke: None
+			},
 			Cell::Empty => unreachable!(),
 		}
 	}
@@ -116,10 +127,20 @@ impl BoardGame for Abalone {
 		let mut style = BoardStyle::default();
 		style.checkerboard_mod=crate::common::gui::CheckerBoardMod::None;
 		style.uniform_color=Color32::from_rgb(40, 17, 51);
-		style.selected_highlights_shape=Shape::StrokeCircle { color: Color32::from_rgb(240, 220, 80), size: 0.8, stroke_width: 5.0, text: "".into(), text_color: Color32::BLACK };
+		style.selected_highlights_shape=Shape::Circle {
+			fill_color: None,
+			size: 0.8,
+			stroke: Some(StrokeData {stroke: Stroke::new(5.0, Color32::from_rgb(240, 220, 80)), kind: egui::StrokeKind::Inside}),
+			text: None };
 		let board_color = Color32::from_rgb(0xaf, 0x69 ,0x49);
 		let outline_color = Color32::from_rgb(0x70, 0x20, 30);
-		style.empty_cell_shape=Some(Shape::Circle { color: board_color, size: 0.95, stroke_color: Some(outline_color), text: "".into(), text_color: Color32::BLACK });
+		style.empty_cell_shape=Some(
+			Shape::Circle {
+				fill_color: Some(board_color),
+				size: 0.95,
+				stroke: Some(crate::common::gui::shapes::StrokeData {stroke: egui::Stroke::new(3.0, outline_color), kind: egui::StrokeKind::Inside}),
+				text: None,
+			});
 		style
 	}
 }
@@ -281,15 +302,9 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 pub fn create_board() -> GenericBoardApp<Abalone> {
 	let mut board=GenericBoardApp::new(Abalone::default(), new_move_searcher_vec("Material".into(), AbaloneMaterialEval{}, 4));
 	board.board_drawer = Box::new(AbaloneBoardDrawer(DefaultBoardDrawer::new()));
-	board.board_drawer.get_style_mut().checkerboard_mod=crate::common::gui::CheckerBoardMod::None;
-	board.board_drawer.get_style_mut().uniform_color=Color32::from_rgb(40, 17, 51);
-	//board.board_drawer.get_style_mut().show_coordinates_mod=crate::common::gui::CoordMod::NumbersAside;
-	board.board_drawer.get_style_mut().selected_highlights_shape=Shape::StrokeCircle { color: Color32::from_rgb(240, 220, 80), size: 0.8, stroke_width: 5.0, text: "".into(), text_color: Color32::BLACK };
+	*board.board_drawer.get_style_mut()=Abalone::default_style();
 	board.max_depth = 6;
 	board.depth = 4;
-	let board_color = Color32::from_rgb(0xaf, 0x69 ,0x49);
-	let outline_color = Color32::from_rgb(0x70, 0x20, 30);
-	board.board_drawer.get_style_mut().empty_cell_shape=Some(Shape::Circle { color: board_color, size: 0.95, stroke_color: Some(outline_color), text: "".into(), text_color: Color32::BLACK });
 	board
 }
 

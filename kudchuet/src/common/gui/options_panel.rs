@@ -1,5 +1,5 @@
 use egui::Id;
-use egui_field_editor::EguiInspect;
+use egui_field_editor::{EguiInspect, EguiInspector, add_button};
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::common::ai::external_engine::ExternalEngineEntry;
@@ -45,18 +45,12 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 								}
 								RightTab::Settings => {
 									let active_engines = self.ai_engine_manager.get_all_engine_names();
-									//let active_engines: Vec<_> = [
-									//	self.ai_engine_manager.active_player1_engine.clone(),
-									//	self.ai_engine_manager.active_player2_engine.clone(),
-									//]
-									//	.iter()
-									//	.filter_map(|e| e.clone())
-									//	.collect();
 									let mut opts_changed = None;
 									for engine_name in active_engines {
 										if let Ok(engine) = self.ai_engine_manager.ensure_engine(&engine_name) {
 											if let Some(mut opts)= engine.get_options() {
 												let resp = opts.inspect(engine_name.as_str(), "", LABEL_RATIO, false, ui);
+												//let resp = ui.add(EguiInspector::new(&mut opts).id_salt(engine_name.as_str()));
 												if resp.changed() {
 													println!("Options changed for engine {} {:?}", engine_name, resp.id);
 													for (k,v) in  &opts.uci {
@@ -83,21 +77,33 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 									}
 								}
 								RightTab::Theme => {
-									if self.board_drawer.get_style_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
+									//ui.heading("Board Style");
+									//if self.board_drawer.get_style_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
+									if ui.add(EguiInspector::new(self.board_drawer.get_style_mut()).id_salt("board_style").with_title("Board Style")).changed() {
 										self.board_drawer.save_style(ui.ctx());
 									}
-									if ui.button("Default").clicked() {
+									add_button("Default Board Style", "Reset board style to default", false, ui, |ui| {
 										*self.board_drawer.get_style_mut() = G::default_style();
 										self.board_drawer.save_style(ui.ctx());
-									}
+									});
+									//if ui.button("Default Board Style").clicked() {
+									//	*self.board_drawer.get_style_mut() = G::default_style();
+									//	self.board_drawer.save_style(ui.ctx());
+									//}
 									if self.board_drawer.get_piece_drawer().has_custom_properties() {
-										if self.board_drawer.get_piece_drawer_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
-											self.board_drawer.save_style(ui.ctx());
+										let piece_drawer = self.board_drawer.get_piece_drawer_mut();
+										//if self.board_drawer.get_piece_drawer_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
+										if ui.add(EguiInspector::new(piece_drawer).id_salt("piece_style").with_title("Piece Style")).changed() {
+											//self.board_drawer.save_style(ui.ctx());
 										}
-										if ui.button("Default").clicked() {
+										add_button("Default Piece Style", "Reset pieces style to default", false, ui, |_ui| {
 											self.board_drawer.get_piece_drawer_mut().set_default();
-											self.board_drawer.save_style(ui.ctx());
-										}
+											//self.board_drawer.save_style(ui.ctx());
+										});
+										//if ui.button("Default Piece Style").clicked() {
+										//	self.board_drawer.get_piece_drawer_mut().set_default();
+										//	//self.board_drawer.save_style(ui.ctx());
+										//}
 									}
 								}
 								RightTab::ImportExport => {

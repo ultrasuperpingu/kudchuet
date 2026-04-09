@@ -1,7 +1,8 @@
 use eframe::egui;
 use egui::Color32;
 use crate::common::gui::board_app::GenericBoardApp;
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType};
+use crate::common::gui::shapes::{Shape, StrokeData};
 use crate::common::new_move_searcher_vec;
 use crate::neutron::game::NeutronDumbEval;
 
@@ -45,9 +46,9 @@ impl BoardMove<Neutron> for Move {
 impl EGUIPieceType for Piece {
 	fn shape(&self) -> Shape {
 		match self {
-			Piece::Neutron =>  Shape::Circle{color:Color32::RED, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Piece::White => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Piece::Black => Shape::Circle{color:Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
+			Piece::Neutron => Shape::Circle { fill_color: Some(Color32::RED), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
+			Piece::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
+			Piece::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: None },
 		}
 	}
 }

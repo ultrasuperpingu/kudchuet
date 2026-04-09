@@ -1,10 +1,11 @@
 use eframe::egui;
-use egui::{Color32, Rect};
+use egui::{Color32, Rect, Stroke, StrokeKind};
 use minimax::Game;
 use crate::bagh_chal::game::BaghChalMaterialEval;
 use crate::common::gui::board_app::GenericBoardApp;
 use crate::common::gui::board_drawer::SquareDrawer;
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType};
+use crate::common::gui::shapes::{Shape, StrokeData, TextData};
 use crate::common::{Player, new_move_searcher_vec};
 
 use super::*;
@@ -23,8 +24,18 @@ pub enum BaghChalPiece {
 impl EGUIPieceType for BaghChalPiece {
 	fn shape(&self) -> Shape {
 		match self {
-			BaghChalPiece::Goat => Shape::Circle{color:Color32::WHITE, size: 0.7, text: "🐐".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			BaghChalPiece::Tiger => Shape::Circle{color:Color32::ORANGE, size: 0.7, text: "🐅".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
+			BaghChalPiece::Goat => Shape::Circle{
+				fill_color: Some(Color32::WHITE),
+				size: 0.7,
+				text: Some(TextData { text: "🐐".into(), color: Color32::BLACK, size: 0.5, }),
+				stroke: Some(StrokeData { stroke: Stroke::new(3.0, Color32::BLACK), kind: StrokeKind::Inside }),
+			},
+			BaghChalPiece::Tiger => Shape::Circle{
+				fill_color: Some(Color32::ORANGE),
+				size: 0.7,
+				text: Some(TextData { text: "🐅".into(), color: Color32::BLACK, size: 0.5, }),
+				stroke: Some(StrokeData { stroke: Stroke::new(3.0, Color32::BLACK), kind: StrokeKind::Inside }),
+			}
 		}
 	}
 }

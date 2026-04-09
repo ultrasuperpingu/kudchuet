@@ -1,7 +1,7 @@
 use egui::{Color32, Painter, Pos2, Rect};
 use egui_field_editor::EguiInspect;
 
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, HalfSizeOffsetMod};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern};
 
 
 pub trait BoardDrawer<G: BoardGame>
@@ -15,12 +15,12 @@ pub trait BoardDrawer<G: BoardGame>
 		
 		let avail_w = ui.available_width().max(10.0)* if style.show_coordinates_mod.is_aside() {0.90} else {1.0};
 		let avail_h = ui.available_height().max(10.0)* if style.show_coordinates_mod.is_aside() {0.90} else {1.0};
-		let cell_size = if style.half_size_offset_mod == HalfSizeOffsetMod::None {
+		let cell_size = if style.row_offset_pattern == RowOffsetPattern::NoOffset {
 			(avail_w / w as f32).min(avail_h / h as f32)
 		} else {
 			(avail_w / (w as f32+0.5)).min(avail_h / h as f32)
 		};
-		let board_width = if style.half_size_offset_mod == HalfSizeOffsetMod::None {
+		let board_width = if style.row_offset_pattern == RowOffsetPattern::NoOffset {
 			cell_size * w as f32
 		} else {
 			cell_size * (w as f32 + 0.5)
@@ -52,15 +52,15 @@ pub trait BoardDrawer<G: BoardGame>
 		}
 		if let Some(pos) = response.interact_pointer_pos() {
 			if can_interact && board_rect.contains(pos) {
-				let (x_coord,y_coord) = self.pixel_to_coords(&board_rect, cell_size, pos, w, h).unwrap();
-
-				if x_coord < w && y_coord < h {
-					if response.clicked() {
-						println!("click coords: {} {}", x_coord, y_coord);
-						let index = G::index_from_coords(x_coord, y_coord);
-						//println!("index_from_coords: {}", index);
-						println!("coords_from_index: {} -> {:?}", index, G::coords_from_index(index));
-						click = Some((x_coord, y_coord));
+				if let Some((x_coord, y_coord)) = self.pixel_to_coords(&board_rect, cell_size, pos, w, h) {
+					if x_coord < w && y_coord < h {
+						if response.clicked() {
+							println!("click coords: {} {}", x_coord, y_coord);
+							let index = G::index_from_coords(x_coord, y_coord);
+							//println!("index_from_coords: {}", index);
+							println!("coords_from_index: {} -> {:?}", index, G::coords_from_index(index));
+							click = Some((x_coord, y_coord));
+						}
 					}
 				}
 			}
@@ -177,10 +177,10 @@ pub trait BoardDrawer<G: BoardGame>
 		};
 
 		let x = board_rect.left() + x_visual as f32 * cell_size + 
-			match self.get_style().half_size_offset_mod {
-				HalfSizeOffsetMod::None => 0.0,
-				HalfSizeOffsetMod::Even => if y_coord.is_multiple_of(2) {0.5*cell_size} else {0.0},
-				HalfSizeOffsetMod::Odd => if !y_coord.is_multiple_of(2) {0.5*cell_size} else {0.0},
+			match self.get_style().row_offset_pattern {
+				RowOffsetPattern::NoOffset => 0.0,
+				RowOffsetPattern::EvenRowsShifted => if y_coord.is_multiple_of(2) {0.5*cell_size} else {0.0},
+				RowOffsetPattern::OddRowsShifted => if !y_coord.is_multiple_of(2) {0.5*cell_size} else {0.0},
 			};
 		let y = board_rect.top() + (h - 1 - y_visual) as f32 * cell_size;
 
@@ -194,10 +194,10 @@ pub trait BoardDrawer<G: BoardGame>
 		let y_off = pos.y - board_rect.top();
 
 		let y_visual = (h - 1) - (y_off / cell_size).floor() as u8;
-		let x_visual = match self.get_style().half_size_offset_mod {
-			HalfSizeOffsetMod::None => (x_off / cell_size).floor() as u8,
-			HalfSizeOffsetMod::Even => ((x_off - if y_visual.is_multiple_of(2) {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
-			HalfSizeOffsetMod::Odd => ((x_off - if !y_visual.is_multiple_of(2) {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
+		let x_visual = match self.get_style().row_offset_pattern {
+			RowOffsetPattern::NoOffset => (x_off / cell_size).floor() as u8,
+			RowOffsetPattern::EvenRowsShifted => ((x_off - if y_visual.is_multiple_of(2) {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
+			RowOffsetPattern::OddRowsShifted => ((x_off - if !y_visual.is_multiple_of(2) {0.5*cell_size} else {0.0}) / cell_size).floor() as u8,
 		};
 
 		let (x_coord, y_coord) = if self.get_style().mirrored {

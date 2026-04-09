@@ -2,7 +2,8 @@
 use eframe::egui;
 use egui::Color32;
 
-use crate::common::{bitboards::Bitboard5x5, gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape}, new_move_searcher_vec};
+use crate::common::{bitboards::Bitboard5x5, gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, shapes::TextData}, new_move_searcher_vec};
+use crate::common::gui::shapes::Shape;
 use crate::three_musketeers::{Move, Player, ThreeMusketeers, game::ThreeMusketeersEvalSimple};
 
 use crate::common::gui::board_app::GenericBoardApp;
@@ -27,10 +28,19 @@ impl EGUIPieceType for ThreeMPiece {
 	fn shape(&self) -> Shape {
 		match self {
 			//✠    ✥♱♰✢✣
-			ThreeMPiece::Musketeer => Shape::Circle{color:Color32::from_rgb(50, 100, 200), size: 0.7, text: "⚜".into(), text_color: Color32::WHITE, stroke_color: None},
-			//ThreeMPiece::Musketeer => Shape::Circle{color:Color32::from_rgb(50, 100, 200), text: "✠".into(), text_color: Color32::WHITE, stroke_color: None},
+			ThreeMPiece::Musketeer => Shape::Circle{
+				fill_color: Some(Color32::from_rgb(50, 100, 200)),
+				size: 0.7,
+				text: Some(TextData {text: "⚜".into(), color: Color32::WHITE, size: 0.5, }),
+				stroke: None
+			},
 			//✚ 
-			ThreeMPiece::Guard => Shape::Circle{color:Color32::from_rgb(200, 50, 50), size: 0.7, text: "✝".into(), text_color: Color32::WHITE, stroke_color: None},
+			ThreeMPiece::Guard => Shape::Circle{
+				fill_color: Some(Color32::from_rgb(200, 50, 50)),
+				size: 0.7,
+				text: Some(TextData {text: "✝".into(), color: Color32::WHITE, size: 0.5, }),
+				stroke: None
+			},
 		}
 	}
 }
@@ -91,11 +101,10 @@ impl BoardGame for ThreeMusketeers {
 			dark_color: Color32::from_rgb(40, 40, 100),
 			show_coordinates_mod: crate::common::gui::CoordMod::FileRankOnSquare,
 			played_highlights_shape: Shape::Rect {
-				color: Color32::from_rgba_unmultiplied(200,200,90,120),
+				fill_color: Some(Color32::from_rgba_unmultiplied(200,200,90,120)),
 				size: 1.0,
-				text: "".into(),
-				text_color: Color32::BLACK,
-				stroke_color: None
+				text: None,
+				stroke: None
 			},
 			//square_stroke_color: Some(egui::Color32::BLACK),
 			..Default::default()

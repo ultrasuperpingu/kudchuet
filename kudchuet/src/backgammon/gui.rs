@@ -1,14 +1,15 @@
 use eframe::egui;
-use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke};
+use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke, StrokeKind};
 use minimax::Game;
 
 use crate::backgammon::rules::{P1_BAR, P1_OUT, P2_BAR, P2_OUT};
 use crate::common::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
 use crate::common::gui::board_drawer::SquareDrawer;
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType, Shape};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType};
 use crate::backgammon::game::{BackgammonMaterialEval, BackgammonSimpleEval};
 use crate::common::{GameResult, Player};
 use crate::common::gui::board_app::GenericBoardApp;
+use crate::common::gui::shapes::{Shape, StrokeData, TextData};
 
 use super::rules::{Backgammon, Move};
 
@@ -22,18 +23,16 @@ impl EGUIPieceType for Piece {
 	fn shape(&self) -> Shape {
 		match self {
 			Piece::Player1(nb) => Shape::Circle {
-				color: Color32::RED,
-				text: if *nb > 1 { nb.to_string()} else {"".into()},
+				fill_color: Some(Color32::RED),
+				text: if *nb > 1 { Some(TextData {text: nb.to_string(), size: 0.5, color: Color32::BLACK }) } else { None },
 				size: 0.98,
-				text_color: Color32::BLACK,
-				stroke_color: Some(Color32::BLACK),
+				stroke: Some(StrokeData { stroke: Stroke::new(3.0, Color32::BLACK), kind: StrokeKind::Inside }),
 			},
 			Piece::Player2(nb) => Shape::Circle {
-				color: Color32::BLACK,
-				text: if *nb > 1 { nb.to_string()} else {"".into()},
+				fill_color: Some(Color32::BLACK),
+				text: if *nb > 1 { Some(TextData {text: nb.to_string(), size: 0.5, color: Color32::WHITE }) } else { None },
 				size: 0.98,
-				text_color: Color32::WHITE,
-				stroke_color: None,
+				stroke: None,
 			},
 		}
 	}

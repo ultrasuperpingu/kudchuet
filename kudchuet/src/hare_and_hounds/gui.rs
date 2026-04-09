@@ -2,7 +2,8 @@ use eframe::egui;
 use egui::{Color32, Rect};
 use crate::common::gui::board_drawer::SquareDrawer;
 use crate::common::new_move_searcher_vec;
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType};
+use crate::common::gui::shapes::{Shape, StrokeData};
 
 use crate::common::gui::board_app::GenericBoardApp;
 use super::Board;
@@ -19,14 +20,13 @@ impl BoardMove<HareAndHounds> for Move {
 	fn to(&self) -> u16 {
 		self.to as u16
 	}
-	//fn ty() -> MoveType { MoveType::FromToOrDrop }
 }
 impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
 			Cell::Empty => unreachable!(),
-			Cell::Hound => Shape::Circle{color:Color32::ORANGE, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Cell::Hare => Shape::Circle{color:Color32::LIGHT_GRAY, size: 0.7, text: "".into(), text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
+			Cell::Hound => Shape::Circle { fill_color: Some(Color32::ORANGE), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
+			Cell::Hare => Shape::Circle { fill_color: Some(Color32::LIGHT_GRAY), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
 		}
 	}
 }

@@ -6,7 +6,8 @@ use crate::chinese_checkers::{ChineseCheckers, ChineseCheckersPlayer, Move};
 use crate::common::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
 use crate::common::gui::board_app::GenericBoardApp;
 use crate::common::gui::board_drawer::SquareDrawer;
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
+use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType};
+use crate::common::gui::shapes::{Shape, StrokeData};
 
 
 impl BoardMove<ChineseCheckers> for Move {
@@ -21,12 +22,12 @@ impl BoardMove<ChineseCheckers> for Move {
 impl EGUIPieceType for ChineseCheckersPlayer {
 	fn shape(&self) -> Shape {
 		match self {
-			ChineseCheckersPlayer::Red => Shape::Circle { color: Color32::RED, size: 0.7, text: "".into(), text_color: Color32::WHITE, stroke_color: None },
-			ChineseCheckersPlayer::Blue => Shape::Circle { color: Color32::BLUE, size: 0.7, text: "".into(), text_color: Color32::WHITE, stroke_color: None },
-			ChineseCheckersPlayer::Green => Shape::Circle { color: Color32::GREEN, size: 0.7, text: "".into(), text_color: Color32::WHITE, stroke_color: None },
-			ChineseCheckersPlayer::Yellow => Shape::Circle { color: Color32::YELLOW, size: 0.7, text: "".into(), text_color: Color32::WHITE, stroke_color: None },
-			ChineseCheckersPlayer::Black => Shape::Circle { color: Color32::BLACK, size: 0.7, text: "".into(), text_color: Color32::WHITE, stroke_color: None },
-			ChineseCheckersPlayer::White => Shape::Circle { color: Color32::WHITE, size: 0.7, text: "".into(), text_color: Color32::WHITE, stroke_color: None },
+			ChineseCheckersPlayer::Red => Shape::Circle { fill_color: Some(Color32::RED), size: 0.7, text: None, stroke: None },
+			ChineseCheckersPlayer::Blue => Shape::Circle { fill_color: Some(Color32::BLUE), size: 0.7, text: None, stroke: None },
+			ChineseCheckersPlayer::Green => Shape::Circle { fill_color: Some(Color32::GREEN), size: 0.7, text: None, stroke: None },
+			ChineseCheckersPlayer::Yellow => Shape::Circle { fill_color: Some(Color32::YELLOW), size: 0.7, text: None, stroke: None },
+			ChineseCheckersPlayer::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: None },
+			ChineseCheckersPlayer::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: None },
 		}
 	}
 }
@@ -108,7 +109,11 @@ impl BoardGame for ChineseCheckers {
 	}
 
 	fn index_from_coords(x: u8, y: u8) -> u16 {
-		ChineseCheckerBoard::index_from_coords(x, y) as u16
+		if ChineseCheckerBoard::is_playable(x, y) {
+			ChineseCheckerBoard::index_from_coords(x, y) as u16
+		} else {
+			u16::MAX
+		}
 	}
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		ChineseCheckerBoard::coords_from_index(index as usize)
@@ -117,9 +122,20 @@ impl BoardGame for ChineseCheckers {
 		BoardStyle {
 			uniform_color: egui::Color32::from_rgb(200, 190, 125),
 			show_coordinates_mod: crate::common::gui::CoordMod::None,
-			played_highlights_shape: Shape::Rect { color: Color32::from_rgba_unmultiplied(120, 120, 120, 128), size: 1.0, text: "".into(), text_color: Color32::BLACK, stroke_color: None },
-			half_size_offset_mod: crate::common::gui::HalfSizeOffsetMod::Even,
+			played_highlights_shape: Shape::Rect {
+				fill_color: Some(Color32::from_rgba_unmultiplied(120, 120, 120, 128)),
+				size: 1.0,
+				text: None,
+				stroke: None
+			},
+			row_offset_pattern: crate::common::gui::RowOffsetPattern::EvenRowsShifted,
 			clear_color: Some(egui::Color32::from_rgb(200, 190, 125)),
+			empty_cell_shape: Some(Shape::Circle {
+				fill_color: Some(Color32::from_rgba_unmultiplied(12, 150, 200, 255)),
+				size: 1.0,
+				text: None,
+				stroke: Some(StrokeData::default())
+			}),
 			..Default::default()
 		}
 	}

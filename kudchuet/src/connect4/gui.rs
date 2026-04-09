@@ -2,7 +2,8 @@ use eframe::egui;
 use egui::Color32;
 use crate::common::new_move_searcher_vec;
 use crate::common::{GameResult, Player, bitboards::Bitboard7x7Col};
- use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, Shape};
+ use crate::common::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType};
+ use crate::common::gui::shapes::{Shape, StrokeData};
  use crate::connect4::game::ConnectFourEval;
 
 use crate::common::gui::board_app::GenericBoardApp;
@@ -19,8 +20,8 @@ impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
 			Cell::Empty => unreachable!(),
-			Cell::PlayerOne => Shape::Circle{color:Color32::YELLOW, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
-			Cell::PlayerTwo => Shape::Circle{color:Color32::RED, text: "".into(), size: 0.7, text_color: Color32::BLACK, stroke_color: Some(Color32::BLACK)},
+			Cell::PlayerOne => Shape::Circle { fill_color: Some(Color32::YELLOW), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
+			Cell::PlayerTwo => Shape::Circle { fill_color: Some(Color32::RED), size: 0.7, text: None, stroke: Some(StrokeData::default()) }
 		}
 	}
 }
@@ -96,7 +97,7 @@ impl BoardGame for ConnectFour {
 		BoardStyle {
 			dark_color: Color32::from_rgb(0, 0, 150),
 			light_color: Color32::from_rgb(0, 0, 150),
-			empty_cell_shape: Some(Shape::Circle { color: Color32::from_rgb(20, 20, 80), size: 0.7, text: "".into(), text_color: egui::Color32::BLACK, stroke_color: Some(egui::Color32::BLACK) }),
+			empty_cell_shape: Some(Shape::Circle { fill_color: Some(Color32::from_rgb(20, 20, 80)), size: 0.7, text: None, stroke: Some(StrokeData::default()) }),
 			show_coordinates_mod: crate::common::gui::CoordMod::NumbersAside,
 			..Default::default()
 		}
