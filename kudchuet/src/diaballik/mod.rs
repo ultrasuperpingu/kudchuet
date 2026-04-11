@@ -549,12 +549,13 @@ mod tests {
 	#[test]
 	fn test_play2() {
 		let mut game=Diaballik::default();
+		let mut rng = crate::utils::Rng::new();
 		println!("{}", game);
 		while game.result() == GameResult::OnGoing {
 			let mut moves=vec![];
 			game.legal_moves(&mut moves);
 			println!("{:?}", moves.len());
-			let m = moves[rand::random_range(0..moves.len())];
+			let m = moves[rng.range(0, moves.len())];
 			println!("{:?}", m);
 			game.play_unchecked(&m);
 			assert_eq!(game.compute_zobrist(), game.hash);

@@ -219,13 +219,14 @@ impl std::fmt::Display for HareAndHounds {
 fn test_game() {
 	let mut hah = HareAndHounds::default();
 	let mut i=0;
+	let mut rng = crate::utils::Rng::new();
 	while hah.result() == GameResult::OnGoing && i< 10000 {
 		println!("{}", hah);
 		let mut len = 0;
 		let mut moves=[Move::default();HareAndHounds::MAX_MOVES];
 		hah.legal_moves(&mut moves, &mut len);
 		println!("{} {:?}", len, moves);
-		hah.play_unchecked(moves[rand::random_range(0..len)]);
+		hah.play_unchecked(moves[rng.range(0, len)]);
 		println!("{:?}", hah.result());
 		i+=1;
 		assert!(hah.houds.count() == 3);

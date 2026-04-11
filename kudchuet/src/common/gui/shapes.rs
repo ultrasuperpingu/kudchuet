@@ -2,8 +2,9 @@
 use egui::{Color32, Pos2, Rect, Stroke, StrokeKind, Vec2};
 use egui_field_editor::EguiInspect;
 use serde::{Deserialize, Serialize};
+use strum::EnumIter;
 
-#[derive(Clone, EguiInspect, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, EguiInspect, PartialEq, Serialize, Deserialize)]
 pub struct StrokeData {
 	pub stroke: Stroke,
 	pub kind: StrokeKind,
@@ -13,7 +14,7 @@ impl Default for StrokeData {
 		Self { stroke: Stroke::new(3.0, Color32::BLACK), kind: StrokeKind::Inside }
 	}
 }
-#[derive(Clone, EguiInspect, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, EguiInspect, PartialEq, Serialize, Deserialize)]
 pub struct TextData {
 	pub text:String,
 	pub color: Color32,
@@ -33,7 +34,8 @@ impl TextData {
 		}
 	}
 }
-#[derive(Clone, EguiInspect, PartialEq, Serialize, Deserialize)]
+
+#[derive(Clone, Debug, EguiInspect, EnumIter, PartialEq, Serialize, Deserialize)]
 pub enum Shape {
 	Circle {
 		fill_color: Option<Color32>,

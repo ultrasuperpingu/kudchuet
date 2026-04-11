@@ -606,11 +606,9 @@ mod tests {
 	}
 	#[test]
 	fn test_random_game_until_end() {
-		use rand::seq::IndexedRandom;
-
 		let mut game = Backgammon::new();
 		println!("{}", game);
-		let mut rng = rand::rng();
+		let mut rng = crate::utils::Rng::new();
 
 		let mut turn = 0;
 		let max_turns = 10_000; // max number of turns
@@ -630,7 +628,7 @@ mod tests {
 				continue;
 			}
 
-			let mv = *moves.choose(&mut rng).unwrap();
+			let mv = moves[rng.range(0, moves.len())];
 
 			let ok = game.play_unchecked(mv);
 			assert!(ok, "apply_move failed on a legal move");

@@ -68,7 +68,7 @@ impl CoordMod {
 		*self == CoordMod::None
 	}
 }
-#[derive(EguiInspect, Default, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
+#[derive(EguiInspect, Debug, Default, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum CheckerBoardMod {
 	None,
 	#[default]
@@ -76,14 +76,14 @@ pub enum CheckerBoardMod {
 	OddDark
 }
 
-#[derive(EguiInspect, Default, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
+#[derive(EguiInspect, Debug, Default, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum RowOffsetPattern {
 	#[default]
 	NoOffset,
 	EvenRowsShifted,
 	OddRowsShifted
 }
-#[derive(EguiInspect, Clone, Serialize, Deserialize)]
+#[derive(EguiInspect, Clone, Debug, Serialize, Deserialize)]
 pub struct BoardStyle {
 	pub checkerboard_mod: CheckerBoardMod,
 	pub row_offset_pattern: RowOffsetPattern,
@@ -142,9 +142,6 @@ pub trait EGUIPieceType {
 			stroke: None
 		}
 	}
-	//fn draw(&self, ui: &mut Ui, center: Pos2, cell_size: f32) {
-	//	self.shape().draw(ui.painter(), center, cell_size);
-	//}
 }
 
 pub trait BoardGame : Game<S = Self>+Default+Clone
@@ -205,7 +202,7 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	fn play_random(&mut self) {}
 }
 
-pub trait BoardMove<G : Game> : std::fmt::Debug + Sized + Copy
+pub trait BoardMove<G : Game> : Debug + Sized + Copy
 {
 	fn from(&self) -> Option<u16> {
 		None

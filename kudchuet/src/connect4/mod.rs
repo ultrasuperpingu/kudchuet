@@ -442,11 +442,12 @@ mod tests {
 	}
 	#[test]
 	fn test_play() {
+		let mut rng = crate::utils::Rng::new();
 		let mut b = ConnectFour::new();
 		let mut moves = [Column::from_index(0); 7];
 		let mut n = b.legal_moves_array(&mut moves);
 		while !b.is_over() {
-			b.play_unchecked(moves[rand::random_range(0..n)]);
+			b.play_unchecked(moves[rng.range(0, n)]);
 			n = b.legal_moves_array(&mut moves);
 		}
 		println!("{}", b);
@@ -466,13 +467,14 @@ mod tests {
 	}
 	#[test]
 	fn test_hash_collide() {
+		let mut rng = crate::utils::Rng::new();
 		for _ in 0..100000 {
 			let mut hashes = std::collections::HashMap::new();
 			let mut b = ConnectFour::new();
 			let mut moves = [Column::from_index(0); 7];
 			let mut n = b.legal_moves_array(&mut moves);
 			while !b.is_over() {
-				b.play_unchecked(moves[rand::random_range(0..n)]);
+				b.play_unchecked(moves[rng.range(0, n)]);
 				let hash = b.encode();
 				if hashes.contains_key(&hash) {
 					println!("collision on {} :\n {}\n{}", hash, hashes[&hash], b);

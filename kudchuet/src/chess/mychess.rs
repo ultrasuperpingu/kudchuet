@@ -1553,13 +1553,14 @@ mod tests {
 	}
 	#[test]
 	fn test_play() {
+		let mut rng = crate::utils::Rng::new();
 		let mut chess = ChessBoard::default();
 		assert_eq!(chess.compute_zobrist(), chess.hash);
 		println!("{}", chess);
 		let mut count = 0;
 		let mut legal_moves = chess.legal_moves();
 		while count < 300 && !legal_moves.is_empty() {
-			chess.play(&legal_moves[rand::random_range(0..legal_moves.len())]);
+			chess.play(&legal_moves[rng.range(0, legal_moves.len())]);
 			println!("{}", chess);
 			legal_moves = chess.legal_moves();
 			assert_eq!(chess.compute_zobrist(), chess.hash);

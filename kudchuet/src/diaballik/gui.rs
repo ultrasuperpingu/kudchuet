@@ -74,7 +74,7 @@ impl EGUIPieceType for Cell {
 			Cell::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
 			Cell::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
 			Cell::WhiteWithBall => Shape::Circle {
-				fill_color: Some(Color32::YELLOW),
+				fill_color: Some(Color32::WHITE),
 				size: 0.7,
 				text: Some(TextData {
 					text: "⚽".into(),
@@ -84,7 +84,7 @@ impl EGUIPieceType for Cell {
 				stroke: Some(StrokeData::default())
 			},
 			Cell::BlackWithBall => Shape::Circle {
-				fill_color: Some(Color32::YELLOW),
+				fill_color: Some(Color32::BLACK),
 				size: 0.7,
 				text: Some(TextData {
 					text: "⚽".into(),

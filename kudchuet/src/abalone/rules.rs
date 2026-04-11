@@ -704,10 +704,11 @@ mod tests {
 	}
 	#[test]
 	fn test_play() {
+		let mut rng = crate::utils::Rng::new();
 		let mut a=Abalone::new_standard();
 		let mut moves = a.legal_moves();
 		while !a.is_over() {
-			a.play(moves[rand::random_range(0..moves.len())]);
+			a.play(moves[rng.range(0, moves.len())]);
 			moves = a.legal_moves();
 			println!("{}", a);
 		}
