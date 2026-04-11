@@ -1,7 +1,10 @@
 
 extern crate kudchuet;
-
-use kudchuet::reversi::gui::create_board;
+mod game;
+mod gui;
+mod ihm;
+mod rules;
+use crate::gui::create_board;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {

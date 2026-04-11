@@ -65,59 +65,10 @@ impl Bitboard7x7 {
 	}
 }
 
-
-#[bitboard(width=9,height=13)]
-#[derive(Default, BitboardDebug, BitboardDisplay, Hash)]
-pub struct Bitboard9x13;
-bitboard_table!(RAY_N, ray_n, ray_n_mask, Bitboard9x13, Bitboard9x13::generate_ray_n_table());
-bitboard_table!(RAY_S, ray_s, ray_s_mask, Bitboard9x13, Bitboard9x13::generate_ray_s_table());
-bitboard_table!(RAY_W, ray_w, ray_w_mask, Bitboard9x13, Bitboard9x13::generate_ray_w_table());
-bitboard_table!(RAY_E, ray_e, ray_e_mask, Bitboard9x13, Bitboard9x13::generate_ray_e_table());
-bitboard_table!(RAY_NE, ray_ne, ray_ne_mask, Bitboard9x13, Bitboard9x13::generate_ray_ne_table());
-bitboard_table!(RAY_NW, ray_nw, ray_nw_mask, Bitboard9x13, Bitboard9x13::generate_ray_nw_table());
-bitboard_table!(RAY_SE, ray_se, ray_se_mask, Bitboard9x13, Bitboard9x13::generate_ray_se_table());
-bitboard_table!(RAY_SW, ray_sw, ray_sw_mask, Bitboard9x13, Bitboard9x13::generate_ray_sw_table());
-bitboard_table!(NEIGHBORS_ORTHO, neighbors_ortho, neighbors_ortho_mask, Bitboard9x13, Bitboard9x13::generate_neighbors_ortho_table());
-bitboard_table!(NEIGHBORS_8, neighbors_8, neighbors_8_mask, Bitboard9x13, Bitboard9x13::generate_neighbors_8_table());
-impl Bitboard9x13 {
-	/// Precomputed masks of all squares between any two squares on the bitboard.
-	#[cfg(not(debug_assertions))]
-	pub const RAY_BETWEEN_MASKS: [[Self; Self::NB_SQUARES]; Self::NB_SQUARES] = Self::generate_ray_between_table();
-	/// Returns the precomputed bitboard mask of squares between `from` and `to`.
-	#[inline(always)]
-	pub fn ray_between_mask(from: usize, to: usize) -> Self {
-		#[cfg(not(debug_assertions))]
-		{
-			Self::RAY_BETWEEN_MASKS[from][to]
-		}
-		#[cfg(debug_assertions)]
-		{
-		RAY_BETWEEN_MASKS[from][to]
-		}
-	}
-	#[inline(always)]
-	pub fn ray_between(&self, from: usize, to: usize) -> Self {
-		#[cfg(not(debug_assertions))]
-		{
-			*self & Self::RAY_BETWEEN_MASKS[from][to]
-		}
-		#[cfg(debug_assertions)]
-		{
-			*self & RAY_BETWEEN_MASKS[from][to]
-		}
-	}
-}
-#[cfg(debug_assertions)]
-pub static RAY_BETWEEN_MASKS: [[Bitboard9x13; Bitboard9x13::NB_SQUARES]; Bitboard9x13::NB_SQUARES] = Bitboard9x13::generate_ray_between_table();
 #[bitboard(width=6,height=5)]
 #[derive(Default, BitboardDebug, BitboardDisplay, Hash)]
 pub struct Bitboard6x5;
 
-
-
-#[bitboard(width=7, height=7, col_major=true)]
-#[derive(Default, BitboardDebug, BitboardDisplay, Hash)]
-pub struct Bitboard7x7Col;
 
 
 #[bitboard(width=19, height=19)]

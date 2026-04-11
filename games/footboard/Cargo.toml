@@ -6,6 +6,12 @@ edition = "2024"
 [dependencies]
 eframe = { version = "0.34", features=["persistence"] }
 kudchuet = { path = "../../kudchuet" }
+bitboard = {path="../../bitboards/bitboard"}
+bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
+#magic_bitboard_proc_macro = {path="../magic_bitboard_proc_macro"}
+#minimax = "0.5"
+minimax = {path="../../minimax"}
+egui_field_editor = {path="../../../egui_inspect/egui_field_editor", features=["filepicker"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"

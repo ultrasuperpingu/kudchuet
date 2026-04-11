@@ -1,7 +1,13 @@
 #![allow(clippy::uninlined_format_args)]
 
 extern crate kudchuet;
-use crate::kudchuet::connect4::gui::create_board;
+use crate::gui::create_board;
+mod ex_connect4;
+mod game;
+mod gui;
+mod ihm;
+mod rules;
+mod bitboard;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {

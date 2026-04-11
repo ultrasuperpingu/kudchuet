@@ -6,12 +6,25 @@ edition = "2024"
 [dependencies]
 eframe = { version = "0.34", features=["persistence"] }
 kudchuet = { path = "../../kudchuet" }
+bitboard = {path="../../bitboards/bitboard"}
+bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
+#magic_bitboard_proc_macro = {path="../magic_bitboard_proc_macro"}
+#minimax = "0.5"
+minimax = {path="../../minimax"}
+
+#need to remove at some point
+shakmaty = {version="0.30", features=["variant"]}
+chess_lib = { package = "chess", version = "3.2" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElement"] }
 
+[build-dependencies]
+bitboard = {path="../../bitboards/bitboard"}
+bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
+num-traits = "0.2"
 
 [[bin]]
 name = "chess"

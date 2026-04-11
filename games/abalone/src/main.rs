@@ -1,13 +1,17 @@
 //use abstract_strategy::abalone::ihm::AbaloneApp;
-use kudchuet::abalone::gui::create_board;
-
+use crate::gui::create_board;
+mod bitboard;
+mod fen;
+mod game;
+mod gui;
+mod rules;
 
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
 	let args: Vec<String> = std::env::args().collect();
 	if args.iter().any(|arg| arg == "--uci") {
-		use kudchuet::abalone::{game::AbaloneMaterialEval, rules::Abalone};
+		use crate::{game::AbaloneMaterialEval, rules::Abalone};
 		use kudchuet::common::{ai::cli_engine::UCILikeCLIEngine, new_move_searcher_static};
 
 		let searcher = new_move_searcher_static::<Abalone, _>(AbaloneMaterialEval {}, 5);

@@ -1,5 +1,7 @@
-use kudchuet::gomoku::gui::create_board;
-
+use crate::gui::create_board;
+mod game;
+mod gui;
+mod rules;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {

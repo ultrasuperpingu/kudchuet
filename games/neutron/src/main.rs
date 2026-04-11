@@ -1,5 +1,9 @@
-use kudchuet::neutron::gui::create_board;
-
+use gui::create_board;
+mod game;
+mod gui;
+mod pext_tables;
+mod rules;
+mod bitboard;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {

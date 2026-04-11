@@ -50,7 +50,6 @@ pub enum Shape {
 		stroke: Option<StrokeData>
 	},
 	String {
-		#[inspect(transparent)]
 		text:TextData
 	},
 	Composed(Vec<Shape>)

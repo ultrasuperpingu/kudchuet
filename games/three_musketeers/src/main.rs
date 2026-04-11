@@ -1,5 +1,8 @@
-use kudchuet::three_musketeers::gui::create_board;
+use crate::gui::create_board;
 
+mod gui;
+mod game;
+mod rules;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {

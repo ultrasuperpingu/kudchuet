@@ -1,10 +1,10 @@
-pub(crate) const fn splitmix64(mut x: u64) -> u64 {
+pub const fn splitmix64(mut x: u64) -> u64 {
 	x = x.wrapping_add(0x9E3779B97F4A7C15);
 	x = (x ^ (x >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
 	x = (x ^ (x >> 27)).wrapping_mul(0x94D049BB133111EB);
 	x ^ (x >> 31)
 }
-pub(crate) const fn fibo_hash_64(x: u64) -> u64 {
+pub const fn fibo_hash_64(x: u64) -> u64 {
 	const K: u64 = 11400714819323198485;
 	let h = x.wrapping_mul(K);
 	//h.swap_bytes()
