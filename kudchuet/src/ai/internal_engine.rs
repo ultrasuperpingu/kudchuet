@@ -1,8 +1,8 @@
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
-use crate::common::gui::{BoardGame, BoardMove};
-use crate::common::ai::{AIEngine, AIOptions};
-use crate::common::{ConcreteStrategy};
+use crate::gui::{BoardGame, BoardMove};
+use crate::ai::{AIEngine, AIOptions};
+use crate::{ConcreteStrategy};
 
 #[cfg(not(target_arch = "wasm32"))]
 use futures::channel::oneshot;

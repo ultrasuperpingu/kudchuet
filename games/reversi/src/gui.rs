@@ -1,19 +1,19 @@
 use eframe::egui;
 use egui::Color32;
 
-use kudchuet::common::Player;
-use kudchuet::common::gui::{CheckerBoardMod, CoordMod};
-use kudchuet::common::gui::shapes::Shape;
-use kudchuet::common::{
+use kudchuet::Player;
+use kudchuet::gui::{CheckerBoardMod, CoordMod};
+use kudchuet::gui::shapes::Shape;
+use kudchuet::{
     GameResult,
-    bitboards::Bitboard8x8,
     gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType},
     new_move_searcher_vec,
 };
 
 use super::game::ReversiEval;
+use crate::bitboard::Bitboard8x8;
 use crate::rules::{Cell, Reversi};
-use kudchuet::common::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_app::GenericBoardApp;
 
 impl BoardMove<Reversi> for (u8, u8) {
     fn from(&self) -> Option<u16> {

@@ -5,7 +5,6 @@ use crate::gui::create_board;
 mod ex_connect4;
 mod game;
 mod gui;
-mod ihm;
 mod rules;
 mod bitboard;
 

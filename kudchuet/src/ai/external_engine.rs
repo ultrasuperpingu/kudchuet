@@ -3,9 +3,9 @@
 
 use egui_field_editor::EguiInspect;
 
-use crate::common::ai::uci::{Serializable, UciFen, UciInfoAttribute, UciMessage, UciOptionConfig, UciSearchControl, UciTimeControl};
-use crate::common::ai::{AIEngine, AIEngineProvider, AIOptions};
-use crate::common::gui::{BoardGame, BoardMove};
+use crate::ai::uci::{Serializable, UciFen, UciInfoAttribute, UciMessage, UciOptionConfig, UciSearchControl, UciTimeControl};
+use crate::ai::{AIEngine, AIEngineProvider, AIOptions};
+use crate::gui::{BoardGame, BoardMove};
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use futures::channel::oneshot;

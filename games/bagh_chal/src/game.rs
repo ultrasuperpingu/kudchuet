@@ -2,7 +2,7 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 
-use kudchuet::common::GameResult;
+use kudchuet::GameResult;
 
 use crate::rules::{Move, BaghChal};
 

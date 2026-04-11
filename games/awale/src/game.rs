@@ -1,7 +1,7 @@
 use std::hash::{DefaultHasher, Hash};
 use std::hash::Hasher;
 
-use kudchuet::common::Player;
+use kudchuet::Player;
 
 use super::rules::Awale;
 

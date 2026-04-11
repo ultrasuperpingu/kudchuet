@@ -6,7 +6,7 @@ use crate::bitboard::Bitboard8x8;
 use super::rules::{Color, Square, Piece, CastlingRights, Move};
 
 
-use kudchuet::common::GameResult;
+use kudchuet::GameResult;
 use super::pext_tables;
 //use super::magic_tables::{MagicEntry, ROOK_MOVES, ROOK_MAGICS};
 

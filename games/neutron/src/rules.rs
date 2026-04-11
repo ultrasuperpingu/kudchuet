@@ -3,7 +3,7 @@ use bitboard::{BitIter, Bitboard};
 
 use std::fmt::{self, Display, Formatter};
 
-use kudchuet::common::{GameResult, Player, bitboards::Bitboard5x5};
+use kudchuet::{GameResult, Player};
 
 use crate::pext_tables;
 

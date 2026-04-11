@@ -1,5 +1,5 @@
 use crate::rules::Checkers10;
-use kudchuet::common::Player;
+use kudchuet::Player;
 
 impl Checkers10 {
 	/// Parse the FEN representation and return the corresponding board

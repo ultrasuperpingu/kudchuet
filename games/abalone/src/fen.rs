@@ -1,5 +1,5 @@
 use crate::{bitboard::BitboardAbalone, rules::{Abalone, Hex, idx}};
-use kudchuet::common::Player;
+use kudchuet::Player;
 
 impl std::fmt::Display for Abalone {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

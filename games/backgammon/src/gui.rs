@@ -2,12 +2,12 @@ use eframe::egui;
 use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke, StrokeKind};
 use minimax::Game;
 
-use kudchuet::common::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
-use kudchuet::common::gui::board_drawer::SquareDrawer;
-use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
-use kudchuet::common::{GameResult, Player};
-use kudchuet::common::gui::board_app::GenericBoardApp;
-use kudchuet::common::gui::shapes::{Shape, StrokeData, TextData};
+use kudchuet::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
+use kudchuet::gui::board_drawer::SquareDrawer;
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::{GameResult, Player};
+use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 
 use crate::rules::{P1_BAR, P1_OUT, P2_BAR, P2_OUT};
 use crate::game::{BackgammonMaterialEval, BackgammonSimpleEval};

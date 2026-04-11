@@ -1,7 +1,7 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 use bitboard::BitIter;
-use kudchuet::common::GameResult;
+use kudchuet::GameResult;
 use bitboard::Bitboard;
 //use minimax::Evaluation;
 

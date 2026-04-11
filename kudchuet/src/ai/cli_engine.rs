@@ -7,9 +7,9 @@ use std::time::Duration;
 
 use minimax::strategies::iterative::SearchStopSignal;
 
-use crate::common::ai::uci::{UciInfoAttribute, UciMessage, UciTimeControl};
-use crate::common::gui::{BoardGame, BoardMove};
-use crate::common::ConcreteStrategy;
+use crate::ai::uci::{UciInfoAttribute, UciMessage, UciOptionConfig, UciTimeControl};
+use crate::gui::{BoardGame, BoardMove};
+use crate::ConcreteStrategy;
 
 pub struct UCILikeCLIEngine<G, AI>
 	where G: BoardGame + Send + 'static,
@@ -61,10 +61,10 @@ where
 					UciMessage::Uci => {
 						println!("{}", UciMessage::Id { name: Some("KudchuetChess".into()), author: None });
 						println!("{}", UciMessage::Id { name: None, author: Some("Ping".into()) });
-						println!("{}", UciMessage::Option(crate::common::ai::uci::UciOptionConfig::Spin { name: "Hash".into(), default: Some(128), min: Some(1), max: Some(4096) }));
-						println!("{}", UciMessage::Option(crate::common::ai::uci::UciOptionConfig::Check { name: "Mtdf".into(), default: Some(false) }));
-						println!("{}", UciMessage::Option(crate::common::ai::uci::UciOptionConfig::Spin { name: "Threads".into(), default: None, min: Some(1), max: Some(2048) }));
-						println!("{}", UciMessage::Option(crate::common::ai::uci::UciOptionConfig::Button { name: "Clear Hash".into() }));
+						println!("{}", UciMessage::Option(UciOptionConfig::Spin { name: "Hash".into(), default: Some(128), min: Some(1), max: Some(4096) }));
+						println!("{}", UciMessage::Option(UciOptionConfig::Check { name: "Mtdf".into(), default: Some(false) }));
+						println!("{}", UciMessage::Option(UciOptionConfig::Spin { name: "Threads".into(), default: None, min: Some(1), max: Some(2048) }));
+						println!("{}", UciMessage::Option(UciOptionConfig::Button { name: "Clear Hash".into() }));
 						
 						println!("{}", UciMessage::UciOk);
 					}

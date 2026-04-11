@@ -1,15 +1,15 @@
 use eframe::egui;
 use egui::Color32;
-use kudchuet::common::{GameResult, Player};
+use kudchuet::{GameResult, Player};
+use kudchuet::ai::{AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
+use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use kudchuet::gui::shapes::{Shape, TextData};
+
+use crate::bitboard::Bitboard8x8;
 use crate::mychess::{ChessPosEval, ChessMaterialEval};
 use crate::rules::{Color, Move, Piece, Square};
-use kudchuet::common::ai::{AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
-use kudchuet::common::bitboards::Bitboard8x8;
-use kudchuet::common::gui::board_app::GenericBoardApp;
-use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
-use kudchuet::common::gui::shapes::{Shape, TextData};
-
-use super::mychess::ChessBoard;
+use crate::mychess::ChessBoard;
 
 impl BoardMove<ChessBoard> for Move {
 	fn from(&self) -> Option<u16> {

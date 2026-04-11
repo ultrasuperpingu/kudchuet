@@ -1,4 +1,5 @@
 use crate::gui::create_board;
+mod bitboard;
 mod game;
 mod gui;
 mod rules;

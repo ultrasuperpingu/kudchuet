@@ -2,12 +2,12 @@ use eframe::egui;
 use egui::{Align2, Color32, FontId, Rect, Stroke, Vec2};
 use egui_field_editor::EguiInspect;
 use crate::bitboard::Bitboard9x13;
-use kudchuet::common::gui::board_drawer::{DefaultSquareDrawer, PieceDrawer, SquareDrawer};
-use kudchuet::common::{GameResult, Player, new_move_searcher_vec};
-use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
-use kudchuet::common::gui::shapes::{Shape, StrokeData, TextData};
+use kudchuet::gui::board_drawer::{DefaultSquareDrawer, PieceDrawer, SquareDrawer};
+use kudchuet::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 
-use kudchuet::common::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_app::GenericBoardApp;
 use crate::rules::Action;
 
 use super::game::FootboardEvalDumb;

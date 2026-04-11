@@ -1,5 +1,11 @@
 use std::hash::Hash;
 
+use std::fmt::{self, Display};
+
+use bitboard::{BitIter, Bitboard};
+
+use kudchuet::Player;
+use super::bitboard::BitboardAbalone;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Cell {
@@ -22,12 +28,6 @@ pub struct Hex {
 	pub q: i8,
 	pub r: i8,
 }
-use std::fmt::{self, Display};
-
-use bitboard::{BitIter, Bitboard};
-
-use kudchuet::common::Player;
-use super::bitboard::BitboardAbalone;
 
 impl Display for Hex {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -653,7 +653,7 @@ impl Abalone {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::common::gui::BoardGame;
+	use kudchuet::gui::BoardGame;
 
 use crate::{bitboard::BitboardAbalone, rules::{Abalone, RAYS, to_bitboard}};
 

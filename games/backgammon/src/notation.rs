@@ -1,5 +1,5 @@
 use arrayvec::ArrayVec;
-use kudchuet::common::Player;
+use kudchuet::Player;
 
 use crate::rules::{Backgammon, P1_BAR, P1_OUT, P2_BAR, P2_OUT, PlayerMove, SingleMove};
 

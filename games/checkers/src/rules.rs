@@ -7,7 +7,7 @@ use std::hash::Hash;
 use bitboard::{BitIter, Bitboard};
 
 use crate::bitboards::Bitboard5x10Checkers10;
-use kudchuet::common::Player;
+use kudchuet::Player;
 
 pub type Coord = (u8, u8);
 pub type BitPos = u8;

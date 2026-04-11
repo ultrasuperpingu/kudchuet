@@ -1,12 +1,12 @@
+use crate::bitboard::Bitboard5x5;
 use crate::rules::{Move, Neutron, Piece};
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::Color32;
-use kudchuet::common::bitboards::Bitboard5x5;
-use kudchuet::common::gui::board_app::GenericBoardApp;
-use kudchuet::common::gui::shapes::{Shape, StrokeData};
-use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
-use kudchuet::common::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::shapes::{Shape, StrokeData};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use kudchuet::{GameResult, Player, new_move_searcher_vec};
 
 use super::game::NeutronDumbEval;
 

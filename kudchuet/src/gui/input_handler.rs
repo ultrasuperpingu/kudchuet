@@ -1,8 +1,8 @@
 use minimax::Game;
 
-use crate::common::gui::{BoardGame, BoardMove};
-use crate::common::gui::board_drawer::BoardDrawer;
-use crate::common::gui::game_state_manager::GameStateManager;
+use crate::gui::{BoardGame, BoardMove};
+use crate::gui::board_drawer::BoardDrawer;
+use crate::gui::game_state_manager::GameStateManager;
 
 
 

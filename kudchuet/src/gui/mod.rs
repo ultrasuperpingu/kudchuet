@@ -4,9 +4,8 @@ use egui::{Color32, Stroke};
 use egui_field_editor::EguiInspect;
 use minimax::Game;
 use serde::{Deserialize, Serialize};
-use crate::common::gui::shapes::StrokeData;
-use crate::common::gui::{input_handler::MoveResult, shapes::Shape};
-use crate::common::gui::board_drawer::BoardDrawer;
+use crate::gui::shapes::StrokeData;
+use crate::gui::{input_handler::MoveResult, shapes::Shape};
 
 
 use super::{GameResult, Player};

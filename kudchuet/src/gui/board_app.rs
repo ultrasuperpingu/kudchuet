@@ -1,9 +1,10 @@
 
 use egui::{Align, Layout, Ui};
 
-use crate::common::gui::{MultipleMoveSelectionResult, BoardDrawer, RightTab};
-use crate::common::ai::{AIEngine, AIEngineProvider};
-use crate::common::ai::engine_manager::{EngineManager, ThinkingResult};
+use crate::gui::{MultipleMoveSelectionResult, RightTab};
+use crate::gui::board_drawer::BoardDrawer;
+use crate::ai::{AIEngine, AIEngineProvider};
+use crate::ai::engine_manager::{EngineManager, ThinkingResult};
 
 use super::{BoardGame, BoardMove};
 use super::input_handler::{InputHandler, MoveResult};

@@ -1,11 +1,11 @@
 use eframe::egui;
 use egui::{Color32, Rect};
-use kudchuet::common::gui::board_drawer::SquareDrawer;
-use kudchuet::common::{GameResult, Player, new_move_searcher_vec};
-use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
-use kudchuet::common::gui::shapes::{Shape, StrokeData};
+use kudchuet::gui::board_drawer::SquareDrawer;
+use kudchuet::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use kudchuet::gui::shapes::{Shape, StrokeData};
 
-use kudchuet::common::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_app::GenericBoardApp;
 use crate::rules::Board;
 
 use super::game::HareAndHoundsEval;

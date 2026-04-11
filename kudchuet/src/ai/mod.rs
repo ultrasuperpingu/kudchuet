@@ -14,7 +14,10 @@ use minimax::IterativeOptions;
 use minimax::ParallelOptions;
 use serde::{Deserialize, Serialize};
 
-use crate::common::{ai::uci::UciOptionConfig, gui::{BoardGame, BoardMove}};
+use crate::{MoveSearcher, new_move_searcher_static};
+use crate::ai::internal_engine::InternalEngine;
+use crate::ai::uci::UciOptionConfig;
+use crate:: gui::{BoardGame, BoardMove};
 
 pub trait AIEngine<G: BoardGame + Sync>: Send
 where
@@ -163,12 +166,12 @@ where
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
 	T: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static + Debug,
 {
-	type Engine = crate::common::ai::internal_engine::InternalEngine<G, crate::common::MoveSearcher<T>>;
+	type Engine = InternalEngine<G, MoveSearcher<T>>;
 	fn get_name(&self) -> &String {
 		&self.name
 	}
 	fn build_engine(&self) -> Self::Engine {
-		crate::common::ai::internal_engine::InternalEngine::new(crate::common::new_move_searcher_static(self.evaluator.clone(), self.initial_depth))
+		InternalEngine::new(new_move_searcher_static(self.evaluator.clone(), self.initial_depth))
 	}
 }
 
@@ -211,7 +214,7 @@ where
 		&self.name
 	}
 	fn build_engine(&self) -> Self::Engine {
-		let engine = crate::common::ai::internal_engine::InternalEngine::new(crate::common::new_move_searcher_static(self.evaluator.clone(), self.initial_depth));
+		let engine = InternalEngine::new(new_move_searcher_static(self.evaluator.clone(), self.initial_depth));
 		Box::new(engine)
 	}
 }

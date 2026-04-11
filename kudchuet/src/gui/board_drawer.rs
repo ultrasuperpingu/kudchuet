@@ -1,7 +1,7 @@
 use egui::{Color32, Painter, Pos2, Rect};
 use egui_field_editor::EguiInspect;
 
-use crate::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern};
+use crate::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern};
 
 
 pub trait BoardDrawer<G: BoardGame>

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use kudchuet::common::Player;
+use kudchuet::Player;
 
 #[derive(Clone, Hash, Debug)]
 pub struct Awale {

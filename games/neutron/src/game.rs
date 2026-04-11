@@ -2,9 +2,9 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 
-use kudchuet::common::{GameResult, bitboards::Bitboard5x5};
+use kudchuet::{GameResult, Player};
 
-use crate::rules::{Move, Player, Neutron};
+use crate::{bitboard::Bitboard5x5, rules::{Move, Neutron}};
 
 impl minimax::Game for Neutron {
 	type S =  Neutron;

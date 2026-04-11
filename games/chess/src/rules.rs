@@ -1,5 +1,6 @@
+use crate::bitboard::Bitboard8x8;
 
-use kudchuet::common::bitboards::Bitboard8x8;
+
 
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -260,7 +261,7 @@ impl CastlingRights {
 }
 #[cfg(test)]
 mod tests {
-	use kudchuet::common::gui::BoardGame;
+	use kudchuet::gui::BoardGame;
 
 	#[test]
 	fn test_promotion() {

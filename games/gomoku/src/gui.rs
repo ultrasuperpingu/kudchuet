@@ -2,11 +2,14 @@
 use eframe::egui;
 use egui::{Color32, Stroke};
 
-use kudchuet::common::{GameResult, Player, bitboards::Goban, gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, board_drawer::SquareDrawer}, new_move_searcher_vec};
-use kudchuet::common::gui::shapes::Shape;
+use kudchuet::new_move_searcher_vec;
+use kudchuet::{GameResult, Player};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, board_drawer::SquareDrawer};
+use kudchuet::gui::shapes::Shape;
+use crate::bitboard::Goban;
 use crate::{game::GomokuEvalSimple, rules::{Cell, Gomoku, Move}};
 
-use kudchuet::common::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_app::GenericBoardApp;
 
 impl BoardMove<Gomoku> for Move {
 	fn from(&self) -> Option<u16> {

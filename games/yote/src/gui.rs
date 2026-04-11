@@ -3,12 +3,12 @@ use bitboard::Bitboard;
 use eframe::egui;
 use egui::Color32;
 
-use kudchuet::common::{GameResult, Player, bitboards::Bitboard6x5, gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType}, new_move_searcher_vec};
-use kudchuet::common::gui::shapes::Shape;
-use kudchuet::common::gui::input_handler::MoveResult;
+use kudchuet::{GameResult, Player, gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType}, new_move_searcher_vec};
+use kudchuet::gui::shapes::Shape;
+use kudchuet::gui::input_handler::MoveResult;
 
-use kudchuet::common::gui::board_app::GenericBoardApp;
-use crate::rules::YotePlayer;
+use kudchuet::gui::board_app::GenericBoardApp;
+use crate::{bitboard::Bitboard6x5, rules::YotePlayer};
 
 use super::game::YoteMaterialEval;
 use super::rules::{Move, Yote};

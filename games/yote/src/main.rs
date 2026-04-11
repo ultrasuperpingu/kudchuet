@@ -1,7 +1,7 @@
 
+mod bitboard;
 mod game;
 mod gui;
-mod ihm;
 mod rules;
 use crate::gui::create_board;
 

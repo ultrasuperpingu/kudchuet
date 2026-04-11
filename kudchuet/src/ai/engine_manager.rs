@@ -1,8 +1,8 @@
-use crate::common::gui::{BoardGame, BoardMove};
-use crate::common::{AIEngine, Player};
+use crate::gui::{BoardGame, BoardMove};
+use crate::Player;
 #[cfg(not(target_arch = "wasm32"))]
-use crate::common::ai::external_engine::{ExternalEngine, ExternalEngineEntry};
-use crate::common::ai::{AIEngineProvider, AIOptions};
+use crate::ai::external_engine::{ExternalEngine, ExternalEngineEntry};
+use crate::ai::{AIEngine, AIEngineProvider, AIOptions};
 use std::collections::HashMap;
 use std::pin::Pin;
 pub enum ThinkingResult<M> {

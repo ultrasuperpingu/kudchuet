@@ -2,7 +2,9 @@ use bitboard::{BitIter, Bitboard};
 
 use std::fmt::{self, Display, Formatter};
 
-use kudchuet::common::{GameResult, Player, bitboards::Bitboard6x5};
+use kudchuet::{GameResult, Player};
+
+use crate::bitboard::Bitboard6x5;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Move {

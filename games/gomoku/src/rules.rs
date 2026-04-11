@@ -1,7 +1,9 @@
 use std::fmt::{self, Display, Formatter};
 use bitboard::Bitboard;
 
-use kudchuet::common::{GameResult, Player, bitboards::Goban};
+use kudchuet::{GameResult, Player};
+
+use crate::bitboard::Goban;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Move {

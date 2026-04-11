@@ -2,7 +2,7 @@
 
 use bitboard::{BitIter, Bitboard};
 
-use kudchuet::common::GameResult;
+use kudchuet::GameResult;
 
 use crate::bitboard::Bitboard5x5;
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

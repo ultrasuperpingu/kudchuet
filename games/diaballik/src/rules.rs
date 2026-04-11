@@ -1,7 +1,7 @@
 
 use bitboard::{BitIter, Bitboard};
 
-use kudchuet::common::{GameResult, Player};
+use kudchuet::{GameResult, Player};
 
 use crate::bitboard::Bitboard7x7;
 
@@ -513,7 +513,7 @@ impl Diaballik {
 
 #[cfg(test)]
 mod tests {
-    use kudchuet::common::GameResult;
+    use kudchuet::GameResult;
 
     use crate::rules::Diaballik;
 

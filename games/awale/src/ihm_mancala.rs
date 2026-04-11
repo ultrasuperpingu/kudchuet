@@ -1,7 +1,7 @@
 use eframe::egui;
 use minimax::Game;
 
-use kudchuet::common::{GameResult, Player, PlayerType, ai::AIEngine, gui::{BoardGame, BoardMove}, new_move_searcher};
+use kudchuet::{GameResult, Player, PlayerType, ai::AIEngine, gui::{BoardGame, BoardMove}, new_move_searcher};
 
 use crate::gui::Place;
 

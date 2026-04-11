@@ -1,6 +1,6 @@
 use bitboard_proc_macro::{BitboardDebug, bitboard};
 use bitboard::{BitIter, Bitboard};
-use kudchuet::common::GameResult;
+use kudchuet::GameResult;
 
 // 0 3-6-9  12
 //  /|\|\| \

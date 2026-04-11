@@ -18,8 +18,8 @@ mod rules;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
 	
-	use kudchuet::common::ai::cli_engine::UCILikeCLIEngine;
-	use kudchuet::common::new_move_searcher_static;
+	use kudchuet::ai::cli_engine::UCILikeCLIEngine;
+	use kudchuet::new_move_searcher_static;
 	use mychess::{ChessMaterialEval, ChessBoard};
 
 	let args: Vec<String> = std::env::args().collect();

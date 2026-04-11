@@ -1,7 +1,7 @@
 
 use bitboard::{BitIter, Bitboard};
 
-use kudchuet::common::{GameResult, Player};
+use kudchuet::{GameResult, Player};
 
 use crate::bitboard::Bitboard9x13;
 

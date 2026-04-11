@@ -5,9 +5,7 @@ use bitboard::{BitIter, Bitboard};
 use minimax::{StochasticGame, TurnBasedGame, TurnBasedGameEvaluator};
 
 use crate::{bitboard::ChineseCheckerBoard, rules::ChineseCheckersPlayer};
-use kudchuet::common::gui::BoardGame;
-
-//use crate::common::Player;
+use kudchuet::gui::BoardGame;
 use super::rules::{ChineseCheckers, Move};
 
 

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use arrayvec::ArrayVec;
-use kudchuet::common::Player;
+use kudchuet::Player;
 use kudchuet::utils;
 use std::fmt;
 use std::hash::Hash;

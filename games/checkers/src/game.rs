@@ -2,7 +2,7 @@ use std::hash::{DefaultHasher, Hash};
 use std::hash::Hasher;
 use bitboard::Bitboard;
 
-use kudchuet::common::Player;
+use kudchuet::Player;
 use super::rules::{Checkers10, Move};
 
 

@@ -6,7 +6,7 @@
 use bitboard::BitIter;
 use minimax::Evaluation;
 
-use kudchuet::common::{GameResult, Player};
+use kudchuet::{GameResult, Player};
 
 use super::rules::{Move, Diaballik};
 

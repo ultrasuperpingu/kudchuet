@@ -3,7 +3,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 //use minimax::Evaluation;
 
 
-use kudchuet::common::{GameResult, Player};
+use kudchuet::{GameResult, Player};
 
 use super::rules::{Move, FootBoard};
 

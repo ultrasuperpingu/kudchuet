@@ -1,9 +1,9 @@
 
 use bitboard::{BitIter, Bitboard};
 
-use kudchuet::common::{GameResult, bitboards::Bitboard5x5};
+use kudchuet::GameResult;
 
-use crate::rules::{Move, ThreeMusketeers};
+use crate::{bitboard::Bitboard5x5, rules::{Move, ThreeMusketeers}};
 
 
 

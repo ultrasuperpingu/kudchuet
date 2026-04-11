@@ -12,7 +12,7 @@ fn main() -> eframe::Result<()> {
 	let args: Vec<String> = std::env::args().collect();
 	if args.iter().any(|arg| arg == "--uci") {
 		use crate::{game::AbaloneMaterialEval, rules::Abalone};
-		use kudchuet::common::{ai::cli_engine::UCILikeCLIEngine, new_move_searcher_static};
+		use kudchuet::{ai::cli_engine::UCILikeCLIEngine, new_move_searcher_static};
 
 		let searcher = new_move_searcher_static::<Abalone, _>(AbaloneMaterialEval {}, 5);
 		let mut cli_engine = UCILikeCLIEngine::new(searcher);

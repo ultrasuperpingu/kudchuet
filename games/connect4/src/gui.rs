@@ -1,14 +1,14 @@
 use eframe::egui;
 use egui::Color32;
-use kudchuet::common::new_move_searcher_vec;
-use kudchuet::common::{GameResult, Player};
- use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
- use kudchuet::common::gui::shapes::{Shape, StrokeData};
+use kudchuet::new_move_searcher_vec;
+use kudchuet::{GameResult, Player};
+ use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+ use kudchuet::gui::shapes::{Shape, StrokeData};
  use crate::bitboard::Bitboard7x7Col;
 
 use super::game::ConnectFourEval;
 
-use kudchuet::common::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_app::GenericBoardApp;
 
 use super::rules::{Cell, Column, ConnectFour};
 

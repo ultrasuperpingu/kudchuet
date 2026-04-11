@@ -1,11 +1,11 @@
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use kudchuet::common::{GameResult, Player, bitboards::Goban};
+use kudchuet::{GameResult, Player};
+
+use crate::bitboard::Goban;
 
 use super::rules::{Move, Gomoku};
-
-
 
 
 impl minimax::Game for Gomoku {

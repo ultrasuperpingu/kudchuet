@@ -1,12 +1,12 @@
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::Color32;
-use kudchuet::common::bitboards::Bitboard7x7;
-use kudchuet::common::{GameResult, Player, new_move_searcher_vec};
-use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
-use kudchuet::common::gui::shapes::{Shape, StrokeData, TextData};
+use kudchuet::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 
-use kudchuet::common::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_app::GenericBoardApp;
+use crate::bitboard::Bitboard7x7;
 use crate::rules::Action;
 
 use super::game::DiaballikEvalMaterial;

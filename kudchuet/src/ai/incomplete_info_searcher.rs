@@ -4,7 +4,8 @@ use minimax::{Game, IterativeOptions, StochasticGame, Strategy, TurnBasedGame, T
 use minimax::strategies::iterative::SearchStopSignal;
 
 use std::fmt::Debug;
-use crate::common::{ConcreteStrategy, ai::{self, AIEngine, AIEngineProvider, AIOptions}, gui::{BoardGame, BoardMove}};
+use crate::ai::internal_engine::InternalEngine;
+use crate::{ConcreteStrategy, ai::{self, AIEngine, AIEngineProvider, AIOptions}, gui::{BoardGame, BoardMove}};
 
 
 impl<E> ConcreteStrategy<E::G> for ExpectiIterativeSearch<E>
@@ -97,6 +98,6 @@ where
 		
 		let mut ai = ExpectiIterativeSearch::new(self.evaluator.clone(), IterativeOptions::new());
 		ai.set_max_depth(self.initial_depth);
-		Box::new(crate::common::ai::internal_engine::InternalEngine::new(ai))
+		Box::new(InternalEngine::new(ai))
 	}
 }

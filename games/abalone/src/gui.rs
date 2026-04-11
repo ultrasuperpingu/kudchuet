@@ -6,11 +6,11 @@ use minimax::Game;
 use crate::bitboard::BitboardAbalone;
 use crate::game::AbaloneMaterialEval;
 use crate::rules::{Abalone, Cell, HEXES, Hex, Move, idx};
-use kudchuet::common::gui::board_app::GenericBoardApp;
-use kudchuet::common::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, PieceDrawer, SquareDrawer};
-use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType};
-use kudchuet::common::gui::shapes::{Shape, StrokeData};
-use kudchuet::common::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, PieceDrawer, SquareDrawer};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType};
+use kudchuet::gui::shapes::{Shape, StrokeData};
+use kudchuet::{GameResult, Player, new_move_searcher_vec};
 
 
 

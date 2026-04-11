@@ -2,9 +2,9 @@ use egui::Id;
 use egui_field_editor::{EguiInspect, EguiInspector, add_button};
 
 #[cfg(not(target_arch = "wasm32"))]
-use crate::common::ai::external_engine::ExternalEngineEntry;
-use crate::common::gui::board_app::GenericBoardApp;
-use crate::common::gui::{BoardGame, BoardMove};
+use crate::ai::external_engine::ExternalEngineEntry;
+use crate::gui::board_app::GenericBoardApp;
+use crate::gui::{BoardGame, BoardMove};
 
 #[derive(PartialEq, Copy, Clone)]
 pub(super) enum RightTab {

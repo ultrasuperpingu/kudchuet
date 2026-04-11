@@ -1,9 +1,9 @@
 
 use eframe::egui;
 use egui::{Color32, Stroke, StrokeKind};
-use kudchuet::common::{GameResult, Player, gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, shapes::{StrokeData, TextData}}, new_move_searcher_vec};
-use kudchuet::common::gui::shapes::Shape;
-use kudchuet::common::gui::board_app::GenericBoardApp;
+use kudchuet::{GameResult, Player, gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, shapes::{StrokeData, TextData}}, new_move_searcher_vec};
+use kudchuet::gui::shapes::Shape;
+use kudchuet::gui::board_app::GenericBoardApp;
 
 use crate::rules::{Cell, Checkers10, Move};
 use crate::game::CheckersEval;

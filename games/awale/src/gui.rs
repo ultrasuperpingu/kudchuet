@@ -2,8 +2,8 @@ use eframe::egui;
 use minimax::Game;
 
 use crate::game::AwaleMaterialEval;
-use kudchuet::common::GameResult;
-use kudchuet::common::{Player, PlayerType, ai::AIEngine, gui::{BoardGame, BoardMove, EGUIPieceType}, new_move_searcher};
+use kudchuet::GameResult;
+use kudchuet::{Player, PlayerType, ai::AIEngine, gui::{BoardGame, BoardMove, EGUIPieceType}, new_move_searcher};
 
 use super::rules::Awale;
 

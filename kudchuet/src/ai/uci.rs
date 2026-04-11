@@ -238,7 +238,7 @@ impl UciMessage {
 				use UciTimeControl::*;
 				let mut time_control = None;
 				let mut has_search_control = false;
-				let mut search_control = crate::common::ai::uci::UciSearchControl {
+				let mut search_control = UciSearchControl {
 					depth: None,
 					nodes: None,
 					mate: None,

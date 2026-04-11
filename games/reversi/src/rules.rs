@@ -1,6 +1,7 @@
 use std::{fmt::Display, hash::{Hash, Hasher}};
 use bitboard::{BitIter, Bitboard};
-use kudchuet::common::bitboards::Bitboard8x8;
+
+use crate::bitboard::Bitboard8x8;
 
 pub type Coord = (u8, u8);
 pub type BitPos = u8;
@@ -418,9 +419,8 @@ impl Reversi {
 
 #[cfg(test)]
 mod tests {
-	//use bitboard::Bitboard;
+	use crate::bitboard::Bitboard8x8;
 
-	use kudchuet::common::bitboards::Bitboard8x8;
 	use super::Cell;
 
 	use super::{flips_dir_compact, flips_dir};

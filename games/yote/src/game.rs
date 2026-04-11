@@ -1,7 +1,7 @@
 
 
 
-use kudchuet::common::{GameResult, Player};
+use kudchuet::{GameResult, Player};
 
 use super::rules::{Move, Yote};
 

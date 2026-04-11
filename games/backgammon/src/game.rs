@@ -1,6 +1,6 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
-use kudchuet::common::Player;
+use kudchuet::Player;
 
 use super::rules::{Backgammon, Move};
 

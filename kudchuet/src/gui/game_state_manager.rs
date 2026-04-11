@@ -1,4 +1,4 @@
-use crate::common::gui::{BoardGame, BoardMove};
+use crate::gui::{BoardGame, BoardMove};
 
 pub struct GameStateManager<G: BoardGame>
 	where G::M: BoardMove<G>

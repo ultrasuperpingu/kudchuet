@@ -4,11 +4,11 @@ use egui::{Color32, Rect, Stroke, StrokeKind};
 use minimax::Game;
 use crate::bitboard::Bitboard5x5;
 use crate::game::BaghChalMaterialEval;
-use kudchuet::common::gui::board_app::GenericBoardApp;
-use kudchuet::common::gui::board_drawer::SquareDrawer;
-use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
-use kudchuet::common::gui::shapes::{Shape, StrokeData, TextData};
-use kudchuet::common::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_drawer::SquareDrawer;
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
+use kudchuet::{GameResult, Player, new_move_searcher_vec};
 
 use crate::rules::{BaghChal, Move};
 

@@ -1,14 +1,14 @@
 use eframe::egui;
 use egui::{Color32, Stroke};
-use kudchuet::common::{GameResult, Player};
 use crate::bitboard::ChineseCheckerBoard;
 use crate::game::ChineseCheckersMaterialEval;
 use crate::rules::{ChineseCheckers, ChineseCheckersPlayer, Move};
-use kudchuet::common::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
-use kudchuet::common::gui::board_app::GenericBoardApp;
-use kudchuet::common::gui::board_drawer::SquareDrawer;
-use kudchuet::common::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern};
-use kudchuet::common::gui::shapes::{Shape, StrokeData};
+use kudchuet::{GameResult, Player};
+use kudchuet::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
+use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_drawer::SquareDrawer;
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern};
+use kudchuet::gui::shapes::{Shape, StrokeData};
 
 
 impl BoardMove<ChineseCheckers> for Move {
