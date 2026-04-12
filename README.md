@@ -10,15 +10,15 @@ It provides:
 - evaluation and search utilities for game AI
 
 ---
-## 🎮 Live demos
+## Live demos
 
 - Chess: https://ultrasuperpingu.github.io/kudchuet/chess
 - Chinese Checkers: https://ultrasuperpingu.github.io/kudchuet/chinese_checkers
 - Three Musketeers: https://ultrasuperpingu.github.io/kudchuet/three_musketeers
 
-## ✨ Features
+## Features
 
-### 🎮 Board game framework
+### Board game framework
 Define any turn-based board game by implementing:
 
 - `BoardGame`
@@ -46,7 +46,7 @@ Kudchuet supports multiple AI backends:
 ### Custom rendering
 You can override board rendering using ```BoardDrawer```, ```PieceDrawer``` and ```SquareDrawer```. Default implmentations of those are already really expressive but you can reimplement those and implement really specifc features.
 
-## 🎮 Supported games
+## Example games
 
 Kudchuet includes multiple fully playable example implementations:
 
