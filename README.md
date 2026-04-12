@@ -9,12 +9,12 @@ It provides:
 - async AI move computation support
 - evaluation and search utilities for game AI
 
----
 ## Live demos
 
 - Chess: https://ultrasuperpingu.github.io/kudchuet/chess
 - Chinese Checkers: https://ultrasuperpingu.github.io/kudchuet/chinese_checkers
 - Three Musketeers: https://ultrasuperpingu.github.io/kudchuet/three_musketeers
+- Backgammon: https://ultrasuperpingu.github.io/kudchuet/backgammon
 
 ## Features
 

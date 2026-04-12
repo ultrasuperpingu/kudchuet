@@ -1,3 +1,6 @@
+cargo build --target wasm32-unknown-unknown -p backgammon --release
+wasm-bindgen target/wasm32-unknown-unknown/release/backgammon.wasm --out-dir docs/backgammon --target web
+
 cargo build --target wasm32-unknown-unknown -p chess@0.1 --release
 wasm-bindgen target/wasm32-unknown-unknown/release/chess.wasm --out-dir docs/chess --target web
 
@@ -6,6 +9,7 @@ wasm-bindgen target/wasm32-unknown-unknown/release/chinese_checkers.wasm --out-d
 
 cargo build --target wasm32-unknown-unknown -p three_musketeers --release
 wasm-bindgen target/wasm32-unknown-unknown/release/three_musketeers.wasm --out-dir docs/three_musketeers --target web
+
 
 
 pause
