@@ -1,8 +1,5 @@
-use gui::create_board;
-mod game;
-mod gui;
-mod rules;
-mod bitboard;
+use diaballik::gui::create_board;
+
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {

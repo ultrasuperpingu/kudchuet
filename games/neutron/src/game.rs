@@ -61,21 +61,21 @@ impl minimax::Game for Neutron {
 		match state.result() {
 			GameResult::Draw => Some(minimax::Winner::Draw),
 			GameResult::OnGoing => None,
+			GameResult::PLAYER1 => {
+				if state.turn == Player::PLAYER1 {
+					Some(minimax::Winner::PlayerToMove)
+				} else {
+					Some(minimax::Winner::PlayerJustMoved)
+				}
+			},
+			GameResult::PLAYER2 => {
+				if state.turn == Player::PLAYER1 {
+					Some(minimax::Winner::PlayerJustMoved)
+				} else {
+					Some(minimax::Winner::PlayerToMove)
+				}
+			},
 			GameResult::Player(_) => unreachable!(),
-			GameResult::Player1 => {
-				if state.turn == Player::PLAYER1 {
-					Some(minimax::Winner::PlayerToMove)
-				} else {
-					Some(minimax::Winner::PlayerJustMoved)
-				}
-			},
-			GameResult::Player2 => {
-				if state.turn == Player::PLAYER1 {
-					Some(minimax::Winner::PlayerJustMoved)
-				} else {
-					Some(minimax::Winner::PlayerToMove)
-				}
-			},
 		}
 	}
 
@@ -123,7 +123,7 @@ impl minimax::Evaluator for NeutronMaterialEval {
 	}
 	
 }*/
-// cargo test --release neutron::game::tests::perft_test -- --nocapture
+// cargo test --release -p neutron game::tests::perft_test -- --nocapture
 //depth           count        time        kn/s
 //    0               1       2.2µs       454.5
 //    1              13      20.1µs       646.8

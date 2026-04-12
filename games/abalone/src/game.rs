@@ -74,7 +74,7 @@ mod tests {
 	use super::super::rules::Abalone;
 	use minimax::perft;
 
-	//cargo test --release abalone::game::tests::perft_test -- --nocapture
+	//cargo test --release -p abalone game::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
 	//    0               1       2.0µs       500.0
 	//    1              46      24.5µs      1877.6

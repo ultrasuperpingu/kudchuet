@@ -300,9 +300,9 @@ impl FootBoard {
 			GameResult::OnGoing
 		} else {
 			if self.score1 > self.score2 {
-				GameResult::Player1
+				GameResult::PLAYER1
 			} else if self.score1 < self.score2 {
-				GameResult::Player2
+				GameResult::PLAYER2
 			} else {
 				GameResult::Draw
 			}

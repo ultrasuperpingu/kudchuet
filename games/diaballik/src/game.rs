@@ -37,8 +37,8 @@ impl minimax::Game for Diaballik {
 	}
 	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
 		match state.result() {
-			GameResult::Player1 => if state.turn() == Player::PLAYER2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			GameResult::Player2 => if state.turn() == Player::PLAYER1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			GameResult::PLAYER1 => if state.turn() == Player::PLAYER2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			GameResult::PLAYER2 => if state.turn() == Player::PLAYER1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
 			GameResult::Player(_) => unreachable!(),
 			GameResult::Draw => unreachable!(),
 			GameResult::OnGoing => None,
@@ -96,7 +96,7 @@ mod tests {
 	use super::DiaballikEvalMaterial;
 	//use super::DiaballikEvalDumb;
 
-	// cargo test --release diaballik::game::tests::perft_test -- --nocapture
+	// cargo test --release -p diaballik game::tests::perft_test -- --nocapture
 
 	//depth           count        time        kn/s
 	//    0               1       5.2µs       192.3

@@ -32,6 +32,7 @@ impl EGUIPieceType for Cell {
 
 impl BoardGame for Gomoku {
 	type PieceType=Cell;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		19
@@ -154,7 +155,7 @@ impl SquareDrawer<Gomoku> for GobanSquareDrawer {
 	}
 }
 pub fn create_board() -> GenericBoardApp<Gomoku> {
-	let mut board=GenericBoardApp::new(Gomoku::default(), new_move_searcher_vec("Simple".into(), GomokuEvalSimple{}, 4));
+	let mut board=GenericBoardApp::new(Gomoku::default(), new_move_searcher_vec("Simple".into(), GomokuEvalSimple::new(), 4));
 	board.board_drawer.set_square_drawer(Box::new(GobanSquareDrawer{}));
 	board
 }

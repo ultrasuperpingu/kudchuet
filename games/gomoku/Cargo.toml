@@ -18,6 +18,9 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElement"] }
 
 
+[lib]
+name = "gomoku"
+
 [[bin]]
 name = "gomoku"
 path = "src/main.rs"

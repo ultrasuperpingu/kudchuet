@@ -1,3 +1,4 @@
+
 use std::fmt::Debug;
 
 use egui::{Color32, Stroke};
@@ -142,12 +143,17 @@ pub trait EGUIPieceType {
 		}
 	}
 }
-
+#[derive(Default, Debug, EguiInspect)]
+pub struct DefaultSettings;
 pub trait BoardGame : Game<S = Self>+Default+Clone
 	where Self::M: BoardMove<Self> + Copy,
 {
 	type PieceType: Copy+EGUIPieceType;
+	type Settings: Default+EguiInspect;
 
+	fn build_from_settings(_settings: &Self::Settings) -> Self {
+		Self::default()
+	}
 	fn width(&self) -> u8;
 	fn height(&self) -> u8;
 
@@ -215,7 +221,8 @@ pub trait BoardMove<G : Game> : Debug + Sized + Copy
 	}
 	fn handle_clicks_interaction(state: &G, legals: &[G::M], clicks: &[u16]) -> MoveResult<G> 
 		where
-			G: BoardGame,G::M: BoardMove<G> 
+			G: BoardGame,
+			G::M: BoardMove<G> 
 	{
 		let candidates: Vec<G::M> = legals.iter()
 			.filter(|&&m| m.matches_prefix(state, legals, clicks))

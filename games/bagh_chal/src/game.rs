@@ -36,14 +36,14 @@ impl minimax::Game for BaghChal {
 		match state.result() {
 			GameResult::Draw => Some(minimax::Winner::Draw),
 			GameResult::OnGoing => None,
-			GameResult::Player1 => {
+			GameResult::PLAYER1 => {
 				if state.tigers_turn() {
 					Some(minimax::Winner::PlayerJustMoved)
 				} else {
 					Some(minimax::Winner::PlayerToMove)
 				}
 			},
-			GameResult::Player2 => {
+			GameResult::PLAYER2 => {
 				if state.tigers_turn() {
 					Some(minimax::Winner::PlayerToMove)
 				} else {
@@ -83,7 +83,7 @@ impl minimax::Evaluator for BaghChalMaterialEval {
 	}
 }
 
-// cargo test --release bagh_chal::game::tests::perft_test -- --nocapture
+// cargo test --release -p bagh_chal game::tests::perft_test -- --nocapture
 //depth           count        time        kn/s
 //    0               1       3.8µs       263.2
 //    1              21       1.3µs     16153.8

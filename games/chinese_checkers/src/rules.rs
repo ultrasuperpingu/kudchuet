@@ -56,7 +56,7 @@ impl ChineseCheckers {
 		2 => &[ChineseCheckersPlayer::Red, ChineseCheckersPlayer::Blue],
 		3 => &[ChineseCheckersPlayer::Red, ChineseCheckersPlayer::Yellow, ChineseCheckersPlayer::Black],
 		4 => &[ChineseCheckersPlayer::Red, ChineseCheckersPlayer::Blue, ChineseCheckersPlayer::Green, ChineseCheckersPlayer::Yellow],
-		6 => &[
+		5|6 => &[
 			ChineseCheckersPlayer::Red,
 			ChineseCheckersPlayer::Blue,
 			ChineseCheckersPlayer::Green,

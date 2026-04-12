@@ -66,7 +66,7 @@ impl minimax::Evaluator for ReversiEval {
 }
 #[cfg(test)]
 mod tests {
-	// cargo test --release reversi::game::tests::perft_test -- --nocapture
+	// cargo test --release -p reversi game::tests::perft_test -- --nocapture
 	// depth           count        time        kn/s
 	//  0               1       3.1µs       322.6
 	//  1               4     700.0ns      5714.3

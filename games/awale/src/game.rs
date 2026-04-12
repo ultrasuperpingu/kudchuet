@@ -67,7 +67,7 @@ mod tests {
 	use super::super::rules::Awale;
 	use minimax::perft;
 
-	//cargo test --release awale::game::tests::perft_test -- --nocapture
+	//cargo test --release -p awale game::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
 	//    0               1       4.2µs       238.1
 	//    1               6      24.7µs       242.9

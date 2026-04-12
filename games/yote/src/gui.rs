@@ -116,8 +116,8 @@ impl BoardMove<Yote> for Move {
 impl EGUIPieceType for YotePlayer {
 	fn shape(&self) -> Shape {
 		match self {
-			YotePlayer::Player2 => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: None },
 			YotePlayer::Player1 => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: None },
+			YotePlayer::Player2 => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: None },
 			_ => unreachable!()
 		}
 	}
@@ -125,6 +125,7 @@ impl EGUIPieceType for YotePlayer {
 
 impl BoardGame for Yote {
 	type PieceType=YotePlayer;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		6

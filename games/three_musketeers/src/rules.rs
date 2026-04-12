@@ -208,14 +208,14 @@ impl ThreeMusketeers {
 	#[inline]
 	pub fn result(&self) -> GameResult {
 		if self.musketeers_aligned() {
-			return GameResult::Player2;
+			return GameResult::PLAYER2;
 		}
 		if self.guards.is_empty() {
-			return GameResult::Player1;
+			return GameResult::PLAYER1;
 		}
 		if self.turn == 0 {
 			if !self.has_legal_move_musketeers() {
-				return GameResult::Player1;
+				return GameResult::PLAYER1;
 			}
 		}
 

@@ -381,10 +381,10 @@ impl Yote {
 		}
 
 		if self.white_pawns_count() == 0 {
-			return GameResult::Player2;
+			return GameResult::PLAYER2;
 		}
 		if self.black_pawns_count() == 0 {
-			return GameResult::Player1;
+			return GameResult::PLAYER1;
 		}
 
 		GameResult::OnGoing
@@ -478,7 +478,7 @@ fn test_white_win() {
 	g.black = Bitboard6x5::empty();
 	g.reserve_black = 0;
 
-	assert_eq!(g.result(), GameResult::Player1);
+	assert_eq!(g.result(), GameResult::PLAYER1);
 }
 #[test]
 fn test_hash_consistency() {

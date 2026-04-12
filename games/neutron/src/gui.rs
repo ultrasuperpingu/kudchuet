@@ -70,6 +70,7 @@ impl EGUIPieceType for Piece {
 }
 impl BoardGame for Neutron {
 	type PieceType = Piece;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		5

@@ -17,6 +17,7 @@ pub struct MancalaApp {
 
 impl BoardGame for Mancala {
 	type PieceType=Move;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		todo!()
@@ -48,8 +49,8 @@ impl BoardGame for Mancala {
 	fn result(&self) -> GameResult {
 		match <Self as Game>::get_winner(self) {
 			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::Player2} else {GameResult::Player1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::PLAYER2} else {GameResult::PLAYER1},
+			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::PLAYER2} else {GameResult::PLAYER1},
 			None => GameResult::OnGoing,
 		}
 	}

@@ -98,10 +98,10 @@ impl Gomoku {
 	#[inline]
 	pub fn result(&self) -> GameResult {
 		if self.black.has_n_aligned(5) {
-			return GameResult::Player1;
+			return GameResult::PLAYER1;
 		}
 		if self.white.has_n_aligned(5) {
-			return GameResult::Player2;
+			return GameResult::PLAYER2;
 		}
 
 		GameResult::OnGoing

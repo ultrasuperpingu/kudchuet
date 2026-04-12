@@ -153,10 +153,10 @@ impl HareAndHounds {
 	#[inline]
 	pub fn result(&self) -> GameResult {
 		if (NEIGHBORS_HARE[self.hare as usize] & !self.houds).is_empty() {
-			return GameResult::Player1;
+			return GameResult::PLAYER1;
 		}
 		if self.turn_and_count % 100 >= 10 {
-			return GameResult::Player2; // hare wins
+			return GameResult::PLAYER2; // hare wins
 		}
 		let hare_col = Board::column(self.hare);
 		for i in self.houds.iter_bits() {
@@ -165,7 +165,7 @@ impl HareAndHounds {
 				return GameResult::OnGoing;
 			 }
 		}
-		GameResult::Player2
+		GameResult::PLAYER2
 	}
 	
 	pub fn cell(&self, x:u8, y:u8) -> Cell {

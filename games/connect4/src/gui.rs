@@ -30,6 +30,7 @@ impl EGUIPieceType for Cell {
 
 impl BoardGame for ConnectFour {
 	type PieceType=Cell;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		7
@@ -52,15 +53,15 @@ impl BoardGame for ConnectFour {
 		} else if self.is_victory() {
 			match self.player_turn() {
 				Cell::Empty => unreachable!(),
-				Cell::PlayerOne => GameResult::Player1,
-				Cell::PlayerTwo => GameResult::Player2,
+				Cell::PlayerOne => GameResult::PLAYER1,
+				Cell::PlayerTwo => GameResult::PLAYER2,
 			}
 		} else {
 			//????
 			match self.player_turn() {
 				Cell::Empty => unreachable!(),
-				Cell::PlayerOne => GameResult::Player2,
-				Cell::PlayerTwo => GameResult::Player1,
+				Cell::PlayerOne => GameResult::PLAYER2,
+				Cell::PlayerTwo => GameResult::PLAYER1,
 			}
 		}
 	}
@@ -107,6 +108,6 @@ impl BoardGame for ConnectFour {
 }
 
 pub fn create_board() -> GenericBoardApp<ConnectFour> {
-	let board=GenericBoardApp::new(ConnectFour::new(), new_move_searcher_vec("Simple".into(), ConnectFourEval{}, 6));
+	let board=GenericBoardApp::new(ConnectFour::new(), new_move_searcher_vec("Simple".into(), ConnectFourEval::new(), 6));
 	board
 }

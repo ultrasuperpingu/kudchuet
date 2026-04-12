@@ -62,6 +62,7 @@ impl EGUIPieceType for Cell {
 
 impl BoardGame for Checkers10 {
 	type PieceType=Cell;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		10
@@ -81,9 +82,9 @@ impl BoardGame for Checkers10 {
 	fn result(&self) -> GameResult {
 		if self.is_over() {
 			if self.player_turn() == Player::PLAYER1 {
-				GameResult::Player1
+				GameResult::PLAYER1
 			} else {
-				GameResult::Player2
+				GameResult::PLAYER2
 			}
 		} else {
 			GameResult::OnGoing
@@ -184,6 +185,6 @@ impl BoardGame for Checkers10 {
 }
 
 pub fn create_board() -> GenericBoardApp<Checkers10> {
-	let board=GenericBoardApp::new(Checkers10::default(), new_move_searcher_vec("Material".into(), CheckersEval{}, 5));
+	let board=GenericBoardApp::new(Checkers10::default(), new_move_searcher_vec("Material".into(), CheckersEval::new(), 5));
 	board
 }

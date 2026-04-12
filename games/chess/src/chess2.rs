@@ -102,7 +102,7 @@ fn main() {
 */
 #[cfg(test)]
 mod tests {
-	// cargo test --release chess::chess2::tests::perft_test -- --nocapture
+	// cargo test --release -p chess chess2::tests::perft_test -- --nocapture
 	// depth           count        time        kn/s
 	// 0               1       5.1µs       196.1
 	// 1              20      30.6µs       653.6

@@ -27,14 +27,14 @@ impl minimax::Game for ThreeMusketeers {
 	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
 		match state.result() {
 			GameResult::OnGoing => None,
-			GameResult::Player1 => {
+			GameResult::PLAYER1 => {
 				if state.turn == 0 {
 					Some(minimax::Winner::PlayerToMove)
 				} else {
 					Some(minimax::Winner::PlayerJustMoved)
 				}
 			},
-			GameResult::Player2 => {
+			GameResult::PLAYER2 => {
 				if state.turn == 0 {
 					Some(minimax::Winner::PlayerJustMoved)
 				} else {
@@ -220,20 +220,21 @@ impl minimax::Evaluator for ThreeMusketeersEvalAdvance {
 	}
 }
 
-// cargo test --release three_musketeers::game::tests::perft_test -- --nocapture
-//    0               1       2.5µs       400.0
-//    1               8       3.3µs      2424.2
-//    2              16     900.0ns     17777.8
+// cargo test --release -p three_musketeers game::tests::perft_test -- --nocapture
+//depth           count        time        kn/s
+//    0               1     400.0ns      2500.0
+//    1               8       6.5µs      1230.8
+//    2              16       1.7µs      9411.8
 //    3             132       2.1µs     62857.1
-//    4             736     291.6µs      2524.0
-//    5            5540      82.0µs     67561.0
-//    6           38740     139.6µs    277507.2
-//    7          263040     410.1µs    641404.5
-//    8         2326184       4.0ms    574849.0
-//    9        14924066      18.9ms    787907.2
-//   10       152389642     150.9ms   1009541.2
-//   11       917688274     769.9ms   1191952.3
-//   12     10611440635        9.3s   1135164.4
+//    4             736     538.6µs      1366.5
+//    5            5540      44.2µs    125339.4
+//    6           38740     168.3µs    230184.2
+//    7          263040     338.7µs    776616.5
+//    8         2325116       2.7ms    856554.1
+//    9        14915148      10.1ms   1476148.1
+//   10       151944996     152.2ms    998238.0
+//   11       914687972     601.8ms   1519838.6
+//   12     10525876764        8.9s   1180777.0
 #[cfg(test)]
 mod tests {
 
@@ -257,11 +258,11 @@ mod tests {
 			5540,
 			38740,
 			263040,
-			2326184,
-			14924066,
-			152389642,
-			917688274,
-			10611440635,
+			2325116,
+			14915148,
+			151944996,
+			914687972,
+			10525876764,
 		];
 
 		for (i, n) in nodes.iter().enumerate() {

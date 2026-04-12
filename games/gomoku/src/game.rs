@@ -27,14 +27,14 @@ impl minimax::Game for Gomoku {
 	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
 		match state.result() {
 			GameResult::OnGoing => None,
-			GameResult::Player1 => {
+			GameResult::PLAYER1 => {
 				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerToMove)
 				} else {
 					Some(minimax::Winner::PlayerJustMoved)
 				}
 			},
-			GameResult::Player2 => {
+			GameResult::PLAYER2 => {
 				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerJustMoved)
 				} else {
@@ -86,7 +86,13 @@ impl GomokuEvalSimple {
 impl minimax::Evaluator for GomokuEvalSimple {
 	type G = Gomoku;
 	fn evaluate(&self, state: &Gomoku) -> minimax::Evaluation {
-		let score = 0;
+		let mut score = 0;
+		score += if state.white.has_n_aligned(4) {100} else {0};
+		score += if state.white.has_n_aligned(3) {50} else {0};
+		score += if state.white.has_n_aligned(2) {10} else {0};
+		score -= if state.black.has_n_aligned(4) {100} else {0};
+		score -= if state.black.has_n_aligned(3) {50} else {0};
+		score -= if state.black.has_n_aligned(2) {10} else {0};
 		if state.turn == Player::PLAYER2 {
 			score
 		} else {
@@ -94,7 +100,7 @@ impl minimax::Evaluator for GomokuEvalSimple {
 		}
 	}
 }
-// cargo test --release gomoku::game::tests::perft_test -- --nocapture
+// cargo test --release -p gomoku game::tests::perft_test -- --nocapture
 //depth           count        time        kn/s
 //    0               1       4.6µs       217.4
 //    1             361       6.4µs     56406.2

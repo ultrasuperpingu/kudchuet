@@ -1,10 +1,6 @@
 #![allow(clippy::uninlined_format_args)]
 
-use crate::gui::create_board;
-
-mod game;
-mod gui;
-mod rules;
+use hare_and_hounds::gui::create_board;
 
 extern crate kudchuet;
 #[cfg(not(target_arch = "wasm32"))]

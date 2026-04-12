@@ -1,10 +1,6 @@
 extern crate kudchuet;
-mod game;
-mod gui;
-mod ihm_mancala;
-mod mancala;
-mod rules;
-use crate::ihm_mancala::MancalaApp;
+
+use awale::ihm_mancala::MancalaApp;
 //use abstract_strategy::awale::ihm::AwaleApp;
 
 #[cfg(not(target_arch = "wasm32"))]

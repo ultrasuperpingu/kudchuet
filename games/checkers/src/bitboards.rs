@@ -5,8 +5,6 @@ use std::hash::Hash;
 use bitboard_proc_macro::{BitboardDebug, bitboard};
 use bitboard::Bitboard;
 
-pub type Coord = (u8, u8);
-pub type BitPos = u8;
 
 #[bitboard(width=5, height=10)]
 #[derive(Hash, BitboardDebug, Default)]

@@ -5,7 +5,7 @@ use std::fmt::{self, Display, Formatter};
 
 use kudchuet::{GameResult, Player};
 
-use crate::pext_tables;
+use crate::{bitboard::Bitboard5x5, pext_tables};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Move {
@@ -297,11 +297,11 @@ impl Neutron {
 	
 	pub fn result(&self) -> GameResult {
 		if !(self.neutron & Bitboard5x5::SOUTH_BORDER).is_empty() {
-			return GameResult::Player1;
+			return GameResult::PLAYER1;
 		}
 
 		if !(self.neutron & Bitboard5x5::NORTH_BORDER).is_empty() {
-			return GameResult::Player2;
+			return GameResult::PLAYER2;
 		}
 
 		let mut moves = Vec::new();
@@ -309,8 +309,8 @@ impl Neutron {
 
 		if moves.is_empty() {
 			match self.turn {
-				Player::PLAYER1 => GameResult::Player1,
-				Player::PLAYER2 => GameResult::Player2,
+				Player::PLAYER1 => GameResult::PLAYER1,
+				Player::PLAYER2 => GameResult::PLAYER2,
 				_ => unreachable!()
 			}
 		} else {

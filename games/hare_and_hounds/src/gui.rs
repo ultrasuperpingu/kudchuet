@@ -34,6 +34,7 @@ impl EGUIPieceType for Cell {
 
 impl BoardGame for HareAndHounds {
 	type PieceType=Cell;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		5

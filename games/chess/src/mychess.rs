@@ -649,7 +649,7 @@ impl ChessBoard {
 			}
 			let checkers = self.compute_checkers::<false>();
 			if checkers.0 {
-				GameResult::Player1
+				GameResult::PLAYER1
 			} else {
 				GameResult::Draw
 			}
@@ -660,7 +660,7 @@ impl ChessBoard {
 			}
 			let checkers = self.compute_checkers::<true>();
 			if checkers.0 {
-				GameResult::Player2
+				GameResult::PLAYER2
 			} else {
 				GameResult::Draw
 			}
@@ -1349,7 +1349,7 @@ impl minimax::Game for ChessBoard {
 	#[inline]
 	fn get_winner(b: &Self::S) -> Option<minimax::Winner> {
 		match b.status() {
-			GameResult::Player1|GameResult::Player2 => Some(minimax::Winner::PlayerJustMoved),
+			GameResult::PLAYER1|GameResult::PLAYER2 => Some(minimax::Winner::PlayerJustMoved),
 			GameResult::Draw => Some(minimax::Winner::Draw),
 			GameResult::OnGoing => None,
 			_ => unreachable!(),
@@ -1654,7 +1654,7 @@ use super::ChessBoard;
 		let (check, checkers, blockers)=board.compute_checkers::<true>();
 		println!("check: {}, checkers: {}, blockers: {}",check, checkers, blockers);
 	}
-	// cargo test --release chess::mychess::tests::perft_test -- --nocapture
+	// cargo test --release -p chess@0.1 mychess::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
 	//    0               1       4.2µs       238.1
 	//    1              20      55.3µs       361.7

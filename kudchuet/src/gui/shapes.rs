@@ -2,7 +2,6 @@
 use egui::{Color32, Pos2, Rect, Stroke, StrokeKind, Vec2};
 use egui_field_editor::EguiInspect;
 use serde::{Deserialize, Serialize};
-use strum::EnumIter;
 
 #[derive(Clone, Debug, EguiInspect, PartialEq, Serialize, Deserialize)]
 pub struct StrokeData {
@@ -18,6 +17,7 @@ impl Default for StrokeData {
 pub struct TextData {
 	pub text:String,
 	pub color: Color32,
+	#[inspect(slider(min=0.0, max=1.0))]
 	pub size: f32,
 }
 impl Default for TextData {
@@ -35,16 +35,38 @@ impl TextData {
 	}
 }
 
-#[derive(Clone, Debug, EguiInspect, EnumIter, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, EguiInspect, PartialEq, Serialize, Deserialize)]
+pub struct StripData {
+	color: Color32,
+	#[inspect(slider(min=0.0, max=1.0))]
+	weight: f32
+}
+impl Default for StripData {
+	fn default() -> Self {
+		Self { color: Color32::from_rgb(255, 255, 255), weight: 1.0 }
+	}
+}
+#[derive(Clone, Debug, EguiInspect, PartialEq, Serialize, Deserialize)]
 pub enum Shape {
 	Circle {
 		fill_color: Option<Color32>,
+		#[inspect(slider(min=0.0, max=1.0))]
+		size: f32,
+		text:Option<TextData>,
+		stroke: Option<StrokeData>,
+	},
+	StrippedCircle {
+		strips: Vec<StripData>,
+		#[inspect(slider(min=0.0, max=1.0))]
+		angle: f32,
+		#[inspect(slider(min=0.0, max=1.0))]
 		size: f32,
 		text:Option<TextData>,
 		stroke: Option<StrokeData>,
 	},
 	Rect {
 		fill_color: Option<Color32>,
+		#[inspect(slider(min=0.0, max=1.0))]
 		size: f32,
 		text: Option<TextData>,
 		stroke: Option<StrokeData>
@@ -73,6 +95,54 @@ fn draw_text(painter: &egui::Painter, center: Pos2, cell_size: f32, text: &TextD
 			text.color
 	);
 }
+fn draw_weighted_stripped_circle(
+	painter: &egui::Painter,
+	center: egui::Pos2,
+	radius: f32,
+	colors: &[Color32],
+	weights: &[f32], // sum = 1.0
+	angle: f32,      // 0..1
+) {
+	let steps = 64;
+	let epsilon = 2.0;
+
+	let dir = egui::Vec2::angled(angle * std::f32::consts::TAU);
+	let normal = egui::vec2(-dir.y, dir.x);
+
+	let total_width = radius * 2.0;
+
+	let mut offset = -total_width / 2.0;
+
+	for (color, weight) in colors.iter().zip(weights.iter()) {
+		let band_width = weight * total_width;
+
+		let min = offset;
+		let max = offset + band_width;
+
+		let mut points = Vec::new();
+
+		for i in 0..=steps {
+			let theta = i as f32 / steps as f32 * std::f32::consts::TAU;
+			let p = center + egui::Vec2::new(theta.cos(), theta.sin()) * radius;
+
+			let proj = (p - center).dot(normal);
+
+			if proj >= min - epsilon && proj <= max + epsilon {
+				points.push(p);
+			}
+		}
+
+		if points.len() >= 3 {
+			painter.add(egui::Shape::convex_polygon(
+				points,
+				*color,
+				egui::Stroke::NONE,
+			));
+		}
+
+		offset += band_width;
+	}
+}
 impl Shape {
 	pub fn draw(&self, painter: &egui::Painter, center: Pos2, cell_size: f32) {
 		match self {
@@ -80,6 +150,31 @@ impl Shape {
 				if let Some(color) = color {
 					painter.circle_filled(center, cell_size * size/2.0, *color);
 				}
+				if let Some(c) = stroke.as_ref() {
+					painter.circle_stroke(center, cell_size * size/2.0, c.stroke);
+				}
+				if let Some(text) = text {
+					draw_text(painter, center, cell_size, text);
+				}
+			},
+			Shape::StrippedCircle { strips, angle, size, text, stroke} => {
+				let mut colors=vec![Color32::default();strips.len()];
+				let mut weights=vec![0.0;strips.len()];
+				let mut sum=0.0;
+				for (i, s) in strips.iter().enumerate() {
+					colors[i] = s.color;
+					weights[i] = s.weight;
+					sum += s.weight;
+				}
+				for w in &mut weights {
+					if sum > 0.0 {
+						*w /= sum;
+					} else {
+						*w = 1.0 / (strips.len() as f32);
+					}
+				}
+				draw_weighted_stripped_circle(painter, center, cell_size * size/2.0, &colors, &weights, *angle);
+				
 				if let Some(c) = stroke.as_ref() {
 					painter.circle_stroke(center, cell_size * size/2.0, c.stroke);
 				}

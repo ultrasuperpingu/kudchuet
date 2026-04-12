@@ -37,8 +37,8 @@ impl minimax::Game for HareAndHounds {
 	}
 	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
 		match state.result() {
-			GameResult::Player1 => if state.turn() {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			GameResult::Player2 => if !state.turn() {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			GameResult::PLAYER1 => if state.turn() {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			GameResult::PLAYER2 => if !state.turn() {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
 			GameResult::Player(_) => unreachable!(),
 			GameResult::Draw => unreachable!(),
 			GameResult::OnGoing => None,
@@ -228,7 +228,7 @@ mod tests {
 		}
 		println!("{}", board)
 	}
-	// cargo test --release hare_and_hounds::game::tests::perft_test -- --nocapture
+	// cargo test --release -p hare_and_hounds game::tests::perft_test -- --nocapture
 
 	//depth           count        time        kn/s
 	//    0               1       2.6µs       384.6

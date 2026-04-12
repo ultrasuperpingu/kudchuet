@@ -41,7 +41,8 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 						egui::ScrollArea::vertical().show(ui, |ui| {
 							match tab {
 								RightTab::GameSettings => {
-									
+									if self.game_state_manager.get_settings_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
+									}
 								}
 								RightTab::Settings => {
 									let active_engines = self.ai_engine_manager.get_all_engine_names();
@@ -110,7 +111,7 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 									let game = self.game().clone();
 									self.import_export_panel.ui(ui, &game, &mut |game| {
 										self.ai_engine_manager.set_paused(true);
-										self.game_state_manager.reset(game);
+										self.game_state_manager.load(game);
 										self.board_drawer.full_reset();
 									});
 								}

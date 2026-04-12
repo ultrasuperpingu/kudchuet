@@ -1,11 +1,7 @@
 #![allow(clippy::uninlined_format_args)]
 extern crate kudchuet;
-mod bitboards;
-mod fen;
-mod game;
-mod gui;
-mod rules;
-use crate::gui::create_board;
+
+use checkers::gui::create_board;
 
 
 #[cfg(not(target_arch = "wasm32"))]

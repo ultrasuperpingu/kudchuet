@@ -170,14 +170,14 @@ impl Diaballik {
 	#[inline]
 	pub fn result(&self) -> GameResult {
 		if self.turn == Player::PLAYER2 && self.ball_player1 > 41 {
-			GameResult::Player1
+			GameResult::PLAYER1
 		}
 		else if self.turn == Player::PLAYER1 && self.ball_player2 < 7 {
-			GameResult::Player2
+			GameResult::PLAYER2
 		} else {
 			// Anti-Game (Blocking) Rules
-			if self.is_blocking(Player::PLAYER1) { return GameResult::Player2; }
-			if self.is_blocking(Player::PLAYER2) { return GameResult::Player1; }
+			if self.is_blocking(Player::PLAYER1) { return GameResult::PLAYER2; }
+			if self.is_blocking(Player::PLAYER2) { return GameResult::PLAYER1; }
 			GameResult::OnGoing
 		}
 	}

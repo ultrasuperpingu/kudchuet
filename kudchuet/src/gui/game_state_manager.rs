@@ -4,6 +4,7 @@ pub struct GameStateManager<G: BoardGame>
 	where G::M: BoardMove<G>
 {
 	current_game: G,
+	settings: G::Settings,
 	move_history: Vec<G>,
 	redo_history: Vec<G>,
 	legal_moves: Vec<G::M>,
@@ -16,6 +17,7 @@ where G::M: BoardMove<G>
 		let legals = initial_game.legal_moves();
 		Self {
 			current_game: initial_game,
+			settings: G::Settings::default(),
 			move_history: Vec::new(),
 			redo_history: Vec::new(),
 			legal_moves: legals,
@@ -66,12 +68,16 @@ where G::M: BoardMove<G>
 		false
 	}
 
-	pub fn reset(&mut self, new_game: G) {
+	pub fn new_game(&mut self) {
+		self.load(G::build_from_settings(&self.settings));
+	}
+	pub fn load(&mut self, new_game: G) {
 		self.current_game = new_game;
 		self.move_history.clear();
 		self.redo_history.clear();
 		self.update_legals();
 	}
+
 
 	pub fn set_game_state(&mut self, new_game: G) {
 		self.current_game = new_game;
@@ -84,5 +90,11 @@ where G::M: BoardMove<G>
 	pub fn play_random(&mut self) {
 		self.current_game.play_random();
 		self.update_legals();
+	}
+	pub fn get_settings(&self) -> &G::Settings {
+		&self.settings
+	}
+	pub fn get_settings_mut(&mut self) -> &mut G::Settings {
+		&mut self.settings
 	}
 }

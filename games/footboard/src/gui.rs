@@ -131,6 +131,7 @@ impl EGUIPieceType for Cell {
 
 impl BoardGame for FootBoard {
 	type PieceType=Cell;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		9
@@ -308,7 +309,7 @@ impl FootboardPieceDrawer {
 			p1_color1: Color32::from_rgb(250, 250, 250),
 			p1_color2: Some(Color32::from_rgb(0, 157, 222)),
 			p1_color3: None,//Some(Color32::from_rgb(250, 250, 250)),
-			p1_angle: 0.38,
+			p1_angle: 0.88,
 			p1_width: 0.5,
 			p2_color1: Color32::from_rgb(5, 45, 177),
 			p2_color2: Some(Color32::from_rgb(244, 0, 14)),
@@ -441,7 +442,7 @@ impl PieceDrawer<FootBoard> for FootboardPieceDrawer
 	}
 }
 pub fn create_board() -> GenericBoardApp<FootBoard> {
-	let mut board=GenericBoardApp::new(FootBoard::default(), new_move_searcher_vec("Dumb".into(), FootboardEvalDumb{}, 3));
+	let mut board=GenericBoardApp::new(FootBoard::default(), new_move_searcher_vec("Dumb".into(), FootboardEvalDumb::new(), 3));
 	board.depth = 3;
 	board.max_depth = 6;
 	board.board_drawer.set_square_drawer(Box::new(FootboardSquareDrawer::new()));

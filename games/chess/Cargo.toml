@@ -26,6 +26,9 @@ bitboard = {path="../../bitboards/bitboard"}
 bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 num-traits = "0.2"
 
+[lib]
+name = "chess"
+
 [[bin]]
 name = "chess"
 path = "src/main.rs"

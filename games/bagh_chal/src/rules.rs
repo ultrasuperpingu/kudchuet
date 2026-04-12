@@ -58,9 +58,6 @@ impl BaghChal {
 	pub fn free(&self) -> Bitboard5x5 {
 		(!self.all()) & Bitboard5x5::FULL
 	}
-	pub fn free_unmasked(&self) -> Bitboard5x5 {
-		!self.all()
-	}
 	pub fn tigers_turn(&self) -> bool {
 		self.turn_tiger
 	}
@@ -189,19 +186,19 @@ impl BaghChal {
 	}
 	pub fn result(&self) -> GameResult {
 		if self.goats_captured >= 5 {
-			return GameResult::Player2;
+			return GameResult::PLAYER2;
 		}
 
 		if self.tigers_turn() {
 			let mut tiger_moves = Vec::new();
 			self.legal_moves_inplace(&mut tiger_moves);
 			if tiger_moves.is_empty() {
-				return GameResult::Player1;
+				return GameResult::PLAYER1;
 			}
 		}
  		let key = self.get_hash();
 		if self.history.iter().filter(|h| **h == key).count() >= 3 {
-			return GameResult::Player2; // tigers win
+			return GameResult::PLAYER2; // tigers win
 		}
 		GameResult::OnGoing
 	}

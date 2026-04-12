@@ -7,8 +7,8 @@ edition = "2024"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-bitboard = {path="../bitboards/bitboard"}
-bitboard_proc_macro = {path="../bitboards/bitboard_proc_macro"}
+#bitboard = {path="../bitboards/bitboard"}
+#bitboard_proc_macro = {path="../bitboards/bitboard_proc_macro"}
 #magic_bitboard_proc_macro = {path="../magic_bitboard_proc_macro"}
 #minimax = "0.5"
 minimax = {path="../minimax"}

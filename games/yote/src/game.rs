@@ -30,14 +30,14 @@ impl minimax::Game for Yote {
 		match state.result() {
 			GameResult::Draw => Some(minimax::Winner::Draw),
 			GameResult::OnGoing => None,
-			GameResult::Player1 => {
+			GameResult::PLAYER1 => {
 				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerToMove)
 				} else {
 					Some(minimax::Winner::PlayerJustMoved)
 				}
 			},
-			GameResult::Player2 => {
+			GameResult::PLAYER2 => {
 				if state.turn == Player::PLAYER1 {
 					Some(minimax::Winner::PlayerJustMoved)
 				} else {
@@ -91,7 +91,7 @@ impl minimax::Evaluator for YoteMaterialEval {
 	}
 	
 }
-// cargo test --release yote::game::tests::simple_perft_test -- --nocapture
+// cargo test --release -p yote game::tests::simple_perft_test -- --nocapture
 // depth           count        time        kn/s
 //     0               1       1.6µs       625.0
 //     1              30       1.7µs     17647.1
@@ -102,7 +102,7 @@ impl minimax::Evaluator for YoteMaterialEval {
 //     6       859118308     185.0ms   4644897.1
 //     7     28919879036        6.8s   4252708.9
 
-// cargo test --release yote::game::tests::mandatory_perft_test -- --nocapture
+// cargo test --release -p yote game::tests::mandatory_perft_test -- --nocapture
 // depth           count        time        kn/s
 //     0               1       1.3µs       769.2
 //     1              30       3.0µs     10000.0

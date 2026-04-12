@@ -68,6 +68,7 @@ impl EGUIPieceType for Cell {
 }
 impl BoardGame for Abalone {
 	type PieceType=Cell;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		8
@@ -99,8 +100,8 @@ impl BoardGame for Abalone {
 	fn result(&self) -> GameResult {
 		match <Self as Game>::get_winner(self) {
 			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::Player2} else {GameResult::Player1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::PLAYER2} else {GameResult::PLAYER1},
+			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::PLAYER2} else {GameResult::PLAYER1},
 			None => GameResult::OnGoing,
 		}
 	}
@@ -300,7 +301,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 	}
 }
 pub fn create_board() -> GenericBoardApp<Abalone> {
-	let mut board=GenericBoardApp::new(Abalone::default(), new_move_searcher_vec("Material".into(), AbaloneMaterialEval{}, 4));
+	let mut board=GenericBoardApp::new(Abalone::default(), new_move_searcher_vec("Material".into(), AbaloneMaterialEval::new(), 4));
 	board.board_drawer = Box::new(AbaloneBoardDrawer(DefaultBoardDrawer::new()));
 	*board.board_drawer.get_style_mut()=Abalone::default_style();
 	board.max_depth = 6;

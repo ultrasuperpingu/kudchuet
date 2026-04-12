@@ -156,6 +156,7 @@ impl EGUIPieceType for ThreeMPiece {
 
 impl BoardGame for ThreeMusketeers {
 	type PieceType = ThreeMPiece;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		5

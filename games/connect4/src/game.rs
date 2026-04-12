@@ -61,7 +61,7 @@ mod tests {
 	use minimax::perft;
 	use super::ConnectFour;
 
-	// cargo test --release connect4::game::tests::perft_test -- --nocapture
+	// cargo test --release -p connect4 game::tests::perft_test -- --nocapture
 
 	//depth           count        time        kn/s
 	//    0               1       1.8µs       555.6

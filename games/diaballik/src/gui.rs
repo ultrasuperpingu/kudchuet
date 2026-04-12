@@ -99,6 +99,7 @@ impl EGUIPieceType for Cell {
 
 impl BoardGame for Diaballik {
 	type PieceType=Cell;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		7
@@ -150,7 +151,7 @@ impl BoardGame for Diaballik {
 }
 
 pub fn create_board() -> GenericBoardApp<Diaballik> {
-	let mut board=GenericBoardApp::new(Diaballik::default(), new_move_searcher_vec("Material".into(), DiaballikEvalMaterial{}, 3));
+	let mut board=GenericBoardApp::new(Diaballik::default(), new_move_searcher_vec("Material".into(), DiaballikEvalMaterial::new(), 3));
 	board.depth = 3;
 	board.max_depth = 4;
 	board

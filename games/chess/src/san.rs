@@ -1,4 +1,4 @@
-use crate::chess::*;
+
 use crate::mychess::ChessBoard;
 use crate::rules::{Color, Move, Piece, Square};
 

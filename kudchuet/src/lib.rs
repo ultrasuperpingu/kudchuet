@@ -52,11 +52,11 @@ impl PlayerController {
 		}
 	}
 }
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum GameResult {
-	#[default]
-	Player1,
-	Player2,
+	//#[default]
+	//Player1,
+	//Player2,
 	Player(u8),
 	Draw,
 	OnGoing
@@ -106,11 +106,13 @@ impl std::fmt::Display for Player {
 	}
 }
 impl GameResult {
+	pub const PLAYER1: Self = Self::Player(0);
+	pub const PLAYER2: Self = Self::Player(1);
 	pub fn is_player1(&self) -> bool {
-		matches!(self, GameResult::Player1)
+		matches!(self, GameResult::Player(0))
 	}
 	pub fn is_player2(&self) -> bool {
-		matches!(self, GameResult::Player2)
+		matches!(self, GameResult::Player(1))
 	}
 	pub fn is_draw(&self) -> bool {
 		matches!(self, GameResult::Draw)

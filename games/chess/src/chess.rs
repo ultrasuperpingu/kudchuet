@@ -78,7 +78,7 @@ mod tests {
 	use minimax::perft;
 	use shakmaty::Chess;
 	use super::super::chess::ChessGame;
-	// cargo test --release chess::chess::tests::perft_test -- --nocapture
+	// cargo test --release -p chess@0.1 chess::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
 	//    0               1       7.7µs       129.9
 	//    1              20      37.4µs       534.8

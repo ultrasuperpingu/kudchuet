@@ -18,6 +18,9 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElement"] }
 
 
+[lib]
+name = "hare_and_hounds"
+
 [[bin]]
 name = "hare_and_hounds"
 path = "src/main.rs"

@@ -1,8 +1,5 @@
-use crate::gui::create_board;
-mod game;
-mod gui;
-mod rules;
-mod bitboard;
+use bagh_chal::gui::create_board;
+
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {

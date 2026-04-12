@@ -43,6 +43,7 @@ impl EGUIPieceType for BaghChalPiece {
 }
 impl BoardGame for BaghChal {
 	type PieceType=BaghChalPiece;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		5
@@ -78,8 +79,8 @@ impl BoardGame for BaghChal {
 	fn result(&self) -> GameResult {
 		match <Self as Game>::get_winner(self) {
 			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::Player2} else {GameResult::Player1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::Player2} else {GameResult::Player1},
+			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::PLAYER2} else {GameResult::PLAYER1},
+			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::PLAYER2} else {GameResult::PLAYER1},
 			None => GameResult::OnGoing,
 		}
 	}
@@ -190,7 +191,7 @@ impl<G> SquareDrawer<G> for BaghChalSquareDrawer
 	}
 }
 pub fn create_board() -> GenericBoardApp<BaghChal> {
-	let mut board=GenericBoardApp::new(BaghChal::default(), new_move_searcher_vec("Material".into(), BaghChalMaterialEval{}, 8));
+	let mut board=GenericBoardApp::new(BaghChal::default(), new_move_searcher_vec("Material".into(), BaghChalMaterialEval::new(), 8));
 	//board.board_drawer.get_style_mut().dark_color=egui::Color32::from_rgb(181, 136, 99);
 	//board.board_drawer.get_style_mut().light_color=Color32::from_rgb(240, 217, 181);
 	//board.board_drawer.get_style_mut().show_coordinates_mod=crate::common::gui::CoordMod::NumbersAside;

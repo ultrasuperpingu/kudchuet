@@ -11,6 +11,9 @@ bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 #magic_bitboard_proc_macro = {path="../../magic_bitboard_proc_macro"}
 #minimax = "0.5"
 minimax = {path="../../minimax"}
+#egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor.git", features=["filepicker"] }
+egui_field_editor = {path="../../../egui_inspect/egui_field_editor", features=["filepicker"] }
+#egui_field_editor = "0.5"
 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -18,6 +21,8 @@ wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElement"] }
 
+[lib]
+name = "chinese_checkers"
 
 [[bin]]
 name = "chinese_checkers"

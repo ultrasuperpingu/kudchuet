@@ -160,7 +160,7 @@ mod tests {
 	use minimax::perft;
 
 	use super::ChineseCheckers;
-	//cargo test -p kudchuet --release chinese_checkers::game::tests::perft_test -- --nocapture
+	//cargo test -p chinese_checkers --release game::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
 	//    0               1       2.6µs       384.6
 	//    1              14      57.9µs       241.8

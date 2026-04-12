@@ -1,18 +1,6 @@
-use crate::gui::create_board;
+use chess::gui::create_board;
 
 extern crate kudchuet;
-
-mod bitboard;
-mod chess2;
-mod chess;
-mod evaluation;
-mod fen;
-mod gui;
-mod magic_tables;
-mod mychess;
-mod pext_tables;
-mod san;
-mod rules;
 
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -20,7 +8,7 @@ fn main() -> eframe::Result<()> {
 	
 	use kudchuet::ai::cli_engine::UCILikeCLIEngine;
 	use kudchuet::new_move_searcher_static;
-	use mychess::{ChessMaterialEval, ChessBoard};
+	use chess::mychess::{ChessMaterialEval, ChessBoard};
 
 	let args: Vec<String> = std::env::args().collect();
 

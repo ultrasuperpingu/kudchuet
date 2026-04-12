@@ -28,8 +28,8 @@ impl minimax::Game for FootBoard {
 	}
 	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
 		match state.result() {
-			GameResult::Player1 => if state.turn() == Player::PLAYER2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			GameResult::Player2 => if state.turn() == Player::PLAYER1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			GameResult::PLAYER1 => if state.turn() == Player::PLAYER2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
+			GameResult::PLAYER2 => if state.turn() == Player::PLAYER1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
 			GameResult::Player(_) => unreachable!(),
 			GameResult::Draw => Some(minimax::Winner::Draw),
 			GameResult::OnGoing => None,
@@ -81,7 +81,7 @@ mod tests {
 	use minimax::util::perft_tt;
 	use super::FootBoard;
 
-	// cargo test --release footboard::game::tests::perft_test -- --nocapture
+	// cargo test --release -p footboard game::tests::perft_test -- --nocapture
 
 	//depth           count        time        kn/s
 	//    0               1       3.7µs       270.3

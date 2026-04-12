@@ -152,9 +152,9 @@ impl Move {
 
 		Some(Move { from, to, promotion })
 	}
-	pub fn is_castling(&self, piece: Piece) -> bool {
-		self.castling_type(piece).is_some()
-	}
+	//pub fn is_castling(&self, piece: Piece) -> bool {
+	//	self.castling_type(piece).is_some()
+	//}
 	pub fn castling_type(&self, piece: Piece) -> Option<u8> {
 		if piece != Piece::King {
 			return None;

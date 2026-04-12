@@ -263,7 +263,7 @@ where G::M: BoardMove<G>+Send
 		ui.separator();
 		ui.horizontal(|ui| {
 			if ui.button("New Game").clicked() {
-				self.game_state_manager.reset(G::default());
+				self.game_state_manager.new_game();
 				self.board_drawer.full_reset();
 			}
 

@@ -62,6 +62,7 @@ pub enum ChessPiece {
 impl BoardGame for ChessBoard {
 
 	type PieceType=ChessPiece;
+	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		8
@@ -173,8 +174,8 @@ impl BoardGame for ChessBoard {
 
 pub fn create_board() -> GenericBoardApp<ChessBoard> {
 	let engines: Vec<Box<dyn AIEngineProvider<ChessBoard, Engine=Box<dyn AIEngine<ChessBoard>>>>> = vec![
-		Box::new(MoveSearcherBuilderDyn::new("Material".into(), ChessMaterialEval{}, 5)),
-		Box::new(MoveSearcherBuilderDyn::new("Simple".into(), ChessPosEval{}, 5)),
+		Box::new(MoveSearcherBuilderDyn::new("Material".into(), ChessMaterialEval::new(), 5)),
+		Box::new(MoveSearcherBuilderDyn::new("Simple".into(), ChessPosEval::new(), 5)),
 	];
 	GenericBoardApp::new(ChessBoard::default(), engines)
 }

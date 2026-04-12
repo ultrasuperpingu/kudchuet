@@ -4,8 +4,8 @@ use std::io::Write;
 use std::path::Path;
 
 use bitboard_proc_macro::bitboard;
-use bitboard::{Bitboard, IntegerStorage};
-use num_traits::{PrimInt, ToPrimitive, Unsigned};
+use bitboard::Bitboard;
+use num_traits::{PrimInt, Unsigned};
 
 #[bitboard(width=5,height=5)]
 #[derive(Default, Debug)]

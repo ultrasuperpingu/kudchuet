@@ -66,7 +66,7 @@ mod tests {
 	use super::Checkers10;
 	use minimax::perft;
 	//https://damforum.nl/viewtopic.php?t=2308
-	//cargo test --release checkers::game::tests::perft_test -- --nocapture
+	//cargo test --release -p checkers game::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
 	//    0               1      11.2µs        89.3
 	//    1               9      26.5µs       339.6

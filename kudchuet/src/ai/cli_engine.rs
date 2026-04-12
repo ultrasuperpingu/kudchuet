@@ -4,15 +4,15 @@ use std::io::Write;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-
 use minimax::strategies::iterative::SearchStopSignal;
 
+use crate::ConcreteStrategy;
 use crate::ai::uci::{UciInfoAttribute, UciMessage, UciOptionConfig, UciTimeControl};
 use crate::gui::{BoardGame, BoardMove};
-use crate::ConcreteStrategy;
 
 pub struct UCILikeCLIEngine<G, AI>
-	where G: BoardGame + Send + 'static,
+where
+	G: BoardGame + Send + 'static,
 	G::M: BoardMove<G> + Copy + Send + 'static,
 	AI: ConcreteStrategy<G> + Send + 'static,
 {
@@ -38,10 +38,9 @@ where
 		}
 	}
 	pub fn process(&mut self) -> Result<(), std::io::Error> {
-		let mut debug:bool = true; 
+		let mut debug: bool = true;
 		let mut pos = G::default();
 
-		
 		let stdin = std::io::stdin();
 		let mut quit = false;
 		let mut opts = self.ai.as_ref().unwrap().get_options(); // AI is present at start (TODO: if process is launched twice, we should panic) 
@@ -55,26 +54,77 @@ where
 				}
 				let m = UciMessage::parse(m_str);
 				if debug {
-					eprintln!("{}", UciMessage::Info(vec![UciInfoAttribute::String(format!("received: {}", m))]));
+					eprintln!(
+						"{}",
+						UciMessage::Info(vec![UciInfoAttribute::String(format!(
+							"received: {}",
+							m
+						))])
+					);
 				}
 				match m {
 					UciMessage::Uci => {
-						println!("{}", UciMessage::Id { name: Some("KudchuetChess".into()), author: None });
-						println!("{}", UciMessage::Id { name: None, author: Some("Ping".into()) });
-						println!("{}", UciMessage::Option(UciOptionConfig::Spin { name: "Hash".into(), default: Some(128), min: Some(1), max: Some(4096) }));
-						println!("{}", UciMessage::Option(UciOptionConfig::Check { name: "Mtdf".into(), default: Some(false) }));
-						println!("{}", UciMessage::Option(UciOptionConfig::Spin { name: "Threads".into(), default: None, min: Some(1), max: Some(2048) }));
-						println!("{}", UciMessage::Option(UciOptionConfig::Button { name: "Clear Hash".into() }));
-						
+						println!(
+							"{}",
+							UciMessage::Id {
+								name: Some("KudchuetChess".into()),
+								author: None
+							}
+						);
+						println!(
+							"{}",
+							UciMessage::Id {
+								name: None,
+								author: Some("Ping".into())
+							}
+						);
+						println!(
+							"{}",
+							UciMessage::Option(UciOptionConfig::Spin {
+								name: "Hash".into(),
+								default: Some(128),
+								min: Some(1),
+								max: Some(4096)
+							})
+						);
+						println!(
+							"{}",
+							UciMessage::Option(UciOptionConfig::Check {
+								name: "Mtdf".into(),
+								default: Some(false)
+							})
+						);
+						println!(
+							"{}",
+							UciMessage::Option(UciOptionConfig::Spin {
+								name: "Threads".into(),
+								default: None,
+								min: Some(1),
+								max: Some(2048)
+							})
+						);
+						println!(
+							"{}",
+							UciMessage::Option(UciOptionConfig::Button {
+								name: "Clear Hash".into()
+							})
+						);
+
 						println!("{}", UciMessage::UciOk);
 					}
 					UciMessage::UciNewGame => {
-						pos=G::default();
+						pos = G::default();
 						self.stop_search().reset_with_options(opts.clone());
 					}
 					UciMessage::SetOption { name, value } => {
 						if debug {
-							println!("{}", UciMessage::Info(vec![UciInfoAttribute::String(format!("setting option {}={:?}", name, value))]));
+							println!(
+								"{}",
+								UciMessage::Info(vec![UciInfoAttribute::String(format!(
+									"setting option {}={:?}",
+									name, value
+								))])
+							);
 						}
 						let mut ok = true;
 						match name.as_str() {
@@ -82,7 +132,12 @@ where
 								if let Some(value) = &value {
 									if let Ok(value) = value.parse() {
 										if debug {
-											println!("{}", UciMessage::Info(vec![UciInfoAttribute::String(format!("setting hash size to {}MB", value))]));
+											println!(
+												"{}",
+												UciMessage::Info(vec![UciInfoAttribute::String(
+													format!("setting hash size to {}MB", value)
+												)])
+											);
 										}
 										opts.table_megabyte_size = value;
 									}
@@ -95,7 +150,12 @@ where
 											v.set_bool(value);
 										}
 										if debug {
-											println!("{}", UciMessage::Info(vec![UciInfoAttribute::String(format!("Setting mtdf to {}", value))]));
+											println!(
+												"{}",
+												UciMessage::Info(vec![UciInfoAttribute::String(
+													format!("Setting mtdf to {}", value)
+												)])
+											);
 										}
 									}
 								}
@@ -104,9 +164,12 @@ where
 								if let Some(value) = &value {
 									let nb_threads = value.parse().ok();
 									if debug {
-										println!("{}", UciMessage::Info(vec![UciInfoAttribute::String(
-											format!("setting threads to {:?}", nb_threads)
-										)]));
+										println!(
+											"{}",
+											UciMessage::Info(vec![UciInfoAttribute::String(
+												format!("setting threads to {:?}", nb_threads)
+											)])
+										);
 									}
 									opts.threads = nb_threads;
 								}
@@ -117,13 +180,16 @@ where
 							_ => {
 								ok = false;
 							}
-							
 						}
 						if ok {
 							self.stop_search().reset_with_options(opts.clone());
 						}
 					}
-					UciMessage::Position { startpos, fen, moves } => {
+					UciMessage::Position {
+						startpos,
+						fen,
+						moves,
+					} => {
 						if startpos {
 							pos = G::default();
 						}
@@ -140,20 +206,23 @@ where
 									} else {
 										eprintln!("Invalid move: {}", mv.to_uci().expect("BoardMove::to_uci() must be implemented for UCI engines (used to output moves like e2e4)"));
 									}
-								},
+								}
 								Err(e) => eprintln!("{}", e),
 							}
 						}
 					}
-					UciMessage::Go { time_control, search_control } => {
+					UciMessage::Go {
+						time_control,
+						search_control,
+					} => {
 						let mut asked_time = None;
 						let mut asked_depth = None;
 						if let Some(search) = self.current_search.take() {
 							search.stop_flag.stop_search();
-    						self.ai = Some(search.thread.join().expect("Thread panicked"));
+							self.ai = Some(search.thread.join().expect("Thread panicked"));
 						}
 						let mut ai = self.ai.take().expect("AI must exist");
-						
+
 						if let Some(tc) = time_control {
 							match tc {
 								UciTimeControl::Ponder => {
@@ -213,15 +282,18 @@ where
 								}
 
 								if !fail {
-									println!("{}", UciMessage::Info(vec![
-										UciInfoAttribute::Pv(moves),
-										UciInfoAttribute::Score {
-											cp: Some(score as i32),
-											mate: None,
-											lower_bound: None,
-											upper_bound: None,
-										}
-									]));
+									println!(
+										"{}",
+										UciMessage::Info(vec![
+											UciInfoAttribute::Pv(moves),
+											UciInfoAttribute::Score {
+												cp: Some(score as i32),
+												mate: None,
+												lower_bound: None,
+												upper_bound: None,
+											}
+										])
+									);
 								}
 							}
 
@@ -229,7 +301,9 @@ where
 								let move_str = m.to_uci();
 								println!(
 									"bestmove {}",
-									move_str.expect("BoardMove::to_uci() must be implemented for UCI engines (used to output moves like e2e4)")
+									move_str.expect(
+										"BoardMove::to_uci() must be implemented for UCI engines (used to output moves like e2e4)"
+									)
 								);
 							} else {
 								println!("bestmove (none)");
@@ -243,20 +317,28 @@ where
 							stop_flag,
 							thread: handle,
 						});
-					},
+					}
 					UciMessage::Stop => {
 						self.stop_search();
 					}
 					UciMessage::Quit => {
 						quit = true;
 						break;
-					},
-					UciMessage::Debug(d) => { debug=d; },
+					}
+					UciMessage::Debug(d) => {
+						debug = d;
+					}
 					UciMessage::IsReady => {
 						println!("{}", UciMessage::ReadyOk);
-					},
+					}
 					_ => {
-						println!("{}", UciMessage::Info(vec![UciInfoAttribute::String(format!("Unknown Command: {}", m))]));
+						println!(
+							"{}",
+							UciMessage::Info(vec![UciInfoAttribute::String(format!(
+								"Unknown Command: {}",
+								m
+							))])
+						);
 					}
 				}
 			}
@@ -274,5 +356,4 @@ where
 		}
 		self.ai.as_mut().expect("AI not present!!!")
 	}
-
 }

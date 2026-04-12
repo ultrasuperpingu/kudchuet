@@ -1,9 +1,6 @@
-use gui::create_board;
+use footboard::gui::create_board;
 
-mod game;
-mod gui;
-mod rules;
-mod bitboard;
+
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {

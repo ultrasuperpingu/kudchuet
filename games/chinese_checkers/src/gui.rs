@@ -1,5 +1,6 @@
 use eframe::egui;
 use egui::{Color32, Stroke};
+use egui_field_editor::EguiInspect;
 use crate::bitboard::ChineseCheckerBoard;
 use crate::game::ChineseCheckersMaterialEval;
 use crate::rules::{ChineseCheckers, ChineseCheckersPlayer, Move};
@@ -32,10 +33,24 @@ impl EGUIPieceType for ChineseCheckersPlayer {
 		}
 	}
 }
+#[derive(EguiInspect)]
+pub struct ChineseCheckersSettings {
+	#[inspect(range(min=2.0, max=6.0))]
+	pub nb_players:u8
+}
+impl Default for ChineseCheckersSettings {
+	fn default() -> Self {
+		Self { nb_players: 2 }
+	}
+}
 impl BoardGame for ChineseCheckers {
 
 	type PieceType=ChineseCheckersPlayer;
+	type Settings = ChineseCheckersSettings;
 
+	fn build_from_settings(settings: &Self::Settings) -> Self {
+		Self::new(settings.nb_players)
+	}
 	fn width(&self) -> u8 {
 		13
 	}
@@ -132,10 +147,17 @@ impl BoardGame for ChineseCheckers {
 			row_offset_pattern: RowOffsetPattern::EvenRowsShifted,
 			clear_color: Some(egui::Color32::from_rgb(200, 190, 125)),
 			empty_cell_shape: Some(Shape::Circle {
-				fill_color: Some(Color32::from_rgba_unmultiplied(12, 150, 200, 255)),
-				size: 1.0,
+				//fill_color: Some(Color32::from_rgba_unmultiplied(12, 150, 200, 255)),
+				fill_color: Some(Color32::from_rgba_unmultiplied(200, 200, 200, 255)),
+				size: 0.7,
 				text: None,
-				stroke: Some(StrokeData::default())
+				stroke: Some(StrokeData{
+					stroke: Stroke {
+						width: 3.0,
+						color: Color32::from_rgb(181, 136, 99)
+					},
+					kind: egui::StrokeKind::Inside
+				})
 			}),
 			..Default::default()
 		}
