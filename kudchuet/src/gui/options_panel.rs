@@ -87,10 +87,6 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 										*self.board_drawer.get_style_mut() = G::default_style();
 										self.board_drawer.save_style(ui.ctx());
 									});
-									//if ui.button("Default Board Style").clicked() {
-									//	*self.board_drawer.get_style_mut() = G::default_style();
-									//	self.board_drawer.save_style(ui.ctx());
-									//}
 									if self.board_drawer.get_piece_drawer().has_custom_properties() {
 										let piece_drawer = self.board_drawer.get_piece_drawer_mut();
 										//if self.board_drawer.get_piece_drawer_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
@@ -98,13 +94,9 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 											//self.board_drawer.save_style(ui.ctx());
 										}
 										add_button("Default Piece Style", "Reset pieces style to default", false, ui, |_ui| {
-											self.board_drawer.get_piece_drawer_mut().set_default();
+											self.board_drawer.get_piece_drawer_mut().reset_to_defaults();
 											//self.board_drawer.save_style(ui.ctx());
 										});
-										//if ui.button("Default Piece Style").clicked() {
-										//	self.board_drawer.get_piece_drawer_mut().set_default();
-										//	//self.board_drawer.save_style(ui.ctx());
-										//}
 									}
 								}
 								RightTab::ImportExport => {

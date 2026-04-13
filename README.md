@@ -25,11 +25,6 @@ Define any turn-based board game by implementing:
 - `BoardMove`
 - optional rendering traits (`BoardDrawer`, `SquareDrawer`)
 
-Supports:
-- Gomoku
-- Chess-like engines (planned / extensible)
-- custom abstract board games
-
 ---
 
 ### AI system
@@ -41,7 +36,7 @@ Kudchuet supports multiple AI backends:
 - Expectiminimax for stractegic games with random parts.
 
 #### External engines (UCI)
-- If you provide a move and position serialization/desrialization, you get a simple uci server and gui implementation
+- If you provide a move and position serialization/desrialization, you get a simple uci-like server and gui implementation.
 
 ### Custom rendering
 You can override board rendering using ```BoardDrawer```, ```PieceDrawer``` and ```SquareDrawer```. Default implmentations of those are already really expressive but you can reimplement those and implement really specifc features.

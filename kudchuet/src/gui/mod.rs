@@ -234,12 +234,17 @@ pub trait BoardMove<G : Game> : Debug + Sized + Copy
 		let n = clicks.len();
 
 		// Possible next clicks
-		let next_possible_clicks: Vec<u16> = candidates.iter()
-			.filter_map(|m| {
-				let seq = m.click_sequence(state);
-				if seq.len() > n { Some(seq[n]) } else { None }
-			})
-			.collect();
+		let mut next_possible_clicks = Vec::new();
+
+		for m in &candidates {
+			let seq = m.click_sequence(state);
+			if seq.len() > n {
+				let idx = seq[n];
+				if !next_possible_clicks.contains(&idx) {
+					next_possible_clicks.push(idx);
+				}
+			}
+		}
 
 		if next_possible_clicks.is_empty() {
 			let exact_matches: Vec<G::M> = candidates.iter()

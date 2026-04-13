@@ -37,9 +37,9 @@ impl TextData {
 
 #[derive(Clone, Debug, EguiInspect, PartialEq, Serialize, Deserialize)]
 pub struct StripData {
-	color: Color32,
+	pub color: Color32,
 	#[inspect(slider(min=0.0, max=1.0))]
-	weight: f32
+	pub weight: f32
 }
 impl Default for StripData {
 	fn default() -> Self {

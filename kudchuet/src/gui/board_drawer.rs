@@ -1,7 +1,9 @@
+use std::{collections::HashMap, marker::PhantomData};
+
 use egui::{Color32, Painter, Pos2, Rect};
 use egui_field_editor::EguiInspect;
 
-use crate::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern};
+use crate::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern, shapes::Shape};
 
 
 pub trait BoardDrawer<G: BoardGame>
@@ -92,7 +94,6 @@ pub trait BoardDrawer<G: BoardGame>
 				// played highlights
 				if self.get_played_highlights().contains(&sq_index) {
 					style.played_highlights_shape.draw(ui.painter(), square.center(), cell_size);
-					//painter.rect_filled(square, 0.0, Color32::from_rgba_unmultiplied(150, 150, 250, 80));
 				}
 				// Pieces
 				if let Some(piece) = game.piece_at(x_coord, y_coord) {
@@ -108,20 +109,16 @@ pub trait BoardDrawer<G: BoardGame>
 		// selected square
 		if let Some(sindex) = self.get_selected() {
 			let (sx, sy) = G::coords_from_index(sindex);
-			//let x = board_rect.left() + sx as f32 * cell_size;
-			//let y = board_rect.top() + (h - 1 - sy) as f32 * cell_size;
 			let pos = Self::coords_to_pixel(self, &board_rect, cell_size, sx, sy, h);
 			let x = pos.x;
 			let y = pos.y;
 			let square = egui::Rect::from_min_size(egui::pos2(x, y), egui::vec2(cell_size, cell_size));
-			//painter.rect_stroke(square, 0.0, egui::Stroke::new(3.0, egui::Color32::YELLOW), egui::StrokeKind::Outside);
 			style.selected_highlights_shape.draw(ui.painter(), square.center(), cell_size);
 		}
 		// legal moves highlights
+		// TODO: probably better to put this in the square loop (to ensure each will be drawn only once)
 		for &index in self.get_legal_highlights() {
 			let (tx, ty) = G::coords_from_index(index);
-			//let x = board_rect.left() + tx as f32 * cell_size;
-			//let y = board_rect.top() + (h - 1 - ty) as f32 * cell_size;
 			let pos = Self::coords_to_pixel(self, &board_rect, cell_size, tx, ty, h);
 			let x = pos.x;
 			let y = pos.y;
@@ -141,7 +138,6 @@ pub trait BoardDrawer<G: BoardGame>
 
 		for file in 0..w {
 			let pos = Self::coords_to_pixel(self, &board_rect, cell_size, file, 0, h);
-			//let x = board_rect.left() + (file as f32 + 0.5) * cell_size;
 			let x = pos.x + 0.5 * cell_size;
 			let y = board_rect.bottom() + 2.0;
 			let t = if self.get_style().show_coordinates_mod.is_file_rank()  { ((b'a' + file) as char).to_string() } else { (file+1).to_string() };
@@ -157,7 +153,6 @@ pub trait BoardDrawer<G: BoardGame>
 		for rank in (0..h).rev() {
 			let pos = Self::coords_to_pixel(self, &board_rect, cell_size, 0, rank, h);
 			let x = board_rect.left() - 6.0;
-			//let y = board_rect.top() + ((h-1-rank) as f32 + 0.5) * cell_size;
 			let y = pos.y + 0.5 * cell_size;
 
 			painter.text(
@@ -250,9 +245,8 @@ pub struct DefaultBoardDrawer<G> {
 	selected: Option<u16>,
 	legal_highlights: Vec<u16>,
 	played_highlights: Vec<u16>,
-	//intermediate_state: Option<G>,
 }
-impl<G: BoardGame> Default for DefaultBoardDrawer<G>
+impl<G: BoardGame + 'static> Default for DefaultBoardDrawer<G>
 	where G::M : BoardMove<G> {
 	fn default() -> Self {
 		Self {
@@ -262,11 +256,10 @@ impl<G: BoardGame> Default for DefaultBoardDrawer<G>
 			selected: None,
 			legal_highlights: vec![],
 			played_highlights: vec![],
-			//intermediate_state:None,
 		}
 	}
 }
-impl<G: BoardGame> DefaultBoardDrawer<G>
+impl<G: BoardGame + 'static> DefaultBoardDrawer<G>
 	where G::M : BoardMove<G>
 {
 	pub fn new() -> Self {
@@ -277,7 +270,6 @@ impl<G: BoardGame> DefaultBoardDrawer<G>
 			selected: None,
 			legal_highlights: vec![],
 			played_highlights: vec![],
-			//intermediate_state:None,
 		}
 	}
 }
@@ -453,22 +445,35 @@ pub trait PieceDrawer<G> : EguiInspect
 	fn has_custom_properties(&self) -> bool {
 		false
 	}
-	fn set_default(&mut self) {
+	fn reset_to_defaults(&mut self);
+	fn get_defaults() -> HashMap<String, Shape> where Self: Sized {
+		HashMap::new()
 	}
 }
 
 #[derive(Default, EguiInspect)]
-pub struct DefaultPieceDrawer;
-impl DefaultPieceDrawer
+pub struct DefaultPieceDrawer<G>
+(
+	HashMap<String, Shape>,
+	#[inspect(hidden)]
+	PhantomData<G>,
+)
+	where G: BoardGame,
+		G::M: BoardMove<G>;
+impl<G> DefaultPieceDrawer<G>
+	where G: BoardGame,
+		G::M: BoardMove<G>
 {
 	pub fn new() -> Self {
-		Self { }
+		Self(Self::get_defaults(), PhantomData::default())
 	}
 }
 
-impl<G> PieceDrawer<G> for DefaultPieceDrawer
+impl<G> PieceDrawer<G> for DefaultPieceDrawer<G>
 	where G: BoardGame,
-		G::M: BoardMove<G> 
+		G::M: BoardMove<G>
 {
-	
+	fn reset_to_defaults(&mut self) {
+		self.0=Self::get_defaults();
+	}
 }

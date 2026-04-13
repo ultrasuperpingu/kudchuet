@@ -5,7 +5,7 @@ use crate::bitboard::Bitboard9x13;
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, PieceDrawer, SquareDrawer};
 use kudchuet::{GameResult, Player, new_move_searcher_vec};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
-use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
+use kudchuet::gui::shapes::{Shape, StripData, StrokeData, TextData};
 
 use kudchuet::gui::board_app::GenericBoardApp;
 use crate::rules::Action;
@@ -93,28 +93,86 @@ impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
 			Cell::Empty => unreachable!(),
-			Cell::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
-			Cell::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
-			Cell::WhiteWithBall => Shape::Circle {
-				fill_color: Some(Color32::YELLOW),
-				size: 0.7,
-				text: Some(TextData {
-					text: "⚽".into(),
-					color: Color32::BLACK,
-					size: 0.5,
-				}),
+			Cell::White => Shape::StrippedCircle {
+				strips: vec![
+					StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.5 },
+					StripData { color: Color32::from_rgb(0, 157, 222), weight: 0.5 },
+				],
+				angle: 0.88,
+				size: 0.8,
+				text: None,
 				stroke: Some(StrokeData::default())
 			},
-			Cell::BlackWithBall => Shape::Circle {
-				fill_color: Some(Color32::YELLOW),
-				size: 0.7,
-				text: Some(TextData {
-					text: "⚽".into(),
-					color: Color32::WHITE,
-					size: 0.5,
-				}),
-				stroke: Some(StrokeData::default())
+			Cell::Black => Shape::StrippedCircle {
+				strips: vec![
+					StripData { color: Color32::from_rgb(5, 45, 177), weight: 0.2 },
+					StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.1 },
+					StripData { color: Color32::from_rgb(244, 0, 14), weight: 0.4 },
+					StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.1 },
+					StripData { color: Color32::from_rgb(5, 45, 177), weight: 0.2 },
+				],
+				angle: 0.25,
+				size: 0.8,
+				text: None,
+				stroke: Some(StrokeData::default()),
 			},
+			Cell::WhiteWithBall => Shape::Composed(vec![
+				Shape::StrippedCircle {
+					strips: vec![
+						StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.5 },
+						StripData { color: Color32::from_rgb(0, 157, 222), weight: 0.5 },
+					],
+					angle: 0.88,
+					size: 0.8,
+					text: None,
+					stroke: Some(StrokeData::default())
+				},
+				Shape::Circle {
+					fill_color: Some(Color32::from_rgb(255, 255, 255)),
+					size: 0.45,
+					text: None,
+					stroke: None,
+				},
+				Shape::String {
+					text: TextData {
+						text: "⚽".into(),
+						color: Color32::BLACK,
+						size: 0.5,
+					}
+				}
+			]),
+			Cell::BlackWithBall => Shape::Composed(vec![
+				Shape::StrippedCircle {
+					strips: vec![
+						StripData { color: Color32::from_rgb(5, 45, 177), weight: 0.2 },
+						StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.1 },
+						StripData { color: Color32::from_rgb(244, 0, 14), weight: 0.4 },
+						StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.1 },
+						StripData { color: Color32::from_rgb(5, 45, 177), weight: 0.2 },
+					],
+					angle: 0.25,
+					size: 0.8,
+					text: Some(TextData {
+						text: "⚽".into(),
+						color: Color32::BLACK,
+						size: 0.5,
+					}),
+					stroke: Some(StrokeData::default())
+				},
+				Shape::Circle {
+					fill_color: Some(Color32::from_rgb(255, 255, 255)),
+					size: 0.45,
+					text: None,
+					stroke: None,
+				},
+				Shape::String {
+					text: TextData {
+						text: "⚽".into(),
+						color: Color32::BLACK,
+						size: 0.5,
+					}
+				}
+			]),
 			Cell::Ball => Shape::Circle {
 				fill_color: Some(Color32::WHITE),
 				size: 0.52,
@@ -361,6 +419,9 @@ impl FootboardPieceDrawer {
 			}
 
 			if points.len() >= 3 {
+				if points.len() > 50 {
+					println!("Large polygon: {}", points.len());
+				}
 				painter.add(egui::Shape::convex_polygon(
 					points,
 					*color,
@@ -437,7 +498,7 @@ impl PieceDrawer<FootBoard> for FootboardPieceDrawer
 		true
 	}
 
-	fn set_default(&mut self) {
+	fn reset_to_defaults(&mut self) {
 		*self=Self::new();
 	}
 }
@@ -446,6 +507,6 @@ pub fn create_board() -> GenericBoardApp<FootBoard> {
 	board.depth = 3;
 	board.max_depth = 6;
 	board.board_drawer.set_square_drawer(Box::new(FootboardSquareDrawer::new()));
-	board.board_drawer.set_piece_drawer(Box::new(FootboardPieceDrawer::new()));
+	//board.board_drawer.set_piece_drawer(Box::new(FootboardPieceDrawer::new()));
 	board
 }
