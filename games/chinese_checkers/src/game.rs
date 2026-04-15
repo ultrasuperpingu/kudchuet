@@ -1,7 +1,5 @@
-//use std::hash::{DefaultHasher, Hash};
-//use std::hash::Hasher;
 
-use bitboard::{BitIter, Bitboard};
+use bitboard::BitIter;
 use minimax::{StochasticGame, TurnBasedGame, TurnBasedGameEvaluator};
 
 use crate::{bitboard::ChineseCheckerBoard, rules::ChineseCheckersPlayer};
@@ -38,9 +36,6 @@ impl minimax::Game for ChineseCheckers {
 	}
 
 	fn zobrist_hash(state: &Self::S) -> u64 {
-		//let mut hasher = DefaultHasher::new();
-		//state.hash(&mut hasher);
-		//hasher.finish()
 		state.hash
 	}
 }

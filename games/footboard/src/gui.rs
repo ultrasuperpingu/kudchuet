@@ -1,21 +1,19 @@
-use eframe::egui;
-use egui::{Align2, Color32, FontId, Rect, Stroke, Vec2};
-use egui_field_editor::EguiInspect;
 use crate::bitboard::Bitboard9x13;
-use kudchuet::gui::board_drawer::{DefaultSquareDrawer, PieceDrawer, SquareDrawer};
-use kudchuet::{GameResult, Player, new_move_searcher_vec};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use eframe::egui;
+use egui::{Align2, Color32, FontId, Rect, Vec2};
+use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StripData, StrokeData, TextData};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::{GameResult, Player, new_move_searcher_vec};
 
-use kudchuet::gui::board_app::GenericBoardApp;
 use crate::rules::Action;
+use kudchuet::gui::board_app::GenericBoardApp;
 
 use super::game::FootboardEvalDumb;
 
-use super::rules::{Cell, Move, FootBoard};
+use super::rules::{Cell, FootBoard, Move};
 
 impl BoardMove<FootBoard> for Move {
-
 	fn click_sequence(&self, _state: &FootBoard) -> Vec<u16> {
 		let mut seq = Vec::new();
 		for action in self.0.iter().flatten() {
@@ -43,7 +41,7 @@ impl BoardMove<FootBoard> for Move {
 				if sim.player1.get_at_index(from as usize) {
 					sim.player1.reset_at_index(from as usize);
 					sim.player1.set_at_index(to as usize);
-					
+
 					if from == sim.ball {
 						sim.ball = to;
 					}
@@ -52,7 +50,7 @@ impl BoardMove<FootBoard> for Move {
 				if sim.player2.get_at_index(from as usize) {
 					sim.player2.reset_at_index(from as usize);
 					sim.player2.set_at_index(to as usize);
-					
+
 					if from == sim.ball {
 						sim.ball = to;
 					}
@@ -64,7 +62,9 @@ impl BoardMove<FootBoard> for Move {
 		Some(sim)
 	}*/
 	fn compute_intermediate_state(&self, state: &FootBoard, clicks: &[u16]) -> Option<FootBoard> {
-		if clicks.len() < 2 { return None; }
+		if clicks.len() < 2 {
+			return None;
+		}
 
 		let mut sim = state.clone();
 		let player = state.current_player();
@@ -75,13 +75,13 @@ impl BoardMove<FootBoard> for Move {
 			//let to = clicks[i+1];
 
 			if player == Player::PLAYER1 {
-				if let Some(a) = self.0[i/2] {
+				if let Some(a) = self.0[i / 2] {
 					FootBoard::play_action(&a, &mut sim.player1, &mut sim.ball);
-				} 
+				}
 			} else {
-				if let Some(a) = self.0[i/2] {
+				if let Some(a) = self.0[i / 2] {
 					FootBoard::play_action(&a, &mut sim.player2, &mut sim.ball);
-				} 
+				}
 			}
 			i += 2;
 		}
@@ -95,21 +95,42 @@ impl EGUIPieceType for Cell {
 			Cell::Empty => unreachable!(),
 			Cell::White => Shape::StrippedCircle {
 				strips: vec![
-					StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.5 },
-					StripData { color: Color32::from_rgb(0, 157, 222), weight: 0.5 },
+					StripData {
+						color: Color32::from_rgb(250, 250, 250),
+						weight: 0.5,
+					},
+					StripData {
+						color: Color32::from_rgb(0, 157, 222),
+						weight: 0.5,
+					},
 				],
 				angle: 0.88,
 				size: 0.8,
 				text: None,
-				stroke: Some(StrokeData::default())
+				stroke: Some(StrokeData::default()),
 			},
 			Cell::Black => Shape::StrippedCircle {
 				strips: vec![
-					StripData { color: Color32::from_rgb(5, 45, 177), weight: 0.2 },
-					StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.1 },
-					StripData { color: Color32::from_rgb(244, 0, 14), weight: 0.4 },
-					StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.1 },
-					StripData { color: Color32::from_rgb(5, 45, 177), weight: 0.2 },
+					StripData {
+						color: Color32::from_rgb(5, 45, 177),
+						weight: 0.2,
+					},
+					StripData {
+						color: Color32::from_rgb(250, 250, 250),
+						weight: 0.1,
+					},
+					StripData {
+						color: Color32::from_rgb(244, 0, 14),
+						weight: 0.4,
+					},
+					StripData {
+						color: Color32::from_rgb(250, 250, 250),
+						weight: 0.1,
+					},
+					StripData {
+						color: Color32::from_rgb(5, 45, 177),
+						weight: 0.2,
+					},
 				],
 				angle: 0.25,
 				size: 0.8,
@@ -119,13 +140,19 @@ impl EGUIPieceType for Cell {
 			Cell::WhiteWithBall => Shape::Composed(vec![
 				Shape::StrippedCircle {
 					strips: vec![
-						StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.5 },
-						StripData { color: Color32::from_rgb(0, 157, 222), weight: 0.5 },
+						StripData {
+							color: Color32::from_rgb(250, 250, 250),
+							weight: 0.5,
+						},
+						StripData {
+							color: Color32::from_rgb(0, 157, 222),
+							weight: 0.5,
+						},
 					],
 					angle: 0.88,
 					size: 0.8,
 					text: None,
-					stroke: Some(StrokeData::default())
+					stroke: Some(StrokeData::default()),
 				},
 				Shape::Circle {
 					fill_color: Some(Color32::from_rgb(255, 255, 255)),
@@ -138,17 +165,32 @@ impl EGUIPieceType for Cell {
 						text: "⚽".into(),
 						color: Color32::BLACK,
 						size: 0.5,
-					}
-				}
+					},
+				},
 			]),
 			Cell::BlackWithBall => Shape::Composed(vec![
 				Shape::StrippedCircle {
 					strips: vec![
-						StripData { color: Color32::from_rgb(5, 45, 177), weight: 0.2 },
-						StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.1 },
-						StripData { color: Color32::from_rgb(244, 0, 14), weight: 0.4 },
-						StripData { color: Color32::from_rgb(250, 250, 250), weight: 0.1 },
-						StripData { color: Color32::from_rgb(5, 45, 177), weight: 0.2 },
+						StripData {
+							color: Color32::from_rgb(5, 45, 177),
+							weight: 0.2,
+						},
+						StripData {
+							color: Color32::from_rgb(250, 250, 250),
+							weight: 0.1,
+						},
+						StripData {
+							color: Color32::from_rgb(244, 0, 14),
+							weight: 0.4,
+						},
+						StripData {
+							color: Color32::from_rgb(250, 250, 250),
+							weight: 0.1,
+						},
+						StripData {
+							color: Color32::from_rgb(5, 45, 177),
+							weight: 0.2,
+						},
 					],
 					angle: 0.25,
 					size: 0.8,
@@ -157,7 +199,7 @@ impl EGUIPieceType for Cell {
 						color: Color32::BLACK,
 						size: 0.5,
 					}),
-					stroke: Some(StrokeData::default())
+					stroke: Some(StrokeData::default()),
 				},
 				Shape::Circle {
 					fill_color: Some(Color32::from_rgb(255, 255, 255)),
@@ -170,8 +212,8 @@ impl EGUIPieceType for Cell {
 						text: "⚽".into(),
 						color: Color32::BLACK,
 						size: 0.5,
-					}
-				}
+					},
+				},
 			]),
 			Cell::Ball => Shape::Circle {
 				fill_color: Some(Color32::WHITE),
@@ -181,14 +223,14 @@ impl EGUIPieceType for Cell {
 					color: Color32::WHITE,
 					size: 0.5,
 				}),
-				stroke: None
+				stroke: None,
 			},
 		}
 	}
 }
 
 impl BoardGame for FootBoard {
-	type PieceType=Cell;
+	type PieceType = Cell;
 	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
@@ -200,7 +242,7 @@ impl BoardGame for FootBoard {
 	}
 
 	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut moves=vec![];
+		let mut moves = vec![];
 		self.legal_moves(&mut moves);
 		moves
 	}
@@ -240,105 +282,164 @@ impl BoardGame for FootBoard {
 			..Default::default()
 		}
 	}
-	
-	fn do_random(&mut self) {
-			}
-	
+
+	fn do_random(&mut self) {}
+
 	fn nb_players(&self) -> u8 {
-				2
-			}
-	
+		2
+	}
+
 	fn get_name(&self, p: Player) -> String {
-				p.to_string()
-			}
-	
+		p.to_string()
+	}
+
 	fn position_to_string(&self) -> Option<String> {
-				None
-			}
-	
+		None
+	}
+
 	fn game_to_string(&self, _mvs: &[Self::M]) -> Option<String> {
-				None
-			}
-	
+		None
+	}
+
 	fn game_from_string(&self, _game_str: &String) -> Result<Vec<Self::M>, String> {
-				Err("Not Supported".into())
-			}
-	
+		Err("Not Supported".into())
+	}
+
 	fn get_position_from_string(&self, _pos_str: &String) -> Result<Self, String> {
-				Err("Not Supported".into())
-			}
-	
+		Err("Not Supported".into())
+	}
+
 	fn move_from_string(&self, m_str: &String) -> Result<Self::M, String> {
-				Self::M::from_uci(m_str)
-			}
-	
+		Self::M::from_uci(m_str)
+	}
+
 	fn move_to_string(&self, m: &Self::M) -> Option<String> {
-				Self::M::to_uci(m)
-			}
-	
+		Self::M::to_uci(m)
+	}
+
 	fn play_random(&mut self) {}
 }
 
 struct FootboardSquareDrawer {
-	default: DefaultSquareDrawer
+	default: DefaultSquareDrawer,
 }
 impl FootboardSquareDrawer {
 	fn new() -> Self {
-		Self{
-			default:DefaultSquareDrawer{}
+		Self {
+			default: DefaultSquareDrawer {},
 		}
 	}
 }
 impl SquareDrawer<FootBoard> for FootboardSquareDrawer
 //where G: BoardGame,
-//		G::M: BoardMove<G> 
+//		G::M: BoardMove<G>
 {
-
-
-	fn draw(&self, painter: &egui::Painter, style: &BoardStyle, game: &FootBoard, square: &Rect, x_coord:u8,y_coord:u8) {
+	fn draw(
+		&self,
+		painter: &egui::Painter,
+		style: &BoardStyle,
+		game: &FootBoard,
+		square: &Rect,
+		x_coord: u8,
+		y_coord: u8,
+	) {
 		let index = Bitboard9x13::index_from_coords(x_coord, y_coord);
 		match index {
-			0|1|2|6|7|8 => {
+			0 | 1 | 2 | 6 | 7 | 8 => {
 				painter.rect_filled(*square, 0.0, style.dark_color);
 			}
-			116|115|114|110|109|108 => {
+			116 | 115 | 114 | 110 | 109 | 108 => {
 				painter.rect_filled(*square, 0.0, style.dark_color);
 			}
 			_ => {
-				self.default.draw(painter, style, game, square, x_coord, y_coord);
+				self.default
+					.draw(painter, style, game, square, x_coord, y_coord);
 			}
 		}
 	}
-	fn draw_overlay(&self, painter: &egui::Painter, style: &BoardStyle, _game: &FootBoard, board_rect: &Rect, cell_size: f32) {
+	fn draw_overlay(
+		&self,
+		painter: &egui::Painter,
+		style: &BoardStyle,
+		_game: &FootBoard,
+		board_rect: &Rect,
+		cell_size: f32,
+	) {
 		let mut field_rect = *board_rect;
-		*field_rect.bottom_mut()-=cell_size;
-		*field_rect.top_mut()+=cell_size;
+		*field_rect.bottom_mut() -= cell_size;
+		*field_rect.top_mut() += cell_size;
 		let stroke = egui::Stroke::new(5.0, style.light_color);
 		painter.rect_stroke(field_rect, 0.0, stroke, egui::StrokeKind::Middle);
-		painter.circle_filled(field_rect.center(), cell_size*0.1, style.light_color);
-		painter.circle_stroke(field_rect.center(), cell_size*1.4, stroke);
-		let points=vec![field_rect.left_center(), field_rect.right_center()];
+		painter.circle_filled(field_rect.center(), cell_size * 0.1, style.light_color);
+		painter.circle_stroke(field_rect.center(), cell_size * 1.4, stroke);
+		let points = vec![field_rect.left_center(), field_rect.right_center()];
 		painter.line(points, stroke);
-		let points=vec![
-			field_rect.center_bottom()+Vec2{x:-1.5*cell_size,y:0.0},
-			field_rect.center_bottom()+Vec2{x:-1.5*cell_size,y:-2.0*cell_size},
-			field_rect.center_bottom()+Vec2{x:1.5*cell_size,y:-2.0*cell_size},
-			field_rect.center_bottom()+Vec2{x:1.5*cell_size,y:0.0},
-			
+		let points = vec![
+			field_rect.center_bottom()
+				+ Vec2 {
+					x: -1.5 * cell_size,
+					y: 0.0,
+				},
+			field_rect.center_bottom()
+				+ Vec2 {
+					x: -1.5 * cell_size,
+					y: -2.0 * cell_size,
+				},
+			field_rect.center_bottom()
+				+ Vec2 {
+					x: 1.5 * cell_size,
+					y: -2.0 * cell_size,
+				},
+			field_rect.center_bottom()
+				+ Vec2 {
+					x: 1.5 * cell_size,
+					y: 0.0,
+				},
 		];
 		painter.line(points, stroke);
-		let points=vec![
-			field_rect.center_top()+Vec2{x:-1.5*cell_size,y:0.0},
-			field_rect.center_top()+Vec2{x:-1.5*cell_size,y:2.0*cell_size},
-			field_rect.center_top()+Vec2{x:1.5*cell_size,y:2.0*cell_size},
-			field_rect.center_top()+Vec2{x:1.5*cell_size,y:0.0},
-			
+		let points = vec![
+			field_rect.center_top()
+				+ Vec2 {
+					x: -1.5 * cell_size,
+					y: 0.0,
+				},
+			field_rect.center_top()
+				+ Vec2 {
+					x: -1.5 * cell_size,
+					y: 2.0 * cell_size,
+				},
+			field_rect.center_top()
+				+ Vec2 {
+					x: 1.5 * cell_size,
+					y: 2.0 * cell_size,
+				},
+			field_rect.center_top()
+				+ Vec2 {
+					x: 1.5 * cell_size,
+					y: 0.0,
+				},
 		];
-		painter.text(board_rect.left_bottom(), Align2::LEFT_BOTTOM, _game.score1.to_string()+" - "+_game.score2.to_string().as_str(), FontId::monospace(cell_size*0.8), Color32::WHITE);
-		painter.text(board_rect.right_bottom(), Align2::RIGHT_BOTTOM, (90.0 - (_game.turn as f32 / 30.0) * 90.0).round().to_string() +":00", FontId::monospace(cell_size*0.8), Color32::WHITE);
+		painter.text(
+			board_rect.left_bottom(),
+			Align2::LEFT_BOTTOM,
+			_game.score1.to_string() + " - " + _game.score2.to_string().as_str(),
+			FontId::monospace(cell_size * 0.8),
+			Color32::WHITE,
+		);
+		painter.text(
+			board_rect.right_bottom(),
+			Align2::RIGHT_BOTTOM,
+			(90.0 - (_game.turn as f32 / 30.0) * 90.0)
+				.round()
+				.to_string() + ":00",
+			FontId::monospace(cell_size * 0.8),
+			Color32::WHITE,
+		);
 		painter.line(points, stroke);
 	}
 }
+
+/*
 #[derive(EguiInspect, Debug)]
 struct FootboardPieceDrawer {
 	#[inspect(slider(min=0.0, max=1.0))]
@@ -442,7 +543,7 @@ impl PieceDrawer<FootBoard> for FootboardPieceDrawer
 			Cell::White => {
 				if let (Some(c2), Some(c3)) = (self.p1_color2,self.p1_color3) {
 					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p1_color1,c2, c3], &[(1.0-self.p1_width)/2.0,self.p1_width, (1.0-self.p1_width)/2.0], self.p1_angle);
-					
+
 				}
 				else if let Some(c2) = self.p1_color2 {
 					Self::draw_weighted_stripped_circle(painter, square.center(), self.size * square.width()/2.0, &[self.p1_color1,c2], &[self.p1_width,1.0-self.p1_width],self.p1_angle);
@@ -501,12 +602,18 @@ impl PieceDrawer<FootBoard> for FootboardPieceDrawer
 	fn reset_to_defaults(&mut self) {
 		*self=Self::new();
 	}
-}
+}*/
+
 pub fn create_board() -> GenericBoardApp<FootBoard> {
-	let mut board=GenericBoardApp::new(FootBoard::default(), new_move_searcher_vec("Dumb".into(), FootboardEvalDumb::new(), 3));
+	let mut board = GenericBoardApp::new(
+		FootBoard::default(),
+		new_move_searcher_vec("Dumb".into(), FootboardEvalDumb::new(), 3),
+	);
 	board.depth = 3;
 	board.max_depth = 6;
-	board.board_drawer.set_square_drawer(Box::new(FootboardSquareDrawer::new()));
+	board
+		.board_drawer
+		.set_square_drawer(Box::new(FootboardSquareDrawer::new()));
 	//board.board_drawer.set_piece_drawer(Box::new(FootboardPieceDrawer::new()));
 	board
 }

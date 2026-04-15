@@ -408,7 +408,7 @@ impl fmt::Display for ChineseCheckerBoard {
 
 #[cfg(test)]
 mod tests {
-	use bitboard::{BitIter, Bitboard};
+	use bitboard::BitIter;
 
 	use super::*;
 
