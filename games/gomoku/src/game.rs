@@ -87,12 +87,12 @@ impl minimax::Evaluator for GomokuEvalSimple {
 	type G = Gomoku;
 	fn evaluate(&self, state: &Gomoku) -> minimax::Evaluation {
 		let mut score = 0;
-		score += if state.white.has_n_aligned(4) {100} else {0};
-		score += if state.white.has_n_aligned(3) {50} else {0};
-		score += if state.white.has_n_aligned(2) {10} else {0};
-		score -= if state.black.has_n_aligned(4) {100} else {0};
-		score -= if state.black.has_n_aligned(3) {50} else {0};
-		score -= if state.black.has_n_aligned(2) {10} else {0};
+		score += if state.white.has_aligned::<4>() {100} else {0};
+		score += if state.white.has_aligned::<3>() {50} else {0};
+		score += if state.white.has_aligned::<2>() {10} else {0};
+		score -= if state.black.has_aligned::<4>() {100} else {0};
+		score -= if state.black.has_aligned::<3>() {50} else {0};
+		score -= if state.black.has_aligned::<2>() {10} else {0};
 		if state.turn == Player::PLAYER2 {
 			score
 		} else {
@@ -102,11 +102,11 @@ impl minimax::Evaluator for GomokuEvalSimple {
 }
 // cargo test --release -p gomoku game::tests::perft_test -- --nocapture
 //depth           count        time        kn/s
-//    0               1       4.6µs       217.4
-//    1             361       6.4µs     56406.2
-//    2          129960     183.5µs    708228.9
-//    3        46655850      64.9ms    718347.0
-//    4     16703020890        3.7s   4525654.5
+//    0               1     400.0ns      2500.0
+//    1             361       2.4µs    150416.7
+//    2          129960     134.5µs    966245.4
+//    3        46655640      43.0ms   1084187.9
+//    4     16702719120        2.6s   6400302.3
 #[cfg(test)]
 mod tests {
 
@@ -126,8 +126,8 @@ mod tests {
 			1,
 			361,
 			129960,
-			46655850,
-			16703020890,
+			46655640,
+			16702719120,
 		];
 
 		for (i, n) in nodes.iter().enumerate() {
