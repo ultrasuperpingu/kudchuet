@@ -1,21 +1,16 @@
-//use std::hash::{DefaultHasher, Hash, Hasher};
-
-//use minimax::Evaluation;
-
 
 use bitboard::BitIter;
-use minimax::Evaluation;
-
 use kudchuet::{GameResult, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 use super::rules::{Move, Diaballik};
 
-impl minimax::Game for Diaballik {
+impl Game for Diaballik {
 	type S =  Diaballik;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		if let Some(w) = Self::get_winner(state) {
 			return Some(w);
 		}
@@ -35,20 +30,18 @@ impl minimax::Game for Diaballik {
 	fn undo(_state: &mut Self::S, _m: Self::M) {
 		_state.undo_unchecked(&_m);
 	}
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		match state.result() {
-			GameResult::PLAYER1 => if state.turn() == Player::PLAYER2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			GameResult::PLAYER2 => if state.turn() == Player::PLAYER1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			GameResult::Player(_) => unreachable!(),
+			GameResult::Player(p) => Some(Winner::Player(p)),
 			GameResult::Draw => unreachable!(),
 			GameResult::OnGoing => None,
 		}
 	}
+	fn current_player(state: &Self::S) -> Player {
+		state.turn()
+	}
 
 	fn zobrist_hash(state: &Self::S) -> u64 {
-		//let mut hasher = DefaultHasher::new();
-		//state.hash(&mut hasher);
-		//hasher.finish()
 		state.hash
 	}
 }
@@ -59,12 +52,12 @@ pub struct DiaballikEvalMaterial;
 
 impl DiaballikEvalMaterial {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for DiaballikEvalMaterial {
+impl Evaluator for DiaballikEvalMaterial {
 	type G = Diaballik;
-	fn evaluate(&self, state: &Diaballik) -> Evaluation {
+	fn evaluate_for(&self, state: &Diaballik, p: Player) -> Evaluation {
 		let mut score = 0;
 		
 		let b1_y = state.ball_player1 / 7;
@@ -78,7 +71,7 @@ impl minimax::Evaluator for DiaballikEvalMaterial {
 		for p in state.player2.iter_bits() {
 			score -= (6-p/7) as Evaluation * 10;
 		}
-		if state.turn == Player::PLAYER1 {
+		if p == Player::PLAYER1 {
 			score
 		} else {
 			-score
@@ -88,10 +81,11 @@ impl minimax::Evaluator for DiaballikEvalMaterial {
 #[cfg(test)]
 mod tests {
 
-	use minimax::{Game, IterativeOptions, Strategy};
+	use kudchuet::ai::minimax::util::perft_tt;
+use kudchuet::ai::minimax::{Game, IterativeOptions, Strategy};
 	
 	#[cfg(not(target_arch = "wasm32"))]
-	use minimax::{ParallelSearch, ParallelOptions};
+	use kudchuet::ai::minimax::{ParallelSearch, ParallelOptions};
 	use super::Diaballik;
 	use super::DiaballikEvalMaterial;
 	//use super::DiaballikEvalDumb;
@@ -116,7 +110,7 @@ mod tests {
 			2488349845,
 			4857129629421,
 		];
-		let nodes = minimax::util::perft_tt::<Diaballik>(&mut board, max_depth, false);
+		let nodes = perft_tt::<Diaballik>(&mut board, max_depth, false);
 		for (i, n) in nodes.iter().enumerate() {
 			if NB_NODES.len() <= i { break; }
 			assert_eq!(NB_NODES[i], *n, "Mismatch at depth {}", i);
@@ -128,7 +122,7 @@ mod tests {
 	fn test_walk_full_game() {
 		let mut state = Diaballik::default();
 		let mut turn_count = 0;
-		let mut strategy = ParallelSearch::new(DiaballikEvalMaterial, IterativeOptions::new(), ParallelOptions::new());
+		let mut strategy = ParallelSearch::new(DiaballikEvalMaterial::new(), IterativeOptions::new(), ParallelOptions::new());
 		strategy.set_max_depth(3);
 		println!("Initial state:\n{}", state);
 

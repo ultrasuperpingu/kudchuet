@@ -1,4 +1,4 @@
-use minimax::Game;
+use crate::ai::minimax::interface::Game;
 
 use crate::gui::{BoardGame, BoardMove};
 use crate::gui::board_drawer::BoardDrawer;

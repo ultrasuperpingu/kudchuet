@@ -1,6 +1,5 @@
 use eframe::egui;
 use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke, StrokeKind};
-use minimax::Game;
 
 use kudchuet::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
 use kudchuet::gui::board_drawer::SquareDrawer;
@@ -108,11 +107,14 @@ impl BoardGame for Backgammon {
 		self.roll_dice();
 	}
 	fn result(&self) -> GameResult {
-		match <Self as Game>::get_winner(self) {
-			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::PLAYER2} else {GameResult::PLAYER1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::PLAYER2} else {GameResult::PLAYER1},
-			None => GameResult::OnGoing,
+		if self.is_game_over() {
+			if let Some(winner) = self.winner() {
+				GameResult::Player(winner.idx() as u8)
+			} else {
+				GameResult::Draw
+			}
+		} else {
+			GameResult::OnGoing
 		}
 	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {

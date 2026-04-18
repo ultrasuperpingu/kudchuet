@@ -124,7 +124,7 @@ impl BoardGame for Neutron {
 pub fn create_board() -> GenericBoardApp<Neutron> {
 	let board = GenericBoardApp::new(
 		Neutron::default(),
-		new_move_searcher_vec("Dumb".into(), NeutronDumbEval {}, 5),
+		new_move_searcher_vec("Dumb".into(), NeutronDumbEval::new(), 5),
 	);
 	board
 }

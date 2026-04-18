@@ -3,6 +3,7 @@ pub mod external_engine;
 pub mod internal_engine;
 pub mod cli_engine;
 pub mod uci;
+pub mod minimax;
 pub mod engine_manager;
 pub mod incomplete_info_searcher;
 

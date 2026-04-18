@@ -1,18 +1,19 @@
 
 use bitboard::BitIter;
-use minimax::{StochasticGame, TurnBasedGame, TurnBasedGameEvaluator};
 
-use crate::{bitboard::ChineseCheckerBoard, rules::ChineseCheckersPlayer};
+use crate::bitboard::ChineseCheckerBoard;
 use kudchuet::gui::BoardGame;
 use super::rules::{ChineseCheckers, Move};
 
+use kudchuet::Player;
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
-impl minimax::Game for ChineseCheckers {
+impl Game for ChineseCheckers {
 	type S =  ChineseCheckers;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		if let Some(w) = Self::get_winner(state) {
 			return Some(w);
 		}
@@ -28,50 +29,27 @@ impl minimax::Game for ChineseCheckers {
 		state.undo_unchecked(m);
 	}
 
-	fn get_winner(_state: &Self::S) -> Option<minimax::Winner> {
-		if _state.winner().is_some() {
-			return Some(minimax::Winner::PlayerJustMoved);
-		}
-		None
-	}
-
 	fn zobrist_hash(state: &Self::S) -> u64 {
 		state.hash
 	}
-}
-impl TurnBasedGame for ChineseCheckers {
-	fn current_player(state: &Self::S) -> i8 {
-		<Self::S as BoardGame>::current_player(state).idx() as i8
+	fn current_player(state: &Self::S) -> Player {
+		<Self::S as BoardGame>::current_player(state)
 	}
-	fn get_explicit_winner(state: &Self::S) -> Option<minimax::TurnBasedWinner> {
-		state.winner().map(|w| minimax::TurnBasedWinner::Player(w.idx() as i8))
-	}
-}
-impl StochasticGame for ChineseCheckers {
-	fn is_random_move(_state: &Self::S) -> bool {
-		false
-	}
-
-	fn get_probability(_state: &Self::S, _mv: Self::M) -> f32 {
-		0.0
+	fn get_winner(state: &Self::S) -> Option<Winner> {
+		state.winner().map(|w| Winner::Player(w.idx() as u8))
 	}
 }
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
-pub struct ChineseCheckersMaterialEval(ChineseCheckersPlayer);
+pub struct ChineseCheckersMaterialEval;
 
 impl ChineseCheckersMaterialEval {
-	pub fn new(p:ChineseCheckersPlayer) -> Self {
-		Self(p)
+	pub fn new() -> Self {
+		Self {}
 	}
 }
-impl TurnBasedGameEvaluator for ChineseCheckersMaterialEval {
-	fn set_evaluated_player(&mut self, p: i8) {
-		self.0=ChineseCheckersPlayer::from_idx(p as u8);
-	}
-}
-impl minimax::Evaluator for ChineseCheckersMaterialEval {
+impl Evaluator for ChineseCheckersMaterialEval {
 	type G = ChineseCheckers;
-	/*fn evaluate(&self, state: &ChineseCheckers) -> minimax::Evaluation {
+	/*fn evaluate(&self, state: &ChineseCheckers) -> Evaluation {
 		let mut score = 0;
 
 		for p in ChineseCheckers::active_players(state.nb_players) {
@@ -111,9 +89,9 @@ impl minimax::Evaluator for ChineseCheckersMaterialEval {
 			}
 		}
 
-		score as minimax::Evaluation
+		score as Evaluation
 	}*/
-	fn evaluate(&self, state: &ChineseCheckers) -> minimax::Evaluation {
+	fn evaluate_for(&self, state: &ChineseCheckers, player: Player) -> Evaluation {
 		let mut score = 0;
 
 		for p in ChineseCheckers::active_players(state.nb_players) {
@@ -138,23 +116,24 @@ impl minimax::Evaluator for ChineseCheckersMaterialEval {
 
 			let value = 300 - dist + in_target * 20;
 
-			if *p == self.0 {
+			if Player(p.idx()) == player {
 				score += value;
 			} else {
 				score -= value;
 			}
 		}
 
-		score as minimax::Evaluation
+		score as Evaluation
 	}
 }
 
 #[cfg(test)]
 mod tests {
 
-	use minimax::perft;
 
-	use super::ChineseCheckers;
+	use kudchuet::ai::minimax::util::perft;
+
+use super::ChineseCheckers;
 	//cargo test -p chinese_checkers --release game::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
 	//    0               1       2.6µs       384.6

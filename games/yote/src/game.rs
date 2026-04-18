@@ -1,20 +1,20 @@
 
 
 
-use kudchuet::{GameResult, Player};
+use kudchuet::{GameResult, Player, ai::minimax::{Evaluation, Evaluator, Game, Winner}};
 
 use super::rules::{Move, Yote};
 
 
 
 
-impl minimax::Game for Yote {
+impl Game for Yote {
 	type S =  Yote;
 
 	type M = Move;
 
 	#[inline]
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		state.legal_moves_inplace(moves);
 		Self::get_winner(state)
 	}
@@ -26,26 +26,17 @@ impl minimax::Game for Yote {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		match state.result() {
-			GameResult::Draw => Some(minimax::Winner::Draw),
+			GameResult::Draw => Some(Winner::Draw),
 			GameResult::OnGoing => None,
-			GameResult::PLAYER1 => {
-				if state.turn == Player::PLAYER1 {
-					Some(minimax::Winner::PlayerToMove)
-				} else {
-					Some(minimax::Winner::PlayerJustMoved)
-				}
+			GameResult::Player(p) => {
+				Some(Winner::Player(p))
 			},
-			GameResult::PLAYER2 => {
-				if state.turn == Player::PLAYER1 {
-					Some(minimax::Winner::PlayerJustMoved)
-				} else {
-					Some(minimax::Winner::PlayerToMove)
-				}
-			},
-			GameResult::Player(_) => unreachable!()
 		}
+	}
+	fn current_player(state: &Self::S) -> Player {
+		state.turn
 	}
 	#[inline]
 	fn zobrist_hash(state: &Self::S) -> u64 {
@@ -62,13 +53,13 @@ pub struct YoteDumbEval;
 
 impl YoteDumbEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for YoteDumbEval {
+impl Evaluator for YoteDumbEval {
 	type G = Yote;
-	fn evaluate(&self, _state: &Yote) -> minimax::Evaluation {
-		0 as minimax::Evaluation
+	fn evaluate_for(&self, _state: &Yote, _p: Player) -> Evaluation {
+		0 as Evaluation
 	}
 }
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
@@ -76,20 +67,18 @@ pub struct YoteMaterialEval;
 
 impl YoteMaterialEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for YoteMaterialEval {
-	
+impl Evaluator for YoteMaterialEval {
 	type G=Yote;
-	fn evaluate(&self, state: &Yote) -> minimax::Evaluation {
-		if state.turn == Player::PLAYER1 {
-			state.white_pawns_count()as minimax::Evaluation - state.black_pawns_count()as minimax::Evaluation 
+	fn evaluate_for(&self, state: &Yote, p: Player) -> Evaluation {
+		if p == Player::PLAYER1 {
+			state.white_pawns_count()as Evaluation - state.black_pawns_count()as Evaluation 
 		} else {
-			state.black_pawns_count() as minimax::Evaluation - state.white_pawns_count() as minimax::Evaluation
+			state.black_pawns_count() as Evaluation - state.white_pawns_count() as Evaluation
 		}
 	}
-	
 }
 // cargo test --release -p yote game::tests::simple_perft_test -- --nocapture
 // depth           count        time        kn/s
@@ -120,10 +109,9 @@ impl minimax::Evaluator for YoteMaterialEval {
 //    13      1146228466        2.1s    547945.6
 #[cfg(test)]
 mod tests {
-
-	use minimax::perft;
-
+	use kudchuet::ai::minimax::util::perft;
 	use crate::rules::Yote;
+
 	#[test]
 	fn simple_perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));

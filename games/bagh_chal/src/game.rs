@@ -2,22 +2,23 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 
-use kudchuet::GameResult;
+use kudchuet::{GameResult, Player};
 
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 use crate::rules::{Move, BaghChal};
 
-impl minimax::Game for BaghChal {
+impl Game for BaghChal {
 	type S =  BaghChal;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		if state.goats_captured >= 5 {
-			return Some(minimax::Winner::PlayerJustMoved);
+			return Some(Winner::Player(1));
 		}
 		state.legal_moves_inplace(moves);
 		if state.tigers_turn() && moves.is_empty() {
-			return Some(minimax::Winner::PlayerJustMoved);
+			return Some(Winner::Player(0));
 		}
 		None
 	}
@@ -32,25 +33,13 @@ impl minimax::Game for BaghChal {
 	fn undo(_state: &mut Self::S, _m: Self::M) {
 		_state.undo_unchecked(&_m);
 	}
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		match state.result() {
-			GameResult::Draw => Some(minimax::Winner::Draw),
+			GameResult::Draw => Some(Winner::Draw),
 			GameResult::OnGoing => None,
-			GameResult::PLAYER1 => {
-				if state.tigers_turn() {
-					Some(minimax::Winner::PlayerJustMoved)
-				} else {
-					Some(minimax::Winner::PlayerToMove)
-				}
+			GameResult::Player(p) => {
+				Some(Winner::Player(p))
 			},
-			GameResult::PLAYER2 => {
-				if state.tigers_turn() {
-					Some(minimax::Winner::PlayerToMove)
-				} else {
-					Some(minimax::Winner::PlayerJustMoved)
-				}
-			},
-			_ => unreachable!(),
 		}
 	}
 
@@ -61,7 +50,13 @@ impl minimax::Game for BaghChal {
 		state.get_hash()
 		//state.compute_hash()
 	}
-	
+	fn current_player(state: &Self::S) -> Player {
+		if state.turn_tiger {
+			Player::PLAYER2
+		} else {
+			Player::PLAYER1
+		}
+	}
 }
 
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
@@ -69,16 +64,16 @@ pub struct BaghChalMaterialEval;
 
 impl BaghChalMaterialEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for BaghChalMaterialEval {
+impl Evaluator for BaghChalMaterialEval {
 	type G = BaghChal;
-	fn evaluate(&self, state: &BaghChal) -> minimax::Evaluation {
-		if state.tigers_turn() {
-			state.goats_captured as minimax::Evaluation
+	fn evaluate_for(&self, state: &BaghChal, p: Player) -> Evaluation {
+		if p == Player::PLAYER2 {
+			state.goats_captured as Evaluation
 		} else {
-			-(state.goats_captured as minimax::Evaluation)
+			-(state.goats_captured as Evaluation)
 		}
 	}
 }
@@ -98,8 +93,9 @@ impl minimax::Evaluator for BaghChalMaterialEval {
 #[cfg(test)]
 mod tests {
 
+	use kudchuet::ai::minimax::util::perft;
+
 	use super::super::{game::BaghChal};
-	use minimax::perft;
 	#[test]
 	fn perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));

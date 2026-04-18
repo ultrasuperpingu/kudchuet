@@ -1,19 +1,18 @@
-
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use kudchuet::{GameResult, Player};
 
 use crate::bitboard::Goban;
 
-use super::rules::{Move, Gomoku};
+use super::rules::{Gomoku, Move};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
-
-impl minimax::Game for Gomoku {
-	type S =  Gomoku;
+impl Game for Gomoku {
+	type S = Gomoku;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		state.legal_moves_inplace(moves);
 		Self::get_winner(state)
 	}
@@ -24,24 +23,10 @@ impl minimax::Game for Gomoku {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		match state.result() {
 			GameResult::OnGoing => None,
-			GameResult::PLAYER1 => {
-				if state.turn == Player::PLAYER1 {
-					Some(minimax::Winner::PlayerToMove)
-				} else {
-					Some(minimax::Winner::PlayerJustMoved)
-				}
-			},
-			GameResult::PLAYER2 => {
-				if state.turn == Player::PLAYER1 {
-					Some(minimax::Winner::PlayerJustMoved)
-				} else {
-					Some(minimax::Winner::PlayerToMove)
-				}
-			},
-			GameResult::Player(_) => unreachable!(),
+			GameResult::Player(p) => Some(Winner::Player(p)),
 			GameResult::Draw => unreachable!(),
 		}
 	}
@@ -58,7 +43,9 @@ impl minimax::Game for Gomoku {
 		state.hash(&mut hasher);
 		hasher.finish()
 	}
-
+	fn current_player(state: &Self::S) -> Player {
+		state.turn
+	}
 }
 
 #[derive(Clone, Default, Copy, Debug)]
@@ -66,12 +53,12 @@ pub struct GomokuEvalDumb;
 
 impl GomokuEvalDumb {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for GomokuEvalDumb {
+impl Evaluator for GomokuEvalDumb {
 	type G = Gomoku;
-	fn evaluate(&self, _state: &Gomoku) -> minimax::Evaluation {
+	fn evaluate_for(&self, _state: &Gomoku, _p: Player) -> Evaluation {
 		0
 	}
 }
@@ -80,24 +67,44 @@ pub struct GomokuEvalSimple;
 
 impl GomokuEvalSimple {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for GomokuEvalSimple {
+impl Evaluator for GomokuEvalSimple {
 	type G = Gomoku;
-	fn evaluate(&self, state: &Gomoku) -> minimax::Evaluation {
+	fn evaluate_for(&self, state: &Gomoku, p: Player) -> Evaluation {
 		let mut score = 0;
-		score += if state.white.has_aligned::<4>() {100} else {0};
-		score += if state.white.has_aligned::<3>() {50} else {0};
-		score += if state.white.has_aligned::<2>() {10} else {0};
-		score -= if state.black.has_aligned::<4>() {100} else {0};
-		score -= if state.black.has_aligned::<3>() {50} else {0};
-		score -= if state.black.has_aligned::<2>() {10} else {0};
-		if state.turn == Player::PLAYER2 {
-			score
+		score += if state.white.has_aligned::<4>() {
+			100
 		} else {
-			-score
-		}
+			0
+		};
+		score += if state.white.has_aligned::<3>() {
+			50
+		} else {
+			0
+		};
+		score += if state.white.has_aligned::<2>() {
+			10
+		} else {
+			0
+		};
+		score -= if state.black.has_aligned::<4>() {
+			100
+		} else {
+			0
+		};
+		score -= if state.black.has_aligned::<3>() {
+			50
+		} else {
+			0
+		};
+		score -= if state.black.has_aligned::<2>() {
+			10
+		} else {
+			0
+		};
+		if p == Player::PLAYER2 { score } else { -score }
 	}
 }
 // cargo test --release -p gomoku game::tests::perft_test -- --nocapture
@@ -110,25 +117,19 @@ impl minimax::Evaluator for GomokuEvalSimple {
 #[cfg(test)]
 mod tests {
 
-	use minimax::perft;
+	use kudchuet::ai::minimax::util::perft;
 
 	use crate::rules::Gomoku;
 	#[test]
 	fn perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));
 		let mut board = Gomoku::new();
-		
+
 		let max_depth = 4;
 		let nodes = perft::<Gomoku>(&mut board, max_depth, true);
 		assert!(nodes.len() == (max_depth + 1) as usize);
 
-		const NB_NODES: [u64; 5] = [
-			1,
-			361,
-			129960,
-			46655640,
-			16702719120,
-		];
+		const NB_NODES: [u64; 5] = [1, 361, 129960, 46655640, 16702719120];
 
 		for (i, n) in nodes.iter().enumerate() {
 			assert_eq!(NB_NODES[i], *n, "Mismatch at depth {}", i);

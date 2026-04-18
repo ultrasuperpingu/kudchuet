@@ -14,7 +14,7 @@ fn main() -> eframe::Result<()> {
 		use crate::{game::AbaloneMaterialEval, rules::Abalone};
 		use kudchuet::{ai::cli_engine::UCILikeCLIEngine, new_move_searcher_static};
 
-		let searcher = new_move_searcher_static::<Abalone, _>(AbaloneMaterialEval {}, 5);
+		let searcher = new_move_searcher_static::<Abalone, _>(AbaloneMaterialEval::new(), 5);
 		let mut cli_engine = UCILikeCLIEngine::new(searcher);
 		cli_engine.process().unwrap();
 		Ok(())

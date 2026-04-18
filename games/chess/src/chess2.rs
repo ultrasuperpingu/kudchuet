@@ -1,18 +1,21 @@
 #![cfg(not(target_arch = "wasm32"))]
 
 extern crate chess_lib;
-extern crate minimax;
 
-use chess_lib::{Board, BoardStatus, ChessMove, MoveGen};
+use kudchuet::Player;
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+
+use chess_lib::{Board, BoardStatus, ChessMove, Color, MoveGen};
+
 //use minimax::{Game, Strategy};
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Chess;
 
-impl minimax::Game for Chess {
+impl Game for Chess {
 	type S = Board;
 	type M = ChessMove;
 
-	fn generate_moves(b: &Board, moves: &mut Vec<ChessMove>) -> Option<minimax::Winner> {
+	fn generate_moves(b: &Board, moves: &mut Vec<ChessMove>) -> Option<Winner> {
 		let movegen = MoveGen::new_legal(b);
 		moves.clear();
 		//moves.reserve(movegen.len());
@@ -26,20 +29,22 @@ impl minimax::Game for Chess {
 		//moves.extend_from_slice(&mv[0..len]);
 		if moves.is_empty() {
 			if *b.checkers() == chess_lib::EMPTY {
-				Some(minimax::Winner::Draw)
+				Some(Winner::Draw)
 			} else {
-				Some(minimax::Winner::PlayerJustMoved)
+				//TODO
+				Some(Winner::Player(0))
 			}
 		} else {
 			None
 		}
 	}
 
-	fn get_winner(b: &Board) -> Option<minimax::Winner> {
+	fn get_winner(b: &Board) -> Option<Winner> {
 		match b.status() {
 			BoardStatus::Ongoing => None,
-			BoardStatus::Stalemate => Some(minimax::Winner::Draw),
-			BoardStatus::Checkmate => Some(minimax::Winner::PlayerJustMoved),
+			BoardStatus::Stalemate => Some(Winner::Draw),
+			//TODO
+			BoardStatus::Checkmate => Some(Winner::Player(0)),
 		}
 	}
 
@@ -54,14 +59,20 @@ impl minimax::Game for Chess {
 	fn notation(_b: &Board, m: ChessMove) -> Option<String> {
 		Some(format!("{}", m))
 	}
+	fn current_player(state: &Self::S) -> Player {
+		match state.side_to_move() {
+			chess_lib::Color::White => Player::PLAYER1,
+			chess_lib::Color::Black => Player::PLAYER2,
+		}
+	}
 }
 
 #[derive(Default,Clone, Copy, PartialEq, Eq)]
 pub struct Chess2Evaluator;
 
-impl minimax::Evaluator for Chess2Evaluator {
+impl Evaluator for Chess2Evaluator {
 	type G = Chess;
-	fn evaluate(&self, board: &Board) -> minimax::Evaluation {
+	fn evaluate_for(&self, board: &Board, p: Player) -> Evaluation {
 		let mut score = 0;
 		for sq in 0..64 {
 			let sq = unsafe { chess_lib::Square::new(sq) };
@@ -74,21 +85,25 @@ impl minimax::Evaluator for Chess2Evaluator {
 					chess_lib::Piece::Queen => 9,
 					chess_lib::Piece::King => 0,
 				};
-				if board.color_on(sq).unwrap() == board.side_to_move() {
+				if board.color_on(sq).unwrap() == Color::White {
 					score += value;
 				} else {
 					score -= value;
 				}
 			}
 		}
-		score
+		if p == Player::PLAYER1 {
+			score
+		} else {
+			-score
+		}
 	}
 }
 /*
 fn main() {
 	let mut b = Board::default();
-	let opts = minimax::IterativeOptions::new().verbose();
-	let mut strategy = minimax::IterativeSearch::new(Evaluator::default(), opts);
+	let opts = IterativeOptions::new().verbose();
+	let mut strategy = IterativeSearch::new(Evaluator::default(), opts);
 	strategy.set_timeout(std::time::Duration::from_secs(1));
 	while Chess::get_winner(&b).is_none() {
 		println!("{}", b);
@@ -114,7 +129,7 @@ mod tests {
 	// 7      3195901860        3.4s    931380.4
 	// 8     84998978956       96.8s    878211.9
 	use chess_lib::Board;
-	use minimax::perft;
+	use kudchuet::ai::minimax::util::perft;
 	use super::Chess;
 	#[test]
 	fn perft_test() {

@@ -1,43 +1,52 @@
-use shakmaty::{Chess, EnPassantMode, Move, Position, zobrist::{Zobrist64}};
+use shakmaty::{Chess, Color, EnPassantMode, Move, Position, zobrist::Zobrist64};
 
 use super::evaluation::evaluate_materials;
 
+use kudchuet::Player;
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 #[derive(Clone, Debug)]
 pub struct ChessGame;
-impl minimax::Game for ChessGame {
+impl Game for ChessGame {
 	type S = Chess;
 	type M = Move;
 
-	fn generate_moves(s: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(s: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		let legals = s.legal_moves();
-		//while !legals.is_empty() {
-		//	moves.push(legals.pop().unwrap());
-		//}
 		moves.clear();
 		moves.reserve(legals.len());
 		moves.extend_from_slice(&legals[..legals.len()]);
 		if legals.is_empty() {
 			if s.is_check() {
-				Some(minimax::Winner::PlayerJustMoved)
+				if s.turn() == Color::White {
+					Some(Winner::Player(0))
+				} else {
+					Some(Winner::Player(1))
+				}
 			} else {
-				Some(minimax::Winner::Draw)
+				Some(Winner::Draw)
 			}
 		}
 		else if s.is_insufficient_material() {
-			Some(minimax::Winner::Draw)
+			Some(Winner::Draw)
 		}
 		else {
 			None
 		}
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		match state.outcome() {
 			shakmaty::Outcome::Known(known_outcome) => {
 				match known_outcome {
-						shakmaty::KnownOutcome::Decisive { winner: _ } => Some(minimax::Winner::PlayerJustMoved),
-						shakmaty::KnownOutcome::Draw => Some(minimax::Winner::Draw),
+						shakmaty::KnownOutcome::Decisive { winner } => {
+							if winner == Color::White {
+								Some(Winner::Player(0))
+							} else {
+								Some(Winner::Player(1))
+							}
+						},
+						shakmaty::KnownOutcome::Draw => Some(Winner::Draw),
 					}
 			},
 			shakmaty::Outcome::Unknown => None,
@@ -52,6 +61,13 @@ impl minimax::Game for ChessGame {
 	fn zobrist_hash(pos: &Self::S) -> u64 {
 		pos.zobrist_hash::<Zobrist64>(EnPassantMode::Legal).into()
 	}
+	fn current_player(state: &Self::S) -> Player {
+		if state.turn() == Color::White {
+			Player::PLAYER1
+		} else {
+			Player::PLAYER2
+		}
+	}
 }
 
 
@@ -59,7 +75,7 @@ impl minimax::Game for ChessGame {
 pub struct ChessPosEval;
 impl ChessPosEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
 impl Default for ChessPosEval {
@@ -67,15 +83,16 @@ impl Default for ChessPosEval {
 		Self::new()
 	}
 }
-impl minimax::Evaluator for ChessPosEval {
+impl Evaluator for ChessPosEval {
 	type G = ChessGame;
-	fn evaluate(&self, state: &Chess) -> minimax::Evaluation {
+	fn evaluate_for(&self, state: &Chess, p: Player) -> Evaluation {
+		//TODO
 		evaluate_materials(state)
 	}
 }
 #[cfg(test)]
 mod tests {
-	use minimax::perft;
+	use kudchuet::ai::minimax::util::perft;
 	use shakmaty::Chess;
 	use super::super::chess::ChessGame;
 	// cargo test --release -p chess@0.1 chess::tests::perft_test -- --nocapture

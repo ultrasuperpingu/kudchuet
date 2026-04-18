@@ -2,6 +2,7 @@ use std::fmt;
 
 use crate::gui::Place;
 
+use kudchuet::{Player, ai::minimax::{Evaluation, Evaluator, Game, Winner}};
 #[derive(Copy, Clone, Debug)]
 pub struct Mancala {
 	// First index by player.
@@ -40,11 +41,11 @@ impl Default for Mancala {
 pub type Move = Place;
 
 
-impl minimax::Game for Mancala {
+impl Game for Mancala {
 	type S = Mancala;
 	type M = Move;
 
-	fn generate_moves(board: &Mancala, moves: &mut Vec<Move>) -> Option<minimax::Winner> {
+	fn generate_moves(board: &Mancala, moves: &mut Vec<Move>) -> Option<Winner> {
 		if let Some(winner) = Self::get_winner(board) {
 			return Some(winner);
 		}
@@ -102,22 +103,24 @@ impl minimax::Game for Mancala {
 		Some(board)
 	}
 
-	fn get_winner(board: &Mancala) -> Option<minimax::Winner> {
+	fn get_winner(board: &Mancala) -> Option<Winner> {
 		if board.pits[0][1..].iter().sum::<u8>() == 0 || board.pits[1][1..].iter().sum::<u8>() == 0
 		{
 			let to_move_total = board.pits[board.to_move as usize].iter().sum::<u8>();
 			Some(if to_move_total == 24 {
-				minimax::Winner::Draw
+				Winner::Draw
 			} else if to_move_total > 24 {
-				minimax::Winner::PlayerToMove
+				Winner::Player(board.to_move as u8)
 			} else {
-				minimax::Winner::PlayerJustMoved
+				Winner::Player((!board.to_move) as u8)
 			})
 		} else {
 			None
 		}
 	}
-
+	fn current_player(board: &Self::S) -> Player {
+		Player(board.to_move as u8)
+	}
 	fn zobrist_hash(board: &Mancala) -> u64 {
 		let mut hash = board.to_move as u64;
 		for i in 0..7 {
@@ -158,12 +161,12 @@ impl fmt::Display for Mancala {
 }
 
 #[derive(Default, Clone, PartialEq, Eq, Debug)]
-pub(crate) struct Evaluator;
+pub(crate) struct EvaluatorMancala;
 
-impl minimax::Evaluator for Evaluator {
+impl Evaluator for EvaluatorMancala {
 	type G = Mancala;
-	fn evaluate(&self, board: &Mancala) -> minimax::Evaluation {
-		board.pits[board.to_move as usize].iter().sum::<u8>() as minimax::Evaluation - 24
+	fn evaluate_for(&self, board: &Mancala, p: Player) -> Evaluation {
+		board.pits[p.idx()].iter().sum::<u8>() as Evaluation - 24
 	}
 }
 const HASHES: [u64; 14] = [
@@ -186,8 +189,9 @@ const HASHES: [u64; 14] = [
 #[cfg(test)]
 mod tests {
 
-	use super::super::mancala::{Mancala, Evaluator};
-	use minimax::{Game, Strategy, perft};
+	use kudchuet::ai::minimax::{IterativeOptions, iterative::IterativeSearch, util::perft, Strategy, Game};
+
+use super::super::mancala::{Mancala, EvaluatorMancala};
 	// cargo test --release awale::mancala::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
 	//    0               1       2.9µs       344.8
@@ -215,8 +219,8 @@ mod tests {
 	#[test]
 	fn main() {
 		let mut board = Mancala::default();
-		let opts = minimax::IterativeOptions::new().verbose();
-		let mut strategy = minimax::IterativeSearch::new(Evaluator::default(), opts);
+		let opts = IterativeOptions::new().verbose();
+		let mut strategy = IterativeSearch::new(EvaluatorMancala::default(), opts);
 		strategy.set_timeout(std::time::Duration::from_secs(1));
 		while Mancala::get_winner(&board).is_none() {
 			println!("{}", board);

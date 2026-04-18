@@ -5,13 +5,14 @@ use bitboard::Bitboard;
 use kudchuet::Player;
 use super::rules::{Checkers10, Move};
 
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
-impl minimax::Game for Checkers10 {
+impl Game for Checkers10 {
 	type S =  Checkers10;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		let mut mvs: Vec<Move>=state.legal_moves();
 		moves.append(&mut mvs);
 		// TODO: check winner
@@ -24,11 +25,11 @@ impl minimax::Game for Checkers10 {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_victory() {
-			Some(minimax::Winner::PlayerJustMoved)
+			Some(Winner::Player(state.player_turn().opponent().idx() as u8))
 		} else if state.is_over() {
-			Some(minimax::Winner::Draw)
+			Some(Winner::Draw)
 		} else {
 			None
 		}
@@ -39,6 +40,9 @@ impl minimax::Game for Checkers10 {
 		state.hash(&mut hasher);
 		hasher.finish()
 	}
+	fn current_player(state: &Self::S) -> Player {
+		state.player_turn()
+	}
 }
 
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
@@ -46,16 +50,16 @@ pub struct CheckersEval;
 
 impl CheckersEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for CheckersEval {
+impl Evaluator for CheckersEval {
 	type G = Checkers10;
-	fn evaluate(&self, state: &Checkers10) -> minimax::Evaluation {
-		if state.current_player == Player::PLAYER1 {
-			state.whites().count() as minimax::Evaluation - state.blacks().count() as minimax::Evaluation
+	fn evaluate_for(&self, state: &Checkers10, p: Player) -> Evaluation {
+		if p == Player::PLAYER1 {
+			state.whites().count() as Evaluation - state.blacks().count() as Evaluation
 		} else {
-			state.blacks().count() as minimax::Evaluation - state.whites().count() as minimax::Evaluation
+			state.blacks().count() as Evaluation - state.whites().count() as Evaluation
 		}
 	}
 }
@@ -63,8 +67,9 @@ impl minimax::Evaluator for CheckersEval {
 #[cfg(test)]
 mod tests {
 
-	use super::Checkers10;
-	use minimax::perft;
+	use kudchuet::ai::minimax::util::perft;
+
+use super::Checkers10;
 	//https://damforum.nl/viewtopic.php?t=2308
 	//cargo test --release -p checkers game::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s

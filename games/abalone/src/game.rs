@@ -4,16 +4,17 @@ use std::hash::Hasher;
 
 use kudchuet::Player;
 
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 use super::rules::{Abalone,Move};
 
 
 
-impl minimax::Game for Abalone {
+impl Game for Abalone {
 	type S =  Abalone;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		if let Some(winner) = Self::get_winner(state) {
 			return Some(winner);
 		}
@@ -29,12 +30,12 @@ impl minimax::Game for Abalone {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_over() {
-			if state.winner().is_some() {
-				return Some(minimax::Winner::PlayerJustMoved);
+			if let Some(w) = state.winner() {
+				return Some(Winner::Player(w.idx() as u8));
 			} else {
-				return Some(minimax::Winner::Draw);
+				return Some(Winner::Draw);
 			}
 		}
 		None
@@ -48,6 +49,9 @@ impl minimax::Game for Abalone {
 	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {
 		Some(_move.to_string())
 	}
+	fn current_player(state: &Self::S) -> Player {
+		state.turn
+	}
 }
 
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
@@ -55,24 +59,25 @@ pub struct AbaloneMaterialEval;
 
 impl AbaloneMaterialEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for AbaloneMaterialEval {
+impl Evaluator for AbaloneMaterialEval {
 	type G = Abalone;
-	fn evaluate(&self, state: &Abalone) -> minimax::Evaluation {
-		if state.turn == Player::PLAYER1 {
-			state.black_out as minimax::Evaluation - state.white_out as minimax::Evaluation
+	fn evaluate_for(&self, state: &Abalone, p: Player) -> Evaluation {
+		if p == Player::PLAYER1 {
+			state.black_out as Evaluation - state.white_out as Evaluation
 		} else {
-			state.white_out as minimax::Evaluation - state.black_out as minimax::Evaluation
+			state.white_out as Evaluation - state.black_out as Evaluation
 		}
 	}
 }
 #[cfg(test)]
 mod tests {
 
+	use kudchuet::ai::minimax::util::perft;
+
 	use super::super::rules::Abalone;
-	use minimax::perft;
 
 	//cargo test --release -p abalone game::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s

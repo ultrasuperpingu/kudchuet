@@ -1,7 +1,8 @@
 //! A definition of the game Connect Four using the library, for use in tests and benchmarks.
 #![allow(dead_code)]
 
-extern crate minimax;
+use kudchuet::Player;
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
@@ -85,13 +86,13 @@ impl Place {
 
 
 #[derive(Debug)]
-pub struct Game;
+pub struct C4Game;
 
-impl minimax::Game for Game {
+impl Game for C4Game {
 	type S = Board;
 	type M = Place;
 
-	fn generate_moves(b: &Board, moves: &mut Vec<Place>) -> Option<minimax::Winner> {
+	fn generate_moves(b: &Board, moves: &mut Vec<Place>) -> Option<Winner> {
 		if let Some(w) = Self::get_winner(b) {
 			return Some(w);
 		}
@@ -105,7 +106,7 @@ impl minimax::Game for Game {
 		None
 	}
 
-	fn get_winner(b: &Board) -> Option<minimax::Winner> {
+	fn get_winner(b: &Board) -> Option<Winner> {
 		// Position of pieces for the player that just moved.
 		let pieces = b.pieces_just_moved();
 
@@ -117,12 +118,16 @@ impl minimax::Game for Game {
 		};
 
 		if matches(1) || matches(HEIGHT) || matches(HEIGHT + 1) || matches(HEIGHT - 1) {
-			return Some(minimax::Winner::PlayerJustMoved);
+			if b.reds_move() {
+				return Some(Winner::Player(0));
+			} else {
+				return Some(Winner::Player(1));
+			}
 		}
 
 		// Full board with no winner.
 		if b.num_moves as u32 == NUM_ROWS * NUM_COLS {
-			Some(minimax::Winner::Draw)
+			Some(Winner::Draw)
 		} else {
 			None
 		}
@@ -165,13 +170,21 @@ impl minimax::Game for Game {
 	fn zobrist_hash(b: &Board) -> u64 {
 		b.hash
 	}
+	
+	fn current_player(state: &Self::S) -> Player {
+		if state.reds_move() {
+			Player::PLAYER2
+		} else {
+			Player::PLAYER1
+		}
+	}
 }
 
 pub struct DumbEvaluator;
 
-impl minimax::Evaluator for DumbEvaluator {
-	type G = Game;
-	fn evaluate(&self, _: &Board) -> minimax::Evaluation {
+impl Evaluator for DumbEvaluator {
+	type G = C4Game;
+	fn evaluate_for(&self, _: &Board, _p: Player) -> Evaluation {
 		0
 	}
 }
@@ -207,9 +220,9 @@ impl Board {
 #[derive(Clone, Default)]
 pub struct BasicEvaluator;
 
-impl minimax::Evaluator for BasicEvaluator {
-	type G = Game;
-	fn evaluate(&self, b: &Board) -> minimax::Evaluation {
+impl Evaluator for BasicEvaluator {
+	type G = C4Game;
+	fn evaluate_for(&self, b: &Board, p: Player) -> Evaluation {
 		let player_pieces = b.pieces_to_move;
 		let opponent_pieces = b.pieces_just_moved();
 		let mut player_wins = b.find_fourth_moves(player_pieces);
@@ -219,9 +232,9 @@ impl minimax::Evaluator for BasicEvaluator {
 		// Bonus points for moves in the middle columns.
 		for col in 2..5 {
 			score +=
-				((player_pieces >> (HEIGHT * col)) & COL_MASK).count_ones() as minimax::Evaluation;
+				((player_pieces >> (HEIGHT * col)) & COL_MASK).count_ones() as Evaluation;
 			score -= ((opponent_pieces >> (HEIGHT * col)) & COL_MASK).count_ones()
-				as minimax::Evaluation;
+				as Evaluation;
 		}
 
 		// Count columns that cause immediate win.
@@ -250,68 +263,11 @@ impl minimax::Evaluator for BasicEvaluator {
 			player_wins >>= HEIGHT;
 			opponent_wins >>= HEIGHT;
 		}
-
+		//TODO
 		score
 	}
 }
 
-#[test]
-#[cfg(not(target_arch = "wasm32"))]
-fn main() {
-	use minimax::*;
-
-	let mut b = Board::default();
-	/*let mut played = crate::connect4::ex_connect4::Game::apply(&mut b, Place{col: 2}).unwrap();
-	crate::connect4::ex_connect4::Game::undo(&mut played, Place{col: 2});
-	assert!(b.all_pieces == played.all_pieces);
-	assert!(b.num_moves == played.num_moves);
-	assert!(b.pieces_to_move == played.pieces_to_move);
-	assert!(b.hash == played.hash);*/
-		
-
-	if std::env::args().any(|arg| arg == "perft") {
-		perft::<self::Game>(&mut b, 10, false);
-		return;
-	}
-
-	let mut dumb = IterativeSearch::new(
-		BasicEvaluator::default(),
-		IterativeOptions::new().with_double_step_increment(),
-	);
-	dumb.set_max_depth(8);
-
-	let opts =
-		IterativeOptions::new().with_table_byte_size(64_000_000).with_double_step_increment();
-	let mut iterative =
-		IterativeSearch::new(BasicEvaluator::default(), opts.clone().with_aspiration_window(5));
-	iterative.set_max_depth(12);
-	let mut parallel = ParallelSearch::new(BasicEvaluator::default(), opts, ParallelOptions::new());
-	parallel.set_max_depth(6);
-
-	let mut strategies: [&mut dyn Strategy<self::Game>; 3] =
-		[&mut dumb, &mut iterative, &mut parallel];
-		//[&mut parallel, &mut dumb, &mut iterative];
-
-	if std::env::args().any(|arg| arg == "parallel") {
-		strategies.swap(1, 2);
-	}
-
-	let mut s = 0;
-	while self::Game::get_winner(&b).is_none() {
-		println!("{}", b);
-		let ref mut strategy = strategies[s];
-		match strategy.choose_move(&mut b) {
-			Some(m) => {
-				let color = if b.reds_move() { "Red" } else { "Yellow" };
-				println!("{} piece in column {}", color, m.col + 1);
-				self::Game::apply(&mut b, m);//.unwrap();
-			}
-			None => break,
-		}
-		s = 1 - s;
-	}
-	println!("{}", b);
-}
 // There aren't that many positions per color, so just encode the zobrist hash statically.
 const HASHES: [u64; 100] = [
 	0x73399349585d196e,
@@ -417,7 +373,9 @@ const HASHES: [u64; 100] = [
 ];
 #[cfg(test)]
 mod tests {
-	use super::Board;
+	use kudchuet::ai::minimax::util::perft;
+
+use super::Board;
 
 	//depth           count        time        kn/s
 	//    0               1       2.4µs       416.7
@@ -437,10 +395,9 @@ mod tests {
 	//cargo test --release connect4::ex_connect4::tests::perft_test -- --nocapture
 	#[test]
 	fn perft_test() {
-		use minimax::*;
 		let mut board = Board::default();
 
-		let nodes = perft::<super::Game>(&mut board, 13, true);
+		let nodes = perft::<super::C4Game>(&mut board, 13, true);
 		const NB_NODES: [u64;14] = [
 			1,
 			7,

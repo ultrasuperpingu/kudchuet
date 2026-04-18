@@ -9,11 +9,11 @@ bitboard = {path="../../bitboards/bitboard"}
 bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 #magic_bitboard_proc_macro = {path="../magic_bitboard_proc_macro"}
 #minimax = "0.5"
-minimax = {path="../../minimax"}
+#minimax = {path="../../minimax"}
 eframe = { version = "0.34", features=["persistence"] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
-# for dices in backgammon
+# for dices
 arrayvec = "0.7"
 
 [lib]

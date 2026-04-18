@@ -10,7 +10,7 @@ bitboard = {path="../../bitboards/bitboard"}
 bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 #magic_bitboard_proc_macro = {path="../../magic_bitboard_proc_macro"}
 #minimax = "0.5"
-minimax = {path="../../minimax"}
+#minimax = {path="../../minimax"}
 #egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor.git", features=["filepicker"] }
 egui_field_editor = {path="../../../egui_inspect/egui_field_editor", features=["filepicker"] }
 #egui_field_editor = "0.5"

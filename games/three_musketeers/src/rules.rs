@@ -231,8 +231,7 @@ impl ThreeMusketeers {
 				let c = match self.get_cell(x, y) {
 					Some(Player::PLAYER1) => 'm',
 					Some(Player::PLAYER2) => 'g',
-					Some(Player::RandomMove) => unreachable!(),
-					Some(Player::Player(_)) => unreachable!(),
+					Some(Player(_)) => unreachable!(),
 					None => '.',
 				};
 				row.push(c);

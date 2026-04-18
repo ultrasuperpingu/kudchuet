@@ -2,7 +2,7 @@
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::{Color32, Rect, Stroke, Vec2};
-use minimax::Game;
+use kudchuet::ai::minimax::{Game, Winner};
 use crate::bitboard::BitboardAbalone;
 use crate::game::AbaloneMaterialEval;
 use crate::rules::{Abalone, Cell, HEXES, Hex, Move, idx};
@@ -99,9 +99,8 @@ impl BoardGame for Abalone {
 	}
 	fn result(&self) -> GameResult {
 		match <Self as Game>::get_winner(self) {
-			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::PLAYER2} else {GameResult::PLAYER1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::PLAYER2} else {GameResult::PLAYER1},
+			Some(Winner::Draw) => GameResult::Draw,
+			Some(Winner::Player(p)) => GameResult::Player(p),
 			None => GameResult::OnGoing,
 		}
 	}

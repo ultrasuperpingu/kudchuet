@@ -7,7 +7,7 @@ edition = "2024"
 eframe = { version = "0.34", features=["persistence"] }
 kudchuet = { path = "../../kudchuet" }
 #minimax = "0.5"
-minimax = {path="../../minimax"}
+#minimax = {path="../../minimax"}
 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

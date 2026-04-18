@@ -72,12 +72,12 @@ impl BoardGame for ChineseCheckers {
 
 	fn current_player(&self) -> Player {
 		match self.turn {
-			ChineseCheckersPlayer::Red => Player::Player(0),
-			ChineseCheckersPlayer::Blue => Player::Player(1),
-			ChineseCheckersPlayer::Green => Player::Player(2),
-			ChineseCheckersPlayer::Yellow => Player::Player(3),
-			ChineseCheckersPlayer::Black => Player::Player(4),
-			ChineseCheckersPlayer::White => Player::Player(5),
+			ChineseCheckersPlayer::Red => Player(0),
+			ChineseCheckersPlayer::Blue => Player(1),
+			ChineseCheckersPlayer::Green => Player(2),
+			ChineseCheckersPlayer::Yellow => Player(3),
+			ChineseCheckersPlayer::Black => Player(4),
+			ChineseCheckersPlayer::White => Player(5),
 		}
 	}
 	fn nb_players(&self) -> u8 {
@@ -85,7 +85,7 @@ impl BoardGame for ChineseCheckers {
 	}
 	fn get_name(&self, p: Player) -> String {
 		match p {
-			Player::Player(idx) => {
+			Player(idx) => {
 				let players = Self::active_players(self.nb_players);
 				if idx < players.len() as u8 {
 					return match players[idx as usize] {
@@ -99,7 +99,6 @@ impl BoardGame for ChineseCheckers {
 				}
 				"".into()
 			}
-			Player::RandomMove => unreachable!(),
 		}
 	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {

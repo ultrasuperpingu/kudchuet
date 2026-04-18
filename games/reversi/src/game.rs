@@ -1,18 +1,21 @@
 use std::hash::{DefaultHasher, Hash};
 use std::hash::Hasher;
 
+use kudchuet::Player;
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+
 use crate::rules::{Cell, Reversi};
 
 
 
 
 
-impl minimax::Game for Reversi {
+impl Game for Reversi {
 	type S =  Reversi;
 
 	type M = (u8, u8);
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		state.legal_moves(moves);
 		Self::get_winner(state)
 	}
@@ -23,16 +26,16 @@ impl minimax::Game for Reversi {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_over() {
 			if let Some(winner) = state.winner() {
-				if winner == state.turn() {
-					return Some(minimax::Winner::PlayerJustMoved);
+				if winner == Cell::Black {
+					return Some(Winner::Player(0));
 				} else {
-					return Some(minimax::Winner::PlayerToMove);
+					return Some(Winner::Player(1));
 				}
 			} else {
-				return Some(minimax::Winner::Draw);
+				return Some(Winner::Draw);
 			}
 		}
 		None
@@ -43,6 +46,14 @@ impl minimax::Game for Reversi {
 		state.hash(&mut hasher);
 		hasher.finish()
 	}
+	
+	fn current_player(state: &Self::S) -> Player {
+		match state.turn() {
+			Cell::Empty => unreachable!(),
+			Cell::White => Player::PLAYER2,
+			Cell::Black => Player::PLAYER1,
+		}
+	}
 }
 
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
@@ -50,13 +61,13 @@ pub struct ReversiEval;
 
 impl ReversiEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for ReversiEval {
+impl Evaluator for ReversiEval {
 	type G = Reversi;
-	fn evaluate(&self, state: &Reversi) -> minimax::Evaluation {
-		if state.turn() == Cell::White {
+	fn evaluate_for(&self, _state: &Reversi, p: Player) -> Evaluation {
+		if p == Player::PLAYER1 {
 			0
 		} else {
 			//state.score_top as minimax::Evaluation - state.score_bottom as minimax::Evaluation
@@ -66,6 +77,9 @@ impl minimax::Evaluator for ReversiEval {
 }
 #[cfg(test)]
 mod tests {
+	use kudchuet::ai::minimax::util::perft;
+	use crate::rules::Reversi;
+
 	// cargo test --release -p reversi game::tests::perft_test -- --nocapture
 	// depth           count        time        kn/s
 	//  0               1       3.1µs       322.6
@@ -81,9 +95,7 @@ mod tests {
 	// 10        24571000      27.5ms    891985.9
 	// 11       212257448     237.9ms    892206.1
 	// 12      1939875880        1.9s   1031846.7
-	use crate::rules::Reversi;
-	use minimax::perft;
-
+	
 	#[test]
 	fn perft_test() {
 		let mut board = Reversi::default();

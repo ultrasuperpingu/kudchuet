@@ -3,10 +3,18 @@
 #![allow(clippy::clone_on_copy)]
 
 use std::fmt::Debug;
-use minimax::Strategy;
-use minimax::strategies::iterative::SearchStopSignal;
+use ai::minimax::Strategy;
+use ai::minimax::SearchStopSignal;
 
 
+use crate::ai::minimax::IterativeSearch;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::ai::minimax::{IterativeOptions, ParallelOptions};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::ai::minimax::ybw::ParallelSearch;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::ai::minimax::interface::Evaluator;
+use crate::ai::minimax::interface::{Evaluation, Game};
 use crate::ai::{AIEngineProvider, MoveSearcherBuilderDyn};
 use crate::ai::{AIEngine, AIOptions, internal_engine::InternalEngine};
 use crate::gui::{BoardGame, BoardMove};
@@ -62,46 +70,38 @@ pub enum GameResult {
 	OnGoing
 }
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum Player {
-	Player(u8),
-	RandomMove
-}
+pub struct Player(pub u8);
 impl Default for Player {
 	fn default() -> Self {
-		Player::Player(0)
+		Player(0)
 	}
 }
 impl Player {
-	pub const PLAYER1: Self = Self::Player(0);
-	pub const PLAYER2: Self = Self::Player(1);
+	pub const PLAYER1: Self = Self(0);
+	pub const PLAYER2: Self = Self(1);
 	pub fn opponent(&self) -> Self {
 		match self {
-			Player::Player(0) => Player::PLAYER2,
-			Player::Player(1) => Player::PLAYER1,
-			Player::Player(_) => panic!("opponent called on a multiplayer game"),
-			Player::RandomMove => Player::RandomMove,
+			Self(0) => Self(1),
+			Self(1) => Self(0),
+			Self(_) => panic!("opponent called on a multiplayer game"),
 		}
 	}
 	pub fn idx(&self) -> usize {
 		match self {
-			Player::Player(id) => *id as usize,
-			Player::RandomMove => unreachable!(),
+			Self(id) => *id as usize,
 		}
 	}
 }
 impl From<Player> for GameResult {
 	fn from(val: Player) -> Self {
-		match val {
-			Player::Player(id) => GameResult::Player(id),
-			Player::RandomMove => panic!("Result from random move"),
-		}
+		GameResult::Player(val.0)
 	}
 }
 impl std::fmt::Display for Player {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Player::Player(id) => f.write_str(format!("Player {}", *id+1).as_str()),
-			Player::RandomMove => f.write_str("Random Move"),
+			Self(id) => f.write_str(format!("Player {}", *id+1).as_str()),
+			//Player::RandomMove => f.write_str("Random Move"),
 		}
 	}
 }
@@ -123,27 +123,28 @@ impl GameResult {
 }
 pub trait ConcreteStrategy<G>: Strategy<G>
 where
-	G: minimax::Game,
+	G: Game,
 {
 	fn get_options(&self) -> AIOptions;
 	fn reset_with_options(&mut self, opts: AIOptions);
-	fn root_value(&self) -> minimax::Evaluation;
+	fn root_value(&self) -> Evaluation;
 	fn stop_search(&self) {}
 	//#[cfg(not(target_arch = "wasm32"))]
 	fn stop_signal(&self) -> SearchStopSignal {
 		SearchStopSignal::new()
 	}
 }
-#[cfg(target_arch = "wasm32")]
-pub type MoveSearcher<T> = minimax::IterativeSearch<T>;
-#[cfg(not(target_arch = "wasm32"))]
-pub type MoveSearcher<T> = minimax::ParallelSearch<T>;
 
+//#[cfg(target_arch = "wasm32")]
+pub type MoveSearcher<T> = ai::minimax::IterativeSearch<T>;
+//#[cfg(not(target_arch = "wasm32"))]
+//pub type MoveSearcher<T> = ParallelSearch<T>;
+/*
 #[cfg(not(target_arch = "wasm32"))]
 impl<G, E> ConcreteStrategy<G> for MoveSearcher<E>
 where
-	G: minimax::Game,
-	E: minimax::Evaluator<G = G> + Clone + Sync + Send + 'static + Default + Eq + Debug,
+	G: Game,
+	E: Evaluator<G = G> + Clone + Sync + Send + 'static + Default + Eq + Debug,
 	G::S: Clone + Send + Sync,
 	G::M: Eq + Send + Sync + Clone,
 {
@@ -159,16 +160,16 @@ where
 
 	fn reset_with_options(&mut self, opts: AIOptions) {
 		println!("reset_with_options {:?}", opts);
-		let mut iter = minimax::IterativeOptions::new()
+		let mut iter = IterativeOptions::new()
 			.with_table_byte_size(opts.table_megabyte_size * 1024 * 1024);
 
 		if Some(&ai::UciValue::Bool(true)) == opts.uci.get("Mdtf") {
 			iter = iter.with_mtdf();
 		}
-		let mut par = minimax::ParallelOptions::new();
+		let mut par = ParallelOptions::new();
 		par.num_threads = opts.threads;
 
-		*self = minimax::ParallelSearch::new(
+		*self = ParallelSearch::new(
 			E::default(),
 			iter,
 			par,
@@ -187,16 +188,16 @@ where
 		self.stop_signal()
 	}
 
-	fn root_value(&self) -> minimax::Evaluation {
+	fn root_value(&self) -> Evaluation {
 		MoveSearcher::<E>::root_value(self)
 	}
-}
-#[cfg(target_arch = "wasm32")]
+}*/
+//#[cfg(target_arch = "wasm32")]
 impl<G, E> ConcreteStrategy<G> for MoveSearcher<E>
-where G: minimax::Game,
-	E: minimax::Evaluator<G = G> + Default,
-	<<E as minimax::Evaluator>::G as minimax::Game>::S: Clone,
-	<<E as minimax::Evaluator>::G as minimax::Game>::M: Eq+Clone
+where G: Game,
+	E: Evaluator<G = G> + Default,
+	<<E as Evaluator>::G as Game>::S: Clone,
+	<<E as Evaluator>::G as Game>::M: Eq+Clone
 {
 	fn get_options(&self) -> AIOptions {
 		let mut opts = AIOptions::from(*self.options());
@@ -207,14 +208,14 @@ where G: minimax::Game,
 		opts
 	}
 	fn reset_with_options(&mut self, opts: AIOptions) {
-		let mut iter = minimax::IterativeOptions::new()
+		let mut iter = IterativeOptions::new()
 			.with_table_byte_size(opts.table_megabyte_size * 1024 * 1024);
 
 		if Some(&ai::UciValue::Bool(true)) == opts.uci.get("Mdtf") {
 			iter = iter.with_mtdf();
 		}
 
-		*self = minimax::IterativeSearch::new(
+		*self = IterativeSearch::new(
 			E::default(),
 			iter
 		);
@@ -225,20 +226,20 @@ where G: minimax::Game,
 			self.set_depth_or_timeout(opts.max_depth, std::time::Duration::from_secs_f32(opts.max_time));
 		}
 	}
-	fn root_value(&self) -> minimax::Evaluation {
+	fn root_value(&self) -> Evaluation {
 		 MoveSearcher::<E>::root_value(self)
 	}
 }
-#[cfg(target_arch = "wasm32")]
+//#[cfg(target_arch = "wasm32")]
 pub fn new_move_searcher<G, T>(evaluator: T, initial_depth: u8) -> Box<dyn AIEngine<G>>
 	where
 		G: BoardGame + Send+Sync+ 'static,
 		G::M: BoardMove<G> + Copy + Eq +Send+ 'static,
-		T: minimax::Evaluator<G = G> + Default + Eq + Clone + Send + 'static,
+		T: Evaluator<G = G> + Default + Eq + Clone + Send + 'static,
 {
-	let mut searcher = minimax::IterativeSearch::new(
+	let mut searcher = IterativeSearch::new(
 		evaluator,
-		minimax::IterativeOptions::new()
+		IterativeOptions::new()
 			.with_table_byte_size(32 * 1024 * 1024)
 	);
 	searcher.set_max_depth(initial_depth);
@@ -260,24 +261,24 @@ pub fn new_move_searcher_vec<G, T>(name: String, evaluator: T, initial_depth: u8
 where
 	G: BoardGame + Send + Sync + 'static,
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	T: minimax::Evaluator<G = G> + Default + Eq + Clone + Send + Sync + 'static + Debug,
+	T: Evaluator<G = G> + Default + Eq + Clone + Send + Sync + 'static + Debug,
 {
 	vec![Box::new(MoveSearcherBuilderDyn::<G, T>::new(name, evaluator, initial_depth))]
 }
 
-
+/*
 #[cfg(not(target_arch = "wasm32"))]
 pub fn new_move_searcher<G, T>(evaluator: T, initial_depth: u8) -> Box<dyn AIEngine<G>>
 where
 	G: BoardGame + Send + Sync + 'static,
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	T: minimax::Evaluator<G = G> + Default + Eq + Clone + Send + Sync + 'static + Debug,
+	T: Evaluator<G = G> + Default + Eq + Clone + Send + Sync + 'static + Debug,
 {
-	let mut searcher = minimax::ParallelSearch::new(
+	let mut searcher = ParallelSearch::new(
 		evaluator,
-		minimax::IterativeOptions::new()
+		IterativeOptions::new()
 			.with_table_byte_size(128 * 1024 * 1024),
-		minimax::ParallelOptions::new(),
+		ParallelOptions::new(),
 	);
 	searcher.set_max_depth(initial_depth);
 	Box::new(InternalEngine::new(searcher))
@@ -287,29 +288,29 @@ pub fn new_move_searcher_static<G, T>(evaluator: T, initial_depth: u8) -> MoveSe
 where
 	G: BoardGame + Send + Sync + 'static,
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	T: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + 'static,
+	T: Evaluator<G = G> + Default + Clone + Send + Sync + 'static,
 {
-	let opts = minimax::IterativeOptions::new().with_table_byte_size(128 * 1024 * 1024);
-	let mut searcher = minimax::ParallelSearch::new(
+	let opts = IterativeOptions::new().with_table_byte_size(128 * 1024 * 1024);
+	let mut searcher = ParallelSearch::new(
 		evaluator,
 		opts,
-		minimax::ParallelOptions::new(),
+		ParallelOptions::new(),
 	);
 	searcher.set_max_depth(initial_depth);
 
 	searcher
-}
+}*/
 
-#[cfg(target_arch = "wasm32")]
+//#[cfg(target_arch = "wasm32")]
 pub fn new_move_searcher_static<G, T>(evaluator: T, initial_depth: u8) -> MoveSearcher<T>
 where
 	G: BoardGame + Send + Sync + 'static,
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	T: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + 'static,
+	T: Evaluator<G = G> + Default + Clone + Send + Sync + 'static,
 {
-	let mut searcher = minimax::IterativeSearch::new(
+	let mut searcher = IterativeSearch::new(
 		evaluator,
-		minimax::IterativeOptions::new()
+		IterativeOptions::new()
 			.with_table_byte_size(128 * 1024 * 1024),
 	);
 	searcher.set_max_depth(initial_depth);

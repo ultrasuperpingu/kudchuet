@@ -6,7 +6,7 @@ use crate::{ConcreteStrategy};
 
 #[cfg(not(target_arch = "wasm32"))]
 use futures::channel::oneshot;
-use minimax::strategies::iterative::SearchStopSignal;
+use crate::ai::minimax::SearchStopSignal;
 use std::future::Future;
 
 pub struct InternalEngine<G, AI>

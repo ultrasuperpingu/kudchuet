@@ -151,10 +151,7 @@ where G::M: BoardMove<G>+Send
 		self.ai_engine_manager.get_player_engine(self.game().current_player()).is_some()
 	}
 	pub(super) fn is_current_player_random(&self) -> bool {
-		match self.game().current_player() {
-			Player::Player(_) => false,
-			Player::RandomMove => true,
-		}
+		G::is_random_move(self.game())
 	}
 	
 	pub(super) fn apply_move(&mut self, mv: G::M) {
@@ -305,7 +302,7 @@ where G::M: BoardMove<G>+Send
 
 			match result {
 				GameResult::Player(id) => {
-					ui.heading(format!("Winner: {}", self.game().get_name(Player::Player(id))));
+					ui.heading(format!("Winner: {}", self.game().get_name(Player(id))));
 				}
 				GameResult::Draw => {
 					ui.heading("Draw Game");
@@ -318,7 +315,7 @@ where G::M: BoardMove<G>+Send
 
 	fn draw_players_list(&mut self, engines: &[String], ui: &mut Ui) {
 		for i in 0..self.game().nb_players() {
-			self.draw_player(Player::Player(i), engines, ui);
+			self.draw_player(Player(i), engines, ui);
 		}
 	}
 	fn draw_player(&mut self, p: Player, engines: &[String], ui: &mut Ui) {

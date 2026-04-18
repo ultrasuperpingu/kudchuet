@@ -1,14 +1,17 @@
-use minimax::Evaluation;
+
+
+use crate::rules::Cell;
 
 use super::rules::{Column, ConnectFour};
+use kudchuet::Player;
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
-
-impl minimax::Game for ConnectFour {
+impl Game for ConnectFour {
 	type S =  ConnectFour;
 
 	type M = Column;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		let mut mvs: [Column;7] = [Column::from_index(0);7];
 		let nb = state.legal_moves_array(&mut mvs);
 		moves.extend_from_slice(&mvs[0..nb]);
@@ -26,16 +29,27 @@ impl minimax::Game for ConnectFour {
 	fn notation(_state: &Self::S, mv: Self::M) -> Option<String> {
 		Some(mv.0.to_string())
 	}
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_victory() {
-			Some(minimax::Winner::PlayerJustMoved)
+			match state.player_turn() {
+				Cell::Empty => unreachable!(),
+				Cell::PlayerOne => Some(Winner::Player(1)),
+				Cell::PlayerTwo => Some(Winner::Player(0)),
+			}
 		} else if state.is_over() {
-			Some(minimax::Winner::Draw)
+			Some(Winner::Draw)
 		} else {
 			None
 		}
 	}
-
+	fn current_player(state: &Self::S) -> Player {
+		
+		match state.player_turn() {
+			Cell::Empty => panic!(),
+			Cell::PlayerOne => Player::PLAYER1,
+			Cell::PlayerTwo => Player::PLAYER2,
+		}
+	}
 	fn zobrist_hash(state: &Self::S) -> u64 {
 		state.encode()
 	}
@@ -47,19 +61,21 @@ pub struct ConnectFourEval;
 
 impl ConnectFourEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for ConnectFourEval {
+impl Evaluator for ConnectFourEval {
 	type G = ConnectFour;
-	fn evaluate(&self, state: &ConnectFour) -> minimax::Evaluation {
+	fn evaluate_for(&self, state: &ConnectFour, _p: Player) -> Evaluation {
+		//TODO
 		state.heuristic() as i16 - state.opponent_heuristic() as i16 as Evaluation
 	}
 }
 #[cfg(test)]
 mod tests {
-	use minimax::perft;
-	use super::ConnectFour;
+	use kudchuet::ai::minimax::util::perft;
+
+use super::ConnectFour;
 
 	// cargo test --release -p connect4 game::tests::perft_test -- --nocapture
 

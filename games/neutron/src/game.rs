@@ -3,49 +3,26 @@
 
 
 use kudchuet::{GameResult, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 use crate::{bitboard::Bitboard5x5, rules::{Move, Neutron}};
 
-impl minimax::Game for Neutron {
+impl Game for Neutron {
 	type S =  Neutron;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		state.legal_moves_inplace(moves);
 		if !(state.neutron & Bitboard5x5::SOUTH_BORDER).is_empty() {
-			return if state.turn == Player::PLAYER1 {
-						Some(minimax::Winner::PlayerToMove)
-					} else {
-						Some(minimax::Winner::PlayerJustMoved)
-					};
+			return Some(Winner::Player(Player::PLAYER2.idx() as u8))
 		}
 
 		if !(state.neutron & Bitboard5x5::NORTH_BORDER).is_empty() {
-			return if state.turn == Player::PLAYER1 {
-						Some(minimax::Winner::PlayerJustMoved)
-					} else {
-						Some(minimax::Winner::PlayerToMove)
-					};
+			return Some(Winner::Player(Player::PLAYER1.idx() as u8))
 		}
 		if moves.is_empty() {
-			match state.turn {
-				Player::PLAYER1 =>  {
-					if state.turn == Player::PLAYER1 {
-						Some(minimax::Winner::PlayerToMove)
-					} else {
-						Some(minimax::Winner::PlayerJustMoved)
-					}
-				},
-				Player::PLAYER2 => {
-					if state.turn == Player::PLAYER1 {
-						Some(minimax::Winner::PlayerJustMoved)
-					} else {
-						Some(minimax::Winner::PlayerToMove)
-					}
-				},
-				_ => unreachable!(),
-			}
+			Some(Winner::Player(state.turn.opponent().idx() as u8))
 		} else {
 			None
 		}
@@ -57,25 +34,11 @@ impl minimax::Game for Neutron {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		match state.result() {
-			GameResult::Draw => Some(minimax::Winner::Draw),
+			GameResult::Draw => Some(Winner::Draw),
 			GameResult::OnGoing => None,
-			GameResult::PLAYER1 => {
-				if state.turn == Player::PLAYER1 {
-					Some(minimax::Winner::PlayerToMove)
-				} else {
-					Some(minimax::Winner::PlayerJustMoved)
-				}
-			},
-			GameResult::PLAYER2 => {
-				if state.turn == Player::PLAYER1 {
-					Some(minimax::Winner::PlayerJustMoved)
-				} else {
-					Some(minimax::Winner::PlayerToMove)
-				}
-			},
-			GameResult::Player(_) => unreachable!(),
+			GameResult::Player(p) => Some(Winner::Player(p)),
 		}
 	}
 
@@ -86,6 +49,10 @@ impl minimax::Game for Neutron {
 		state.get_hash()
 		//state.compute_hash()
 	}
+	
+	fn current_player(state: &Self::S) -> Player {
+		state.turn()
+	}
 }
 
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
@@ -93,32 +60,32 @@ pub struct NeutronDumbEval;
 
 impl NeutronDumbEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for NeutronDumbEval {
+impl Evaluator for NeutronDumbEval {
 	type G = Neutron;
-	fn evaluate(&self, _state: &Neutron) -> minimax::Evaluation {
-		0 as minimax::Evaluation
+	fn evaluate_for(&self, _state: &Neutron, _p: Player) -> Evaluation {
+		0 as Evaluation
 	}
 }
 /*
 #[derive(Clone, Default, Copy)]
-pub struct NeutronMaterialEval;
+pub struct NeutronMaterialEval(Player);
 
 impl NeutronMaterialEval {
 	pub fn new() -> Self {
 		Self
 	}
 }
-impl minimax::Evaluator for NeutronMaterialEval {
+impl Evaluator for NeutronMaterialEval {
 	
 	type G=NeutronGame;
-	fn evaluate(&self, state: &Neutron) -> minimax::Evaluation {
+	fn evaluate(&self, state: &Neutron) -> Evaluation {
 		if state.turn == Player::White {
-			state.white_pawns_count()as minimax::Evaluation - state.black_pawns_count()as minimax::Evaluation 
+			state.white_pawns_count()as Evaluation - state.black_pawns_count()as Evaluation 
 		} else {
-			state.black_pawns_count() as minimax::Evaluation - state.white_pawns_count() as minimax::Evaluation
+			state.black_pawns_count() as Evaluation - state.white_pawns_count() as Evaluation
 		}
 	}
 	
@@ -136,8 +103,9 @@ impl minimax::Evaluator for NeutronMaterialEval {
 #[cfg(test)]
 mod tests {
 
+	use kudchuet::ai::minimax::util::perft;
+
 	use super::super::{game::Neutron};
-	use minimax::perft;
 	#[test]
 	fn perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));

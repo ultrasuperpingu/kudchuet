@@ -10,7 +10,7 @@ bitboard = {path="../../bitboards/bitboard"}
 bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 #magic_bitboard_proc_macro = {path="../magic_bitboard_proc_macro"}
 #minimax = "0.5"
-minimax = {path="../../minimax"}
+#minimax = {path="../../minimax"}
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"

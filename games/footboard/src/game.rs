@@ -1,6 +1,6 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-//use minimax::Evaluation;
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 
 use kudchuet::{GameResult, Player};
@@ -8,12 +8,12 @@ use kudchuet::{GameResult, Player};
 use super::rules::{Move, FootBoard};
 
 
-impl minimax::Game for FootBoard {
+impl Game for FootBoard {
 	type S =  FootBoard;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		if let Some(w) = Self::get_winner(state) {
 			return Some(w);
 		}
@@ -26,12 +26,10 @@ impl minimax::Game for FootBoard {
 		s.play_unchecked(&m);
 		Some(s)
 	}
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		match state.result() {
-			GameResult::PLAYER1 => if state.turn() == Player::PLAYER2 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			GameResult::PLAYER2 => if state.turn() == Player::PLAYER1 {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			GameResult::Player(_) => unreachable!(),
-			GameResult::Draw => Some(minimax::Winner::Draw),
+			GameResult::Player(p) => Some(Winner::Player(p)),
+			GameResult::Draw => Some(Winner::Draw),
 			GameResult::OnGoing => None,
 		}
 	}
@@ -42,6 +40,9 @@ impl minimax::Game for FootBoard {
 		hasher.finish()
 		//state.compute_hash()
 	}
+	fn current_player(state: &Self::S) -> Player {
+		state.turn()
+	}
 }
 
 
@@ -50,20 +51,20 @@ pub struct FootboardEvalDumb;
 
 impl FootboardEvalDumb {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for FootboardEvalDumb {
+impl Evaluator for FootboardEvalDumb {
 	type G = FootBoard;
-	fn evaluate(&self, state: &FootBoard) -> minimax::Evaluation {
-		let mut score = (state.score1 as minimax::Evaluation - state.score2 as minimax::Evaluation) * 1000;
+	fn evaluate_for(&self, state: &FootBoard, p: Player) -> Evaluation {
+		let mut score = (state.score1 as Evaluation - state.score2 as Evaluation) * 1000;
 		let owner = state.ball_owner();
 		if owner == Some(state.turn()) {
 			score += 100;
 		} else if owner.is_some() {
 			score -= 100;
 		}
-		if state.turn() == Player::PLAYER1 {
+		if p == Player::PLAYER1 {
 			score
 		} else {
 			-score
@@ -73,12 +74,12 @@ impl minimax::Evaluator for FootboardEvalDumb {
 #[cfg(test)]
 mod tests {
 	
-	#[cfg(not(target_arch = "wasm32"))]
-	use minimax::{Game, IterativeOptions, ParallelOptions, ParallelSearch, Strategy};
+	use kudchuet::ai::minimax::util::perft_tt;
+#[cfg(not(target_arch = "wasm32"))]
+	use kudchuet::ai::minimax::{Game, IterativeOptions, ParallelOptions, ybw::ParallelSearch, Strategy};
 	#[cfg(not(target_arch = "wasm32"))]
 	use super::FootboardEvalDumb;
 
-	use minimax::util::perft_tt;
 	use super::FootBoard;
 
 	// cargo test --release -p footboard game::tests::perft_test -- --nocapture
@@ -110,7 +111,7 @@ mod tests {
 	fn test_walk_full_game() {
 		let mut state = FootBoard::default();
 		let mut turn_count = 0;
-		let mut strategy = ParallelSearch::new(FootboardEvalDumb, IterativeOptions::new(), ParallelOptions::new());
+		let mut strategy = ParallelSearch::new(FootboardEvalDumb::new(), IterativeOptions::new(), ParallelOptions::new());
 		strategy.set_max_depth(2);
 		println!("Initial state:\n{}", state);
 

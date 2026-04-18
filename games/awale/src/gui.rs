@@ -1,5 +1,4 @@
 use eframe::egui;
-use minimax::Game;
 
 use crate::game::AwaleMaterialEval;
 use kudchuet::GameResult;
@@ -48,11 +47,14 @@ impl BoardGame for Awale {
 		todo!()
 	}
 	fn result(&self) -> GameResult {
-		match <Self as Game>::get_winner(self) {
-			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::PLAYER2} else {GameResult::PLAYER1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::PLAYER2} else {GameResult::PLAYER1},
-			None => GameResult::OnGoing,
+		if self.is_over() {
+			if let Some(w) = self.winner() {
+				w.into()
+			} else {
+				GameResult::Draw
+			}
+		} else {
+			GameResult::OnGoing
 		}
 	}
 }
@@ -63,7 +65,7 @@ impl Default for AwaleApp {
 	fn default() -> Self {
 		Self {
 			game: Awale::default(),
-			computer: new_move_searcher(AwaleMaterialEval{}, 5),
+			computer: new_move_searcher(AwaleMaterialEval::new(), 5),
 			selected:None,
 			players: [PlayerType::default(), PlayerType::Computer],
 			

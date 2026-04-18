@@ -4,7 +4,7 @@ use std::io::Write;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use minimax::strategies::iterative::SearchStopSignal;
+use crate::ai::minimax::SearchStopSignal;
 
 use crate::ConcreteStrategy;
 use crate::ai::uci::{UciInfoAttribute, UciMessage, UciOptionConfig, UciTimeControl};

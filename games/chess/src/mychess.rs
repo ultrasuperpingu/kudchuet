@@ -5,6 +5,8 @@ use crate::bitboard::Bitboard8x8;
 
 use super::rules::{Color, Square, Piece, CastlingRights, Move};
 
+use kudchuet::Player;
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 use kudchuet::GameResult;
 use super::pext_tables;
@@ -1328,12 +1330,12 @@ impl ChessBoard {
 		self.hash ^= Self::ZOBRIST_KEYS.turn
 	}
 }
-impl minimax::Game for ChessBoard {
+impl Game for ChessBoard {
 	type S = ChessBoard;
 	type M = Move;
 
 	#[inline]
-	fn generate_moves(b: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(b: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		let mut array = [Move { from: Square(0), to: Square(0), promotion: None }; 256];
 		let mut len = 0;
 		if b.turn == Color::White {
@@ -1347,12 +1349,11 @@ impl minimax::Game for ChessBoard {
 	}
 
 	#[inline]
-	fn get_winner(b: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(b: &Self::S) -> Option<Winner> {
 		match b.status() {
-			GameResult::PLAYER1|GameResult::PLAYER2 => Some(minimax::Winner::PlayerJustMoved),
-			GameResult::Draw => Some(minimax::Winner::Draw),
+			GameResult::Player(p) => Some(Winner::Player(p)),
+			GameResult::Draw => Some(Winner::Draw),
 			GameResult::OnGoing => None,
-			_ => unreachable!(),
 		}
 		//None
 	}
@@ -1366,14 +1367,17 @@ impl minimax::Game for ChessBoard {
 	}
 
 	fn zobrist_hash(b: &Self::S) -> u64 {
-		//let mut hasher = DefaultHasher::new();
-		//b.hash(&mut hasher);
-		//hasher.finish()
 		b.hash
 	}
 
 	fn notation(_b: &Self::S, m: Self::M) -> Option<String> {
 		_b.move_to_san(&m).ok()
+	}
+	fn current_player(b: &Self::S) -> Player {
+		match b.turn() {
+			Color::White => Player::PLAYER1,
+			Color::Black => Player::PLAYER2,
+		}
 	}
 }
 
@@ -1381,7 +1385,7 @@ impl minimax::Game for ChessBoard {
 pub struct ChessMaterialEval;
 impl ChessMaterialEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
 impl Default for ChessMaterialEval {
@@ -1389,9 +1393,9 @@ impl Default for ChessMaterialEval {
 		Self::new()
 	}
 }
-impl minimax::Evaluator for ChessMaterialEval {
+impl Evaluator for ChessMaterialEval {
 	type G = ChessBoard;
-	fn evaluate(&self, state: &ChessBoard) -> minimax::Evaluation {
+	fn evaluate_for(&self, state: &ChessBoard, p: Player) -> Evaluation {
 		const P: i16 = 100;
 		const N: i16 = 320;
 		const B: i16 = 330;
@@ -1407,7 +1411,7 @@ impl minimax::Evaluator for ChessMaterialEval {
 			(state.bishops & state.blacks).count() as i16 * B +
 			(state.rooks & state.blacks).count() as i16 * R +
 			(state.queens & state.blacks).count() as i16 * Q;
-		if state.turn == Color::White {
+		if p == Player::PLAYER1 {
 			w - b
 		} else {
 			b - w
@@ -1419,7 +1423,7 @@ impl minimax::Evaluator for ChessMaterialEval {
 pub struct ChessPosEval;
 impl ChessPosEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
 impl Default for ChessPosEval {
@@ -1427,10 +1431,10 @@ impl Default for ChessPosEval {
 		Self::new()
 	}
 }
-impl minimax::Evaluator for ChessPosEval {
+impl Evaluator for ChessPosEval {
 	type G = ChessBoard;
 
-	fn evaluate(&self, state: &ChessBoard) -> minimax::Evaluation {
+	fn evaluate_for(&self, state: &ChessBoard, p: Player) -> Evaluation {
 		const P: i16 = 100;
 		const N: i16 = 320;
 		const B: i16 = 330;
@@ -1531,13 +1535,15 @@ impl minimax::Evaluator for ChessPosEval {
 		//w_score -= w_files.iter().filter(|&&c| c > 1).sum::<i16>() * 20;
 		//b_score -= b_files.iter().filter(|&&c| c > 1).sum::<i16>() * 20;
 
-		if state.turn == Color::White { w_score - b_score } else { b_score - w_score }
+		if p == Player::PLAYER1 { w_score - b_score } else { b_score - w_score }
 	}
 }
 #[cfg(test)]
 mod tests {
 
-	use crate::bitboard::Bitboard8x8;
+	use kudchuet::ai::minimax::util::perft;
+
+use crate::bitboard::Bitboard8x8;
 
 use super::ChessBoard;
 	#[test]
@@ -1665,8 +1671,7 @@ use super::ChessBoard;
 	//    6       119060324     197.4ms    603000.4
 	//    7      3195901860        5.1s    631837.3
 	//cargo flamegraph --unit-test abstract_strategy -- chess::mychess::tests::perft_test --perfdata perf.data
-	use minimax::perft;
-
+	
 	#[test]
 	fn perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));

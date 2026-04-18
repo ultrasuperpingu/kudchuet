@@ -1,5 +1,6 @@
 use eframe::egui;
 use egui::Color32;
+use kudchuet::ai::minimax::Game;
 
 use crate::bitboard::Bitboard5x5;
 use crate::game::ThreeMusketeersEvalSimple;
@@ -32,14 +33,14 @@ impl BoardMove<ThreeMusketeers> for Move {
 
 	fn handle_clicks_interaction(
 		state: &ThreeMusketeers,
-		legals: &[<ThreeMusketeers as minimax::Game>::M],
+		legals: &[<ThreeMusketeers as Game>::M],
 		clicks: &[u16],
 	) -> kudchuet::gui::input_handler::MoveResult<ThreeMusketeers>
 	where
 		ThreeMusketeers: BoardGame,
-		<ThreeMusketeers as minimax::Game>::M: BoardMove<ThreeMusketeers>,
+		<ThreeMusketeers as Game>::M: BoardMove<ThreeMusketeers>,
 	{
-		let candidates: Vec<<ThreeMusketeers as minimax::Game>::M> = legals
+		let candidates: Vec<<ThreeMusketeers as Game>::M> = legals
 			.iter()
 			.filter(|&&m| m.matches_prefix(state, legals, clicks))
 			.copied()
@@ -61,7 +62,7 @@ impl BoardMove<ThreeMusketeers> for Move {
 			.collect();
 
 		if next_possible_clicks.is_empty() {
-			let exact_matches: Vec<<ThreeMusketeers as minimax::Game>::M> = candidates
+			let exact_matches: Vec<<ThreeMusketeers as Game>::M> = candidates
 				.iter()
 				.filter(|m| m.click_sequence(state).len() == n)
 				.copied()
@@ -105,7 +106,7 @@ impl BoardMove<ThreeMusketeers> for Move {
 	fn matches_prefix(
 		&self,
 		state: &ThreeMusketeers,
-		_legals: &[<ThreeMusketeers as minimax::Game>::M],
+		_legals: &[<ThreeMusketeers as Game>::M],
 		clicks: &[u16],
 	) -> bool {
 		let seq = self.click_sequence(state);
@@ -259,7 +260,7 @@ impl BoardGame for ThreeMusketeers {
 pub fn create_board() -> GenericBoardApp<ThreeMusketeers> {
 	let board = GenericBoardApp::new(
 		ThreeMusketeers::default(),
-		new_move_searcher_vec("Simple".into(), ThreeMusketeersEvalSimple {}, 5),
+		new_move_searcher_vec("Simple".into(), ThreeMusketeersEvalSimple::new(), 5),
 	);
 	board
 }

@@ -1,7 +1,6 @@
 use eframe::egui;
-use minimax::Game;
 
-use kudchuet::{GameResult, Player, PlayerType, ai::AIEngine, gui::{BoardGame, BoardMove}, new_move_searcher};
+use kudchuet::{GameResult, Player, PlayerType, ai::{AIEngine, minimax::{Game, Winner}}, gui::{BoardGame, BoardMove}, new_move_searcher};
 
 use crate::gui::Place;
 
@@ -48,9 +47,8 @@ impl BoardGame for Mancala {
 	}
 	fn result(&self) -> GameResult {
 		match <Self as Game>::get_winner(self) {
-			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::PLAYER2} else {GameResult::PLAYER1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::PLAYER2} else {GameResult::PLAYER1},
+			Some(Winner::Draw) => GameResult::Draw,
+			Some(Winner::Player(p)) => GameResult::Player(p),
 			None => GameResult::OnGoing,
 		}
 	}
@@ -62,7 +60,7 @@ impl Default for MancalaApp {
 	fn default() -> Self {
 		Self {
 			game: Mancala::default(),
-			computer: new_move_searcher(super::mancala::Evaluator{}, 5),
+			computer: new_move_searcher(super::mancala::EvaluatorMancala::default(), 5),
 			selected:None,
 			players: [PlayerType::default(), PlayerType::Computer],
 			

@@ -283,11 +283,7 @@ impl Backgammon {
 	}
 
 	pub fn current_player(&self) -> Player {
-		if self.dice.is_empty() {
-			Player::RandomMove
-		} else {
-			self.current_player
-		}
+		self.current_player
 	}
 	fn current_sign(&self) -> i8 {
 		if self.current_player == Player::PLAYER1 { 1 } else { -1 }

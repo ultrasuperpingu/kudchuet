@@ -13,7 +13,7 @@ fn main() -> eframe::Result<()> {
 	let args: Vec<String> = std::env::args().collect();
 
 	if args.iter().any(|arg| arg == "--uci") {
-		let searcher = new_move_searcher_static::<ChessBoard, _>(ChessMaterialEval {}, 5);
+		let searcher = new_move_searcher_static::<ChessBoard, _>(ChessMaterialEval::new(), 5);
 		let mut cli_engine = UCILikeCLIEngine::new(searcher);
 		cli_engine.process().unwrap();
 		Ok(())

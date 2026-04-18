@@ -221,7 +221,7 @@ impl BoardGame for Yote {
 pub fn create_board() -> GenericBoardApp<Yote> {
 	let board = GenericBoardApp::new(
 		Yote::default(),
-		new_move_searcher_vec("Material".into(), YoteMaterialEval {}, 5),
+		new_move_searcher_vec("Material".into(), YoteMaterialEval::new(), 5),
 	);
 	board
 }

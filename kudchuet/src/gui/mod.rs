@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use egui::{Color32, Stroke};
 use egui_field_editor::EguiInspect;
-use minimax::Game;
+use crate::ai::minimax::interface::Game;
 use serde::{Deserialize, Serialize};
 use crate::gui::shapes::StrokeData;
 use crate::gui::{input_handler::MoveResult, shapes::Shape};

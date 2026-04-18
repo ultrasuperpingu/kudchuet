@@ -1,19 +1,18 @@
-use std::hash::{DefaultHasher, Hash};
 use std::hash::Hasher;
+use std::hash::{DefaultHasher, Hash};
 
 use kudchuet::Player;
 
 use super::rules::Awale;
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
-
-
-impl minimax::Game for Awale {
-	type S =  Awale;
+impl Game for Awale {
+	type S = Awale;
 
 	type M = usize;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
-		let mut mvs: Vec<Self::M>=state.legal_moves();
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+		let mut mvs: Vec<Self::M> = state.legal_moves();
 		moves.append(&mut mvs);
 		// TODO: check winner
 		Self::get_winner(state)
@@ -25,15 +24,18 @@ impl minimax::Game for Awale {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_over() {
-			if state.winner().is_some() {
-				return Some(minimax::Winner::PlayerJustMoved);
+			if let Some(p) = state.winner() {
+				return Some(Winner::Player(p.idx() as u8));
 			} else {
-				return Some(minimax::Winner::Draw);
+				return Some(Winner::Draw);
 			}
 		}
 		None
+	}
+	fn current_player(state: &Self::S) -> Player {
+		state.turn
 	}
 
 	fn zobrist_hash(state: &Self::S) -> u64 {
@@ -48,24 +50,25 @@ pub struct AwaleMaterialEval;
 
 impl AwaleMaterialEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for AwaleMaterialEval {
+impl Evaluator for AwaleMaterialEval {
 	type G = Awale;
-	fn evaluate(&self, state: &Awale) -> minimax::Evaluation {
-		if state.turn == Player::PLAYER1 {
-			state.score_bottom as minimax::Evaluation - state.score_top as minimax::Evaluation
+	fn evaluate_for(&self, state: &Awale, p: Player) -> Evaluation {
+		if p == Player::PLAYER1 {
+			state.score_bottom as Evaluation - state.score_top as Evaluation
 		} else {
-			state.score_top as minimax::Evaluation - state.score_bottom as minimax::Evaluation
+			state.score_top as Evaluation - state.score_bottom as Evaluation
 		}
 	}
 }
 #[cfg(test)]
 mod tests {
 
+	use kudchuet::ai::minimax::util::perft;
+
 	use super::super::rules::Awale;
-	use minimax::perft;
 
 	//cargo test --release -p awale game::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
@@ -88,23 +91,11 @@ mod tests {
 
 		let nodes = perft::<Awale>(&mut board, 12, true);
 		const NB_NODES: [u64; 13] = [
-			1,
-			6,
-			36,
-			190,
-			1014,
-			5219,
-			27332,
-			139157,
-			711414,
-			3592872,
-			18137964,
-			91558687,
+			1, 6, 36, 190, 1014, 5219, 27332, 139157, 711414, 3592872, 18137964, 91558687,
 			459952410,
 		];
 		for (i, n) in nodes.iter().enumerate() {
 			assert_eq!(NB_NODES[i], *n, "Mismatch at depth {}", i);
 		}
 	}
-
 }

@@ -3,6 +3,7 @@ use egui_field_editor::{EguiInspect, EguiInspector, add_button};
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::external_engine::ExternalEngineEntry;
+use crate::ai::minimax::interface::Game;
 use crate::gui::board_app::GenericBoardApp;
 use crate::gui::{BoardGame, BoardMove};
 
@@ -203,7 +204,7 @@ impl ImportExportPanel {
 		game: &G,
 		on_position_loaded: &mut dyn FnMut(G)
 	)
-	where <G as minimax::Game>::M: BoardMove<G>
+	where <G as Game>::M: BoardMove<G>
 	{
 		ui.vertical(|ui| {
 			ui.label(egui::RichText::new("Position").strong());

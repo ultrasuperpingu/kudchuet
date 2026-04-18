@@ -203,7 +203,7 @@ impl<G> SquareDrawer<G> for HareAndHoundsSquareDrawer
 	}
 }
 pub fn create_board() -> GenericBoardApp<HareAndHounds> {
-	let mut board=GenericBoardApp::new(HareAndHounds::default(), new_move_searcher_vec("Simple".into(), HareAndHoundsEval{}, 12));
+	let mut board=GenericBoardApp::new(HareAndHounds::default(), new_move_searcher_vec("Simple".into(), HareAndHoundsEval::new(), 12));
 	board.board_drawer.set_square_drawer(Box::new(HareAndHoundsSquareDrawer{}));
 	board.depth = 12;
 	board.max_depth = 25;

@@ -1,9 +1,10 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 use bitboard::BitIter;
-use kudchuet::GameResult;
+use kudchuet::{GameResult, Player};
 use bitboard::Bitboard;
-//use minimax::Evaluation;
+
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 
 use crate::rules::{Board, NEIGHBORS_HARE};
@@ -11,12 +12,12 @@ use crate::rules::{Board, NEIGHBORS_HARE};
 use super::rules::{Move, HareAndHounds};
 
 
-impl minimax::Game for HareAndHounds {
+impl Game for HareAndHounds {
 	type S =  HareAndHounds;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		if let Some(w) = Self::get_winner(state) {
 			return Some(w);
 		}
@@ -35,17 +36,23 @@ impl minimax::Game for HareAndHounds {
 		//println!("apply after\nstate\n{}\ns\n{}", state, s);
 		Some(s)
 	}
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		match state.result() {
-			GameResult::PLAYER1 => if state.turn() {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			GameResult::PLAYER2 => if !state.turn() {Some(minimax::Winner::PlayerJustMoved)} else {Some(minimax::Winner::PlayerToMove)},
-			GameResult::Player(_) => unreachable!(),
+			GameResult::Player(p) => Some(Winner::Player(p)),
 			GameResult::Draw => unreachable!(),
 			GameResult::OnGoing => None,
 		}
 	}
 	fn zobrist_hash(state: &Self::S) -> u64 {
 		state.compute_hash()
+	}
+	
+	fn current_player(state: &Self::S) -> Player {
+		
+		match state.turn() {
+			true => Player::PLAYER2,
+			false => Player::PLAYER1,
+		}
 	}
 }
 
@@ -55,12 +62,12 @@ pub struct HareAndHoundsEvalDumb;
 
 impl HareAndHoundsEvalDumb {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for HareAndHoundsEvalDumb {
+impl Evaluator for HareAndHoundsEvalDumb {
 	type G = HareAndHounds;
-	fn evaluate(&self, _state: &HareAndHounds) -> minimax::Evaluation {
+	fn evaluate_for(&self, _state: &HareAndHounds, _p: Player) -> Evaluation {
 		0
 	}
 }
@@ -75,14 +82,14 @@ pub struct HareAndHoundsEval;
 
 impl HareAndHoundsEval {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for HareAndHoundsEval {
+impl Evaluator for HareAndHoundsEval {
 	type G = HareAndHounds;
 
 	#[inline(always)]
-	fn evaluate(&self, state: &HareAndHounds) -> minimax::Evaluation {
+	fn evaluate_for(&self, state: &HareAndHounds, p: Player) -> Evaluation {
 		let hare = state.hare;
 
 		// 1. Liberté du lièvre (cases disponibles)
@@ -105,13 +112,19 @@ impl minimax::Evaluator for HareAndHoundsEval {
 		// + progression du lièvre
 		// - proximité des chiens
 		// pondéré légèrement
-		10 * hare_moves + 5 * hare_col - 3 * avg_dist
+		let score = 10 * hare_moves + 5 * hare_col - 3 * avg_dist;
+		if p == Player::PLAYER1 {
+			-score
+		} else {
+			score
+		}
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use minimax::{IterativeOptions, Strategy, perft, strategies::iterative::IterativeSearch};
+	
+	use kudchuet::ai::minimax::{IterativeOptions, iterative::IterativeSearch, Strategy, util::perft};
 	use crate::game::HareAndHoundsEval;
 
 	use super::HareAndHounds;
@@ -219,7 +232,7 @@ mod tests {
 	#[test]
 	fn perft_best() {
 		let mut board = HareAndHounds::default();
-		let mut ai = IterativeSearch::<HareAndHoundsEval>::new(HareAndHoundsEval{}, IterativeOptions::new());
+		let mut ai = IterativeSearch::<HareAndHoundsEval>::new(HareAndHoundsEval::new(), IterativeOptions::new());
 		ai.set_max_depth(12);
 		let _m = ai.choose_move(&board);
 		println!("{:?}", ai.principal_variation().len());

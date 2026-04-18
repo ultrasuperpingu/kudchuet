@@ -1,19 +1,21 @@
-
 use bitboard::{BitIter, Bitboard};
 
-use kudchuet::GameResult;
+use kudchuet::{
+	GameResult, Player,
+	ai::minimax::{Evaluation, Evaluator, Game, Winner},
+};
 
-use crate::{bitboard::Bitboard5x5, rules::{Move, ThreeMusketeers}};
+use crate::{
+	bitboard::Bitboard5x5,
+	rules::{Move, ThreeMusketeers},
+};
 
-
-
-
-impl minimax::Game for ThreeMusketeers {
-	type S =  ThreeMusketeers;
+impl Game for ThreeMusketeers {
+	type S = ThreeMusketeers;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		state.legal_moves_inplace(moves);
 		Self::get_winner(state)
 	}
@@ -24,24 +26,10 @@ impl minimax::Game for ThreeMusketeers {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		match state.result() {
 			GameResult::OnGoing => None,
-			GameResult::PLAYER1 => {
-				if state.turn == 0 {
-					Some(minimax::Winner::PlayerToMove)
-				} else {
-					Some(minimax::Winner::PlayerJustMoved)
-				}
-			},
-			GameResult::PLAYER2 => {
-				if state.turn == 0 {
-					Some(minimax::Winner::PlayerJustMoved)
-				} else {
-					Some(minimax::Winner::PlayerToMove)
-				}
-			},
-			GameResult::Player(_) => unreachable!(),
+			GameResult::Player(p) => Some(Winner::Player(p)),
 			GameResult::Draw => unreachable!(),
 		}
 	}
@@ -53,13 +41,23 @@ impl minimax::Game for ThreeMusketeers {
 		let file_char2 = (b'a' + x2) as char;
 		let rank_char2 = (b'1' + y2) as char;
 
-		Some(format!("{}{}-{}{}", file_char1, rank_char1, file_char2, rank_char2))
+		Some(format!(
+			"{}{}-{}{}",
+			file_char1, rank_char1, file_char2, rank_char2
+		))
 	}
 
 	fn zobrist_hash(state: &Self::S) -> u64 {
 		state.get_hash()
 	}
-	
+
+	fn current_player(state: &Self::S) -> Player {
+		if state.turn == 0 {
+			Player::PLAYER1
+		} else {
+			Player::PLAYER2
+		}
+	}
 }
 
 #[derive(Clone, Default, Copy, Debug)]
@@ -67,12 +65,12 @@ pub struct ThreeMusketeersEvalDumb;
 
 impl ThreeMusketeersEvalDumb {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for ThreeMusketeersEvalDumb {
+impl Evaluator for ThreeMusketeersEvalDumb {
 	type G = ThreeMusketeers;
-	fn evaluate(&self, _state: &ThreeMusketeers) -> minimax::Evaluation {
+	fn evaluate_for(&self, _state: &ThreeMusketeers, _p: Player) -> Evaluation {
 		0
 	}
 }
@@ -81,22 +79,22 @@ pub struct ThreeMusketeersEvalSimple;
 
 impl ThreeMusketeersEvalSimple {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for ThreeMusketeersEvalSimple {
+impl Evaluator for ThreeMusketeersEvalSimple {
 	type G = ThreeMusketeers;
-	fn evaluate(&self, state: &ThreeMusketeers) -> minimax::Evaluation {
+	fn evaluate_for(&self, state: &ThreeMusketeers, p: Player) -> Evaluation {
 		let mut nei = 0;
-		let mut last = [(0,0);3];
+		let mut last = [(0, 0); 3];
 		for (i, m) in state.musketeers.iter_bits().enumerate() {
 			nei += state.guards.neighbors_ortho(m as usize).count();
-			let coords=Bitboard5x5::coords_from_index(m as usize);
-			last[i]=coords;
+			let coords = Bitboard5x5::coords_from_index(m as usize);
+			last[i] = coords;
 		}
 		let mut max = 0;
 		for a in 0..3 {
-			for b in (a+1)..3 {
+			for b in (a + 1)..3 {
 				let (x1, y1) = last[a];
 				let (x2, y2) = last[b];
 				let dx = (x1 as i32 - x2 as i32).abs();
@@ -108,28 +106,24 @@ impl minimax::Evaluator for ThreeMusketeersEvalSimple {
 			}
 		}
 
-		let score = max as i16-nei as i16;
-		if state.turn == 1 {
-			score
-		} else {
-			-score
-		}
+		let score = max as i16 - nei as i16;
+		if p == Player::PLAYER1 { score } else { -score }
 	}
+
 }
 #[derive(Clone, Default, Copy)]
-pub struct ThreeMusketeersEval2;
+pub struct ThreeMusketeersEvalAdvanced;
 
-impl ThreeMusketeersEval2 {
+impl ThreeMusketeersEvalAdvanced {
 	pub fn new() -> Self {
-		Self
+		Self {}
 	}
 }
-impl minimax::Evaluator for ThreeMusketeersEval2 {
-	
-	type G=ThreeMusketeers;
-	fn evaluate(&self, state: &ThreeMusketeers) -> minimax::Evaluation {
+impl Evaluator for ThreeMusketeersEvalAdvanced {
+	type G = ThreeMusketeers;
+	fn evaluate_for(&self, state: &ThreeMusketeers, p: Player) -> Evaluation {
 		let mut pressure = 0;
-		let mut coords = vec![(0,0); 3];
+		let mut coords = vec![(0, 0); 3];
 
 		for (i, m) in state.musketeers.iter_bits().enumerate() {
 			pressure += state.guards.neighbors_ortho(m as usize).count();
@@ -138,10 +132,11 @@ impl minimax::Evaluator for ThreeMusketeersEval2 {
 
 		let mut dispersion = 0;
 		for a in 0..3 {
-			for b in (a+1)..3 {
+			for b in (a + 1)..3 {
 				let (x1, y1) = coords[a];
 				let (x2, y2) = coords[b];
-				let d = (x1 as i32 - x2 as i32).abs()
+				let d = (x1 as i32 - x2 as i32)
+					.abs()
 					.max((y1 as i32 - y2 as i32).abs());
 				dispersion = dispersion.max(d);
 			}
@@ -149,73 +144,18 @@ impl minimax::Evaluator for ThreeMusketeersEval2 {
 
 		let mut border_score = 0;
 		for &(x, y) in &coords {
-			let d = x.min(4-x).min(y.min(4-y));
+			let d = x.min(4 - x).min(y.min(4 - y));
 			border_score += (4 - d) as i32;
 		}
 
 		let mobility = state.legal_moves().len() as i32;
 
-		let score =
-			20 * dispersion
-		- 15 * pressure as i32
-		+ 10 * border_score
-		+  5 * mobility;
+		let score = 20 * dispersion - 15 * pressure as i32 + 10 * border_score + 5 * mobility;
 
-		if state.turn == 1 {
-			score as minimax::Evaluation
+		if p == Player::PLAYER1 {
+			score as Evaluation
 		} else {
-			-score as minimax::Evaluation
-		}
-	}
-	
-}
-
-#[derive(Clone, Default, Copy, PartialEq, Eq)]
-pub struct ThreeMusketeersEvalAdvance;
-
-impl ThreeMusketeersEvalAdvance {
-	pub fn new() -> Self {
-		Self
-	}
-}
-impl minimax::Evaluator for ThreeMusketeersEvalAdvance {
-	
-	type G=ThreeMusketeers;
-	fn evaluate(&self, state: &ThreeMusketeers) -> minimax::Evaluation {
-		let mut pressure = 0;
-		let mut coords = [(0,0); 3];
-
-		for (i, m) in state.musketeers.iter_bits().enumerate() {
-			pressure += state.guards.neighbors_ortho(m as usize).count();
-			coords[i] = Bitboard5x5::coords_from_index(m as usize);
-		}
-
-		let mut dispersion = 0;
-		for a in 0..3 {
-			for b in (a+1)..3 {
-				let (x1, y1) = coords[a];
-				let (x2, y2) = coords[b];
-				let d = (x1 as i32 - x2 as i32).abs()
-					.max((y1 as i32 - y2 as i32).abs());
-				dispersion = dispersion.max(d);
-			}
-		}
-
-		let mut border_score = 0;
-		for &(x, y) in &coords {
-			let d = x.min(4-x).min(y.min(4-y));
-			border_score += (4 - d) as i32;
-		}
-
-		let score =
-			40 * dispersion
-			+ 30 * border_score
-			-  5 * pressure as i32;
-
-		if state.turn == 1 {
-			-score as minimax::Evaluation
-		} else {
-			score as minimax::Evaluation
+			-score as Evaluation
 		}
 	}
 }
@@ -238,13 +178,14 @@ impl minimax::Evaluator for ThreeMusketeersEvalAdvance {
 #[cfg(test)]
 mod tests {
 
+	use kudchuet::ai::minimax::util::perft;
+
 	use crate::rules::ThreeMusketeers;
-	use minimax::perft;
 	#[test]
 	fn perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));
 		let mut board = ThreeMusketeers::new();
-		
+
 		let max_depth = 12;
 		let nodes = perft::<ThreeMusketeers>(&mut board, max_depth, true);
 		assert!(nodes.len() == (max_depth + 1) as usize);

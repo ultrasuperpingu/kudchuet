@@ -122,7 +122,7 @@ impl BoardGame for Reversi {
 pub fn create_board() -> GenericBoardApp<Reversi> {
 	let board = GenericBoardApp::new(
 		Reversi::default(),
-		new_move_searcher_vec("Dumb".into(), ReversiEval {}, 4),
+		new_move_searcher_vec("Dumb".into(), ReversiEval::new(), 4),
 	);
 	board
 }

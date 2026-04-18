@@ -2,13 +2,15 @@
 
 use kudchuet::Player;
 
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+
 use super::rules::{Backgammon, Move};
 
-impl minimax::Game for Backgammon {
+impl Game for Backgammon {
 	type S = Backgammon;
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> std::option::Option<minimax::Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> std::option::Option<Winner> {
 		*moves = state.legal_moves();
 		Self::get_winner(state)
 	}
@@ -23,45 +25,26 @@ impl minimax::Game for Backgammon {
 		Some(format!("{:?}", mv))
 	}
 
-	fn get_winner(state: &Self::S) -> Option<minimax::Winner> {
-		if state.is_game_over() {
-			if let Some(winner) = state.winner() {
-				if winner == state.current_player {
-					Some(minimax::Winner::PlayerJustMoved)
-				} else {
-					Some(minimax::Winner::PlayerToMove)
-				}
-			} else {
-				Some(minimax::Winner::Draw)
-			}
-		} else {
-			None
-		}
-	}
 	fn zobrist_hash(state: &Self::S) -> u64 {
 		//let mut hasher = DefaultHasher::new();
 		//state.hash(&mut hasher);
 		//hasher.finish()
 		state.hash
 	}
-}
-impl minimax::TurnBasedGame for Backgammon {
-	fn current_player(state: &Self::S) -> i8 {
-		state.current_player().idx() as i8
+	fn current_player(state: &Self::S) -> Player {
+		state.current_player()
 	}
-	fn get_explicit_winner(state: &Self::S) -> Option<minimax::TurnBasedWinner> {
+	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_game_over() {
 			if let Some(winner) = state.winner() {
-				Some(minimax::TurnBasedWinner::Player(winner.idx() as i8))
+				Some(Winner::Player(winner.idx() as u8))
 			} else {
-				Some(minimax::TurnBasedWinner::Draw)
+				Some(Winner::Draw)
 			}
 		} else {
 			None
 		}
 	}
-}
-impl minimax::StochasticGame for Backgammon {
 	fn is_random_move(state: &Self::S) -> bool {
 		state.dice.is_empty()
 	}
@@ -72,39 +55,32 @@ impl minimax::StochasticGame for Backgammon {
 }
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
 pub struct BackgammonMaterialEval {
-	turn:i8
+	turn:Player
 }
 
-impl minimax::Evaluator for BackgammonMaterialEval {
+impl Evaluator for BackgammonMaterialEval {
 	type G = Backgammon;
 
-	fn evaluate(&self, state: &Backgammon) -> minimax::Evaluation {
-		if self.turn == Player::PLAYER1.idx() as i8 {
-			state.outside[0] as minimax::Evaluation - state.outside[1] as minimax::Evaluation
+	fn evaluate_for(&self, state: &Backgammon, p: Player) -> Evaluation {
+		if p == Player::PLAYER1 {
+			state.outside[0] as Evaluation - state.outside[1] as Evaluation
 		} else {
-			state.outside[1] as minimax::Evaluation - state.outside[0] as minimax::Evaluation
+			state.outside[1] as Evaluation - state.outside[0] as Evaluation
 		}
 	}
 }
-impl minimax::TurnBasedGameEvaluator for BackgammonMaterialEval {
-	fn set_evaluated_player(&mut self, p: i8) {
-		self.turn = p;
-	}
-}
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
-pub struct BackgammonSimpleEval {
-	turn:i8
-}
+pub struct BackgammonSimpleEval;
 const CONSECUTIVE_BONUS: i16 = 19;
 const ON_BAR_MALUS: i16 = 71;
 const OUT_BONUS: i16 = 103;
 
-impl minimax::Evaluator for BackgammonSimpleEval {
+impl Evaluator for BackgammonSimpleEval {
 	type G = Backgammon;
 
-	fn evaluate(&self, state: &Backgammon) -> minimax::Evaluation {
-		let mut scorep1 = 0 as minimax::Evaluation;
-		let mut scorep2 = 0 as minimax::Evaluation;
+	fn evaluate_for(&self, state: &Backgammon, p: Player) -> Evaluation {
+		let mut scorep1 = 0 as Evaluation;
+		let mut scorep2 = 0 as Evaluation;
 		scorep1 += state.outside[0] as i16 * OUT_BONUS;
 		scorep2 += state.outside[1] as i16 * OUT_BONUS;
 		scorep1 -= state.on_bar[0] as i16 * ON_BAR_MALUS;
@@ -146,7 +122,7 @@ impl minimax::Evaluator for BackgammonSimpleEval {
 				consecutive = 0;
 			}
 		}
-		if self.turn == Player::PLAYER1.idx() as i8 {
+		if p == Player::PLAYER1 {
 			scorep1 - scorep2
 		} else {
 			scorep2 - scorep1
@@ -161,10 +137,5 @@ fn apply_consecutive_bonus(scorep1: &mut i16, scorep2: &mut i16, consecutive: i1
 		} else {
 			*scorep1 += (consecutive-2)*CONSECUTIVE_BONUS;
 		}
-	}
-}
-impl minimax::TurnBasedGameEvaluator for BackgammonSimpleEval {
-	fn set_evaluated_player(&mut self, p: i8) {
-		self.turn = p;
 	}
 }

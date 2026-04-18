@@ -1,7 +1,7 @@
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::{Color32, Rect, Stroke, StrokeKind};
-use minimax::Game;
+use kudchuet::ai::minimax::{Game, Winner};
 use crate::bitboard::Bitboard5x5;
 use crate::game::BaghChalMaterialEval;
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -78,9 +78,8 @@ impl BoardGame for BaghChal {
 	}
 	fn result(&self) -> GameResult {
 		match <Self as Game>::get_winner(self) {
-			Some(minimax::Winner::Draw) => GameResult::Draw,
-			Some(minimax::Winner::PlayerJustMoved) => if self.current_player() == Player::PLAYER1 {GameResult::PLAYER2} else {GameResult::PLAYER1},
-			Some(minimax::Winner::PlayerToMove) => if self.current_player() == Player::PLAYER2 {GameResult::PLAYER2} else {GameResult::PLAYER1},
+			Some(Winner::Draw) => GameResult::Draw,
+			Some(Winner::Player(p)) => GameResult::Player(p),
 			None => GameResult::OnGoing,
 		}
 	}
