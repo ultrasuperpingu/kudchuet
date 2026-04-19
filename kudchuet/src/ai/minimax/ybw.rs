@@ -181,6 +181,7 @@ where
 		}
 		let current_player = E::G::current_player(s);
 		let alpha_orig = alpha;
+		let beta_orig = beta;
 		let hash = E::G::zobrist_hash(s);
 		let mut good_move = None;
 		if let Some(value) = self
@@ -234,11 +235,15 @@ where
 				beta,
 			)?
 		};
-		//alpha = max(alpha, initial_value);
-		let (best, best_move) = /*if alpha >= beta {
+		if current_player == player_to_move {
+			alpha = alpha.max(initial_value);
+		} else {
+			beta = beta.min(initial_value);
+		}
+		let (best, best_move) = if alpha >= beta {
 			// Skip search
 			(initial_value, first_move)
-		} else */if self.par_opts.serial_cutoff_depth >= depth {
+		} else if self.par_opts.serial_cutoff_depth >= depth {
 			// Serial search
 			let mut best = initial_value;
 			let mut best_move = first_move;
@@ -322,8 +327,8 @@ where
 							Some(m),
 							depth - 1,
 							player_to_move,
-							alpha,
-							alpha + 1,
+							beta - 1,
+							beta,
 						)?;
 						if probe > alpha && probe < beta {
 							// Full search fallback.
@@ -332,7 +337,7 @@ where
 								Some(m),
 								depth - 1,
 								player_to_move,
-								probe,
+								alpha,
 								beta,
 							)?
 						} else {
@@ -427,7 +432,7 @@ where
 					// MIN node
 					let mut state = s.clone();
 					let mut new = AppliedMove::<E::G>::new(&mut state, m);
-					let value = if self.opts.null_window_search && initial_alpha > alpha_orig {
+					let value = if self.opts.null_window_search && initial_beta < beta_orig {
 						// TODO: send reference to alpha as neg_beta to children.
 						let probe = self.expectiminimax(
 							&mut new,
@@ -448,8 +453,8 @@ where
 								Some(m),
 								depth - 1,
 								player_to_move,
-								probe,
-								beta.load(Ordering::SeqCst),
+								initial_alpha,
+								initial_beta,
 							)?
 						} else {
 							probe
@@ -484,7 +489,7 @@ where
 		};
 
 		self.table
-			.concurrent_update(hash, alpha_orig, beta, depth, best, best_move);
+			.concurrent_update(hash, alpha_orig, beta_orig, depth, best, best_move);
 		self.move_pool.local_do(|pool| pool.free(moves));
 		Some(clamp_value(best))
 	}
