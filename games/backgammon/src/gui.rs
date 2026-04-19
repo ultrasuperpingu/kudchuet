@@ -4,7 +4,7 @@ use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke, StrokeKind};
 use kudchuet::ai::MoveSearcherBuilderDyn;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 
@@ -100,23 +100,6 @@ impl BoardGame for Backgammon {
 		10
 	}
 
-	fn current_player(&self) -> Player {
-		self.current_player()
-	}
-	fn do_random(&mut self) {
-		self.roll_dice();
-	}
-	fn result(&self) -> GameResult {
-		if self.is_game_over() {
-			if let Some(winner) = self.winner() {
-				GameResult::Player(winner.idx() as u8)
-			} else {
-				GameResult::Draw
-			}
-		} else {
-			GameResult::OnGoing
-		}
-	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		if x == 6 {
 			return self.bar_piece(y);
@@ -242,7 +225,7 @@ impl BoardGame for Backgammon {
 	fn play_random(&mut self) {
 		self.roll_dice();
 	}
-	fn get_position_from_string(&self, _pos_str: &String) -> Result<Self, String> {
+	fn get_position_from_string(&self, _pos_str: &str) -> Result<Self, String> {
 		Backgammon::from_position_notation(_pos_str)
 	}
 	fn position_to_string(&self) -> Option<String> {

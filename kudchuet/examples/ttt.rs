@@ -198,8 +198,8 @@ fn square_to_player(square: Square) -> Player {
 fn square_to_winner(square: Square) -> Winner {
 	match square {
 		Square::Empty => unreachable!(),
-		Square::X => Winner::Player(0),
-		Square::O => Winner::Player(1),
+		Square::X => Winner::PLAYER1,
+		Square::O => Winner::PLAYER2,
 	}
 }
 #[derive(Copy, Clone, PartialEq, Eq)]

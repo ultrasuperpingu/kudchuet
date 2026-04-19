@@ -27,7 +27,7 @@ impl Game for Awale {
 	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_over() {
 			if let Some(p) = state.winner() {
-				return Some(Winner::Player(p.idx() as u8));
+				return Some(Winner::Player(p));
 			} else {
 				return Some(Winner::Draw);
 			}

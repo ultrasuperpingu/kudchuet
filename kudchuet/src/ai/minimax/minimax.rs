@@ -84,7 +84,7 @@ impl<E: Evaluator> ExpectiMinimax<E> {
 		if depth == 0 {
 			if let Some(winner) = E::G::get_winner(s) {
 				return match winner {
-					Winner::Player(p) if p as usize == player_to_move.idx() => BEST_EVAL,
+					Winner::Player(p) if p == player_to_move => BEST_EVAL,
 					Winner::Player(_) => WORST_EVAL,
 					Winner::Draw => 0,
 				};
@@ -94,7 +94,7 @@ impl<E: Evaluator> ExpectiMinimax<E> {
 		let mut moves = self.move_pool.alloc();
 		if let Some(winner) = E::G::generate_moves(s, &mut moves) {
 			return match winner {
-				Winner::Player(p) if p as usize == player_to_move.idx() => BEST_EVAL,
+				Winner::Player(p) if p == player_to_move => BEST_EVAL,
 				Winner::Draw => 0,
 				Winner::Player(_) => WORST_EVAL,
 			};

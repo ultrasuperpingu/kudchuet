@@ -33,8 +33,8 @@ impl Game for ConnectFour {
 		if state.is_victory() {
 			match state.player_turn() {
 				Cell::Empty => unreachable!(),
-				Cell::PlayerOne => Some(Winner::Player(1)),
-				Cell::PlayerTwo => Some(Winner::Player(0)),
+				Cell::PlayerOne => Some(Winner::PLAYER2),
+				Cell::PlayerTwo => Some(Winner::PLAYER1),
 			}
 		} else if state.is_over() {
 			Some(Winner::Draw)

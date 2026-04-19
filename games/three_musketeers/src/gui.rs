@@ -7,7 +7,7 @@ use crate::game::ThreeMusketeersEvalSimple;
 use crate::rules::{Move, ThreeMusketeers};
 use kudchuet::gui::shapes::Shape;
 use kudchuet::{
-	GameResult, Player,
+	Player,
 	gui::{
 		BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType,
 		shapes::TextData,
@@ -117,7 +117,7 @@ impl BoardMove<ThreeMusketeers> for Move {
 		None
 	}
 
-	fn from_uci(_m_str: &String) -> Result<Self, String> {
+	fn from_uci(_m_str: &str) -> Result<Self, String> {
 		Err("Not supported".into())
 	}
 }
@@ -167,26 +167,6 @@ impl BoardGame for ThreeMusketeers {
 		5
 	}
 
-	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut moves = vec![];
-		self.legal_moves_inplace(&mut moves);
-		moves
-	}
-	fn play(&mut self, mv: Self::M) {
-		self.play_unchecked(mv);
-	}
-
-	fn result(&self) -> GameResult {
-		self.result()
-	}
-
-	fn current_player(&self) -> Player {
-		if self.turn == 0 {
-			Player::PLAYER1
-		} else {
-			Player::PLAYER2
-		}
-	}
 	fn get_name(&self, p: Player) -> String {
 		match p {
 			Player::PLAYER1 => "Musketeers".into(),
@@ -228,11 +208,9 @@ impl BoardGame for ThreeMusketeers {
 	fn position_to_string(&self) -> Option<String> {
 		Some(self.to_fen())
 	}
-	fn get_position_from_string(&self, pos_str: &String) -> Result<Self, String> {
+	fn get_position_from_string(&self, pos_str: &str) -> Result<Self, String> {
 		Self::from_fen(pos_str)
 	}
-
-	fn do_random(&mut self) {}
 
 	fn nb_players(&self) -> u8 {
 		2
@@ -242,11 +220,11 @@ impl BoardGame for ThreeMusketeers {
 		None
 	}
 
-	fn game_from_string(&self, _game_str: &String) -> Result<Vec<Self::M>, String> {
+	fn game_from_string(&self, _game_str: &str) -> Result<Vec<Self::M>, String> {
 		Err("Not Supported".into())
 	}
 
-	fn move_from_string(&self, m_str: &String) -> Result<Self::M, String> {
+	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
 		Self::M::from_uci(m_str)
 	}
 

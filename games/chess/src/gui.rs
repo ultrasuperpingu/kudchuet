@@ -1,6 +1,6 @@
 use eframe::egui;
 use egui::Color32;
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 use kudchuet::ai::{AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
@@ -22,7 +22,7 @@ impl BoardMove<ChessBoard> for Move {
 	fn to_uci(&self) -> Option<String> {
 		Some(self.to_string())
 	}
-	fn from_uci(m_str: &String) -> Result<Self, String> {
+	fn from_uci(m_str: &str) -> Result<Self, String> {
 		Self::from_uci(m_str).ok_or("Invalid uci".into())
 	}
 }
@@ -70,24 +70,6 @@ impl BoardGame for ChessBoard {
 
 	fn height(&self) -> u8 {
 		8
-	}
-
-	fn legal_moves(&self) -> Vec<Self::M> {
-		self.legal_moves()
-	}
-	fn play(&mut self, mv: Self::M) {
-		self.play(&mv);
-	}
-	#[inline(always)]
-	fn result(&self) -> GameResult {
-		self.status()
-	}
-
-	fn current_player(&self) -> Player {
-		match self.turn() {
-			Color::White => Player::PLAYER1,
-			Color::Black => Player::PLAYER2,
-		}
 	}
 	fn get_name(&self, p: Player) -> String {
 		match p {
@@ -140,10 +122,10 @@ impl BoardGame for ChessBoard {
 		}
 		Some(game)
 	}
-	fn get_position_from_string(&self, pos_str: &String) -> Result<Self, String> {
+	fn get_position_from_string(&self, pos_str: &str) -> Result<Self, String> {
 		Self::from_fen(pos_str)
 	}
-	fn move_from_string(&self, m_str: &String) -> Result<Self::M, String> {
+	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
 		let res= self.san_to_move(m_str);
 		if res.is_err() {
 			let mv = Move::from_uci(m_str);
@@ -153,7 +135,7 @@ impl BoardGame for ChessBoard {
 		}
 		res
 	}
-	fn game_from_string(&self, _game_str: &String) -> Result<Vec<Self::M>, String> {
+	fn game_from_string(&self, _game_str: &str) -> Result<Vec<Self::M>, String> {
 		Err("Not Supported".into())
 	}
 	fn default_style() -> BoardStyle {

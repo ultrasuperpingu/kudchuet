@@ -134,14 +134,7 @@ impl Default for BoardStyle {
 	}
 }
 pub trait EGUIPieceType {
-	fn shape(&self) -> Shape {
-		Shape::Circle {
-			fill_color: Some(Color32::BLACK),
-			size: 0.7,
-			text: None,
-			stroke: None
-		}
-	}
+	fn shape(&self) -> Shape;
 }
 #[derive(Default, Debug, EguiInspect)]
 pub struct DefaultSettings;
@@ -150,37 +143,65 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 {
 	type PieceType: Copy+EGUIPieceType;
 	type Settings: Default+EguiInspect;
-
+	/// Create a Board game from the provided settings.
+	/// 
+	/// Default implementation ignores settings; override if game requires configuration.
 	fn build_from_settings(_settings: &Self::Settings) -> Self {
 		Self::default()
 	}
+	/// Width of the board
 	fn width(&self) -> u8;
+	/// Height of the board
 	fn height(&self) -> u8;
 
+	/// Generate legal moves from the current position.
+	/// 
+	/// This is a convinience method. Default implementation call Game::generate_moves.
+	/// Collects all generated moves into a Vec.
+	/// Prefer using generate_moves for performance-critical paths.
+	/// This does not need to be reimplemented.
 	fn legal_moves(&self) -> Vec<Self::M> {
 		let mut moves=vec![];
 		<Self as Game>::generate_moves(self, &mut moves);
 		moves
 	}
+
+	/// Apply a move to the game.
+	/// 
+	/// This is a convinient method. Default implementation call Game::apply(self).
+	/// This does not need to be reimplemented.
 	fn play(&mut self, mv: Self::M) {
 		let state=<Self as Game>::apply(self, mv);
 		if let Some(state) = state {
 			*self=state;
 		}
 	}
-	fn do_random(&mut self) {
+	/// Get the current status of the game.
+	/// 
+	/// This is a convinient method. Default implementation call Game::get_winner(self) and convert it to GameResult.
+	/// This does not need to be reimplemented.
+	fn result(&self) -> GameResult {
+		Self::get_winner(self).into()
 	}
-	fn result(&self) -> GameResult;
-	fn current_player(&self) -> Player;
+	/// Get the player which have to play
+	/// 
+	/// This is a convinient method. Default implementation call Game::current_player(self).
+	/// This does not need to be reimplemented.
+	fn current_player(&self) -> Player {
+		<Self as Game>::current_player(self)
+	}
+	/// Number of players (default is 2)
 	fn nb_players(&self) -> u8 {
 		2
 	}
-
+	/// Should returns Player's name (ex: White, Black).
+	/// Default is Player n.
 	fn get_name(&self, p: Player) -> String {
 		p.to_string()
 	}
-
+	/// Returns the piece at a particular square on the board
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType>;
+	/// 
 	fn index_from_coords(x: u8, y: u8) -> u16;
 	fn coords_from_index(index: u16) -> (u8, u8);
 	fn position_to_string(&self) -> Option<String> {
@@ -189,13 +210,13 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	fn game_to_string(&self, _mvs: &[Self::M]) -> Option<String> {
 		None
 	}
-	fn game_from_string(&self, _game_str: &String) -> Result<Vec<Self::M>, String> {
+	fn game_from_string(&self, _game_str: &str) -> Result<Vec<Self::M>, String> {
 		Err("Not Supported".into())
 	}
-	fn get_position_from_string(&self, _pos_str: &String) -> Result<Self, String> {
+	fn get_position_from_string(&self, _pos_str: &str) -> Result<Self, String> {
 		Err("Not Supported".into())
 	}
-	fn move_from_string(&self, m_str: &String) -> Result<Self::M, String> {
+	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
 		Self::M::from_uci(m_str)
 	}
 	fn move_to_string(&self, m: &Self::M) -> Option<String> {
@@ -294,7 +315,7 @@ pub trait BoardMove<G : Game> : Debug + Sized + Copy
 	fn to_uci(&self) -> Option<String> {
 		None
 	}
-	fn from_uci(_m_str: &String) -> Result<Self, String> {
+	fn from_uci(_m_str: &str) -> Result<Self, String> {
 		Err("Not supported".into())
 	}
 }

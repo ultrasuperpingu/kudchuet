@@ -108,9 +108,9 @@ impl Game for Mancala {
 			Some(if to_move_total == 24 {
 				Winner::Draw
 			} else if to_move_total > 24 {
-				Winner::Player(board.to_move as u8)
+				Winner::Player(Player(board.to_move as u8))
 			} else {
-				Winner::Player((!board.to_move) as u8)
+				Winner::Player(Player((!board.to_move) as u8))
 			})
 		} else {
 			None

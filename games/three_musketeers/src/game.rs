@@ -1,7 +1,7 @@
 use bitboard::{BitIter, Bitboard};
 
 use kudchuet::{
-	GameResult, Player,
+	Player,
 	ai::minimax::{Evaluation, Evaluator, Game, Winner},
 };
 
@@ -27,11 +27,7 @@ impl Game for ThreeMusketeers {
 	}
 
 	fn get_winner(state: &Self::S) -> Option<Winner> {
-		match state.result() {
-			GameResult::OnGoing => None,
-			GameResult::Player(p) => Some(Winner::Player(p)),
-			GameResult::Draw => unreachable!(),
-		}
+		state.result().into()
 	}
 	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {
 		let (x1, y1) = Bitboard5x5::coords_from_index(_move.from as usize);

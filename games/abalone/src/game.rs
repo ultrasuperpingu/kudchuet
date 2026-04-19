@@ -33,7 +33,7 @@ impl Game for Abalone {
 	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_over() {
 			if let Some(w) = state.winner() {
-				return Some(Winner::Player(w.idx() as u8));
+				return Some(Winner::Player(w));
 			} else {
 				return Some(Winner::Draw);
 			}

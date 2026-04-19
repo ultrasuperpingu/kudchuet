@@ -1,7 +1,6 @@
 use eframe::egui;
 
 use crate::game::AwaleMaterialEval;
-use kudchuet::GameResult;
 use kudchuet::{Player, PlayerType, ai::AIEngine, gui::{BoardGame, BoardMove, EGUIPieceType}, new_move_searcher};
 
 use super::rules::Awale;
@@ -17,7 +16,9 @@ pub struct AwaleApp {
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Place(pub u8);
 impl EGUIPieceType for Place {
-
+	fn shape(&self) -> kudchuet::gui::shapes::Shape {
+		kudchuet::gui::shapes::Shape::Circle { fill_color: None, size: 0.0, text: None, stroke: None }
+	}
 }
 impl BoardGame for Awale {
 	type PieceType=Place;
@@ -31,10 +32,6 @@ impl BoardGame for Awale {
 		todo!()
 	}
 
-	fn current_player(&self) -> Player {
-		self.turn
-	}
-
 	fn piece_at(&self, _x: u8, _y: u8) -> Option<Self::PieceType> {
 		todo!()
 	}
@@ -45,17 +42,6 @@ impl BoardGame for Awale {
 
 	fn coords_from_index(_index: u16) -> (u8, u8) {
 		todo!()
-	}
-	fn result(&self) -> GameResult {
-		if self.is_over() {
-			if let Some(w) = self.winner() {
-				w.into()
-			} else {
-				GameResult::Draw
-			}
-		} else {
-			GameResult::OnGoing
-		}
 	}
 }
 impl BoardMove<Awale> for usize {

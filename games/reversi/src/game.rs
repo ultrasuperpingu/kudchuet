@@ -30,9 +30,9 @@ impl Game for Reversi {
 		if state.is_over() {
 			if let Some(winner) = state.winner() {
 				if winner == Cell::Black {
-					return Some(Winner::Player(0));
+					return Some(Winner::PLAYER1);
 				} else {
-					return Some(Winner::Player(1));
+					return Some(Winner::PLAYER2);
 				}
 			} else {
 				return Some(Winner::Draw);

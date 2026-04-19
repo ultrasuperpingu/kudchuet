@@ -1,14 +1,13 @@
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::{Color32, Rect, Stroke, StrokeKind};
-use kudchuet::ai::minimax::{Game, Winner};
 use crate::bitboard::Bitboard5x5;
 use crate::game::BaghChalMaterialEval;
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
-use kudchuet::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::{Player, new_move_searcher_vec};
 
 use crate::rules::{BaghChal, Move};
 
@@ -53,13 +52,6 @@ impl BoardGame for BaghChal {
 		5
 	}
 
-	fn current_player(&self) -> Player {
-		
-		match self.tigers_turn() {
-			false => Player::PLAYER1,
-			true => Player::PLAYER2,
-		}
-	}
 	fn get_name(&self, p: Player) -> String {
 		match p {
 			Player::PLAYER1 => "Goats".into(),
@@ -74,13 +66,6 @@ impl BoardGame for BaghChal {
 			Some(BaghChalPiece::Goat)
 		} else {
 			None
-		}
-	}
-	fn result(&self) -> GameResult {
-		match <Self as Game>::get_winner(self) {
-			Some(Winner::Draw) => GameResult::Draw,
-			Some(Winner::Player(p)) => GameResult::Player(p),
-			None => GameResult::OnGoing,
 		}
 	}
 	fn index_from_coords(x: u8, y: u8) -> u16 {

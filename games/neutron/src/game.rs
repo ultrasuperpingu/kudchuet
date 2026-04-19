@@ -2,7 +2,7 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 use crate::{bitboard::Bitboard5x5, rules::{Move, Neutron}};
@@ -15,14 +15,14 @@ impl Game for Neutron {
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		state.legal_moves_inplace(moves);
 		if !(state.neutron & Bitboard5x5::SOUTH_BORDER).is_empty() {
-			return Some(Winner::Player(Player::PLAYER2.idx() as u8))
+			return Some(Winner::Player(Player::PLAYER2))
 		}
 
 		if !(state.neutron & Bitboard5x5::NORTH_BORDER).is_empty() {
-			return Some(Winner::Player(Player::PLAYER1.idx() as u8))
+			return Some(Winner::Player(Player::PLAYER1))
 		}
 		if moves.is_empty() {
-			Some(Winner::Player(state.turn.opponent().idx() as u8))
+			Some(Winner::Player(state.turn.opponent()))
 		} else {
 			None
 		}
@@ -35,11 +35,7 @@ impl Game for Neutron {
 	}
 
 	fn get_winner(state: &Self::S) -> Option<Winner> {
-		match state.result() {
-			GameResult::Draw => Some(Winner::Draw),
-			GameResult::OnGoing => None,
-			GameResult::Player(p) => Some(Winner::Player(p)),
-		}
+		state.result().into()
 	}
 
 	fn zobrist_hash(state: &Self::S) -> u64 {

@@ -2,7 +2,6 @@
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::{Color32, Rect, Stroke, Vec2};
-use kudchuet::ai::minimax::{Game, Winner};
 use crate::bitboard::BitboardAbalone;
 use crate::game::AbaloneMaterialEval;
 use crate::rules::{Abalone, Cell, HEXES, Hex, Move, idx};
@@ -10,8 +9,7 @@ use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, PieceDrawer, SquareDrawer};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType};
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::{GameResult, Player, new_move_searcher_vec};
-
+use kudchuet::{Player, new_move_searcher_vec};
 
 
 impl BoardMove<Abalone> for Move {
@@ -78,9 +76,6 @@ impl BoardGame for Abalone {
 		8
 	}
 
-	fn current_player(&self) -> Player {
-		self.turn
-	}
 	fn get_name(&self, p: Player) -> String {
 		match p {
 			Player::PLAYER1 => "Black".into(),
@@ -97,13 +92,6 @@ impl BoardGame for Abalone {
 			None
 		}
 	}
-	fn result(&self) -> GameResult {
-		match <Self as Game>::get_winner(self) {
-			Some(Winner::Draw) => GameResult::Draw,
-			Some(Winner::Player(p)) => GameResult::Player(p),
-			None => GameResult::OnGoing,
-		}
-	}
 	fn index_from_coords(x: u8, y: u8) -> u16 {
 		BitboardAbalone::index_from_coords(x, y) as u16
 	}
@@ -111,7 +99,7 @@ impl BoardGame for Abalone {
 		BitboardAbalone::coords_from_index(index as usize)
 	}
 
-	fn get_position_from_string(&self, pos_str: &String) -> Result<Self, String> {
+	fn get_position_from_string(&self, pos_str: &str) -> Result<Self, String> {
 		Self::from_fen(pos_str)
 	}
 	fn position_to_string(&self) -> Option<String> {
@@ -120,7 +108,7 @@ impl BoardGame for Abalone {
 	fn move_to_string(&self, m: &Self::M) -> Option<String> {
 		m.to_uci()
 	}
-	fn move_from_string(&self, m_str: &String) -> Result<Self::M, String> {
+	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
 		Move::from_uci(m_str)
 	}
 	fn default_style() -> BoardStyle {

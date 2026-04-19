@@ -137,9 +137,9 @@ impl Game for Connect4Game {
 
 		if matches(1) || matches(HEIGHT) || matches(HEIGHT + 1) || matches(HEIGHT - 1) {
 			if b.reds_move() {
-				return Some(Winner::Player(1));
+				return Some(Winner::PLAYER2);
 			} else {
-				return Some(Winner::Player(0));
+				return Some(Winner::PLAYER1);
 			}
 		}
 
@@ -310,7 +310,7 @@ fn main() {
 		strategies.swap(1, 2);
 	}
 	#[cfg(target_arch = "wasm32")]
-	let mut strategies: [&mut dyn Strategy<self::Game>; 2] = [&mut dumb, &mut iterative];
+	let mut strategies: [&mut dyn Strategy<Connect4Game>; 2] = [&mut dumb, &mut iterative];
 
 	let mut s = 0;
 	while Connect4Game::get_winner(&b).is_none() {

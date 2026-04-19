@@ -3,7 +3,7 @@ use eframe::egui;
 use egui::{Color32, Stroke};
 
 use kudchuet::new_move_searcher_vec;
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, board_drawer::SquareDrawer};
 use kudchuet::gui::shapes::Shape;
 use crate::bitboard::Goban;
@@ -42,22 +42,6 @@ impl BoardGame for Gomoku {
 		19
 	}
 
-	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut moves = vec![];
-		self.legal_moves_inplace(&mut moves);
-		moves
-	}
-	fn play(&mut self, mv: Self::M) {
-		self.play_unchecked(mv);
-	}
-
-	fn result(&self) -> GameResult {
-		self.result()
-	}
-
-	fn current_player(&self) -> Player {
-		self.turn
-	}
 	fn get_name(&self, p: Player) -> String {
 		match p {
 			Player::PLAYER1 => "Black".into(),

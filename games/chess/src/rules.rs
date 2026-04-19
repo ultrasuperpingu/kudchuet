@@ -266,7 +266,7 @@ mod tests {
 	#[test]
 	fn test_promotion() {
 	let b = super::super::mychess::ChessBoard::from_fen("8/8/1P1k4/1K1b1p2/5P2/8/r1p5/8 b - - 0 1").unwrap();
-	let m = b.move_from_string(&"c2c1q".into());
+	let m = b.move_from_string("c2c1q");
 	println!("{m:?}");
 	}
 }

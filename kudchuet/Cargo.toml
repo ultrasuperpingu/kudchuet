@@ -7,16 +7,10 @@ edition = "2024"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-#bitboard = {path="../bitboards/bitboard"}
-#bitboard_proc_macro = {path="../bitboards/bitboard_proc_macro"}
-#magic_bitboard_proc_macro = {path="../magic_bitboard_proc_macro"}
-#minimax = "0.5"
-#minimax = {path="../minimax"}
-
 eframe = "0.34"
 egui = { version = "0.34", features=["persistence"] }
-#egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor.git", features=["filepicker"] }
-egui_field_editor = {path="../../egui_inspect/egui_field_editor", features=["filepicker"] }
+egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor.git", features=["filepicker"] }
+#egui_field_editor = {path="../../egui_inspect/egui_field_editor", features=["filepicker"] }
 #egui_field_editor = "0.5"
 
 instant = { version = "0.1", features = ["wasm-bindgen"] }
@@ -37,14 +31,7 @@ web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElemen
 wasm-bindgen-futures = "0.4"
 
 [dev-dependencies]
-#chrono = "0.4"
-#rand = "0.9.0"
 bencher = "0.1"
-
-[build-dependencies]
-bitboard = {path="../bitboards/bitboard"}
-bitboard_proc_macro = {path="../bitboards/bitboard_proc_macro"}
-num-traits = "0.2"
 
 [[bench]]
 name = "minimax"

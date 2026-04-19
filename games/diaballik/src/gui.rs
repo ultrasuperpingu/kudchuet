@@ -1,7 +1,7 @@
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::Color32;
-use kudchuet::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::{Player, new_move_searcher_vec};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 
@@ -107,23 +107,6 @@ impl BoardGame for Diaballik {
 
 	fn height(&self) -> u8 {
 		7
-	}
-
-	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut moves=vec![];
-		self.legal_moves(&mut moves);
-		moves
-	}
-	fn play(&mut self, mv: Self::M) {
-		self.play_unchecked(&mv);
-	}
-
-	fn result(&self) -> GameResult {
-		self.result()
-	}
-
-	fn current_player(&self) -> Player {
-		self.turn()
 	}
 
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {

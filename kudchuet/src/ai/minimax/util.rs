@@ -61,7 +61,7 @@ where
 		if let Some(winner) = G::get_winner(&state) {
 			return match winner {
 				interface::Winner::Draw => None,
-				interface::Winner::Player(p) => Some(p as usize),
+				interface::Winner::Player(p) => Some(p.0 as usize),
 			};
 		}
 		let strategy = &mut strategies[s];

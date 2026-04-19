@@ -32,7 +32,7 @@ impl Game for Chess {
 				Some(Winner::Draw)
 			} else {
 				//TODO
-				Some(Winner::Player(0))
+				Some(Winner::PLAYER1)
 			}
 		} else {
 			None
@@ -44,7 +44,7 @@ impl Game for Chess {
 			BoardStatus::Ongoing => None,
 			BoardStatus::Stalemate => Some(Winner::Draw),
 			//TODO
-			BoardStatus::Checkmate => Some(Winner::Player(0)),
+			BoardStatus::Checkmate => Some(Winner::PLAYER1),
 		}
 	}
 

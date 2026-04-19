@@ -5,7 +5,6 @@ use egui::Color32;
 use kudchuet::gui::input_handler::MoveResult;
 use kudchuet::gui::shapes::Shape;
 use kudchuet::{
-	GameResult, Player,
 	gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType},
 	new_move_searcher_vec,
 };
@@ -176,18 +175,6 @@ impl BoardGame for Yote {
 		let mut moves = vec![];
 		self.legal_moves_inplace(&mut moves);
 		moves
-	}
-
-	fn play(&mut self, mv: Self::M) {
-		self.play(mv);
-	}
-
-	fn result(&self) -> GameResult {
-		self.result()
-	}
-
-	fn current_player(&self) -> Player {
-		self.turn
 	}
 
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {

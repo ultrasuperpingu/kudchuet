@@ -51,20 +51,21 @@ impl<G: BoardGame+Sync+Send+'static> eframe::App for GenericBoardApp<G>
 			let result = self.draw_header_panel(ui);
 			ui.separator();
 			let computer_playing = self.is_current_player_computer();
-			if let Some(click) = self.board_drawer.draw_board(ui, &self.game_to_draw(), !computer_playing) {
+			let is_random_move = self.is_current_player_random();
+			if let Some(click) = self.board_drawer.draw_board(ui, &self.game_to_draw(), !computer_playing || is_random_move) {
 				match self.input_handler.process(click, &self.game_state_manager, &mut self.board_drawer) {
 					MoveResult::Created{mv, ..} => {
 						self.game_state_manager.apply_move(mv);
 					}
 					_ => {
-						if self.is_current_player_random() {
+						if is_random_move {
 							self.game_state_manager.play_random();
 						}
 					}
 				}
 			}
 			if result == GameResult::OnGoing {
-				if self.is_current_player_computer() && !self.ai_engine_manager.is_paused() {
+				if self.is_current_player_computer() && !self.is_current_player_random() && !self.ai_engine_manager.is_paused() {
 					match self.ai_engine_manager.pool_ai_result() {
 						ThinkingResult::NotThinking => {
 							if let Err(err) = self.ai_engine_manager.choose_move_async(&self.game().clone()) {
@@ -301,8 +302,8 @@ where G::M: BoardMove<G>+Send
 			}
 
 			match result {
-				GameResult::Player(id) => {
-					ui.heading(format!("Winner: {}", self.game().get_name(Player(id))));
+				GameResult::Player(p) => {
+					ui.heading(format!("Winner: {}", self.game().get_name(p)));
 				}
 				GameResult::Draw => {
 					ui.heading("Draw Game");

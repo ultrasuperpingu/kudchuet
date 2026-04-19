@@ -181,7 +181,7 @@ impl Diaballik {
 			GameResult::OnGoing
 		}
 	}
-	fn is_blocking(&self, p: Player) -> bool {
+	pub(crate) fn is_blocking(&self, p: Player) -> bool {
 		let (me, opponent) = match p {
 			Player::PLAYER1 => (self.player1, self.player2),
 			Player::PLAYER2 => (self.player2, self.player1),

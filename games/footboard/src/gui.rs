@@ -4,7 +4,7 @@ use egui::{Align2, Color32, FontId, Rect, Vec2};
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StripData, StrokeData, TextData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
-use kudchuet::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::{Player, new_move_searcher_vec};
 
 use crate::rules::Action;
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -241,23 +241,6 @@ impl BoardGame for FootBoard {
 		13
 	}
 
-	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut moves = vec![];
-		self.legal_moves(&mut moves);
-		moves
-	}
-	fn play(&mut self, mv: Self::M) {
-		self.play_unchecked(&mv);
-	}
-
-	fn result(&self) -> GameResult {
-		self.result()
-	}
-
-	fn current_player(&self) -> Player {
-		self.turn()
-	}
-
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		match self.cell(x, y) {
 			Cell::Empty => None,
@@ -283,8 +266,6 @@ impl BoardGame for FootBoard {
 		}
 	}
 
-	fn do_random(&mut self) {}
-
 	fn nb_players(&self) -> u8 {
 		2
 	}
@@ -293,23 +274,7 @@ impl BoardGame for FootBoard {
 		p.to_string()
 	}
 
-	fn position_to_string(&self) -> Option<String> {
-		None
-	}
-
-	fn game_to_string(&self, _mvs: &[Self::M]) -> Option<String> {
-		None
-	}
-
-	fn game_from_string(&self, _game_str: &String) -> Result<Vec<Self::M>, String> {
-		Err("Not Supported".into())
-	}
-
-	fn get_position_from_string(&self, _pos_str: &String) -> Result<Self, String> {
-		Err("Not Supported".into())
-	}
-
-	fn move_from_string(&self, m_str: &String) -> Result<Self::M, String> {
+	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
 		Self::M::from_uci(m_str)
 	}
 

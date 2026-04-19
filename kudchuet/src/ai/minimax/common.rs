@@ -92,7 +92,7 @@ impl<M> ValueMove<M> {
 		(self.value, self.m)
 	}
 }
-
+/*
 static PRIMES: [usize; 16] = [
 	14323, 18713, 19463, 30553, 33469, 45343, 50221, 51991, 53201, 56923, 64891, 72763, 74471,
 	81647, 92581, 94693,
@@ -130,3 +130,4 @@ pub(super) fn random_best<T, F: Fn(&T) -> f32>(set: &[T], score_fn: F) -> Option
 	}
 	best
 }
+*/

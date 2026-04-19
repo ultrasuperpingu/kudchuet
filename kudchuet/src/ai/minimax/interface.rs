@@ -59,17 +59,19 @@ pub trait Evaluator {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Winner {
 	/// The player who won.
-	Player(u8),
+	Player(Player),
 	/// Nobody won.
 	Draw,
 }
 
 impl Winner {
+	pub const PLAYER1: Self = Winner::Player(Player(0));
+	pub const PLAYER2: Self = Winner::Player(Player(0));
 	/// Canonical evaluations for end states.
 	pub fn evaluate(&self, to_eval: Player) -> Evaluation {
 		match *self {
-			Winner::Player(i) => {
-				if Player(i) == to_eval {
+			Winner::Player(p) => {
+				if p == to_eval {
 					BEST_EVAL
 				} else {
 					WORST_EVAL

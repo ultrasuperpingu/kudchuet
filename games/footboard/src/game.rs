@@ -3,7 +3,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 
 use super::rules::{Move, FootBoard};
 
@@ -27,11 +27,7 @@ impl Game for FootBoard {
 		Some(s)
 	}
 	fn get_winner(state: &Self::S) -> Option<Winner> {
-		match state.result() {
-			GameResult::Player(p) => Some(Winner::Player(p)),
-			GameResult::Draw => Some(Winner::Draw),
-			GameResult::OnGoing => None,
-		}
+		state.result().into()
 	}
 
 	fn zobrist_hash(state: &Self::S) -> u64 {

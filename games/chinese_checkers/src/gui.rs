@@ -5,7 +5,7 @@ use kudchuet::ai::MoveSearcherBuilderDyn;
 use crate::bitboard::ChineseCheckerBoard;
 use crate::game::ChineseCheckersMaterialEval;
 use crate::rules::{ChineseCheckers, ChineseCheckersPlayer, Move};
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern};
@@ -62,24 +62,7 @@ impl BoardGame for ChineseCheckers {
 	fn play(&mut self, mv: Self::M) {
 		let _ = self.play(mv);
 	}
-	#[inline(always)]
-	fn result(&self) -> GameResult {
-		match self.winner() {
-			Some(p) => GameResult::Player(p.idx()),
-			None => GameResult::OnGoing,
-		}
-	}
 
-	fn current_player(&self) -> Player {
-		match self.turn {
-			ChineseCheckersPlayer::Red => Player(0),
-			ChineseCheckersPlayer::Blue => Player(1),
-			ChineseCheckersPlayer::Green => Player(2),
-			ChineseCheckersPlayer::Yellow => Player(3),
-			ChineseCheckersPlayer::Black => Player(4),
-			ChineseCheckersPlayer::White => Player(5),
-		}
-	}
 	fn nb_players(&self) -> u8 {
 		self.nb_players
 	}
@@ -161,7 +144,7 @@ impl BoardGame for ChineseCheckers {
 			..Default::default()
 		}
 	}
-	fn get_position_from_string(&self, fen: &String) -> Result<Self, String> {
+	fn get_position_from_string(&self, fen: &str) -> Result<Self, String> {
 		Self::from_fen(fen)
 	}
 	fn position_to_string(&self) -> Option<String> {

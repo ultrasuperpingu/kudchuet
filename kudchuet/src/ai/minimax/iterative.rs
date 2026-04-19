@@ -166,7 +166,7 @@ where
 
 		if let Some(winner) = E::G::get_winner(s) {
 			return match winner {
-				Winner::Player(p) if p as usize == player_to_move.idx() => Some(BEST_EVAL),
+				Winner::Player(p) if p == player_to_move => Some(BEST_EVAL),
 				Winner::Player(_) => Some(WORST_EVAL),
 				Winner::Draw => Some(0),
 			};
@@ -283,7 +283,7 @@ where
 		if let Some(winner) = E::G::generate_moves(s, &mut moves) {
 			return
 				match winner {
-					Winner::Player(p) if p as usize == player_to_move.idx() => Some(BEST_EVAL),
+					Winner::Player(p) if p == player_to_move => Some(BEST_EVAL),
 					Winner::Draw => Some(0),
 					Winner::Player(_) => Some(WORST_EVAL),
 				};

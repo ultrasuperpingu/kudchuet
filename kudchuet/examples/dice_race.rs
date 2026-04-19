@@ -3,6 +3,7 @@
 //! First player to reach RACE_LENGTH exactly wins.
 //! If player go above RACE_LENGTH, he bounces (score above is substracted from RACE_LENGTH)
 //! If a player reaches the position of the other player, the other player go back to the begining.
+#![allow(dead_code)]
 extern crate kudchuet;
 
 use std::default::Default;
@@ -200,9 +201,9 @@ impl Game for DiceGame {
 	}
 	fn get_winner(b: &Board) -> Option<Winner> {
 		if b.p1 == RACE_LENGTH {
-			Some(Winner::Player(0))
+			Some(Winner::PLAYER1)
 		} else if b.p2 == RACE_LENGTH {
-			Some(Winner::Player(1))
+			Some(Winner::PLAYER2)
 		} else {
 			None
 		}
@@ -301,6 +302,7 @@ impl Evaluator for DiceRaceEvaluator {
 		if p == Player::PLAYER1 { score } else { -score }
 	}
 }
+
 fn main() {
 	let mut minimax = ExpectiMinimax::new(DiceRaceEvaluator::default(), 8);
 	let mut minimax2 = IterativeSearch::new(

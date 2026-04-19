@@ -6,13 +6,14 @@ use std::fmt::Debug;
 use ai::minimax::Strategy;
 use ai::minimax::SearchStopSignal;
 
-
+#[cfg(target_arch = "wasm32")]
 use crate::ai::minimax::IterativeSearch;
+use crate::ai::minimax::Winner;
+use crate::ai::minimax::IterativeOptions;
 #[cfg(not(target_arch = "wasm32"))]
-use crate::ai::minimax::{IterativeOptions, ParallelOptions};
+use crate::ai::minimax::ParallelOptions;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::minimax::ybw::ParallelSearch;
-#[cfg(not(target_arch = "wasm32"))]
 use crate::ai::minimax::interface::Evaluator;
 use crate::ai::minimax::interface::{Evaluation, Game};
 use crate::ai::{AIEngineProvider, MoveSearcherBuilderDyn};
@@ -61,11 +62,9 @@ impl PlayerController {
 	}
 }
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+//TODO: This is equivalent to minimax::Winner. One of those should be removed.
 pub enum GameResult {
-	//#[default]
-	//Player1,
-	//Player2,
-	Player(u8),
+	Player(Player),
 	Draw,
 	OnGoing
 }
@@ -83,7 +82,7 @@ impl Player {
 		match self {
 			Self(0) => Self(1),
 			Self(1) => Self(0),
-			Self(_) => panic!("opponent called on a multiplayer game"),
+			Self(_) => panic!("Opponent called on a multiplayer game"),
 		}
 	}
 	pub fn idx(&self) -> usize {
@@ -94,7 +93,12 @@ impl Player {
 }
 impl From<Player> for GameResult {
 	fn from(val: Player) -> Self {
-		GameResult::Player(val.0)
+		GameResult::Player(val)
+	}
+}
+impl From<Player> for Winner {
+	fn from(val: Player) -> Self {
+		Winner::Player(val)
 	}
 }
 impl std::fmt::Display for Player {
@@ -106,19 +110,69 @@ impl std::fmt::Display for Player {
 	}
 }
 impl GameResult {
-	pub const PLAYER1: Self = Self::Player(0);
-	pub const PLAYER2: Self = Self::Player(1);
+	pub const PLAYER1: Self = Self::Player(Player(0));
+	pub const PLAYER2: Self = Self::Player(Player(1));
 	pub fn is_player1(&self) -> bool {
-		matches!(self, GameResult::Player(0))
+		matches!(self, GameResult::Player(Player(0)))
 	}
 	pub fn is_player2(&self) -> bool {
-		matches!(self, GameResult::Player(1))
+		matches!(self, GameResult::Player(Player(1)))
 	}
 	pub fn is_draw(&self) -> bool {
 		matches!(self, GameResult::Draw)
 	}
 	pub fn is_finished(&self) -> bool {
 		!matches!(self, GameResult::OnGoing)
+	}
+}
+
+impl TryFrom<GameResult> for Player {
+	type Error = String;
+
+	fn try_from(value: GameResult) -> Result<Self, Self::Error> {
+		match value {
+			GameResult::Player(p) => Ok(p),
+			GameResult::Draw => Err("Draw can not be converted to Player".into()),
+			GameResult::OnGoing => Err("OnGoing can not be converted to Player".into()),
+		}
+	}
+}
+impl TryFrom<Winner> for Player {
+	type Error = String;
+
+	fn try_from(value: Winner) -> Result<Self, Self::Error> {
+		match value {
+			Winner::Player(p) => Ok(p),
+			Winner::Draw => Err("Draw can not be converted to Player".into()),
+		}
+	}
+}
+impl From<GameResult> for Option<Winner> {
+	fn from(value: GameResult) -> Self {
+		match value {
+			GameResult::Player(p) => Some(Winner::Player(p)),
+			GameResult::Draw => Some(Winner::Draw),
+			GameResult::OnGoing => None,
+		}
+	}
+}
+
+impl From<Winner> for GameResult {
+	fn from(value: Winner) -> Self {
+		match value {
+			Winner::Player(p) => GameResult::Player(p),
+			Winner::Draw => GameResult::Draw,
+		}
+	}
+}
+
+impl From<Option<Winner>> for GameResult {
+	fn from(value: Option<Winner>) -> Self {
+		match value {
+			Some(Winner::Player(p)) => GameResult::Player(p),
+			Some(Winner::Draw) => GameResult::Draw,
+			None => GameResult::OnGoing,
+		}
 	}
 }
 pub trait ConcreteStrategy<G>: Strategy<G>
@@ -135,11 +189,11 @@ where
 	}
 }
 
-//#[cfg(target_arch = "wasm32")]
+#[cfg(target_arch = "wasm32")]
 pub type MoveSearcher<T> = ai::minimax::IterativeSearch<T>;
-//#[cfg(not(target_arch = "wasm32"))]
-//pub type MoveSearcher<T> = ParallelSearch<T>;
-/*
+#[cfg(not(target_arch = "wasm32"))]
+pub type MoveSearcher<T> = ParallelSearch<T>;
+
 #[cfg(not(target_arch = "wasm32"))]
 impl<G, E> ConcreteStrategy<G> for MoveSearcher<E>
 where
@@ -191,8 +245,8 @@ where
 	fn root_value(&self) -> Evaluation {
 		MoveSearcher::<E>::root_value(self)
 	}
-}*/
-//#[cfg(target_arch = "wasm32")]
+}
+#[cfg(target_arch = "wasm32")]
 impl<G, E> ConcreteStrategy<G> for MoveSearcher<E>
 where G: Game,
 	E: Evaluator<G = G> + Default,
@@ -230,7 +284,7 @@ where G: Game,
 		 MoveSearcher::<E>::root_value(self)
 	}
 }
-//#[cfg(target_arch = "wasm32")]
+#[cfg(target_arch = "wasm32")]
 pub fn new_move_searcher<G, T>(evaluator: T, initial_depth: u8) -> Box<dyn AIEngine<G>>
 	where
 		G: BoardGame + Send+Sync+ 'static,
@@ -246,12 +300,12 @@ pub fn new_move_searcher<G, T>(evaluator: T, initial_depth: u8) -> Box<dyn AIEng
 	Box::new(InternalEngine::new(searcher))
 }
 #[cfg(target_arch = "wasm32")]
-pub fn new_move_searcher_with_opts<T>(opts: minimax::IterativeOptions) -> MoveSearcher<T>
-	where T: minimax::Evaluator+Default,
-	<<T as minimax::Evaluator>::G as minimax::Game>::M: Eq,
-	<<T as minimax::Evaluator>::G as minimax::Game>::S: Clone
+pub fn new_move_searcher_with_opts<T>(opts: IterativeOptions) -> MoveSearcher<T>
+	where T: Evaluator+Default,
+	<<T as Evaluator>::G as Game>::M: Eq,
+	<<T as Evaluator>::G as Game>::S: Clone
 {
-	minimax::IterativeSearch::new(
+	IterativeSearch::new(
 		T::default(),
 		opts
 	)
@@ -266,7 +320,7 @@ where
 	vec![Box::new(MoveSearcherBuilderDyn::<G, T>::new(name, evaluator, initial_depth))]
 }
 
-/*
+
 #[cfg(not(target_arch = "wasm32"))]
 pub fn new_move_searcher<G, T>(evaluator: T, initial_depth: u8) -> Box<dyn AIEngine<G>>
 where
@@ -299,9 +353,9 @@ where
 	searcher.set_max_depth(initial_depth);
 
 	searcher
-}*/
+}
 
-//#[cfg(target_arch = "wasm32")]
+#[cfg(target_arch = "wasm32")]
 pub fn new_move_searcher_static<G, T>(evaluator: T, initial_depth: u8) -> MoveSearcher<T>
 where
 	G: BoardGame + Send + Sync + 'static,

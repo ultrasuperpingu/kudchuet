@@ -6,7 +6,7 @@ use egui::Color32;
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
-use kudchuet::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::new_move_searcher_vec;
 
 use super::game::NeutronDumbEval;
 
@@ -80,21 +80,6 @@ impl BoardGame for Neutron {
 		5
 	}
 
-	fn legal_moves(&self) -> Vec<Self::M> {
-		self.legal_moves()
-	}
-	fn play(&mut self, mv: Self::M) {
-		self.play(&mv);
-	}
-
-	fn result(&self) -> GameResult {
-		self.result()
-	}
-
-	fn current_player(&self) -> Player {
-		self.turn()
-	}
-
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		self.piece_at(x, y)
 	}
@@ -116,7 +101,7 @@ impl BoardGame for Neutron {
 	fn position_to_string(&self) -> Option<String> {
 		Some(self.to_fen())
 	}
-	fn get_position_from_string(&self, pos_str: &String) -> Result<Self, String> {
+	fn get_position_from_string(&self, pos_str: &str) -> Result<Self, String> {
 		Self::from_fen(pos_str)
 	}
 }

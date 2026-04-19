@@ -1,7 +1,7 @@
 
 
 
-use kudchuet::{GameResult, Player, ai::minimax::{Evaluation, Evaluator, Game, Winner}};
+use kudchuet::{Player, ai::minimax::{Evaluation, Evaluator, Game, Winner}};
 
 use super::rules::{Move, Yote};
 
@@ -27,13 +27,7 @@ impl Game for Yote {
 	}
 
 	fn get_winner(state: &Self::S) -> Option<Winner> {
-		match state.result() {
-			GameResult::Draw => Some(Winner::Draw),
-			GameResult::OnGoing => None,
-			GameResult::Player(p) => {
-				Some(Winner::Player(p))
-			},
-		}
+		state.result().into()
 	}
 	fn current_player(state: &Self::S) -> Player {
 		state.turn

@@ -143,7 +143,7 @@ fn test_winning_position() {
 	b = connect4::Connect4Game::apply(&mut b, connect4::Place { col: 3 }).unwrap();
 	b = connect4::Connect4Game::apply(&mut b, connect4::Place { col: 2 }).unwrap();
 	assert_eq!(
-		Some(Winner::Player(0)),
+		Some(Winner::PLAYER1),
 		connect4::Connect4Game::get_winner(&b)
 	);
 

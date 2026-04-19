@@ -6,8 +6,10 @@ mod dice_race;
 
 use bencher::Bencher;
 use kudchuet::ai::minimax::{
-	ExpectiMinimax, IterativeOptions, IterativeSearch, ParallelOptions, ParallelSearch, Strategy,
+	ExpectiMinimax, IterativeOptions, IterativeSearch, Strategy,
 };
+#[cfg(not(target_arch = "wasm32"))]
+use kudchuet::ai::minimax::{ParallelOptions, ParallelSearch};
 
 fn bench_expectiminimax(b: &mut Bencher) {
 	let board = dice_race::Board::default();

@@ -37,7 +37,7 @@ impl Game for Backgammon {
 	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_game_over() {
 			if let Some(winner) = state.winner() {
-				Some(Winner::Player(winner.idx() as u8))
+				Some(Winner::Player(winner))
 			} else {
 				Some(Winner::Draw)
 			}

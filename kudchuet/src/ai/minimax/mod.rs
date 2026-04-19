@@ -9,6 +9,7 @@ pub use crate::ai::minimax::interface::*;
 pub use crate::ai::minimax::iterative::IterativeSearch;
 pub use crate::ai::minimax::minimax::ExpectiMinimax;
 pub use crate::ai::minimax::random::Random;
+#[cfg(not(target_arch = "wasm32"))]
 pub use crate::ai::minimax::ybw::ParallelSearch;
 
 pub mod iterative;
@@ -107,8 +108,8 @@ impl IterativeOptions {
 	pub fn get_mtdf(&self) -> bool {
 		self.mtdf
 	}
-	pub fn get_step_increment(&self) -> Option<u8> {
-		self.null_move_depth
+	pub fn get_step_increment(&self) -> u8 {
+		self.step_increment
 	}
 	pub fn get_max_quiescence_depth(&self) -> u8 {
 		self.max_quiescence_depth
@@ -192,8 +193,7 @@ impl IterativeOptions {
 		self
 	}
 
-	/// Enable [quiescence
-	/// search](https://en.wikipedia.org/wiki/Quiescence_search) at the leaves
+	/// Enable [quiescence search](https://en.wikipedia.org/wiki/Quiescence_search) at the leaves
 	/// of the search tree.  The Evaluator must implement `generate_noisy_moves`
 	/// for the search to know when the state has become "quiet".
 	pub fn with_quiescence_search_depth(mut self, depth: u8) -> Self {
@@ -306,6 +306,9 @@ impl ParallelOptions {
 	}
 
 	pub fn num_threads(self) -> usize {
-		self.num_threads.unwrap_or_else(num_cpus::get)
+		#[cfg(not(target_arch = "wasm32"))]
+		{self.num_threads.unwrap_or_else(num_cpus::get)}
+		#[cfg(target_arch = "wasm32")]
+		{1}
 	}
 }

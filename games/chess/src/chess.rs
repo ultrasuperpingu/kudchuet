@@ -19,9 +19,9 @@ impl Game for ChessGame {
 		if legals.is_empty() {
 			if s.is_check() {
 				if s.turn() == Color::White {
-					Some(Winner::Player(0))
+					Some(Winner::PLAYER1)
 				} else {
-					Some(Winner::Player(1))
+					Some(Winner::PLAYER2)
 				}
 			} else {
 				Some(Winner::Draw)
@@ -41,9 +41,9 @@ impl Game for ChessGame {
 				match known_outcome {
 						shakmaty::KnownOutcome::Decisive { winner } => {
 							if winner == Color::White {
-								Some(Winner::Player(0))
+								Some(Winner::PLAYER1)
 							} else {
-								Some(Winner::Player(1))
+								Some(Winner::PLAYER2)
 							}
 						},
 						shakmaty::KnownOutcome::Draw => Some(Winner::Draw),

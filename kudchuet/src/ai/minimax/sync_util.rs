@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicPtr, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
@@ -24,7 +24,7 @@ pub(super) fn timeout_signal(dur: Duration, signal: &Arc<AtomicBool>) -> Arc<()>
 	});
 	token
 }
-
+/*
 // An insert-only lock-free Option<Box<T>>
 pub(super) struct AtomicBox<T>(AtomicPtr<T>);
 
@@ -79,7 +79,7 @@ fn test_atomic_box() {
 	b.try_set(Box::new(4));
 	assert_eq!(Some(&3), b.get());
 }
-
+*/
 // Safe API around lockfree threadlocals for rayon threadpools.
 // Only safe when used from a single threadpool, as this crate does.
 pub(super) struct ThreadLocal<T> {

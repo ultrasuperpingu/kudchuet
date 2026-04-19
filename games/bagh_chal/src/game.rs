@@ -2,7 +2,7 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 use crate::rules::{Move, BaghChal};
@@ -14,11 +14,11 @@ impl Game for BaghChal {
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		if state.goats_captured >= 5 {
-			return Some(Winner::Player(1));
+			return Some(Winner::PLAYER2);
 		}
 		state.legal_moves_inplace(moves);
 		if state.tigers_turn() && moves.is_empty() {
-			return Some(Winner::Player(0));
+			return Some(Winner::PLAYER1);
 		}
 		None
 	}
@@ -34,13 +34,7 @@ impl Game for BaghChal {
 		_state.undo_unchecked(&_m);
 	}
 	fn get_winner(state: &Self::S) -> Option<Winner> {
-		match state.result() {
-			GameResult::Draw => Some(Winner::Draw),
-			GameResult::OnGoing => None,
-			GameResult::Player(p) => {
-				Some(Winner::Player(p))
-			},
-		}
+		state.result().into()
 	}
 
 	fn zobrist_hash(state: &Self::S) -> u64 {

@@ -1,6 +1,6 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 
 use crate::bitboard::Goban;
 
@@ -24,11 +24,7 @@ impl Game for Gomoku {
 	}
 
 	fn get_winner(state: &Self::S) -> Option<Winner> {
-		match state.result() {
-			GameResult::OnGoing => None,
-			GameResult::Player(p) => Some(Winner::Player(p)),
-			GameResult::Draw => unreachable!(),
-		}
+		state.result().into()
 	}
 	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {
 		let (x2, y2) = Goban::coords_from_index(_move.to as usize);

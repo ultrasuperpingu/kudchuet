@@ -27,7 +27,7 @@ impl Game for Checkers10 {
 
 	fn get_winner(state: &Self::S) -> Option<Winner> {
 		if state.is_victory() {
-			Some(Winner::Player(state.player_turn().opponent().idx() as u8))
+			Some(Winner::Player(state.player_turn().opponent()))
 		} else if state.is_over() {
 			Some(Winner::Draw)
 		} else {

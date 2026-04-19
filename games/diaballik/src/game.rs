@@ -1,6 +1,6 @@
 
 use bitboard::BitIter;
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
 
 use super::rules::{Move, Diaballik};
@@ -31,10 +31,16 @@ impl Game for Diaballik {
 		_state.undo_unchecked(&_m);
 	}
 	fn get_winner(state: &Self::S) -> Option<Winner> {
-		match state.result() {
-			GameResult::Player(p) => Some(Winner::Player(p)),
-			GameResult::Draw => unreachable!(),
-			GameResult::OnGoing => None,
+		if state.turn == Player::PLAYER2 && state.ball_player1 > 41 {
+			Some(Winner::PLAYER1)
+		}
+		else if state.turn == Player::PLAYER1 && state.ball_player2 < 7 {
+			Some(Winner::PLAYER2)
+		} else {
+			// Anti-Game (Blocking) Rules
+			if state.is_blocking(Player::PLAYER1) { return Some(Winner::PLAYER2); }
+			if state.is_blocking(Player::PLAYER2) { return Some(Winner::PLAYER1); }
+			None
 		}
 	}
 	fn current_player(state: &Self::S) -> Player {
@@ -82,7 +88,7 @@ impl Evaluator for DiaballikEvalMaterial {
 mod tests {
 
 	use kudchuet::ai::minimax::util::perft_tt;
-use kudchuet::ai::minimax::{Game, IterativeOptions, Strategy};
+use kudchuet::ai::minimax::{Game, IterativeOptions, IterativeSearch, Strategy};
 	
 	#[cfg(not(target_arch = "wasm32"))]
 	use kudchuet::ai::minimax::{ParallelSearch, ParallelOptions};
@@ -118,11 +124,28 @@ use kudchuet::ai::minimax::{Game, IterativeOptions, Strategy};
 		
 	}
 	#[test]
-	#[cfg(not(target_arch = "wasm32"))]
+	//#[cfg(not(target_arch = "wasm32"))]
 	fn test_walk_full_game() {
 		let mut state = Diaballik::default();
 		let mut turn_count = 0;
-		let mut strategy = ParallelSearch::new(DiaballikEvalMaterial::new(), IterativeOptions::new(), ParallelOptions::new());
+		let mut strategy = {
+			#[cfg(not(target_arch = "wasm32"))]
+			{
+				ParallelSearch::new(
+					DiaballikEvalMaterial::new(),
+					IterativeOptions::new(),
+					ParallelOptions::new(),
+				)
+			}
+
+			#[cfg(target_arch = "wasm32")]
+			{
+				IterativeSearch::new(
+					DiaballikEvalMaterial::new(),
+					IterativeOptions::new(),
+				)
+			}
+		};
 		strategy.set_max_depth(3);
 		println!("Initial state:\n{}", state);
 

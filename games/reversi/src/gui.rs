@@ -5,7 +5,6 @@ use kudchuet::Player;
 use kudchuet::gui::shapes::Shape;
 use kudchuet::gui::{CheckerBoardMod, CoordMod};
 use kudchuet::{
-	GameResult,
 	gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType},
 	new_move_searcher_vec,
 };
@@ -57,36 +56,6 @@ impl BoardGame for Reversi {
 		8
 	}
 
-	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut moves = vec![];
-		self.legal_moves(&mut moves);
-		moves
-	}
-	fn play(&mut self, mv: Self::M) {
-		self.play_unchecked(mv.0, mv.1);
-	}
-
-	fn result(&self) -> GameResult {
-		if !self.is_over() {
-			GameResult::OnGoing
-		} else if self.is_draw() {
-			GameResult::Draw
-		} else {
-			if self.winner() == Some(Cell::Black) {
-				GameResult::PLAYER1
-			} else {
-				GameResult::PLAYER2
-			}
-		}
-	}
-
-	fn current_player(&self) -> Player {
-		match self.turn() {
-			Cell::Empty => unreachable!(),
-			Cell::Black => Player::PLAYER1,
-			Cell::White => Player::PLAYER2,
-		}
-	}
 	fn get_name(&self, p: Player) -> String {
 		match p {
 			Player::PLAYER1 => "Black".into(),

@@ -119,9 +119,9 @@ impl Game for C4Game {
 
 		if matches(1) || matches(HEIGHT) || matches(HEIGHT + 1) || matches(HEIGHT - 1) {
 			if b.reds_move() {
-				return Some(Winner::Player(0));
+				return Some(Winner::PLAYER1);
 			} else {
-				return Some(Winner::Player(1));
+				return Some(Winner::PLAYER2);
 			}
 		}
 

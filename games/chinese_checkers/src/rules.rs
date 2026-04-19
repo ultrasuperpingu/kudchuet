@@ -508,7 +508,7 @@ mod tests {
 		let _=game.play(Move{from:164, to: 189});
 		println!("{}", game);
 		println!("{:?}", game.result());
-		assert!(game.result() == GameResult::Player(0));
+		assert!(game.result() == GameResult::PLAYER1);
 		
 	}
 }

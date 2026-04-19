@@ -1,7 +1,7 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 use bitboard::BitIter;
-use kudchuet::{GameResult, Player};
+use kudchuet::Player;
 use bitboard::Bitboard;
 
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
@@ -37,18 +37,13 @@ impl Game for HareAndHounds {
 		Some(s)
 	}
 	fn get_winner(state: &Self::S) -> Option<Winner> {
-		match state.result() {
-			GameResult::Player(p) => Some(Winner::Player(p)),
-			GameResult::Draw => unreachable!(),
-			GameResult::OnGoing => None,
-		}
+		state.result().into()
 	}
 	fn zobrist_hash(state: &Self::S) -> u64 {
 		state.compute_hash()
 	}
 	
 	fn current_player(state: &Self::S) -> Player {
-		
 		match state.turn() {
 			true => Player::PLAYER2,
 			false => Player::PLAYER1,

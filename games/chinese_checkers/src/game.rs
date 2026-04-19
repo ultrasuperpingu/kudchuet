@@ -2,7 +2,7 @@
 use bitboard::BitIter;
 
 use crate::bitboard::ChineseCheckerBoard;
-use kudchuet::gui::BoardGame;
+use crate::rules::ChineseCheckersPlayer;
 use super::rules::{ChineseCheckers, Move};
 
 use kudchuet::Player;
@@ -33,10 +33,17 @@ impl Game for ChineseCheckers {
 		state.hash
 	}
 	fn current_player(state: &Self::S) -> Player {
-		<Self::S as BoardGame>::current_player(state)
+		match state.turn {
+			ChineseCheckersPlayer::Red => Player(0),
+			ChineseCheckersPlayer::Blue => Player(1),
+			ChineseCheckersPlayer::Green => Player(2),
+			ChineseCheckersPlayer::Yellow => Player(3),
+			ChineseCheckersPlayer::Black => Player(4),
+			ChineseCheckersPlayer::White => Player(5),
+		}
 	}
 	fn get_winner(state: &Self::S) -> Option<Winner> {
-		state.winner().map(|w| Winner::Player(w.idx() as u8))
+		state.winner().map(|w| Winner::Player(Player(w.idx() as u8)))
 	}
 }
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
@@ -49,48 +56,7 @@ impl ChineseCheckersMaterialEval {
 }
 impl Evaluator for ChineseCheckersMaterialEval {
 	type G = ChineseCheckers;
-	/*fn evaluate(&self, state: &ChineseCheckers) -> Evaluation {
-		let mut score = 0;
 
-		for p in ChineseCheckers::active_players(state.nb_players) {
-			let b = state.board(*p);
-			let target = ChineseCheckerBoard::target_board(*p);
-			
-
-			let mut dist = 0;
-
-			for i in b.iter_bits() {
-				let (x, y) = ChineseCheckerBoard::coords_from_index(i as usize);
-
-				let mut best = i32::MAX;
-
-				for t in target.iter_bits() {
-					let (tx, ty) = ChineseCheckerBoard::coords_from_index(t as usize);
-
-					let dx = x as i32 - tx as i32;
-					let dy = y as i32 - ty as i32;
-					let dz = -(dx + dy);
-					let d = dx.abs().max(dy.abs()).max(dz.abs());
-
-					best = best.min(d);
-				}
-
-				dist += best;
-			}
-
-			let in_target = (b.clone() & target.clone()).count() as i32;
-
-			let value = 300 - dist + in_target * 20;
-
-			if *p == self.0 {
-				score += value;
-			} else {
-				score -= value;
-			}
-		}
-
-		score as Evaluation
-	}*/
 	fn evaluate_for(&self, state: &ChineseCheckers, player: Player) -> Evaluation {
 		let mut score = 0;
 
@@ -111,7 +77,6 @@ impl Evaluator for ChineseCheckersMaterialEval {
 
 				dist += d as i32;
 			}
-
 			let in_target = (b.clone() & target_board.clone()).count() as i32;
 
 			let value = 300 - dist + in_target * 20;

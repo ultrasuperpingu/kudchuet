@@ -44,14 +44,6 @@ impl BoardGame for HareAndHounds {
 		3
 	}
 
-	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut len=0;
-		let mut moves=[Move::default();HareAndHounds::MAX_MOVES];
-		self.legal_moves(&mut moves, &mut len);
-		let mut mvs=vec![];
-		mvs.extend_from_slice(&moves[0..len]);
-		mvs
-	}
 	fn play(&mut self, mv: Self::M) {
 		self.play_unchecked(mv);
 	}
