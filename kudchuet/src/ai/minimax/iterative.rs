@@ -519,12 +519,12 @@ where
 {
 	pub fn new(eval: E, opts: IterativeOptions) -> IterativeSearch<E> {
 		let table = TranspositionTable::new(opts.table_byte_size, opts.strategy);
-		let negamaxer = ExpectiMinimaxer::new(table, eval, opts);
+		let minimaxer = ExpectiMinimaxer::new(table, eval, opts);
 		IterativeSearch {
 			max_depth: 99,
 			max_time: Duration::from_secs(5),
 			prev_value: 0,
-			minimaxer: negamaxer,
+			minimaxer,
 			opts,
 			actual_depth: 0,
 			nodes_explored: Vec::new(),

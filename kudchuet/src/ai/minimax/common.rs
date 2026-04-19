@@ -79,6 +79,13 @@ impl<M> ValueMove<M> {
 			self.m = m;
 		}
 	}
+	#[cfg(not(target_arch = "wasm32"))]
+	pub(super) fn min(&mut self, value: Evaluation, m: M) {
+		if value < self.value {
+			self.value = value;
+			self.m = m;
+		}
+	}
 
 	#[cfg(not(target_arch = "wasm32"))]
 	pub(super) fn into_inner(self) -> (Evaluation, M) {

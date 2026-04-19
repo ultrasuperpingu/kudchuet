@@ -133,7 +133,6 @@ where
 			self.move_pool.local_do(|pool| pool.free(moves));
 			return Some(self.eval.evaluate_for(s, player_to_move));
 		}
-		panic!("noisy active");
 		let mut best = WORST_EVAL;
 		for &m in moves.iter() {
 			let mut new = AppliedMove::<E::G>::new(s, m);
@@ -180,6 +179,7 @@ where
 				beta,
 			);
 		}
+		let current_player = E::G::current_player(s);
 		let alpha_orig = alpha;
 		let hash = E::G::zobrist_hash(s);
 		let mut good_move = None;
@@ -194,11 +194,7 @@ where
 		self.move_pool.local_do(|pool| moves = pool.alloc());
 		if let Some(winner) = E::G::generate_moves(s, &mut moves) {
 			self.move_pool.local_do(|pool| pool.free(moves));
-			return match winner {
-				Winner::Player(p) if p as usize == player_to_move.idx() => Some(BEST_EVAL),
-				Winner::Draw => Some(0),
-				Winner::Player(_) => Some(WORST_EVAL),
-			};
+			return Some(winner.evaluate(player_to_move));
 		}
 		if moves.is_empty() {
 			self.move_pool.local_do(|pool| pool.free(moves));
@@ -210,7 +206,6 @@ where
 		}
 
 		if self.null_move_check(s, depth, player_to_move, beta)? >= beta {
-			panic!("null move active");
 			self.move_pool.local_do(|pool| pool.free(moves));
 			return Some(beta);
 		}
@@ -239,11 +234,11 @@ where
 				beta,
 			)?
 		};
-		alpha = max(alpha, initial_value);
-		let (best, best_move) = if alpha >= beta {
+		//alpha = max(alpha, initial_value);
+		let (best, best_move) = /*if alpha >= beta {
 			// Skip search
 			(initial_value, first_move)
-		} else if self.par_opts.serial_cutoff_depth >= depth {
+		} else */if self.par_opts.serial_cutoff_depth >= depth {
 			// Serial search
 			let mut best = initial_value;
 			let mut best_move = first_move;
@@ -267,7 +262,7 @@ where
 
 				best = value.round() as Evaluation;
 				(best, best_move)
-			} else if E::G::current_player(s) == player_to_move {
+			} else if current_player == player_to_move {
 				for &m in moves[1..].iter() {
 					let mut new = AppliedMove::<E::G>::new(s, m);
 					let value = if null_window {
@@ -357,7 +352,7 @@ where
 						best = value;
 						best_move = m;
 					}
-					if best < beta {
+					if value < beta {
 						beta = value;
 						// Now that we've found a good move, assume following moves
 						// are worse, and seek to cull them without full evaluation.
@@ -372,59 +367,112 @@ where
 			}
 		} else {
 			let alpha = AtomicI16::new(alpha);
+			let beta = AtomicI16::new(beta);
 			let best_move = Mutex::new(ValueMove::new(initial_value, first_move));
 			// Parallel search
 			let result = par_iter_in_order(&moves[1..]).try_for_each(|&m| -> Option<()> {
-				// Check to see if we're cancelled by another branch.
 				let initial_alpha = alpha.load(Ordering::SeqCst);
-				if initial_alpha >= beta {
+				let initial_beta = beta.load(Ordering::SeqCst);
+				// Check to see if we're cancelled by another branch.
+				if initial_alpha >= initial_beta {
 					return None;
 				}
-
-				let mut state = s.clone();
-				let mut new = AppliedMove::<E::G>::new(&mut state, m);
-				let value = if self.opts.null_window_search && initial_alpha > alpha_orig {
-					// TODO: send reference to alpha as neg_beta to children.
-					let probe = self.expectiminimax(
-						&mut new,
-						Some(m),
-						depth - 1,
-						player_to_move,
-						initial_alpha,
-						initial_alpha + 1,
-					)?;
-					if probe > initial_alpha && probe < beta {
-						// Check again that we're not cancelled.
-						if alpha.load(Ordering::SeqCst) >= beta {
-							return None;
+				if current_player == player_to_move {
+					// MAX node
+					let mut state = s.clone();
+					let mut new = AppliedMove::<E::G>::new(&mut state, m);
+					let value = if self.opts.null_window_search && initial_alpha > alpha_orig {
+						// TODO: send reference to alpha as neg_beta to children.
+						let probe = self.expectiminimax(
+							&mut new,
+							Some(m),
+							depth - 1,
+							player_to_move,
+							initial_alpha,
+							initial_alpha + 1,
+						)?;
+						if probe > initial_alpha && probe < initial_beta {
+							// Check again that we're not cancelled.
+							if alpha.load(Ordering::SeqCst) >= beta.load(Ordering::SeqCst) {
+								return None;
+							}
+							// Full search fallback.
+							self.expectiminimax(
+								&mut new,
+								Some(m),
+								depth - 1,
+								player_to_move,
+								probe,
+								beta.load(Ordering::SeqCst),
+							)?
+						} else {
+							probe
 						}
-						// Full search fallback.
+					} else {
 						self.expectiminimax(
 							&mut new,
 							Some(m),
 							depth - 1,
 							player_to_move,
-							probe,
-							beta,
+							initial_alpha,
+							initial_beta,
 						)?
-					} else {
-						probe
-					}
-				} else {
-					self.expectiminimax(
-						&mut new,
-						Some(m),
-						depth - 1,
-						player_to_move,
-						initial_alpha,
-						beta,
-					)?
-				};
+					};
 
-				alpha.fetch_max(value, Ordering::SeqCst);
-				let mut bests = best_move.lock().unwrap();
-				bests.max(value, m);
-				Some(())
+					alpha.fetch_max(value, Ordering::SeqCst);
+					let mut bests = best_move.lock().unwrap();
+					bests.max(value, m);
+					Some(())
+				} else {
+					// MIN node
+					let mut state = s.clone();
+					let mut new = AppliedMove::<E::G>::new(&mut state, m);
+					let value = if self.opts.null_window_search && initial_alpha > alpha_orig {
+						// TODO: send reference to alpha as neg_beta to children.
+						let probe = self.expectiminimax(
+							&mut new,
+							Some(m),
+							depth - 1,
+							player_to_move,
+							initial_beta - 1,
+							initial_beta,
+						)?;
+						if probe > initial_alpha && probe < initial_beta {
+							// Check again that we're not cancelled.
+							if alpha.load(Ordering::SeqCst) >= beta.load(Ordering::SeqCst) {
+								return None;
+							}
+							// Full search fallback.
+							self.expectiminimax(
+								&mut new,
+								Some(m),
+								depth - 1,
+								player_to_move,
+								probe,
+								beta.load(Ordering::SeqCst),
+							)?
+						} else {
+							probe
+						}
+					} else {
+						self.expectiminimax(
+							&mut new,
+							Some(m),
+							depth - 1,
+							player_to_move,
+							initial_alpha,
+							initial_beta,
+						)?
+					};
+
+					beta.fetch_min(value, Ordering::SeqCst);
+					let mut bests = best_move.lock().unwrap();
+					bests.min(value, m);
+					Some(())
+				}
+				
+
+				
 			});
 			if result.is_none() {
 				// Check for timeout.
