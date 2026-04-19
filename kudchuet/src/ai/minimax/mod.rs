@@ -7,14 +7,11 @@ use std::sync::{
 
 pub use crate::ai::minimax::interface::*;
 pub use crate::ai::minimax::iterative::IterativeSearch;
-pub use crate::ai::minimax::mcts::{MCTSOptions, MonteCarloTreeSearch};
 pub use crate::ai::minimax::minimax::ExpectiMinimax;
 pub use crate::ai::minimax::random::Random;
 pub use crate::ai::minimax::ybw::ParallelSearch;
 
 pub mod iterative;
-#[cfg(not(target_arch = "wasm32"))]
-pub mod mcts;
 pub mod minimax;
 pub mod random;
 #[cfg(not(target_arch = "wasm32"))]

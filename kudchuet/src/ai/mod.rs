@@ -5,7 +5,6 @@ pub mod cli_engine;
 pub mod uci;
 pub mod minimax;
 pub mod engine_manager;
-pub mod incomplete_info_searcher;
 
 use std::{collections::HashMap, fmt::Debug, mem::discriminant, pin::Pin, time::Duration};
 use egui::Id;

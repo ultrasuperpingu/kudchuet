@@ -1,7 +1,7 @@
 use eframe::egui;
 use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke, StrokeKind};
 
-use kudchuet::ai::incomplete_info_searcher::ExpectiMinimaxBuilder;
+use kudchuet::ai::MoveSearcherBuilderDyn;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
 use kudchuet::{GameResult, Player};
@@ -364,8 +364,8 @@ impl SquareDrawer<Backgammon> for BackgammonSquareDrawer
 	}
 }
 pub fn create_board() -> GenericBoardApp<Backgammon> {
-	let ai_provider = ExpectiMinimaxBuilder::new("Material".into(), BackgammonMaterialEval::default(), 4);
-	let ai_provider2 = ExpectiMinimaxBuilder::new("Simple".into(), BackgammonSimpleEval::default(), 4);
+	let ai_provider = MoveSearcherBuilderDyn::new("Material".into(), BackgammonMaterialEval::default(), 4);
+	let ai_provider2 = MoveSearcherBuilderDyn::new("Simple".into(), BackgammonSimpleEval::default(), 4);
 	let mut board = GenericBoardApp::new(Backgammon::new(), vec![Box::new(ai_provider), Box::new(ai_provider2)]);
 	board.board_drawer.set_square_drawer(Box::new(BackgammonSquareDrawer{}));
 	board

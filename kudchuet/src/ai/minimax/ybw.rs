@@ -5,7 +5,6 @@
 //!
 //! This is based on the Young Brothers Wait Concept and CilkChess.
 //!
-//! For now, this code is broken
 extern crate rayon;
 
 use crate::Player;

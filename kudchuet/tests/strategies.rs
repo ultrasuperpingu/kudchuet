@@ -167,7 +167,7 @@ fn test_winning_position() {
 }
 
 #[test]
-fn compare_plain_negamax() {
+fn compare_plain_minimax() {
 	for _ in 0..100 {
 		for max_depth in 1..6 {
 			let b = generate_random_state(10);
@@ -250,10 +250,10 @@ fn compare_plain_negamax() {
 	}
 }
 
-// The same test, but a deeper tree (without plain negamax) to try to expose
+// The same test, but a deeper tree (without plain minimax) to try to expose
 // more parallelism in the parallel strategies.
 #[test]
-fn compare_deep_negamax() {
+fn compare_deep_minimax() {
 	let opt = IterativeOptions::new()
 		.with_table_byte_size(64000)
 		.with_countermoves()
