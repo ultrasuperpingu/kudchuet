@@ -1,5 +1,4 @@
 use bitboard_proc_macro::bitboard;
-use bitboard::Bitboard;
 
 use crate::rules::{Hex, idx};
 

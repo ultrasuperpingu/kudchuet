@@ -94,14 +94,14 @@ impl Reversi
 
 }
 const DIR_SHIFT_FUNCS: [fn(&Bitboard8x8) -> Bitboard8x8; 8] = [
-	Bitboard8x8::shift_se,
-	Bitboard8x8::shift_s,
-	Bitboard8x8::shift_sw,
-	Bitboard8x8::shift_e,
-	Bitboard8x8::shift_w,
-	Bitboard8x8::shift_ne,
-	Bitboard8x8::shift_n,
-	Bitboard8x8::shift_nw,
+	Bitboard8x8::shifted_se,
+	Bitboard8x8::shifted_s,
+	Bitboard8x8::shifted_sw,
+	Bitboard8x8::shifted_e,
+	Bitboard8x8::shifted_w,
+	Bitboard8x8::shifted_ne,
+	Bitboard8x8::shifted_n,
+	Bitboard8x8::shifted_nw,
 ];
 
 #[inline(always)]
@@ -428,14 +428,14 @@ mod tests {
 	use super::Reversi;
 	#[test]
 	fn test_shift() {
-		println!("{}", Bitboard8x8::BORDER.shift_n());
-		println!("{}", Bitboard8x8::BORDER.shift_s());
-		println!("{}", Bitboard8x8::BORDER.shift_e());
-		println!("{}", Bitboard8x8::BORDER.shift_w());
-		println!("{}", Bitboard8x8::BORDER.shift_ne());
-		println!("{}", Bitboard8x8::BORDER.shift_nw());
-		println!("{}", Bitboard8x8::BORDER.shift_se());
-		println!("{}", Bitboard8x8::BORDER.shift_sw());
+		println!("{}", Bitboard8x8::BORDER.shifted_n());
+		println!("{}", Bitboard8x8::BORDER.shifted_s());
+		println!("{}", Bitboard8x8::BORDER.shifted_e());
+		println!("{}", Bitboard8x8::BORDER.shifted_w());
+		println!("{}", Bitboard8x8::BORDER.shifted_ne());
+		println!("{}", Bitboard8x8::BORDER.shifted_nw());
+		println!("{}", Bitboard8x8::BORDER.shifted_se());
+		println!("{}", Bitboard8x8::BORDER.shifted_sw());
 
 		println!("{}", Bitboard8x8::BORDER.shift(5,5));
 		println!("{}", Bitboard8x8::BORDER.shift(-5,5));

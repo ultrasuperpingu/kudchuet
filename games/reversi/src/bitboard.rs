@@ -1,5 +1,5 @@
 use bitboard_proc_macro::{BitboardDebug, BitboardDisplay, bitboard};
-use bitboard::{Bitboard, bitboard_table};
+use bitboard::bitboard_table;
 
 
 #[bitboard(width=8,height=8,col_major=false)]

@@ -1,5 +1,3 @@
-use std::hash::{DefaultHasher, Hash, Hasher};
-
 use kudchuet::Player;
 
 use crate::bitboard::Goban;
@@ -18,9 +16,14 @@ impl Game for Gomoku {
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
-		let mut s2 = state.clone();
-		s2.play_unchecked(m);
-		Some(s2)
+		//let mut s2 = state.clone();
+		//s2.play_unchecked(m);
+		//Some(s2)
+		state.play_unchecked(m);
+		None
+	}
+	fn undo(state: &mut Self::S, m: Self::M) {
+		state.undo_unchecked(m);
 	}
 
 	fn get_winner(state: &Self::S) -> Option<Winner> {
@@ -35,16 +38,14 @@ impl Game for Gomoku {
 	}
 
 	fn zobrist_hash(state: &Self::S) -> u64 {
-		let mut hasher = DefaultHasher::new();
-		state.hash(&mut hasher);
-		hasher.finish()
+		state.get_hash()
 	}
 	fn current_player(state: &Self::S) -> Player {
 		state.turn
 	}
 }
 
-#[derive(Clone, Default, Copy, Debug)]
+#[derive(Clone, Default, Copy, Debug, PartialEq, Eq)]
 pub struct GomokuEvalDumb;
 
 impl GomokuEvalDumb {
@@ -70,33 +71,44 @@ impl Evaluator for GomokuEvalSimple {
 	type G = Gomoku;
 	fn evaluate_for(&self, state: &Gomoku, p: Player) -> Evaluation {
 		let mut score = 0;
-		score += if state.white.has_aligned::<4>() {
-			100
+		score += if Gomoku::has_broken_four(&state.white, &state.black) {
+			103
 		} else {
 			0
 		};
-		score += if state.white.has_aligned::<3>() {
-			50
+		score += if Gomoku::has_open_four(&state.white, &state.black) {
+			501
 		} else {
 			0
 		};
-		score += if state.white.has_aligned::<2>() {
-			10
+		score += if Gomoku::has_open_three(&state.white, &state.black) {
+			47
 		} else {
 			0
 		};
-		score -= if state.black.has_aligned::<4>() {
-			100
+		score += if Gomoku::has_closed_four(&state.white, &state.black) {
+			73
 		} else {
 			0
 		};
-		score -= if state.black.has_aligned::<3>() {
-			50
+		
+		score -= if Gomoku::has_broken_four(&state.black, &state.white) {
+			103
 		} else {
 			0
 		};
-		score -= if state.black.has_aligned::<2>() {
-			10
+		score -= if Gomoku::has_open_four(&state.black, &state.white) {
+			501
+		} else {
+			0
+		};
+		score -= if Gomoku::has_open_three(&state.black, &state.white) {
+			47
+		} else {
+			0
+		};
+		score -= if Gomoku::has_closed_four(&state.black, &state.white) {
+			73
 		} else {
 			0
 		};

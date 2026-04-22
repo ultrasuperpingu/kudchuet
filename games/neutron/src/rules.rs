@@ -150,7 +150,7 @@ pub enum Piece {
 	Black,
 	White,
 	Neutron
-} 
+}
 impl Neutron {
 	pub const ZOBRIST_KEYS: Zobrist = Zobrist::new(0x15A4CDE);
 	#[inline(always)]

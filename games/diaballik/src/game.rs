@@ -88,8 +88,9 @@ impl Evaluator for DiaballikEvalMaterial {
 mod tests {
 
 	use kudchuet::ai::minimax::util::perft_tt;
-use kudchuet::ai::minimax::{Game, IterativeOptions, IterativeSearch, Strategy};
-	
+	use kudchuet::ai::minimax::{Game, IterativeOptions, Strategy};
+	#[cfg(target_arch = "wasm32")]
+	use kudchuet::ai::minimax::IterativeSearch;
 	#[cfg(not(target_arch = "wasm32"))]
 	use kudchuet::ai::minimax::{ParallelSearch, ParallelOptions};
 	use super::Diaballik;

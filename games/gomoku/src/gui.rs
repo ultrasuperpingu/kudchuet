@@ -2,11 +2,14 @@
 use eframe::egui;
 use egui::{Color32, Stroke};
 
-use kudchuet::new_move_searcher_vec;
+use kudchuet::ai::AIEngine;
+use kudchuet::ai::AIEngineProvider;
+use kudchuet::ai::MoveSearcherBuilderDyn;
 use kudchuet::Player;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, board_drawer::SquareDrawer};
 use kudchuet::gui::shapes::Shape;
 use crate::bitboard::Goban;
+use crate::game::GomokuEvalDumb;
 use crate::{game::GomokuEvalSimple, rules::{Cell, Gomoku, Move}};
 
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -139,7 +142,11 @@ impl SquareDrawer<Gomoku> for GobanSquareDrawer {
 	}
 }
 pub fn create_board() -> GenericBoardApp<Gomoku> {
-	let mut board=GenericBoardApp::new(Gomoku::default(), new_move_searcher_vec("Simple".into(), GomokuEvalSimple::new(), 4));
+	let engines: Vec<Box<dyn AIEngineProvider<Gomoku, Engine=Box<dyn AIEngine<Gomoku>>>>> = vec![
+		Box::new(MoveSearcherBuilderDyn::new("Dumb".into(), GomokuEvalDumb::new(), 4)),
+		Box::new(MoveSearcherBuilderDyn::new("Simple".into(), GomokuEvalSimple::new(), 4)),
+	];
+	let mut board=GenericBoardApp::new(Gomoku::default(), engines);
 	board.board_drawer.set_square_drawer(Box::new(GobanSquareDrawer{}));
 	board
 }

@@ -6,5 +6,6 @@ use bitboard_proc_macro::{BitboardDebug, BitboardDisplay, bitboard};
 #[derive(Default, BitboardDebug, BitboardDisplay, Hash)]
 pub struct Goban;
 impl Goban {
-	//const ODD : Self = Self::any(&self)
+	
+
 }
