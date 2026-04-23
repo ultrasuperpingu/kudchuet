@@ -281,12 +281,11 @@ where
 
 		let mut moves = self.move_pool.alloc();
 		if let Some(winner) = E::G::generate_moves(s, &mut moves) {
-			return
-				match winner {
-					Winner::Player(p) if p == player_to_move => Some(BEST_EVAL),
-					Winner::Draw => Some(0),
-					Winner::Player(_) => Some(WORST_EVAL),
-				};
+			return match winner {
+				Winner::Player(p) if p == player_to_move => Some(BEST_EVAL),
+				Winner::Draw => Some(0),
+				Winner::Player(_) => Some(WORST_EVAL),
+			};
 		}
 		self.stats.generate_moves(moves.len());
 		if moves.is_empty() {
@@ -608,8 +607,10 @@ where
 		if E::G::generate_moves(&s_clone, &mut moves).is_some() {
 			return None;
 		}
-		// Start in a random order.
-		fastrand::shuffle(&mut moves);
+		if self.opts.shuffle_moves {
+			// Start in a random order.
+			fastrand::shuffle(&mut moves);
+		}
 		let mut moves = moves
 			.into_iter()
 			.map(|m| ValueMove::new(0, m))

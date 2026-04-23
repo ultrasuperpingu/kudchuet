@@ -12,6 +12,8 @@ impl Game for Gomoku {
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
 		state.legal_moves_inplace(moves);
+		// randomize moves.
+		fastrand::shuffle(moves);
 		Self::get_winner(state)
 	}
 
@@ -71,47 +73,17 @@ impl Evaluator for GomokuEvalSimple {
 	type G = Gomoku;
 	fn evaluate_for(&self, state: &Gomoku, p: Player) -> Evaluation {
 		let mut score = 0;
-		score += if Gomoku::has_broken_four(&state.white, &state.black) {
-			103
-		} else {
-			0
-		};
-		score += if Gomoku::has_open_four(&state.white, &state.black) {
-			501
-		} else {
-			0
-		};
-		score += if Gomoku::has_open_three(&state.white, &state.black) {
-			47
-		} else {
-			0
-		};
-		score += if Gomoku::has_closed_four(&state.white, &state.black) {
-			73
-		} else {
-			0
-		};
+		let mut empty = state.black.or_const(&state.white);
+		empty.not_assign_const();
+		score += Gomoku::open_four(&state.white, &state.black, &empty).count() as Evaluation * 501;
+		score += Gomoku::broken_four(&state.white, &state.black, &empty).count() as Evaluation * 103;
+		score += Gomoku::closed_four(&state.white, &state.black, &empty).count() as Evaluation * 73;
+		score += Gomoku::open_three(&state.white, &state.black, &empty).count() as Evaluation * 47;
 		
-		score -= if Gomoku::has_broken_four(&state.black, &state.white) {
-			103
-		} else {
-			0
-		};
-		score -= if Gomoku::has_open_four(&state.black, &state.white) {
-			501
-		} else {
-			0
-		};
-		score -= if Gomoku::has_open_three(&state.black, &state.white) {
-			47
-		} else {
-			0
-		};
-		score -= if Gomoku::has_closed_four(&state.black, &state.white) {
-			73
-		} else {
-			0
-		};
+		score -= Gomoku::open_four(&state.black, &state.white, &empty).count() as Evaluation * 501;
+		score -= Gomoku::broken_four(&state.black, &state.white, &empty).count() as Evaluation * 103;
+		score -= Gomoku::closed_four(&state.black, &state.white, &empty).count() as Evaluation * 73;
+		score -= Gomoku::open_three(&state.black, &state.white, &empty).count() as Evaluation * 47;
 		if p == Player::PLAYER2 { score } else { -score }
 	}
 }

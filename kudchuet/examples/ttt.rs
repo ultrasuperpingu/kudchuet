@@ -273,8 +273,8 @@ impl Evaluator for TTTEvaluator {
 fn main() {
 	let mut b = Board::default();
 	let mut strategies = vec![
-		ExpectiMinimax::new(TTTEvaluator::default(), 10),
-		ExpectiMinimax::new(TTTEvaluator::default(), 10),
+		ExpectiMinimax::new(TTTEvaluator::default(), 10, true),
+		ExpectiMinimax::new(TTTEvaluator::default(), 10, true),
 	];
 	let mut s = 0;
 	while TTTGame::get_winner(&b).is_none() {

@@ -1,155 +1,190 @@
 use crate::{bitboard::Goban, rules::Gomoku};
 
 impl Gomoku {
-	pub const fn has_broken_four(mine: &Goban, other: &Goban) -> bool {
-		let all = mine.or_const(other);
-		let empty = all.not_const();
-		Self::has_broken_four_h(mine, &empty)
-			|| Self::has_broken_four_v(mine, &empty)
-			|| Self::has_broken_four_diag_inc(mine, &empty)
-			|| Self::has_broken_four_diag_dec(mine, &empty)
-	}
-	pub const fn has_broken_four_h(mine: &Goban, empty: &Goban) -> bool {
+	pub const fn broken_four(mine: &Goban, _other: &Goban, empty: &Goban) -> Goban {
+		let mut res;
+		let mine_pattern = Goban::detect_pattern_h(mine, 0b10111);
+		let empty_pattern = Goban::detect_pattern_h(empty, 0b01000);
+		res = mine_pattern.and_const(&empty_pattern);
+
 		let mine_pattern = Goban::detect_pattern_h(mine, 0b11011);
 		let empty_pattern = Goban::detect_pattern_h(empty, 0b00100);
-		mine_pattern.and_const(&empty_pattern).any()
-	}
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
 
-	pub const fn has_broken_four_v(mine: &Goban, empty: &Goban) -> bool {
+		let mine_pattern = Goban::detect_pattern_h(mine, 0b11101);
+		let empty_pattern = Goban::detect_pattern_h(empty, 0b00010);
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
+		let mine_pattern = Goban::detect_pattern_v(mine, 0b10111);
+		let empty_pattern = Goban::detect_pattern_v(empty, 0b01000);
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
 		let mine_pattern = Goban::detect_pattern_v(mine, 0b11011);
 		let empty_pattern = Goban::detect_pattern_v(empty, 0b00100);
-		mine_pattern.and_const(&empty_pattern).any()
-	}
-	pub const fn has_broken_four_diag_inc(mine: &Goban, empty: &Goban) -> bool {
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
+		let mine_pattern = Goban::detect_pattern_v(mine, 0b11101);
+		let empty_pattern = Goban::detect_pattern_v(empty, 0b00010);
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
+		let mine_pattern = Goban::detect_pattern_diag_inc(mine, 0b10111);
+		let empty_pattern = Goban::detect_pattern_diag_inc(empty, 0b01000);
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
 		let mine_pattern = Goban::detect_pattern_diag_inc(mine, 0b11011);
 		let empty_pattern = Goban::detect_pattern_diag_inc(empty, 0b00100);
-		mine_pattern.and_const(&empty_pattern).any()
-	}
-	pub const fn has_broken_four_diag_dec(mine: &Goban, empty: &Goban) -> bool {
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
+		let mine_pattern = Goban::detect_pattern_diag_inc(mine, 0b11101);
+		let empty_pattern = Goban::detect_pattern_diag_inc(empty, 0b00010);
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
+		let mine_pattern = Goban::detect_pattern_diag_dec(mine, 0b10111);
+		let empty_pattern = Goban::detect_pattern_diag_dec(empty, 0b01000);
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
 		let mine_pattern = Goban::detect_pattern_diag_dec(mine, 0b11011);
 		let empty_pattern = Goban::detect_pattern_diag_dec(empty, 0b00100);
-		mine_pattern.and_const(&empty_pattern).any()
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
+		let mine_pattern = Goban::detect_pattern_diag_dec(mine, 0b11101);
+		let empty_pattern = Goban::detect_pattern_diag_dec(empty, 0b00010);
+		res.or_assign_const(&mine_pattern.and_const(&empty_pattern));
+
+		res
 	}
 
-	pub fn has_open_three(mine: &Goban, other: &Goban) -> bool {
-		let all = mine.or_const(other);
-		let empty = all.not_const();
-		Self::has_open_three_h(mine, &empty)
-			|| Self::has_open_three_v(mine, &empty)
-			|| Self::has_open_three_diag_dec(mine, &empty)
-			|| Self::has_open_three_diag_inc(mine, &empty)
+	pub fn open_three(mine: &Goban, _other: &Goban, empty: &Goban) -> Goban {
+		Self::open_three_h(mine, &empty)
+			| Self::open_three_v(mine, &empty)
+			| Self::open_three_diag_dec(mine, &empty)
+			| Self::open_three_diag_inc(mine, &empty)
 	}
-	pub fn has_open_three_h(mine: &Goban, empty: &Goban) -> bool {
+	pub fn open_three_h(mine: &Goban, empty: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_h(mine, 0b01110);
 		let empty_pattern = Goban::detect_pattern_h(empty, 0b10001);
-		mine_pattern.and_const(&empty_pattern).any()
+		mine_pattern.and_const(&empty_pattern)
 	}
-	pub const fn has_open_three_v(mine: &Goban, empty: &Goban) -> bool {
+	pub const fn open_three_v(mine: &Goban, empty: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_v(mine, 0b01110);
 		let empty_pattern = Goban::detect_pattern_v(empty, 0b10001);
-		mine_pattern.and_const(&empty_pattern).any()
+		mine_pattern.and_const(&empty_pattern)
 	}
-	pub const fn has_open_three_diag_inc(mine: &Goban, empty: &Goban) -> bool {
+	pub const fn open_three_diag_inc(mine: &Goban, empty: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_diag_inc(mine, 0b01110);
 		let empty_pattern = Goban::detect_pattern_diag_inc(empty, 0b10001);
-		mine_pattern.and_const(&empty_pattern).any()
+		mine_pattern.and_const(&empty_pattern)
 	}
-	pub const fn has_open_three_diag_dec(mine: &Goban, empty: &Goban) -> bool {
+	pub const fn open_three_diag_dec(mine: &Goban, empty: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_diag_dec(mine, 0b01110);
 		let empty_pattern = Goban::detect_pattern_diag_dec(empty, 0b10001);
-		mine_pattern.and_const(&empty_pattern).any()
+		mine_pattern.and_const(&empty_pattern)
 	}
-	pub const fn has_open_four(mine: &Goban, other: &Goban) -> bool {
-		let empty = mine.or_const(other).not_const();
-		Self::has_open_four_h(mine, &empty)
-			|| Self::has_open_four_v(mine, &empty)
-			|| Self::has_open_four_diag_inc(mine, &empty)
-			|| Self::has_open_four_diag_dec(mine, &empty)
+	pub const fn open_four(mine: &Goban, _other: &Goban, empty: &Goban) -> Goban {
+		Self::open_four_h(mine, &empty)
+			.or_const(&Self::open_four_v(mine, &empty))
+			.or_const(&Self::open_four_diag_inc(mine, &empty))
+			.or_const(&Self::open_four_diag_dec(mine, &empty))
 	}
 
-	pub const fn has_open_four_h(mine: &Goban, empty: &Goban) -> bool {
+	pub const fn open_four_h(mine: &Goban, empty: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_h(mine, 0b011110);
 		let empty_pattern = Goban::detect_pattern_h(empty, 0b100001);
-		mine_pattern.and_const(&empty_pattern).any()
+		mine_pattern.and_const(&empty_pattern)
 	}
-	pub const fn has_open_four_v(mine: &Goban, empty: &Goban) -> bool {
+	pub const fn open_four_v(mine: &Goban, empty: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_v(mine, 0b011110);
 		let empty_pattern = Goban::detect_pattern_v(empty, 0b100001);
-		mine_pattern.and_const(&empty_pattern).any()
+		mine_pattern.and_const(&empty_pattern)
 	}
-	pub const fn has_open_four_diag_inc(mine: &Goban, empty: &Goban) -> bool {
+	pub const fn open_four_diag_inc(mine: &Goban, empty: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_diag_inc(mine, 0b011110);
 		let empty_pattern = Goban::detect_pattern_diag_inc(empty, 0b100001);
-		mine_pattern.and_const(&empty_pattern).any()
+		mine_pattern.and_const(&empty_pattern)
 	}
 
-	pub const fn has_open_four_diag_dec(mine: &Goban, empty: &Goban) -> bool {
+	pub const fn open_four_diag_dec(mine: &Goban, empty: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_diag_dec(mine, 0b011110);
 		let empty_pattern = Goban::detect_pattern_diag_dec(empty, 0b100001);
-		mine_pattern.and_const(&empty_pattern).any()
+		mine_pattern.and_const(&empty_pattern)
 	}
-	pub const fn has_closed_four(mine: &Goban, other: &Goban) -> bool {
-		let empty = mine.or_const(other).not_const();
-
-		Self::has_closed_four_h(mine, &empty, other)
-			|| Self::has_closed_four_v(mine, &empty, other)
-			|| Self::has_closed_four_diag_inc(mine, &empty, other)
-			|| Self::has_closed_four_diag_dec(mine, &empty, other)
+	pub const fn closed_four(mine: &Goban, other: &Goban, empty: &Goban) -> Goban {
+		Self::closed_four_h(mine, &empty, other)
+			.or_const(&Self::closed_four_v(mine, &empty, other))
+			.or_const(&Self::closed_four_diag_inc(mine, &empty, other))
+			.or_const(&Self::closed_four_diag_dec(mine, &empty, other))
 	}
 
-	pub const fn has_closed_four_h(mine: &Goban, empty: &Goban, other: &Goban) -> bool {
+	pub const fn closed_four_h(mine: &Goban, empty: &Goban, other: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_h(mine, 0b011110);
 		let other_pattern = Goban::detect_pattern_h(other, 0b100000);
 		let empty_pattern = Goban::detect_pattern_h(empty, 0b000001);
-		let mut res = mine_pattern.and_const(&empty_pattern).and_const(&other_pattern).any();
-		if !res {
-			let mine_pattern = Goban::detect_pattern_h(mine, 0b011110);
-			let other_pattern = Goban::detect_pattern_h(other, 0b000001);
-			let empty_pattern = Goban::detect_pattern_h(empty, 0b100000);
-			res = mine_pattern.and_const(&empty_pattern).and_const(&other_pattern).any();
-		}
+		let mut res = mine_pattern
+			.and_const(&empty_pattern)
+			.and_const(&other_pattern);
+
+		let mine_pattern = Goban::detect_pattern_h(mine, 0b011110);
+		let other_pattern = Goban::detect_pattern_h(other, 0b000001);
+		let empty_pattern = Goban::detect_pattern_h(empty, 0b100000);
+		res.or_assign_const(
+			&mine_pattern
+				.and_const(&empty_pattern)
+				.and_const(&other_pattern),
+		);
 		res
 	}
-	pub const fn has_closed_four_v(mine: &Goban, empty: &Goban, other: &Goban) -> bool {
+	pub const fn closed_four_v(mine: &Goban, empty: &Goban, other: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_v(mine, 0b011110);
 		let other_pattern = Goban::detect_pattern_v(other, 0b100000);
 		let empty_pattern = Goban::detect_pattern_v(empty, 0b000001);
-		let mut res = mine_pattern.and_const(&empty_pattern).and_const(&other_pattern).any();
-		if !res {
-			let mine_pattern = Goban::detect_pattern_v(mine, 0b011110);
-			let other_pattern = Goban::detect_pattern_v(other, 0b000001);
-			let empty_pattern = Goban::detect_pattern_v(empty, 0b100000);
-			res = mine_pattern.and_const(&empty_pattern).and_const(&other_pattern).any();
-		}
+		let mut res = mine_pattern
+			.and_const(&empty_pattern)
+			.and_const(&other_pattern);
+
+		let mine_pattern = Goban::detect_pattern_v(mine, 0b011110);
+		let other_pattern = Goban::detect_pattern_v(other, 0b000001);
+		let empty_pattern = Goban::detect_pattern_v(empty, 0b100000);
+		res.or_assign_const(
+			&mine_pattern
+				.and_const(&empty_pattern)
+				.and_const(&other_pattern),
+		);
 		res
 	}
-	pub const fn has_closed_four_diag_inc(mine: &Goban, empty: &Goban, other: &Goban) -> bool {
+	pub const fn closed_four_diag_inc(mine: &Goban, empty: &Goban, other: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_diag_inc(mine, 0b011110);
 		let other_pattern = Goban::detect_pattern_diag_inc(other, 0b100000);
 		let empty_pattern = Goban::detect_pattern_diag_inc(empty, 0b000001);
-		let mut res = mine_pattern.and_const(&empty_pattern).and_const(&other_pattern).any();
-		if !res {
-			let mine_pattern = Goban::detect_pattern_diag_inc(mine, 0b011110);
-			let other_pattern = Goban::detect_pattern_diag_inc(other, 0b000001);
-			let empty_pattern = Goban::detect_pattern_diag_inc(empty, 0b100000);
-			res = mine_pattern.and_const(&empty_pattern).and_const(&other_pattern).any();
-		}
+		let mut res = mine_pattern
+			.and_const(&empty_pattern)
+			.and_const(&other_pattern);
+		let mine_pattern = Goban::detect_pattern_diag_inc(mine, 0b011110);
+		let other_pattern = Goban::detect_pattern_diag_inc(other, 0b000001);
+		let empty_pattern = Goban::detect_pattern_diag_inc(empty, 0b100000);
+		res.or_assign_const(
+			&mine_pattern
+				.and_const(&empty_pattern)
+				.and_const(&other_pattern),
+		);
 		res
 	}
-	pub const fn has_closed_four_diag_dec(mine: &Goban, empty: &Goban, other: &Goban) -> bool {
+	pub const fn closed_four_diag_dec(mine: &Goban, empty: &Goban, other: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_diag_dec(mine, 0b011110);
 		let other_pattern = Goban::detect_pattern_diag_dec(other, 0b100000);
 		let empty_pattern = Goban::detect_pattern_diag_dec(empty, 0b000001);
-		let mut res = mine_pattern.and_const(&empty_pattern).and_const(&other_pattern).any();
-		if !res {
-			let mine_pattern = Goban::detect_pattern_diag_dec(mine, 0b011110);
-			let other_pattern = Goban::detect_pattern_diag_dec(other, 0b000001);
-			let empty_pattern = Goban::detect_pattern_diag_dec(empty, 0b100000);
-			res = mine_pattern.and_const(&empty_pattern).and_const(&other_pattern).any();
-		}
+		let mut res = mine_pattern
+			.and_const(&empty_pattern)
+			.and_const(&other_pattern);
+		let mine_pattern = Goban::detect_pattern_diag_dec(mine, 0b011110);
+		let other_pattern = Goban::detect_pattern_diag_dec(other, 0b000001);
+		let empty_pattern = Goban::detect_pattern_diag_dec(empty, 0b100000);
+		res.or_assign_const(
+			&mine_pattern
+				.and_const(&empty_pattern)
+				.and_const(&other_pattern),
+		);
 		res
 	}
-
 }
 #[cfg(test)]
 mod tests {
@@ -175,7 +210,7 @@ mod tests {
 			}
 		};
 	}
-	
+
 	/*pub const fn pattern_shift<SHIFTFN: const Fn(&Goban) -> Goban>(mine: &Goban, mine_mask: u64, shift_fn: SHIFTFN) -> Goban {
 		let mut mask = mine_mask;
 		let mut res = Goban::FULL;
@@ -207,17 +242,8 @@ mod tests {
 		);
 		println!("{}", mine);
 		assert_pattern!(
-			Gomoku::has_broken_four_h(&mine, &empty),
+			Gomoku::broken_four(&mine, &_other, &empty).any(),
 			"broken four horizontal should be detected"
-		);
-	}
-	#[test]
-	fn test_broken_four_v() {
-		let (mine, _other, empty) = setup(&[(5, 5), (5, 6), (5, 8), (5, 9)], &[]);
-		println!("{}", mine);
-		assert_pattern!(
-			Gomoku::has_broken_four_v(&mine, &empty),
-			"broken four vertical should be detected"
 		);
 	}
 	#[test]
@@ -225,7 +251,7 @@ mod tests {
 		let (mine, _other, empty) = setup(&[(5, 5), (6, 5), (7, 5)], &[]);
 		println!("{}", mine);
 		assert_pattern!(
-			Gomoku::has_open_three_h(&mine, &empty),
+			Gomoku::open_three_h(&mine, &empty).any(),
 			//test_has_open_three_h(&mine, &empty),
 			"open three horizontal should be detected"
 		);
@@ -235,19 +261,16 @@ mod tests {
 		let (mine, _other, empty) = setup(&[(5, 5), (6, 6), (7, 7), (8, 8)], &[]);
 		println!("{}", mine);
 		assert_pattern!(
-			Gomoku::has_open_four_diag_inc(&mine, &empty),
+			Gomoku::open_four_diag_inc(&mine, &empty).any(),
 			"open four diag inc should be detected"
 		);
 	}
 	#[test]
 	fn test_closed_four_diag_inc() {
-		let (mine, other, empty) = setup(
-			&[(5, 5), (6, 6), (7, 7), (8, 8)],
-			&[(9, 9)],
-		);
+		let (mine, other, empty) = setup(&[(5, 5), (6, 6), (7, 7), (8, 8)], &[(9, 9)]);
 		println!("{}\n{}", mine, other);
 		assert_pattern!(
-			Gomoku::has_closed_four_diag_inc(&mine, &empty, &other),
+			Gomoku::closed_four_diag_inc(&mine, &empty, &other).any(),
 			"closed four diag dec should be detected"
 		);
 	}

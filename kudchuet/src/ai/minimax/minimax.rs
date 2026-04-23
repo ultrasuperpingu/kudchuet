@@ -9,6 +9,7 @@ pub struct ExpectiMinimax<E: Evaluator> {
 	max_depth: u8,
 	move_pool: MovePool<<E::G as Game>::M>,
 	rng: Rng,
+	shuffle_moves: bool,
 	pub prev_value: Evaluation,
 	pub eval: E,
 }
@@ -29,10 +30,11 @@ where
 		if E::G::generate_moves(s, &mut moves).is_some() {
 			return None;
 		}
-		// Randomly permute order that we look at the moves.
-		// We'll pick the first best score from this list.
-		self.rng.shuffle(&mut moves);
-
+		if self.shuffle_moves {
+			// Randomly permute order that we look at the moves.
+			// We'll pick the first best score from this list.
+			self.rng.shuffle(&mut moves);
+		}
 		let mut best_move = *moves.first()?;
 		let mut s_clone = s.clone();
 		for &m in moves.iter() {
@@ -61,10 +63,11 @@ where
 	}
 }
 impl<E: Evaluator> ExpectiMinimax<E> {
-	pub fn new(evaluator: E, depth: u8) -> Self {
+	pub fn new(evaluator: E, depth: u8, shuffle_moves: bool) -> Self {
 		Self {
 			max_depth: depth,
 			move_pool: MovePool::<_>::default(),
+			shuffle_moves,
 			rng: Rng::new(),
 			prev_value: 0,
 			eval: evaluator,
@@ -257,7 +260,7 @@ mod tests {
 	}
 	#[test]
 	fn test() {
-		let mut strat = ExpectiMinimax::new(Eval::default(), 8);
+		let mut strat = ExpectiMinimax::new(Eval::default(), 8, true);
 		let mut i = 0;
 		let mut s = DumbGame::default();
 		while i < 10 {

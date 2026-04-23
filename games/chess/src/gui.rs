@@ -58,7 +58,7 @@ pub enum ChessPiece {
 	BlackBishop,
 	BlackQueen,
 	BlackKing
-} 
+}
 impl BoardGame for ChessBoard {
 
 	type PieceType=ChessPiece;

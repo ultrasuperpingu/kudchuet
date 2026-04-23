@@ -14,7 +14,7 @@ use kudchuet::ai::minimax::{ParallelOptions, ParallelSearch};
 fn bench_expectiminimax(b: &mut Bencher) {
 	let board = dice_race::Board::default();
 	b.iter(|| {
-		let mut s = ExpectiMinimax::new(dice_race::DiceRaceEvaluator::default(), 8);
+		let mut s = ExpectiMinimax::new(dice_race::DiceRaceEvaluator::default(), 8, true);
 		let m = s.choose_move(&board);
 		assert!(m.is_some());
 	});

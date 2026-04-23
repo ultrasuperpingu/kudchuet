@@ -150,7 +150,7 @@ fn test_winning_position() {
 	// Make sure none of the strategies die when given a winning position.
 	assert_eq!(
 		None,
-		ExpectiMinimax::new(RandomEvaluator::default(), 4).choose_move(&b)
+		ExpectiMinimax::new(RandomEvaluator::default(), 4, true).choose_move(&b)
 	);
 
 	let opt = IterativeOptions::new();
@@ -176,7 +176,7 @@ fn compare_plain_minimax() {
 			plain_minimax.choose_move(&b);
 			let value = plain_minimax.root_value;
 
-			let mut minimax = ExpectiMinimax::new(RandomEvaluator::default(), max_depth);
+			let mut minimax = ExpectiMinimax::new(RandomEvaluator::default(), max_depth, true);
 			let minimax_move = minimax.choose_move(&b).unwrap();
 			let minimax_value = minimax.root_value();
 			assert_eq!(value, minimax_value, "search depth={}\n{}", max_depth, b);
@@ -262,7 +262,7 @@ fn compare_deep_minimax() {
 		for max_depth in 1..10 {
 			let b = generate_random_state(10);
 
-			let mut negamax = ExpectiMinimax::new(RandomEvaluator::default(), max_depth);
+			let mut negamax = ExpectiMinimax::new(RandomEvaluator::default(), max_depth, true);
 			negamax.choose_move(&b).unwrap();
 			let value = negamax.root_value();
 

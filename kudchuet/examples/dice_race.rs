@@ -304,7 +304,7 @@ impl Evaluator for DiceRaceEvaluator {
 }
 
 fn main() {
-	let mut minimax = ExpectiMinimax::new(DiceRaceEvaluator::default(), 8);
+	let mut minimax = ExpectiMinimax::new(DiceRaceEvaluator::default(), 8, true);
 	let mut minimax2 = IterativeSearch::new(
 		DiceRaceEvaluator::default(),
 		IterativeOptions::new().with_null_window_search(true),

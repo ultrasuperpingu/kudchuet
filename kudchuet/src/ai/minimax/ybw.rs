@@ -677,7 +677,6 @@ where
 			timeout_signal(self.max_time, &self.stop_signal);
 			self.stop_signal.clone()
 		};
-
 		let (best_move, value) = {
 			let start_time = Instant::now();
 			let mut minimaxer = ParallelExpectiMinimax::new(

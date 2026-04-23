@@ -69,6 +69,7 @@ pub struct IterativeOptions {
 	pub(super) min_reorder_moves_depth: u8,
 	pub(super) countermove_table: bool,
 	pub(super) countermove_history_table: bool,
+	pub(super) shuffle_moves: bool,
 	pub verbose: bool,
 }
 
@@ -87,7 +88,8 @@ impl IterativeOptions {
 			min_reorder_moves_depth: u8::MAX,
 			countermove_table: false,
 			countermove_history_table: false,
-			verbose: false,
+			shuffle_moves: true,
+			verbose: true,
 		}
 	}
 	pub fn get_strategy(&self) -> Replacement {
