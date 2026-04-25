@@ -4,6 +4,7 @@
 //! etc. Can keep going until a maximum depth or maximum time or either. Uses
 //! a transposition table to reuse information from previous iterations.
 
+use crate::GameOutcome;
 use crate::Player;
 
 use super::IterativeOptions;
@@ -163,12 +164,13 @@ where
 		if self.timeout_check() {
 			return None;
 		}
-
-		if let Some(winner) = E::G::get_winner(s) {
-			return match winner {
-				Winner::Player(p) if p == player_to_move => Some(BEST_EVAL),
-				Winner::Player(_) => Some(WORST_EVAL),
-				Winner::Draw => Some(0),
+		let res  = E::G::get_winner(s);
+		if res.is_ended() {
+			return match res {
+				GameOutcome::Player(p) if p == player_to_move => Some(BEST_EVAL),
+				GameOutcome::Player(_) => Some(WORST_EVAL),
+				GameOutcome::Draw => Some(0),
+				_ => unreachable!()
 			};
 		}
 		if depth == 0 {
@@ -194,7 +196,7 @@ where
 			}
 
 			best = value.round() as Evaluation;
-		} else if E::G::current_player(s) == player_to_move {
+		} else if E::G::get_current_player(s) == player_to_move {
 			best = WORST_EVAL;
 			for &m in moves.iter() {
 				let mut new = AppliedMove::<E::G>::new(s, m);
@@ -269,7 +271,7 @@ where
 		}
 
 		let alpha_orig = alpha;
-		let hash = E::G::zobrist_hash(s);
+		let hash = E::G::get_hash(s);
 		let mut good_move = None;
 		if let Some(value) = self
 			.table
@@ -280,18 +282,20 @@ where
 		}
 
 		let mut moves = self.move_pool.alloc();
-		if let Some(winner) = E::G::generate_moves(s, &mut moves) {
-			return match winner {
-				Winner::Player(p) if p == player_to_move => Some(BEST_EVAL),
-				Winner::Draw => Some(0),
-				Winner::Player(_) => Some(WORST_EVAL),
+		let res  = E::G::generate_moves(s, &mut moves);
+		if res.is_ended() {
+			return match res {
+				GameOutcome::Player(p) if p == player_to_move => Some(BEST_EVAL),
+				GameOutcome::Draw => Some(0),
+				GameOutcome::Player(_) => Some(WORST_EVAL),
+				_ => unreachable!()
 			};
 		}
 		self.stats.generate_moves(moves.len());
 		if moves.is_empty() {
 			//not sure how to handle this...
 			self.move_pool.free(moves);
-			if player_to_move == E::G::current_player(s) {
+			if player_to_move == E::G::get_current_player(s) {
 				return Some(WORST_EVAL);
 			} else {
 				return Some(BEST_EVAL);
@@ -340,7 +344,7 @@ where
 			}
 
 			best = value.round() as Evaluation;
-		} else if E::G::current_player(s) == player_to_move {
+		} else if E::G::get_current_player(s) == player_to_move {
 			best = WORST_EVAL;
 			for &m in moves.iter() {
 				let mut new = AppliedMove::<E::G>::new(s, m);
@@ -483,7 +487,7 @@ where
 		}
 		moves.sort_by_key(|vm| -vm.value);
 		self.table.update(
-			E::G::zobrist_hash(s),
+			E::G::get_hash(s),
 			alpha,
 			beta,
 			depth,
@@ -597,14 +601,14 @@ where
 		// Start timer if configured.
 		self.minimaxer.reset_timeout(self.max_time);
 
-		let root_hash = E::G::zobrist_hash(s);
+		let root_hash = E::G::get_hash(s);
 		let mut s_clone = s.clone();
 		let mut best_move = None;
 		let mut interval_start;
-		let player_to_move = E::G::current_player(s);
+		let player_to_move = E::G::get_current_player(s);
 		// Store the moves so they can be reordered every iteration.
 		let mut moves = Vec::new();
-		if E::G::generate_moves(&s_clone, &mut moves).is_some() {
+		if E::G::generate_moves(&s_clone, &mut moves).is_ended() {
 			return None;
 		}
 		if self.opts.shuffle_moves {

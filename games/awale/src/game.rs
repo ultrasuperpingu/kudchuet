@@ -1,17 +1,17 @@
 use std::hash::Hasher;
 use std::hash::{DefaultHasher, Hash};
 
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 
 use super::rules::Awale;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 impl Game for Awale {
 	type S = Awale;
 
 	type M = usize;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		let mut mvs: Vec<Self::M> = state.legal_moves();
 		moves.append(&mut mvs);
 		// TODO: check winner
@@ -24,21 +24,21 @@ impl Game for Awale {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		if state.is_over() {
 			if let Some(p) = state.winner() {
-				return Some(Winner::Player(p));
+				return GameOutcome::Player(p);
 			} else {
-				return Some(Winner::Draw);
+				return GameOutcome::Draw;
 			}
 		}
-		None
+		GameOutcome::OnGoing
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		state.turn
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		let mut hasher = DefaultHasher::new();
 		state.hash(&mut hasher);
 		hasher.finish()

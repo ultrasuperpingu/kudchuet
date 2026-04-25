@@ -1,9 +1,9 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 
 use super::rules::{Move, FootBoard};
 
@@ -13,12 +13,13 @@ impl Game for FootBoard {
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
-		if let Some(w) = Self::get_winner(state) {
-			return Some(w);
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
+		let res = Self::get_winner(state);
+		if res.is_ended() {
+			return res;
 		}
 		state.legal_moves(moves);
-		None
+		GameOutcome::OnGoing
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -26,17 +27,17 @@ impl Game for FootBoard {
 		s.play_unchecked(&m);
 		Some(s)
 	}
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		state.result().into()
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		let mut hasher = DefaultHasher::new();
 		state.hash(&mut hasher);
 		hasher.finish()
 		//state.compute_hash()
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		state.turn()
 	}
 }
@@ -111,7 +112,7 @@ mod tests {
 		strategy.set_max_depth(2);
 		println!("Initial state:\n{}", state);
 
-		while turn_count < 200 && !state.result().is_finished() {
+		while turn_count < 200 && !state.result().is_ended() {
 			let chosen_move = strategy.choose_move(&state);
 
 			FootBoard::apply(&mut state, chosen_move.unwrap());

@@ -437,8 +437,8 @@ mod tests {
 		println!("{}", Bitboard8x8::BORDER.shifted_se());
 		println!("{}", Bitboard8x8::BORDER.shifted_sw());
 
-		println!("{}", Bitboard8x8::BORDER.shift(5,5));
-		println!("{}", Bitboard8x8::BORDER.shift(-5,5));
+		println!("{}", Bitboard8x8::BORDER.shifted(5,5));
+		println!("{}", Bitboard8x8::BORDER.shifted(-5,5));
 		
 	}
 	

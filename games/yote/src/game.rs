@@ -1,20 +1,17 @@
-
-
-
-use kudchuet::{Player, ai::minimax::{Evaluation, Evaluator, Game, Winner}};
+use kudchuet::{
+	GameOutcome, Player,
+	ai::minimax::{Evaluation, Evaluator, Game},
+};
 
 use super::rules::{Move, Yote};
 
-
-
-
 impl Game for Yote {
-	type S =  Yote;
+	type S = Yote;
 
 	type M = Move;
 
 	#[inline]
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		state.legal_moves_inplace(moves);
 		Self::get_winner(state)
 	}
@@ -26,14 +23,14 @@ impl Game for Yote {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<Winner> {
-		state.result().into()
+	fn get_winner(state: &Self::S) -> GameOutcome {
+		state.result()
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		state.turn
 	}
 	#[inline]
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		//let mut hasher = DefaultHasher::new();
 		//state.hash(&mut hasher);
 		//hasher.finish()
@@ -65,10 +62,10 @@ impl YoteMaterialEval {
 	}
 }
 impl Evaluator for YoteMaterialEval {
-	type G=Yote;
+	type G = Yote;
 	fn evaluate_for(&self, state: &Yote, p: Player) -> Evaluation {
 		if p == Player::PLAYER1 {
-			state.white_pawns_count()as Evaluation - state.black_pawns_count()as Evaluation 
+			state.white_pawns_count() as Evaluation - state.black_pawns_count() as Evaluation
 		} else {
 			state.black_pawns_count() as Evaluation - state.white_pawns_count() as Evaluation
 		}
@@ -103,8 +100,8 @@ impl Evaluator for YoteMaterialEval {
 //    13      1146228466        2.1s    547945.6
 #[cfg(test)]
 mod tests {
-	use kudchuet::ai::minimax::util::perft;
 	use crate::rules::Yote;
+	use kudchuet::ai::minimax::util::perft;
 
 	#[test]
 	fn simple_perft_test() {

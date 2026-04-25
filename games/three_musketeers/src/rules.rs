@@ -1,6 +1,6 @@
 use bitboard::{BitIter, Bitboard};
 use std::fmt::{self, Display, Formatter};
-use kudchuet::{GameResult, Player};
+use kudchuet::{GameOutcome, Player};
 
 use crate::bitboard::Bitboard5x5;
 
@@ -206,20 +206,20 @@ impl ThreeMusketeers {
 		}
 	}
 	#[inline]
-	pub fn result(&self) -> GameResult {
+	pub fn result(&self) -> GameOutcome {
 		if self.musketeers_aligned() {
-			return GameResult::PLAYER2;
+			return GameOutcome::PLAYER2;
 		}
 		if self.guards.is_empty() {
-			return GameResult::PLAYER1;
+			return GameOutcome::PLAYER1;
 		}
 		if self.turn == 0 {
 			if !self.has_legal_move_musketeers() {
-				return GameResult::PLAYER1;
+				return GameOutcome::PLAYER1;
 			}
 		}
 
-		GameResult::OnGoing
+		GameOutcome::OnGoing
 	}
 }
 impl ThreeMusketeers {
@@ -285,13 +285,13 @@ impl ThreeMusketeers {
 #[cfg(test)]
 mod tests {
 	use super::ThreeMusketeers;
-	use super::GameResult;
+	use super::GameOutcome;
 		
 	#[test]
 	fn play_one_move() {
 		let mut game = ThreeMusketeers::new();
 		assert_eq!(game.turn, 0);
-		assert_eq!(game.result(), GameResult::OnGoing);
+		assert_eq!(game.result(), GameOutcome::OnGoing);
 
 		let moves = game.legal_moves();
 		assert!(!moves.is_empty());

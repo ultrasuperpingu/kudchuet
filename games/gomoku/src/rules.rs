@@ -1,7 +1,7 @@
 use bitboard::{BitIter, Bitboard};
 use std::fmt::{self, Display, Formatter};
 
-use kudchuet::{GameResult, Player};
+use kudchuet::{GameOutcome, Player};
 
 use crate::bitboard::Goban;
 
@@ -123,15 +123,15 @@ impl Gomoku {
 
 impl Gomoku {
 	#[inline]
-	pub fn result(&self) -> GameResult {
+	pub fn result(&self) -> GameOutcome {
 		if self.black.has_aligned::<5>() {
-			return GameResult::PLAYER1;
+			return GameOutcome::PLAYER1;
 		}
 		if self.white.has_aligned::<5>() {
-			return GameResult::PLAYER2;
+			return GameOutcome::PLAYER2;
 		}
 
-		GameResult::OnGoing
+		GameOutcome::OnGoing
 	}
 	pub fn cell(&self, x: u8, y: u8) -> Cell {
 		if self.white.get(x, y) {
@@ -208,7 +208,7 @@ pub enum Cell {
 }
 #[cfg(test)]
 mod tests {
-	use super::GameResult;
+	use super::GameOutcome;
 	use super::Gomoku;
 	use super::Player;
 
@@ -216,7 +216,7 @@ mod tests {
 	fn play_one_move() {
 		let mut game = Gomoku::new();
 		assert_eq!(game.turn, Player::PLAYER1);
-		assert_eq!(game.result(), GameResult::OnGoing);
+		assert_eq!(game.result(), GameOutcome::OnGoing);
 
 		let moves = game.legal_moves();
 		assert!(!moves.is_empty());

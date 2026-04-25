@@ -2,8 +2,8 @@ use shakmaty::{Chess, Color, EnPassantMode, Move, Position, zobrist::Zobrist64};
 
 use super::evaluation::evaluate_materials;
 
-use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::{GameOutcome, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 #[derive(Clone, Debug)]
 pub struct ChessGame;
@@ -11,7 +11,7 @@ impl Game for ChessGame {
 	type S = Chess;
 	type M = Move;
 
-	fn generate_moves(s: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(s: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		let legals = s.legal_moves();
 		moves.clear();
 		moves.reserve(legals.len());
@@ -19,37 +19,37 @@ impl Game for ChessGame {
 		if legals.is_empty() {
 			if s.is_check() {
 				if s.turn() == Color::White {
-					Some(Winner::PLAYER1)
+					GameOutcome::PLAYER1
 				} else {
-					Some(Winner::PLAYER2)
+					GameOutcome::PLAYER2
 				}
 			} else {
-				Some(Winner::Draw)
+				GameOutcome::Draw
 			}
 		}
 		else if s.is_insufficient_material() {
-			Some(Winner::Draw)
+			GameOutcome::Draw
 		}
 		else {
-			None
+			GameOutcome::OnGoing
 		}
 	}
 
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		match state.outcome() {
 			shakmaty::Outcome::Known(known_outcome) => {
 				match known_outcome {
 						shakmaty::KnownOutcome::Decisive { winner } => {
 							if winner == Color::White {
-								Some(Winner::PLAYER1)
+								GameOutcome::PLAYER1
 							} else {
-								Some(Winner::PLAYER2)
+								GameOutcome::PLAYER2
 							}
 						},
-						shakmaty::KnownOutcome::Draw => Some(Winner::Draw),
+						shakmaty::KnownOutcome::Draw => GameOutcome::Draw,
 					}
 			},
-			shakmaty::Outcome::Unknown => None,
+			shakmaty::Outcome::Unknown => GameOutcome::OnGoing,
 		}
 	}
 
@@ -58,10 +58,10 @@ impl Game for ChessGame {
 		//println!("{:?}", s);
 		s.ok()
 	}
-	fn zobrist_hash(pos: &Self::S) -> u64 {
+	fn get_hash(pos: &Self::S) -> u64 {
 		pos.zobrist_hash::<Zobrist64>(EnPassantMode::Legal).into()
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		if state.turn() == Color::White {
 			Player::PLAYER1
 		} else {

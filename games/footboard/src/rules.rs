@@ -1,7 +1,7 @@
 
 use bitboard::{BitIter, Bitboard};
 
-use kudchuet::{GameResult, Player};
+use kudchuet::{GameOutcome, Player};
 
 use crate::bitboard::Bitboard9x13;
 
@@ -295,16 +295,16 @@ impl FootBoard {
 	}
 
 	#[inline]
-	pub fn result(&self) -> GameResult {
+	pub fn result(&self) -> GameOutcome {
 		if self.turn < 30 {
-			GameResult::OnGoing
+			GameOutcome::OnGoing
 		} else {
 			if self.score1 > self.score2 {
-				GameResult::PLAYER1
+				GameOutcome::PLAYER1
 			} else if self.score1 < self.score2 {
-				GameResult::PLAYER2
+				GameOutcome::PLAYER2
 			} else {
-				GameResult::Draw
+				GameOutcome::Draw
 			}
 		}
 	}

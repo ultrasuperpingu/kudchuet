@@ -2,8 +2,8 @@
 
 extern crate chess_lib;
 
-use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::{GameOutcome, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 use chess_lib::{Board, BoardStatus, ChessMove, Color, MoveGen};
 
@@ -15,7 +15,7 @@ impl Game for Chess {
 	type S = Board;
 	type M = ChessMove;
 
-	fn generate_moves(b: &Board, moves: &mut Vec<ChessMove>) -> Option<Winner> {
+	fn generate_moves(b: &Board, moves: &mut Vec<ChessMove>) -> GameOutcome {
 		let movegen = MoveGen::new_legal(b);
 		moves.clear();
 		//moves.reserve(movegen.len());
@@ -29,22 +29,22 @@ impl Game for Chess {
 		//moves.extend_from_slice(&mv[0..len]);
 		if moves.is_empty() {
 			if *b.checkers() == chess_lib::EMPTY {
-				Some(Winner::Draw)
+				GameOutcome::Draw
 			} else {
 				//TODO
-				Some(Winner::PLAYER1)
+				GameOutcome::PLAYER1
 			}
 		} else {
-			None
+			GameOutcome::OnGoing
 		}
 	}
 
-	fn get_winner(b: &Board) -> Option<Winner> {
+	fn get_winner(b: &Board) -> GameOutcome {
 		match b.status() {
-			BoardStatus::Ongoing => None,
-			BoardStatus::Stalemate => Some(Winner::Draw),
+			BoardStatus::Ongoing => GameOutcome::OnGoing,
+			BoardStatus::Stalemate => GameOutcome::Draw,
 			//TODO
-			BoardStatus::Checkmate => Some(Winner::PLAYER1),
+			BoardStatus::Checkmate => GameOutcome::PLAYER1,
 		}
 	}
 
@@ -52,14 +52,14 @@ impl Game for Chess {
 		Some(b.make_move_new(m))
 	}
 
-	fn zobrist_hash(b: &Board) -> u64 {
+	fn get_hash(b: &Board) -> u64 {
 		b.get_hash()
 	}
 
 	fn notation(_b: &Board, m: ChessMove) -> Option<String> {
 		Some(format!("{}", m))
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		match state.side_to_move() {
 			chess_lib::Color::White => Player::PLAYER1,
 			chess_lib::Color::Black => Player::PLAYER2,

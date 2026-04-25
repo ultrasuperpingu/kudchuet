@@ -1,8 +1,8 @@
 use std::hash::{DefaultHasher, Hash};
 use std::hash::Hasher;
 
-use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::{GameOutcome, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 use crate::rules::{Cell, Reversi};
 
@@ -15,7 +15,7 @@ impl Game for Reversi {
 
 	type M = (u8, u8);
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		state.legal_moves(moves);
 		Self::get_winner(state)
 	}
@@ -26,28 +26,28 @@ impl Game for Reversi {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		if state.is_over() {
 			if let Some(winner) = state.winner() {
 				if winner == Cell::Black {
-					return Some(Winner::PLAYER1);
+					return GameOutcome::PLAYER1;
 				} else {
-					return Some(Winner::PLAYER2);
+					return GameOutcome::PLAYER2;
 				}
 			} else {
-				return Some(Winner::Draw);
+				return GameOutcome::Draw;
 			}
 		}
-		None
+		GameOutcome::OnGoing
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		let mut hasher = DefaultHasher::new();
 		state.hash(&mut hasher);
 		hasher.finish()
 	}
 	
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		match state.turn() {
 			Cell::Empty => unreachable!(),
 			Cell::White => Player::PLAYER2,

@@ -9,7 +9,7 @@ extern crate kudchuet;
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 use kudchuet::ai::minimax::*;
 
 const RACE_LENGTH: u8 = 48;
@@ -89,9 +89,10 @@ impl Game for DiceGame {
 	type S = Board;
 	type M = Move;
 
-	fn generate_moves(b: &Board, ms: &mut Vec<Move>) -> Option<Winner> {
-		if let Some(winner) = Self::get_winner(b) {
-			return Some(winner);
+	fn generate_moves(b: &Board, ms: &mut Vec<Move>) -> GameOutcome {
+		let res = Self::get_winner(b);
+		if res.is_ended() {
+			return res;
 		}
 		if let Some(d) = b.current_dice_choice {
 			match d {
@@ -149,7 +150,7 @@ impl Game for DiceGame {
 			ms.push(Move::Choice(Dice::OneD10));
 			ms.push(Move::Choice(Dice::TwoD10));
 		}
-		None
+		GameOutcome::OnGoing
 	}
 
 	fn apply(b: &mut Board, m: Move) -> Option<Board> {
@@ -185,27 +186,27 @@ impl Game for DiceGame {
 	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {
 		Some(format!("{:?}", _move))
 	}
-	fn zobrist_hash(_state: &Self::S) -> u64 {
+	fn get_hash(_state: &Self::S) -> u64 {
 		let hash = (_state.p1 as u64)
 			| ((_state.p2 as u64) << 8)
 			| ((_state.to_move as u64) << 17)
 			| ((_state.current_dice_choice.is_some() as u64) << 18);
 		splitmix64(hash)
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		if state.to_move {
 			Player::PLAYER2
 		} else {
 			Player::PLAYER1
 		}
 	}
-	fn get_winner(b: &Board) -> Option<Winner> {
+	fn get_winner(b: &Board) -> GameOutcome {
 		if b.p1 == RACE_LENGTH {
-			Some(Winner::PLAYER1)
+			GameOutcome::PLAYER1
 		} else if b.p2 == RACE_LENGTH {
-			Some(Winner::PLAYER2)
+			GameOutcome::PLAYER2
 		} else {
-			None
+			GameOutcome::OnGoing
 		}
 	}
 	fn is_random_move(state: &Self::S) -> bool {
@@ -311,7 +312,7 @@ fn main() {
 	);
 	minimax2.set_max_depth(8);
 	let mut b = Board::default();
-	while DiceGame::get_winner(&b).is_none() {
+	while !DiceGame::get_winner(&b).is_ended() {
 		println!("{}", b);
 		let strategy: &mut dyn Strategy<DiceGame> = if b.to_move {
 			&mut minimax2

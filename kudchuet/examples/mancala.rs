@@ -1,10 +1,9 @@
 extern crate kudchuet;
 
 use kudchuet::{
-	Player,
-	ai::minimax::{
-		Evaluation, Evaluator, Game, IterativeOptions, IterativeSearch, Strategy, Winner,
-	},
+	GameOutcome, Player, ai::minimax::{
+		Evaluation, Evaluator, Game, IterativeOptions, IterativeSearch, Strategy,
+	}
 };
 use std::fmt;
 
@@ -40,20 +39,21 @@ impl Game for Mancala {
 	type S = Board;
 	type M = Move;
 
-	fn generate_moves(board: &Board, moves: &mut Vec<Move>) -> Option<Winner> {
-		if let Some(winner) = Self::get_winner(board) {
-			return Some(winner);
+	fn generate_moves(board: &Board, moves: &mut Vec<Move>) -> GameOutcome {
+		let res = Self::get_winner(board);
+		if res.is_ended() {
+			return res;
 		}
 		if board.skipped {
 			moves.push(0);
-			return None;
+			return GameOutcome::OnGoing;
 		}
 		for i in 1..7 {
 			if board.pits[board.to_move as usize][i] > 0 {
 				moves.push(i as Move);
 			}
 		}
-		None
+		GameOutcome::OnGoing
 	}
 
 	fn apply(board: &mut Board, m: Move) -> Option<Board> {
@@ -101,23 +101,23 @@ impl Game for Mancala {
 		Some(board)
 	}
 
-	fn get_winner(board: &Board) -> Option<Winner> {
+	fn get_winner(board: &Board) -> GameOutcome {
 		if board.pits[0][1..].iter().sum::<u8>() == 0 || board.pits[1][1..].iter().sum::<u8>() == 0
 		{
 			let to_move_total = board.pits[board.to_move as usize].iter().sum::<u8>();
-			Some(if to_move_total == 24 {
-				Winner::Draw
+			if to_move_total == 24 {
+				GameOutcome::Draw
 			} else if to_move_total > 24 {
-				Winner::Player(Player(board.to_move as u8))
+				GameOutcome::Player(Player(board.to_move as u8))
 			} else {
-				Winner::Player(Player((!board.to_move) as u8))
-			})
+				GameOutcome::Player(Player((!board.to_move) as u8))
+			}
 		} else {
-			None
+			GameOutcome::OnGoing
 		}
 	}
 
-	fn zobrist_hash(board: &Board) -> u64 {
+	fn get_hash(board: &Board) -> u64 {
 		let mut hash = board.to_move as u64;
 		for i in 0..7 {
 			hash ^= HASHES[i].wrapping_mul(board.pits[0][i] as u64);
@@ -144,7 +144,7 @@ impl Game for Mancala {
 	fn max_table_index() -> u16 {
 		6
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		if state.to_move {
 			Player::PLAYER2
 		} else {
@@ -186,7 +186,7 @@ fn main() {
 	let opts = IterativeOptions::new().verbose();
 	let mut strategy = IterativeSearch::new(MancalaEvaluator::default(), opts);
 	strategy.set_timeout(std::time::Duration::from_secs(1));
-	while Mancala::get_winner(&board).is_none() {
+	while !Mancala::get_winner(&board).is_ended() {
 		println!("{}", board);
 		match strategy.choose_move(&board) {
 			Some(m) => board = Mancala::apply(&mut board, m).unwrap(),

@@ -6,7 +6,7 @@ extern crate kudchuet;
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 use kudchuet::ai::minimax::util::perft;
 use kudchuet::ai::minimax::*;
 
@@ -110,9 +110,10 @@ impl Game for Connect4Game {
 	type S = Board;
 	type M = Place;
 
-	fn generate_moves(b: &Board, moves: &mut Vec<Place>) -> Option<Winner> {
-		if let Some(winner) = Self::get_winner(b) {
-			return Some(winner);
+	fn generate_moves(b: &Board, moves: &mut Vec<Place>) -> GameOutcome {
+		let res = Self::get_winner(b);
+		if res.is_ended() {
+			return res;
 		}
 		let mut cols = b.all_pieces;
 		for i in 0..NUM_COLS {
@@ -121,10 +122,10 @@ impl Game for Connect4Game {
 			}
 			cols >>= HEIGHT;
 		}
-		None
+		GameOutcome::OnGoing
 	}
 
-	fn get_winner(b: &Board) -> Option<Winner> {
+	fn get_winner(b: &Board) -> GameOutcome {
 		// Position of pieces for the player that just moved.
 		let pieces = b.pieces_just_moved();
 
@@ -137,17 +138,17 @@ impl Game for Connect4Game {
 
 		if matches(1) || matches(HEIGHT) || matches(HEIGHT + 1) || matches(HEIGHT - 1) {
 			if b.reds_move() {
-				return Some(Winner::PLAYER2);
+				return GameOutcome::PLAYER2;
 			} else {
-				return Some(Winner::PLAYER1);
+				return GameOutcome::PLAYER1;
 			}
 		}
 
 		// Full board with no winner.
 		if b.num_moves as u32 == NUM_ROWS * NUM_COLS {
-			Some(Winner::Draw)
+			GameOutcome::Draw
 		} else {
-			None
+			GameOutcome::OnGoing
 		}
 	}
 
@@ -163,10 +164,10 @@ impl Game for Connect4Game {
 		Some(b)
 	}
 
-	fn zobrist_hash(b: &Board) -> u64 {
+	fn get_hash(b: &Board) -> u64 {
 		b.hash
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		if state.reds_move() {
 			return Player::PLAYER2;
 		} else {
@@ -262,7 +263,7 @@ impl Evaluator for BasicEvaluator {
 			player_wins >>= HEIGHT;
 			opponent_wins >>= HEIGHT;
 		}
-		if p == Self::G::current_player(b) {
+		if p == Self::G::get_current_player(b) {
 			score
 		} else {
 			-score
@@ -313,7 +314,7 @@ fn main() {
 	let mut strategies: [&mut dyn Strategy<Connect4Game>; 2] = [&mut dumb, &mut iterative];
 
 	let mut s = 0;
-	while Connect4Game::get_winner(&b).is_none() {
+	while !Connect4Game::get_winner(&b).is_ended() {
 		println!("{}", b);
 		let ref mut strategy = strategies[s];
 		match strategy.choose_move(&mut b) {

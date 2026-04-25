@@ -3,7 +3,7 @@ use bitboard::{BitIter, Bitboard};
 
 use std::fmt::{self, Display, Formatter};
 
-use kudchuet::{GameResult, Player};
+use kudchuet::{GameOutcome, Player};
 
 use crate::{bitboard::Bitboard5x5, pext_tables};
 
@@ -295,13 +295,13 @@ impl Zobrist {
 }
 impl Neutron {
 	
-	pub fn result(&self) -> GameResult {
+	pub fn result(&self) -> GameOutcome {
 		if !(self.neutron & Bitboard5x5::SOUTH_BORDER).is_empty() {
-			return GameResult::PLAYER1;
+			return GameOutcome::PLAYER1;
 		}
 
 		if !(self.neutron & Bitboard5x5::NORTH_BORDER).is_empty() {
-			return GameResult::PLAYER2;
+			return GameOutcome::PLAYER2;
 		}
 
 		let mut moves = Vec::new();
@@ -309,12 +309,12 @@ impl Neutron {
 
 		if moves.is_empty() {
 			match self.turn {
-				Player::PLAYER1 => GameResult::PLAYER1,
-				Player::PLAYER2 => GameResult::PLAYER2,
+				Player::PLAYER1 => GameOutcome::PLAYER1,
+				Player::PLAYER2 => GameOutcome::PLAYER2,
 				_ => unreachable!()
 			}
 		} else {
-			GameResult::OnGoing
+			GameOutcome::OnGoing
 		}
 	}
 

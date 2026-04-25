@@ -28,7 +28,7 @@ where
 {
 	fn choose_move(&mut self, s: &G::S) -> Option<G::M> {
 		let mut moves = Vec::new();
-		if G::generate_moves(s, &mut moves).is_some() {
+		if G::generate_moves(s, &mut moves).is_ended() {
 			return None;
 		}
 		fastrand::choice(moves)

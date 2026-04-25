@@ -6,9 +6,9 @@ use crate::bitboard::Bitboard8x8;
 use super::rules::{Color, Square, Piece, CastlingRights, Move};
 
 use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
-use kudchuet::GameResult;
+use kudchuet::GameOutcome;
 use super::pext_tables;
 //use super::magic_tables::{MagicEntry, ROOK_MOVES, ROOK_MAGICS};
 
@@ -643,28 +643,28 @@ impl ChessBoard {
 		}
 	}
 	#[inline]
-	pub fn status(&self) -> GameResult {
+	pub fn status(&self) -> GameOutcome {
 		if self.turn() == Color::Black {
 			let no_legal_moves = self.legal_moves_template::<false>().is_empty();
 			if !no_legal_moves {
-				return GameResult::OnGoing;
+				return GameOutcome::OnGoing;
 			}
 			let checkers = self.compute_checkers::<false>();
 			if checkers.0 {
-				GameResult::PLAYER1
+				GameOutcome::PLAYER1
 			} else {
-				GameResult::Draw
+				GameOutcome::Draw
 			}
 		} else {
 			let no_legal_moves = self.legal_moves_template::<true>().is_empty();
 			if !no_legal_moves {
-				return GameResult::OnGoing;
+				return GameOutcome::OnGoing;
 			}
 			let checkers = self.compute_checkers::<true>();
 			if checkers.0 {
-				GameResult::PLAYER2
+				GameOutcome::PLAYER2
 			} else {
-				GameResult::Draw
+				GameOutcome::Draw
 			}
 		}
 	}
@@ -1335,7 +1335,7 @@ impl Game for ChessBoard {
 	type M = Move;
 
 	#[inline]
-	fn generate_moves(b: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(b: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		let mut array = [Move { from: Square(0), to: Square(0), promotion: None }; 256];
 		let mut len = 0;
 		if b.turn == Color::White {
@@ -1349,13 +1349,8 @@ impl Game for ChessBoard {
 	}
 
 	#[inline]
-	fn get_winner(b: &Self::S) -> Option<Winner> {
-		match b.status() {
-			GameResult::Player(p) => Some(Winner::Player(p)),
-			GameResult::Draw => Some(Winner::Draw),
-			GameResult::OnGoing => None,
-		}
-		//None
+	fn get_winner(b: &Self::S) -> GameOutcome {
+		b.status()
 	}
 
 	#[inline]
@@ -1366,14 +1361,14 @@ impl Game for ChessBoard {
 		Some(copy)
 	}
 
-	fn zobrist_hash(b: &Self::S) -> u64 {
+	fn get_hash(b: &Self::S) -> u64 {
 		b.hash
 	}
 
 	fn notation(_b: &Self::S, m: Self::M) -> Option<String> {
 		_b.move_to_san(&m).ok()
 	}
-	fn current_player(b: &Self::S) -> Player {
+	fn get_current_player(b: &Self::S) -> Player {
 		match b.turn() {
 			Color::White => Player::PLAYER1,
 			Color::Black => Player::PLAYER2,

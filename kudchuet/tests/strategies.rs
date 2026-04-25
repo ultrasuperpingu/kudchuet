@@ -9,7 +9,7 @@ extern crate kudchuet;
 #[path = "../examples/connect4.rs"]
 mod connect4;
 
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 use kudchuet::ai::minimax::*;
 
 use std::cmp::{max, min};
@@ -38,8 +38,9 @@ impl<E: Evaluator> PlainMinimax<E> {
 	where
 		<<E as Evaluator>::G as Game>::M: Copy,
 	{
-		if let Some(winner) = E::G::get_winner(s) {
-			return winner.evaluate(player_to_move);
+		let res = E::G::get_winner(s);
+		if res.is_ended() {
+			return res.evaluate(player_to_move);
 		}
 		if depth == 0 {
 			return self.eval.evaluate_for(s, player_to_move);
@@ -47,7 +48,7 @@ impl<E: Evaluator> PlainMinimax<E> {
 		let mut moves = Vec::new();
 		E::G::generate_moves(s, &mut moves);
 		let mut best;
-		if E::G::current_player(s) == player_to_move {
+		if E::G::get_current_player(s) == player_to_move {
 			best = WORST_EVAL;
 			for &m in moves.iter() {
 				let mut new = E::G::apply(s, m).unwrap();
@@ -74,7 +75,7 @@ where
 	fn choose_move(&mut self, s: &<E::G as Game>::S) -> Option<<E::G as Game>::M> {
 		let mut moves = Vec::new();
 		E::G::generate_moves(s, &mut moves);
-		let player = E::G::current_player(s);
+		let player = E::G::get_current_player(s);
 		self.best_moves.clear();
 		let mut best_value = WORST_EVAL;
 		let mut s = s.clone();
@@ -123,7 +124,7 @@ fn generate_random_state(depth: u8) -> connect4::Board {
 		connect4::Connect4Game::generate_moves(&b, &mut moves);
 		let m = fastrand::choice(moves).unwrap();
 		let next = connect4::Connect4Game::apply(&mut b, m).unwrap();
-		if connect4::Connect4Game::get_winner(&next).is_some() {
+		if connect4::Connect4Game::get_winner(&next).is_ended() {
 			// Oops, undo and try again on the next iter.
 		} else {
 			b = next;
@@ -143,7 +144,7 @@ fn test_winning_position() {
 	b = connect4::Connect4Game::apply(&mut b, connect4::Place { col: 3 }).unwrap();
 	b = connect4::Connect4Game::apply(&mut b, connect4::Place { col: 2 }).unwrap();
 	assert_eq!(
-		Some(Winner::PLAYER1),
+		GameOutcome::PLAYER1,
 		connect4::Connect4Game::get_winner(&b)
 	);
 

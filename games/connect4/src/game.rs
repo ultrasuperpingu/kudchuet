@@ -3,15 +3,15 @@
 use crate::rules::Cell;
 
 use super::rules::{Column, ConnectFour};
-use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::{GameOutcome, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 impl Game for ConnectFour {
 	type S =  ConnectFour;
 
 	type M = Column;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		let mut mvs: [Column;7] = [Column::from_index(0);7];
 		let nb = state.legal_moves_array(&mut mvs);
 		moves.extend_from_slice(&mvs[0..nb]);
@@ -29,20 +29,20 @@ impl Game for ConnectFour {
 	fn notation(_state: &Self::S, mv: Self::M) -> Option<String> {
 		Some(mv.0.to_string())
 	}
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		if state.is_victory() {
 			match state.player_turn() {
 				Cell::Empty => unreachable!(),
-				Cell::PlayerOne => Some(Winner::PLAYER2),
-				Cell::PlayerTwo => Some(Winner::PLAYER1),
+				Cell::PlayerOne => GameOutcome::PLAYER2,
+				Cell::PlayerTwo => GameOutcome::PLAYER1,
 			}
 		} else if state.is_over() {
-			Some(Winner::Draw)
+			GameOutcome::Draw
 		} else {
-			None
+			GameOutcome::OnGoing
 		}
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		
 		match state.player_turn() {
 			Cell::Empty => panic!(),
@@ -50,7 +50,7 @@ impl Game for ConnectFour {
 			Cell::PlayerTwo => Player::PLAYER2,
 		}
 	}
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		state.encode()
 	}
 }

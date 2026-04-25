@@ -2,7 +2,7 @@
 
 use bitboard::{BitIter, Bitboard};
 
-use kudchuet::GameResult;
+use kudchuet::GameOutcome;
 
 use crate::bitboard::Bitboard5x5;
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -184,22 +184,22 @@ impl BaghChal {
 			}
 		}
 	}
-	pub fn result(&self) -> GameResult {
+	pub fn result(&self) -> GameOutcome {
 		if self.goats_captured >= 5 {
-			return GameResult::PLAYER2;
+			return GameOutcome::PLAYER2;
 		}
 
 		if self.tigers_turn() {
 			let mut tiger_moves = Vec::new();
 			self.legal_moves_inplace(&mut tiger_moves);
 			if tiger_moves.is_empty() {
-				return GameResult::PLAYER1;
+				return GameOutcome::PLAYER1;
 			}
 		}
  		let key = self.get_hash();
 		if self.history.iter().filter(|h| **h == key).count() >= 3 {
-			return GameResult::PLAYER2; // tigers win
+			return GameOutcome::PLAYER2; // tigers win
 		}
-		GameResult::OnGoing
+		GameOutcome::OnGoing
 	}
 }

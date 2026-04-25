@@ -5,20 +5,21 @@ use crate::bitboard::ChineseCheckerBoard;
 use crate::rules::ChineseCheckersPlayer;
 use super::rules::{ChineseCheckers, Move};
 
-use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::{GameOutcome, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 impl Game for ChineseCheckers {
 	type S =  ChineseCheckers;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
-		if let Some(w) = Self::get_winner(state) {
-			return Some(w);
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
+		let res = Self::get_winner(state);
+		if res.is_ended()  {
+			return res;
 		}
 		state.generate_moves(moves);
-		None
+		GameOutcome::OnGoing
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -29,10 +30,10 @@ impl Game for ChineseCheckers {
 		state.undo_unchecked(m);
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		state.hash
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		match state.turn {
 			ChineseCheckersPlayer::Red => Player(0),
 			ChineseCheckersPlayer::Blue => Player(1),
@@ -42,8 +43,11 @@ impl Game for ChineseCheckers {
 			ChineseCheckersPlayer::White => Player(5),
 		}
 	}
-	fn get_winner(state: &Self::S) -> Option<Winner> {
-		state.winner().map(|w| Winner::Player(Player(w.idx() as u8)))
+	fn get_winner(state: &Self::S) -> GameOutcome {
+		match state.winner() {
+			Some(w) => GameOutcome::Player(Player(w.idx() as u8)),
+			None => GameOutcome::OnGoing,
+		}
 	}
 }
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]

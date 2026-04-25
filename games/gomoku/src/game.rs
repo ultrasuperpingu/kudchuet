@@ -1,16 +1,16 @@
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 
 use crate::bitboard::Goban;
 
 use super::rules::{Gomoku, Move};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 impl Game for Gomoku {
 	type S = Gomoku;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		state.legal_moves_inplace(moves);
 		// randomize moves.
 		fastrand::shuffle(moves);
@@ -28,21 +28,20 @@ impl Game for Gomoku {
 		state.undo_unchecked(m);
 	}
 
-	fn get_winner(state: &Self::S) -> Option<Winner> {
-		state.result().into()
+	fn get_winner(state: &Self::S) -> GameOutcome {
+		state.result()
 	}
 	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {
 		let (x2, y2) = Goban::coords_from_index(_move.to as usize);
 		let file_char2 = (b'a' + x2) as char;
-		let rank_char2 = (b'1' + y2) as char;
 
-		Some(format!("{}{}", file_char2, rank_char2))
+		Some(format!("{}{}", file_char2, y2+1))
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		state.get_hash()
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		state.turn
 	}
 }
@@ -79,11 +78,13 @@ impl Evaluator for GomokuEvalSimple {
 		score += Gomoku::broken_four(&state.white, &state.black, &empty).count() as Evaluation * 103;
 		score += Gomoku::closed_four(&state.white, &state.black, &empty).count() as Evaluation * 73;
 		score += Gomoku::open_three(&state.white, &state.black, &empty).count() as Evaluation * 47;
+		score += Gomoku::open_two(&state.white, &state.black, &empty).count() as Evaluation * 5;
 		
 		score -= Gomoku::open_four(&state.black, &state.white, &empty).count() as Evaluation * 501;
 		score -= Gomoku::broken_four(&state.black, &state.white, &empty).count() as Evaluation * 103;
 		score -= Gomoku::closed_four(&state.black, &state.white, &empty).count() as Evaluation * 73;
 		score -= Gomoku::open_three(&state.black, &state.white, &empty).count() as Evaluation * 47;
+		score -= Gomoku::open_two(&state.black, &state.white, &empty).count() as Evaluation * 5;
 		if p == Player::PLAYER2 { score } else { -score }
 	}
 }

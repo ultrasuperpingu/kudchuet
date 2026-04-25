@@ -125,7 +125,7 @@ pub(super) trait Table<M: Copy> {
 		pv.clear();
 		let mut hash_history = Vec::new();
 		let mut state = state.clone();
-		let mut hash = G::zobrist_hash(&state);
+		let mut hash = G::get_hash(&state);
 		while let Some(entry) = self.lookup(hash) {
 			// The principal variation should only have exact nodes, as other
 			// node types are from cutoffs where the node is proven to be
@@ -140,7 +140,7 @@ pub(super) trait Table<M: Copy> {
 			if let Some(new_state) = G::apply(&mut state, m) {
 				state = new_state;
 			}
-			hash = G::zobrist_hash(&state);
+			hash = G::get_hash(&state);
 			// Prevent cyclical PVs from being infinitely long.
 			if hash_history.contains(&hash) {
 				break;

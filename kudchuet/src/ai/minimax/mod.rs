@@ -17,6 +17,8 @@ pub mod minimax;
 pub mod random;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod ybw;
+pub mod mcts;
+pub mod mcts_node;
 
 mod common;
 pub mod interface;

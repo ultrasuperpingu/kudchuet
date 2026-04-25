@@ -10,8 +10,8 @@ extern crate kudchuet;
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 
-use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, ExpectiMinimax, Winner};
+use kudchuet::{GameOutcome, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, ExpectiMinimax};
 use kudchuet::ai::minimax::{Game, Strategy};
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -100,19 +100,20 @@ impl Game for TTTGame {
 	type S = Board;
 	type M = Place;
 
-	fn generate_moves(b: &Board, ms: &mut Vec<Place>) -> Option<Winner> {
-		if let Some(winner) = Self::get_winner(b) {
-			return Some(winner);
+	fn generate_moves(b: &Board, ms: &mut Vec<Place>) -> GameOutcome {
+		let res = Self::get_winner(b);
+		if res.is_ended() {
+			return res;
 		}
 		for i in 0..b.squares.len() {
 			if b.squares[i] == Square::Empty {
 				ms.push(Place { i: i as u8 });
 			}
 		}
-		None
+		GameOutcome::OnGoing
 	}
 
-	fn get_winner(b: &Board) -> Option<Winner> {
+	fn get_winner(b: &Board) -> GameOutcome {
 		// A player can only cause themselves to win on their turn, so only check for that.
 
 		// horizontal wins
@@ -120,58 +121,58 @@ impl Game for TTTGame {
 			&& b.squares[0] == b.squares[1]
 			&& b.squares[1] == b.squares[2]
 		{
-			return Some(square_to_winner(b.just_moved()));
+			return square_to_winner(b.just_moved());
 		}
 		if b.squares[3] == b.just_moved()
 			&& b.squares[3] == b.squares[4]
 			&& b.squares[4] == b.squares[5]
 		{
-			return Some(square_to_winner(b.just_moved()));
+			return square_to_winner(b.just_moved());
 		}
 		if b.squares[6] == b.just_moved()
 			&& b.squares[6] == b.squares[7]
 			&& b.squares[7] == b.squares[8]
 		{
-			return Some(square_to_winner(b.just_moved()));
+			return square_to_winner(b.just_moved());
 		}
 		// vertical wins
 		if b.squares[0] == b.just_moved()
 			&& b.squares[0] == b.squares[3]
 			&& b.squares[3] == b.squares[6]
 		{
-			return Some(square_to_winner(b.just_moved()));
+			return square_to_winner(b.just_moved());
 		}
 		if b.squares[1] == b.just_moved()
 			&& b.squares[1] == b.squares[4]
 			&& b.squares[4] == b.squares[7]
 		{
-			return Some(square_to_winner(b.just_moved()));
+			return square_to_winner(b.just_moved());
 		}
 		if b.squares[2] == b.just_moved()
 			&& b.squares[2] == b.squares[5]
 			&& b.squares[5] == b.squares[8]
 		{
-			return Some(square_to_winner(b.just_moved()));
+			return square_to_winner(b.just_moved());
 		}
 		// diagonal wins
 		if b.squares[0] == b.just_moved()
 			&& b.squares[0] == b.squares[4]
 			&& b.squares[4] == b.squares[8]
 		{
-			return Some(square_to_winner(b.just_moved()));
+			return square_to_winner(b.just_moved());
 		}
 		if b.squares[2] == b.just_moved()
 			&& b.squares[2] == b.squares[4]
 			&& b.squares[4] == b.squares[6]
 		{
-			return Some(square_to_winner(b.just_moved()));
+			return square_to_winner(b.just_moved());
 		}
 		// draws
 		if b.squares.iter().all(|s| *s != Square::Empty) {
-			Some(Winner::Draw)
+			GameOutcome::Draw
 		} else {
 			// non-terminal state
-			None
+			GameOutcome::OnGoing
 		}
 	}
 
@@ -184,7 +185,7 @@ impl Game for TTTGame {
 		b.squares[m.i as usize] = Square::Empty;
 		b.to_move = b.to_move.invert();
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		square_to_player(state.to_move)
 	}
 }
@@ -195,11 +196,11 @@ fn square_to_player(square: Square) -> Player {
 		Square::O => Player::PLAYER2,
 	}
 }
-fn square_to_winner(square: Square) -> Winner {
+fn square_to_winner(square: Square) -> GameOutcome {
 	match square {
 		Square::Empty => unreachable!(),
-		Square::X => Winner::PLAYER1,
-		Square::O => Winner::PLAYER2,
+		Square::X => GameOutcome::PLAYER1,
+		Square::O => GameOutcome::PLAYER2,
 	}
 }
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -277,7 +278,7 @@ fn main() {
 		ExpectiMinimax::new(TTTEvaluator::default(), 10, true),
 	];
 	let mut s = 0;
-	while TTTGame::get_winner(&b).is_none() {
+	while !TTTGame::get_winner(&b).is_ended() {
 		println!("{}", b);
 		let ref mut strategy = strategies[s];
 		match strategy.choose_move(&mut b) {

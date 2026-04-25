@@ -1,10 +1,10 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 use bitboard::BitIter;
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 use bitboard::Bitboard;
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 
 use crate::rules::{Board, NEIGHBORS_HARE};
@@ -17,16 +17,17 @@ impl Game for HareAndHounds {
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
-		if let Some(w) = Self::get_winner(state) {
-			return Some(w);
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
+		let res = Self::get_winner(state);
+		if res.is_ended()  {
+			return res;
 		}
 		let mut mvs = [Move::default();HareAndHounds::MAX_MOVES];
 		let mut nb = 0;
 		state.legal_moves(&mut mvs, &mut nb);
 		moves.extend_from_slice(&mvs[0..nb]);
 		//println!("GEN: {:?}", moves);
-		None
+		GameOutcome::OnGoing
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -36,14 +37,14 @@ impl Game for HareAndHounds {
 		//println!("apply after\nstate\n{}\ns\n{}", state, s);
 		Some(s)
 	}
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		state.result().into()
 	}
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		state.compute_hash()
 	}
 	
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		match state.turn() {
 			true => Player::PLAYER2,
 			false => Player::PLAYER1,
@@ -158,9 +159,9 @@ mod tests {
 		while let Some(state) = stack.pop() {
 			if memo.contains_key(&state) { continue; }
 			let res=state.result();
-			if res.is_finished() {
+			if res.is_ended() {
 				// terminal
-				let r = if res.is_player1() { GameResult::HoundsWin } else { GameResult::HareWin };
+				let r = if res.player1_wins() { GameResult::HoundsWin } else { GameResult::HareWin };
 				memo.insert(state, r);
 				continue;
 			}

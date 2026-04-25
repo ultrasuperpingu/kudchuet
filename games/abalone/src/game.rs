@@ -2,9 +2,9 @@ use std::hash::{DefaultHasher, Hash};
 use std::hash::Hasher;
 
 
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 use super::rules::{Abalone,Move};
 
 
@@ -14,14 +14,15 @@ impl Game for Abalone {
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
-		if let Some(winner) = Self::get_winner(state) {
-			return Some(winner);
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
+		let res = Self::get_winner(state);
+		if res.is_ended()  {
+			return res;
 		}
 		let mut mvs = vec![];
 		state.legal_moves_inplace(&mut mvs);
 		moves.append(&mut mvs);
-		None
+		GameOutcome::OnGoing
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -30,18 +31,18 @@ impl Game for Abalone {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		if state.is_over() {
 			if let Some(w) = state.winner() {
-				return Some(Winner::Player(w));
+				return GameOutcome::Player(w);
 			} else {
-				return Some(Winner::Draw);
+				return GameOutcome::Draw;
 			}
 		}
-		None
+		GameOutcome::OnGoing
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		let mut hasher = DefaultHasher::new();
 		state.hash(&mut hasher);
 		hasher.finish()
@@ -49,7 +50,7 @@ impl Game for Abalone {
 	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {
 		Some(_move.to_string())
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		state.turn
 	}
 }

@@ -2,7 +2,7 @@ use bitboard::{BitIter, Bitboard};
 
 use std::fmt::{self, Display, Formatter};
 
-use kudchuet::{GameResult, Player};
+use kudchuet::{GameOutcome, Player};
 
 use crate::bitboard::Bitboard6x5;
 
@@ -375,19 +375,19 @@ impl Yote {
 	pub fn black_pawns_count(&self) -> usize {
 		self.reserve_black as usize + self.black.count() as usize
 	}
-	pub fn result(&self) -> GameResult {
+	pub fn result(&self) -> GameOutcome {
 		if self.white_pawns_count() <= 3 && self.black_pawns_count() <= 3 {
-			return GameResult::Draw;
+			return GameOutcome::Draw;
 		}
 
 		if self.white_pawns_count() == 0 {
-			return GameResult::PLAYER2;
+			return GameOutcome::PLAYER2;
 		}
 		if self.black_pawns_count() == 0 {
-			return GameResult::PLAYER1;
+			return GameOutcome::PLAYER1;
 		}
 
-		GameResult::OnGoing
+		GameOutcome::OnGoing
 	}
 }
 #[test]
@@ -468,7 +468,7 @@ fn test_draw_condition() {
 	g.white = Bitboard6x5::from_storage(0b111);
 	g.black = Bitboard6x5::from_storage(0b111 << 3);
 
-	assert_eq!(g.result(), GameResult::Draw);
+	assert_eq!(g.result(), GameOutcome::Draw);
 }
 #[test]
 fn test_white_win() {
@@ -478,7 +478,7 @@ fn test_white_win() {
 	g.black = Bitboard6x5::empty();
 	g.reserve_black = 0;
 
-	assert_eq!(g.result(), GameResult::PLAYER1);
+	assert_eq!(g.result(), GameOutcome::PLAYER1);
 }
 #[test]
 fn test_hash_consistency() {
@@ -553,7 +553,7 @@ fn test_move_blocked() {
 fn test_play() {
 	let mut g = Yote::new();
 	println!("{}", g);
-	while g.result() == GameResult::OnGoing {
+	while g.result() == GameOutcome::OnGoing {
 		let mvs=g.legal_moves();
 		g.play(mvs[0]);
 		println!("{}", g);

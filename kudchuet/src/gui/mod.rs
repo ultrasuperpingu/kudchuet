@@ -9,7 +9,7 @@ use crate::gui::shapes::StrokeData;
 use crate::gui::{input_handler::MoveResult, shapes::Shape};
 
 
-use super::{GameResult, Player};
+use super::{GameOutcome, Player};
 use self::options_panel::RightTab;
 
 pub mod board_app;
@@ -180,7 +180,7 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	/// 
 	/// This is a convinient method. Default implementation call Game::get_winner(self) and convert it to GameResult.
 	/// This does not need to be reimplemented.
-	fn result(&self) -> GameResult {
+	fn result(&self) -> GameOutcome {
 		Self::get_winner(self).into()
 	}
 	/// Get the player which have to play
@@ -188,7 +188,7 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	/// This is a convinient method. Default implementation call Game::current_player(self).
 	/// This does not need to be reimplemented.
 	fn current_player(&self) -> Player {
-		<Self as Game>::current_player(self)
+		<Self as Game>::get_current_player(self)
 	}
 	/// Number of players (default is 2)
 	fn nb_players(&self) -> u8 {

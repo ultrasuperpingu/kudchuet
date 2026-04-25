@@ -1,6 +1,6 @@
 //! The common structures and traits.
 
-use crate::Player;
+use crate::{GameOutcome, Player};
 
 /// An assessment of a game state from the perspective of the player whose turn it is to play.
 /// Higher values mean a more favorable state.
@@ -54,7 +54,7 @@ pub trait Evaluator {
 	}
 	// TODO reorder moves by assigning value to each state and combining with countermoves table etc.
 }
-
+/*
 /// The result of playing a game until it finishes.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Winner {
@@ -80,7 +80,7 @@ impl Winner {
 			Winner::Draw => 0,
 		}
 	}
-}
+}*/
 
 /// Defines the rules for a two-player, perfect-knowledge game.
 ///
@@ -100,7 +100,7 @@ pub trait Game: Sized {
 	///
 	/// Returns the same output as `get_winner`, so that some games do not need
 	/// to generate moves twice.
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner>;
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome;
 
 	/// Apply a move to get a new state.
 	///
@@ -137,11 +137,11 @@ pub trait Game: Sized {
 	/// Returns `Some(PlayerJustMoved)` or `Some(PlayerToMove)` if there's a winner,
 	/// `Some(Draw)` if the state is terminal without a winner, and `None` if
 	/// the state is non-terminal.
-	fn get_winner(state: &Self::S) -> Option<Winner>;
+	fn get_winner(state: &Self::S) -> GameOutcome;
 
 	/// Hash of the game state.
 	/// Expected to be pre-calculated and cheaply updated with each apply.
-	fn zobrist_hash(_state: &Self::S) -> u64 {
+	fn get_hash(_state: &Self::S) -> u64 {
 		unimplemented!("game has not implemented zobrist hash");
 	}
 
@@ -166,7 +166,7 @@ pub trait Game: Sized {
 		0
 	}
 	/// Returns the current player (e.g. 1 or -1) for the given state.
-	fn current_player(state: &Self::S) -> Player;
+	fn get_current_player(state: &Self::S) -> Player;
 	/// Returns true if the current state requires a random move.
 	fn is_random_move(_state: &Self::S) -> bool {
 		false

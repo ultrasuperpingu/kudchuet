@@ -1,7 +1,7 @@
 
 use bitboard::{BitIter, Bitboard};
 
-use kudchuet::{GameResult, Player};
+use kudchuet::{GameOutcome, Player};
 
 use crate::bitboard::Bitboard7x7;
 
@@ -168,17 +168,17 @@ impl Diaballik {
 		}
 	}
 	#[inline]
-	pub fn result(&self) -> GameResult {
+	pub fn result(&self) -> GameOutcome {
 		if self.turn == Player::PLAYER2 && self.ball_player1 > 41 {
-			GameResult::PLAYER1
+			GameOutcome::PLAYER1
 		}
 		else if self.turn == Player::PLAYER1 && self.ball_player2 < 7 {
-			GameResult::PLAYER2
+			GameOutcome::PLAYER2
 		} else {
 			// Anti-Game (Blocking) Rules
-			if self.is_blocking(Player::PLAYER1) { return GameResult::PLAYER2; }
-			if self.is_blocking(Player::PLAYER2) { return GameResult::PLAYER1; }
-			GameResult::OnGoing
+			if self.is_blocking(Player::PLAYER1) { return GameOutcome::PLAYER2; }
+			if self.is_blocking(Player::PLAYER2) { return GameOutcome::PLAYER1; }
+			GameOutcome::OnGoing
 		}
 	}
 	pub(crate) fn is_blocking(&self, p: Player) -> bool {
@@ -513,7 +513,7 @@ impl Diaballik {
 
 #[cfg(test)]
 mod tests {
-    use kudchuet::GameResult;
+    use kudchuet::GameOutcome;
 
     use crate::rules::Diaballik;
 
@@ -536,7 +536,7 @@ mod tests {
 		let mut game=Diaballik::default();
 		let mut rng = kudchuet::utils::Rng::new();
 		println!("{}", game);
-		while game.result() == GameResult::OnGoing {
+		while game.result() == GameOutcome::OnGoing {
 			let mut moves=vec![];
 			game.legal_moves(&mut moves);
 			println!("{:?}", moves.len());

@@ -417,7 +417,7 @@ impl ChineseCheckers {
 mod tests {
 	use super::{ChineseCheckers, ChineseCheckersPlayer, Move};
 	use crate::bitboard::ChineseCheckerBoard;
-	use kudchuet::{GameResult, gui::BoardGame};
+	use kudchuet::{GameOutcome, gui::BoardGame};
 	#[test]
 	fn test_display() {
 		let board = ChineseCheckers::new(2);
@@ -502,13 +502,13 @@ mod tests {
             B R           
              R            
 "##).unwrap();
-		assert!(game.result() == GameResult::OnGoing);
+		assert!(game.result() == GameOutcome::OnGoing);
 		let legals = game.legal_moves();
 		println!("{legals:?}");
 		let _=game.play(Move{from:164, to: 189});
 		println!("{}", game);
 		println!("{:?}", game.result());
-		assert!(game.result() == GameResult::PLAYER1);
+		assert!(game.result() == GameOutcome::PLAYER1);
 		
 	}
 }

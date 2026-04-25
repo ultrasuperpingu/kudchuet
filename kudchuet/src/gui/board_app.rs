@@ -11,7 +11,7 @@ use super::input_handler::{InputHandler, MoveResult};
 use super::game_state_manager::GameStateManager;
 use super::options_panel::ImportExportPanel;
 use super::board_drawer::DefaultBoardDrawer;
-use super::{GameResult, Player};
+use super::{GameOutcome, Player};
 
 
 pub struct GenericBoardApp<G: BoardGame+Sync+Send>
@@ -64,7 +64,7 @@ impl<G: BoardGame+Sync+Send+'static> eframe::App for GenericBoardApp<G>
 					}
 				}
 			}
-			if result == GameResult::OnGoing {
+			if result == GameOutcome::OnGoing {
 				if self.is_current_player_computer() && !self.is_current_player_random() && !self.ai_engine_manager.is_paused() {
 					match self.ai_engine_manager.pool_ai_result() {
 						ThinkingResult::NotThinking => {
@@ -210,7 +210,7 @@ where G::M: BoardMove<G>+Send
 			}).inner
 	}
 
-	fn draw_header_panel(&mut self, ui: &mut Ui) -> GameResult {
+	fn draw_header_panel(&mut self, ui: &mut Ui) -> GameOutcome {
 		let result = self.game().result();
 		let engines = self.ai_engine_manager.get_all_engine_names();
 		ui.horizontal(|ui| {
@@ -302,10 +302,10 @@ where G::M: BoardMove<G>+Send
 			}
 
 			match result {
-				GameResult::Player(p) => {
+				GameOutcome::Player(p) => {
 					ui.heading(format!("Winner: {}", self.game().get_name(p)));
 				}
-				GameResult::Draw => {
+				GameOutcome::Draw => {
 					ui.heading("Draw Game");
 				}
 				_ => {}

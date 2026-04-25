@@ -72,7 +72,7 @@ impl BoardGame for Gomoku {
 			uniform_color: Color32::from_rgb(215, 180, 140),
 			light_color: Color32::from_rgb(200, 200, 250),
 			dark_color: Color32::from_rgb(40, 40, 40),
-			show_coordinates_mod: CoordMod::NumbersAside,
+			show_coordinates_mod: CoordMod::FileRankAside,
 			..Default::default()
 		}
 	}

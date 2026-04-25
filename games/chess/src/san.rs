@@ -182,7 +182,7 @@ impl ChessBoard {
 		let mut next_board = self.clone();
 		next_board.play(mv);
 		let status = next_board.status();
-		if status.is_player1() || status.is_player2() {
+		if status.player1_wins() || status.player2_wins() {
 			san.push('#');
 		} else if next_board.is_in_check(next_board.turn) {
 			san.push('+');

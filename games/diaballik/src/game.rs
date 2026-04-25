@@ -1,7 +1,7 @@
 
 use bitboard::BitIter;
-use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::{GameOutcome, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 use super::rules::{Move, Diaballik};
 
@@ -10,13 +10,14 @@ impl Game for Diaballik {
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
-		if let Some(w) = Self::get_winner(state) {
-			return Some(w);
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
+		let res = Self::get_winner(state);
+		if res.is_ended()  {
+			return res;
 		}
 		
 		state.legal_moves(moves);
-		None
+		GameOutcome::OnGoing
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -30,24 +31,24 @@ impl Game for Diaballik {
 	fn undo(_state: &mut Self::S, _m: Self::M) {
 		_state.undo_unchecked(&_m);
 	}
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		if state.turn == Player::PLAYER2 && state.ball_player1 > 41 {
-			Some(Winner::PLAYER1)
+			GameOutcome::PLAYER1
 		}
 		else if state.turn == Player::PLAYER1 && state.ball_player2 < 7 {
-			Some(Winner::PLAYER2)
+			GameOutcome::PLAYER2
 		} else {
 			// Anti-Game (Blocking) Rules
-			if state.is_blocking(Player::PLAYER1) { return Some(Winner::PLAYER2); }
-			if state.is_blocking(Player::PLAYER2) { return Some(Winner::PLAYER1); }
-			None
+			if state.is_blocking(Player::PLAYER1) { return GameOutcome::PLAYER2; }
+			if state.is_blocking(Player::PLAYER2) { return GameOutcome::PLAYER1; }
+			GameOutcome::OnGoing
 		}
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		state.turn()
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		state.hash
 	}
 }
@@ -150,7 +151,7 @@ mod tests {
 		strategy.set_max_depth(3);
 		println!("Initial state:\n{}", state);
 
-		while turn_count < 200 && !state.result().is_finished() {
+		while turn_count < 200 && !state.result().is_ended() {
 			let chosen_move = strategy.choose_move(&state);
 
 			Diaballik::apply(&mut state, chosen_move.unwrap());

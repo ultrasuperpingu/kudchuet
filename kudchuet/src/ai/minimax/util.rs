@@ -3,6 +3,8 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate rayon;
 
+use crate::GameOutcome;
+
 use super::interface;
 use super::interface::Game;
 
@@ -58,10 +60,12 @@ where
 	let mut strategies: [&mut dyn interface::Strategy<G>; 2] = [s1, s2];
 	let mut s = 0;
 	loop {
-		if let Some(winner) = G::get_winner(&state) {
-			return match winner {
-				interface::Winner::Draw => None,
-				interface::Winner::Player(p) => Some(p.0 as usize),
+		let res = G::get_winner(&state);
+		if res.is_ended()  {
+			return match res {
+				GameOutcome::Draw => None,
+				GameOutcome::Player(p) => Some(p.0 as usize),
+				_ => unreachable!()
 			};
 		}
 		let strategy = &mut strategies[s];
@@ -113,7 +117,7 @@ where
 		return 1;
 	}
 	let mut moves = pool.alloc();
-	if G::generate_moves(state, &mut moves).is_some() {
+	if G::generate_moves(state, &mut moves).is_ended() {
 		// Apparently perft rules only count positions at the target depth.
 		return 0;
 	}
@@ -257,11 +261,11 @@ where
 	if depth == 0 {
 		return 1;
 	}
-	if G::get_winner(state).is_some() {
+	if G::get_winner(state).is_ended() {
 		return 0;
 	}
 
-	let hash = G::zobrist_hash(state);
+	let hash = G::get_hash(state);
 	let key = (hash, depth);
 
 	// Lookup dans le cache avec hash + depth

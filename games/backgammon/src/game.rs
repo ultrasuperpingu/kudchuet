@@ -1,8 +1,8 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 use super::rules::{Backgammon, Move};
 
@@ -10,7 +10,7 @@ impl Game for Backgammon {
 	type S = Backgammon;
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> std::option::Option<Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		*moves = state.legal_moves();
 		Self::get_winner(state)
 	}
@@ -25,24 +25,24 @@ impl Game for Backgammon {
 		Some(format!("{:?}", mv))
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		//let mut hasher = DefaultHasher::new();
 		//state.hash(&mut hasher);
 		//hasher.finish()
 		state.hash
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		state.current_player()
 	}
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		if state.is_game_over() {
 			if let Some(winner) = state.winner() {
-				Some(Winner::Player(winner))
+				GameOutcome::Player(winner)
 			} else {
-				Some(Winner::Draw)
+				GameOutcome::Draw
 			}
 		} else {
-			None
+			GameOutcome::OnGoing
 		}
 	}
 	fn is_random_move(state: &Self::S) -> bool {

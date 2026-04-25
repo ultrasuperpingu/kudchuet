@@ -2,17 +2,17 @@ use std::hash::{DefaultHasher, Hash};
 use std::hash::Hasher;
 use bitboard::Bitboard;
 
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 use super::rules::{Checkers10, Move};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 impl Game for Checkers10 {
 	type S =  Checkers10;
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		let mut mvs: Vec<Move>=state.legal_moves();
 		moves.append(&mut mvs);
 		// TODO: check winner
@@ -25,22 +25,22 @@ impl Game for Checkers10 {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<Winner> {
+	fn get_winner(state: &Self::S) -> GameOutcome {
 		if state.is_victory() {
-			Some(Winner::Player(state.player_turn().opponent()))
+			GameOutcome::Player(state.player_turn().opponent())
 		} else if state.is_over() {
-			Some(Winner::Draw)
+			GameOutcome::Draw
 		} else {
-			None
+			GameOutcome::OnGoing
 		}
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		let mut hasher = DefaultHasher::new();
 		state.hash(&mut hasher);
 		hasher.finish()
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		state.player_turn()
 	}
 }

@@ -118,8 +118,9 @@ where
 		if self.timeout.load(Ordering::Relaxed) {
 			return None;
 		}
-		if let Some(winner) = E::G::get_winner(s) {
-			return Some(winner.evaluate(player_to_move));
+		let res = E::G::get_winner(s);
+		if res.is_ended() {
+			return Some(res.evaluate(player_to_move));
 		}
 		if depth == 0 {
 			return Some(self.eval.evaluate_for(s, player_to_move));
@@ -178,10 +179,10 @@ where
 				beta,
 			);
 		}
-		let current_player = E::G::current_player(s);
+		let current_player = E::G::get_current_player(s);
 		let alpha_orig = alpha;
 		let beta_orig = beta;
-		let hash = E::G::zobrist_hash(s);
+		let hash = E::G::get_hash(s);
 		let mut good_move = None;
 		if let Some(value) = self
 			.table
@@ -192,13 +193,14 @@ where
 
 		let mut moves = Vec::new();
 		self.move_pool.local_do(|pool| moves = pool.alloc());
-		if let Some(winner) = E::G::generate_moves(s, &mut moves) {
+		let res = E::G::generate_moves(s, &mut moves);
+		if res.is_ended() {
 			self.move_pool.local_do(|pool| pool.free(moves));
-			return Some(winner.evaluate(player_to_move));
+			return Some(res.evaluate(player_to_move));
 		}
 		if moves.is_empty() {
 			self.move_pool.local_do(|pool| pool.free(moves));
-			if player_to_move == E::G::current_player(s) {
+			if player_to_move == E::G::get_current_player(s) {
 				return Some(WORST_EVAL);
 			} else {
 				return Some(BEST_EVAL);
@@ -501,7 +503,7 @@ where
 		background: bool,
 	) -> Option<(<E::G as Game>::M, Evaluation, u8)> {
 		self.table.concurrent_advance_generation();
-		let root_hash = E::G::zobrist_hash(&state);
+		let root_hash = E::G::get_hash(&state);
 		let mut best_move = None;
 		let mut best_value = 0;
 		let mut interval_start;
@@ -662,8 +664,8 @@ where
 	E: Clone + Sync + Send + 'static,
 {
 	fn choose_move(&mut self, s: &<E::G as Game>::S) -> Option<<E::G as Game>::M> {
-		let player_to_move = E::G::current_player(s);
-		if E::G::get_winner(s).is_some() {
+		let player_to_move = E::G::get_current_player(s);
+		if E::G::get_winner(s).is_ended() {
 			return None;
 		}
 		// Cancel any ongoing background processing.

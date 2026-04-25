@@ -1,8 +1,8 @@
 //! A definition of the game Connect Four using the library, for use in tests and benchmarks.
 #![allow(dead_code)]
 
-use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::{GameOutcome, Player};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
@@ -92,9 +92,10 @@ impl Game for C4Game {
 	type S = Board;
 	type M = Place;
 
-	fn generate_moves(b: &Board, moves: &mut Vec<Place>) -> Option<Winner> {
-		if let Some(w) = Self::get_winner(b) {
-			return Some(w);
+	fn generate_moves(b: &Board, moves: &mut Vec<Place>) -> GameOutcome {
+		let res = Self::get_winner(b);
+		if res.is_ended()  {
+			return res;
 		}
 		let mut cols = b.all_pieces;
 		for i in 0..NUM_COLS {
@@ -103,10 +104,10 @@ impl Game for C4Game {
 			}
 			cols >>= HEIGHT;
 		}
-		None
+		GameOutcome::OnGoing
 	}
 
-	fn get_winner(b: &Board) -> Option<Winner> {
+	fn get_winner(b: &Board) -> GameOutcome {
 		// Position of pieces for the player that just moved.
 		let pieces = b.pieces_just_moved();
 
@@ -119,17 +120,17 @@ impl Game for C4Game {
 
 		if matches(1) || matches(HEIGHT) || matches(HEIGHT + 1) || matches(HEIGHT - 1) {
 			if b.reds_move() {
-				return Some(Winner::PLAYER1);
+				return GameOutcome::PLAYER1;
 			} else {
-				return Some(Winner::PLAYER2);
+				return GameOutcome::PLAYER2;
 			}
 		}
 
 		// Full board with no winner.
 		if b.num_moves as u32 == NUM_ROWS * NUM_COLS {
-			Some(Winner::Draw)
+			GameOutcome::Draw
 		} else {
-			None
+			GameOutcome::OnGoing
 		}
 	}
 
@@ -167,11 +168,11 @@ impl Game for C4Game {
 		
 	}
 
-	fn zobrist_hash(b: &Board) -> u64 {
+	fn get_hash(b: &Board) -> u64 {
 		b.hash
 	}
 	
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		if state.reds_move() {
 			Player::PLAYER2
 		} else {

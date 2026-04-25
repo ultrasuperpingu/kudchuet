@@ -1,8 +1,7 @@
 use bitboard::{BitIter, Bitboard};
 
 use kudchuet::{
-	Player,
-	ai::minimax::{Evaluation, Evaluator, Game, Winner},
+	GameOutcome, Player, ai::minimax::{Evaluation, Evaluator, Game}
 };
 
 use crate::{
@@ -15,7 +14,7 @@ impl Game for ThreeMusketeers {
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		state.legal_moves_inplace(moves);
 		Self::get_winner(state)
 	}
@@ -26,8 +25,8 @@ impl Game for ThreeMusketeers {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> Option<Winner> {
-		state.result().into()
+	fn get_winner(state: &Self::S) -> GameOutcome {
+		state.result()
 	}
 	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {
 		let (x1, y1) = Bitboard5x5::coords_from_index(_move.from as usize);
@@ -43,11 +42,11 @@ impl Game for ThreeMusketeers {
 		))
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		state.get_hash()
 	}
 
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		if state.turn == 0 {
 			Player::PLAYER1
 		} else {

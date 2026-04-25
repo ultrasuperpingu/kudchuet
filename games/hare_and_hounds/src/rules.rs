@@ -1,6 +1,6 @@
 use bitboard_proc_macro::{BitboardDebug, bitboard};
 use bitboard::{BitIter, Bitboard};
-use kudchuet::GameResult;
+use kudchuet::GameOutcome;
 
 // 0 3-6-9  12
 //  /|\|\| \
@@ -151,21 +151,21 @@ impl HareAndHounds {
 		}
 	}
 	#[inline]
-	pub fn result(&self) -> GameResult {
+	pub fn result(&self) -> GameOutcome {
 		if (NEIGHBORS_HARE[self.hare as usize] & !self.houds).is_empty() {
-			return GameResult::PLAYER1;
+			return GameOutcome::PLAYER1;
 		}
 		if self.turn_and_count % 100 >= 10 {
-			return GameResult::PLAYER2; // hare wins
+			return GameOutcome::PLAYER2; // hare wins
 		}
 		let hare_col = Board::column(self.hare);
 		for i in self.houds.iter_bits() {
 			 let hound_col = Board::column(i as u8);
 			 if hound_col <= hare_col {
-				return GameResult::OnGoing;
+				return GameOutcome::OnGoing;
 			 }
 		}
-		GameResult::PLAYER2
+		GameOutcome::PLAYER2
 	}
 	
 	pub fn cell(&self, x:u8, y:u8) -> Cell {
@@ -218,7 +218,7 @@ fn test_game() {
 	let mut hah = HareAndHounds::default();
 	let mut i=0;
 	let mut rng = kudchuet::utils::Rng::new();
-	while hah.result() == GameResult::OnGoing && i< 10000 {
+	while hah.result() == GameOutcome::OnGoing && i< 10000 {
 		println!("{}", hah);
 		let mut len = 0;
 		let mut moves=[Move::default();HareAndHounds::MAX_MOVES];

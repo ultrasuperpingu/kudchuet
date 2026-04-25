@@ -6,12 +6,13 @@ use std::fmt::Debug;
 use ai::minimax::Strategy;
 use ai::minimax::SearchStopSignal;
 
+use crate::ai::minimax::BEST_EVAL;
 #[cfg(target_arch = "wasm32")]
 use crate::ai::minimax::IterativeSearch;
-use crate::ai::minimax::Winner;
 use crate::ai::minimax::IterativeOptions;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::minimax::ParallelOptions;
+use crate::ai::minimax::WORST_EVAL;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::minimax::ybw::ParallelSearch;
 use crate::ai::minimax::interface::Evaluator;
@@ -62,8 +63,7 @@ impl PlayerController {
 	}
 }
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-//TODO: This is equivalent to minimax::Winner. One of those should be removed.
-pub enum GameResult {
+pub enum GameOutcome {
 	Player(Player),
 	Draw,
 	OnGoing
@@ -86,92 +86,66 @@ impl Player {
 		}
 	}
 	pub fn idx(&self) -> usize {
-		match self {
-			Self(id) => *id as usize,
-		}
+		self.0 as usize
 	}
 }
-impl From<Player> for GameResult {
+impl From<Player> for GameOutcome {
 	fn from(val: Player) -> Self {
-		GameResult::Player(val)
-	}
-}
-impl From<Player> for Winner {
-	fn from(val: Player) -> Self {
-		Winner::Player(val)
+		GameOutcome::Player(val)
 	}
 }
 impl std::fmt::Display for Player {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Self(id) => f.write_str(format!("Player {}", *id+1).as_str()),
-			//Player::RandomMove => f.write_str("Random Move"),
+			Self(id) => write!(f, "Player {}", *id + 1),
 		}
 	}
 }
-impl GameResult {
+impl GameOutcome {
 	pub const PLAYER1: Self = Self::Player(Player(0));
 	pub const PLAYER2: Self = Self::Player(Player(1));
-	pub fn is_player1(&self) -> bool {
-		matches!(self, GameResult::Player(Player(0)))
+	pub fn player1_wins(&self) -> bool {
+		matches!(self, GameOutcome::Player(Player(0)))
 	}
-	pub fn is_player2(&self) -> bool {
-		matches!(self, GameResult::Player(Player(1)))
+	pub fn player2_wins(&self) -> bool {
+		matches!(self, GameOutcome::Player(Player(1)))
 	}
 	pub fn is_draw(&self) -> bool {
-		matches!(self, GameResult::Draw)
+		matches!(self, GameOutcome::Draw)
 	}
-	pub fn is_finished(&self) -> bool {
-		!matches!(self, GameResult::OnGoing)
+	pub fn is_ended(&self) -> bool {
+		!matches!(self, GameOutcome::OnGoing)
+	}
+	pub fn is_win_for(&self, p: Player) -> bool {
+		self == &GameOutcome::Player(p)
+	}
+	pub fn is_lose_for(&self, p: Player) -> bool {
+		match self {
+			GameOutcome::Player(player) => player != &p,
+			_ => false,
+		}
+	}
+	pub fn evaluate(&self, to_eval: Player) -> Evaluation {
+		match *self {
+			GameOutcome::Player(p) => {
+				if p == to_eval {
+					BEST_EVAL
+				} else {
+					WORST_EVAL
+				}
+			}
+			_ => 0,
+		}
 	}
 }
-
-impl TryFrom<GameResult> for Player {
+impl TryFrom<GameOutcome> for Player {
 	type Error = String;
 
-	fn try_from(value: GameResult) -> Result<Self, Self::Error> {
+	fn try_from(value: GameOutcome) -> Result<Self, Self::Error> {
 		match value {
-			GameResult::Player(p) => Ok(p),
-			GameResult::Draw => Err("Draw can not be converted to Player".into()),
-			GameResult::OnGoing => Err("OnGoing can not be converted to Player".into()),
-		}
-	}
-}
-impl TryFrom<Winner> for Player {
-	type Error = String;
-
-	fn try_from(value: Winner) -> Result<Self, Self::Error> {
-		match value {
-			Winner::Player(p) => Ok(p),
-			Winner::Draw => Err("Draw can not be converted to Player".into()),
-		}
-	}
-}
-impl From<GameResult> for Option<Winner> {
-	fn from(value: GameResult) -> Self {
-		match value {
-			GameResult::Player(p) => Some(Winner::Player(p)),
-			GameResult::Draw => Some(Winner::Draw),
-			GameResult::OnGoing => None,
-		}
-	}
-}
-
-impl From<Winner> for GameResult {
-	fn from(value: Winner) -> Self {
-		match value {
-			Winner::Player(p) => GameResult::Player(p),
-			Winner::Draw => GameResult::Draw,
-		}
-	}
-}
-
-impl From<Option<Winner>> for GameResult {
-	fn from(value: Option<Winner>) -> Self {
-		match value {
-			Some(Winner::Player(p)) => GameResult::Player(p),
-			Some(Winner::Draw) => GameResult::Draw,
-			None => GameResult::OnGoing,
+			GameOutcome::Player(p) => Ok(p),
+			GameOutcome::Draw => Err("Draw can not be converted to Player".into()),
+			GameOutcome::OnGoing => Err("OnGoing can not be converted to Player".into()),
 		}
 	}
 }

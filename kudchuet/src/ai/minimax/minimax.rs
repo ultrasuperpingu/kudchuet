@@ -1,5 +1,4 @@
-use crate::Player;
-use crate::ai::minimax::interface::Winner;
+use crate::{GameOutcome, Player};
 use crate::utils::Rng;
 
 use super::interface::{BEST_EVAL, Evaluation, Evaluator, Game, Strategy, WORST_EVAL};
@@ -26,8 +25,8 @@ where
 		}
 		let mut best = WORST_EVAL;
 		let mut moves = self.move_pool.alloc();
-		let player = E::G::current_player(s);
-		if E::G::generate_moves(s, &mut moves).is_some() {
+		let player = E::G::get_current_player(s);
+		if E::G::generate_moves(s, &mut moves).is_ended() {
 			return None;
 		}
 		if self.shuffle_moves {
@@ -85,21 +84,25 @@ impl<E: Evaluator> ExpectiMinimax<E> {
 		mut beta: Evaluation,
 	) -> Evaluation {
 		if depth == 0 {
-			if let Some(winner) = E::G::get_winner(s) {
-				return match winner {
-					Winner::Player(p) if p == player_to_move => BEST_EVAL,
-					Winner::Player(_) => WORST_EVAL,
-					Winner::Draw => 0,
+			let res = E::G::get_winner(s);
+			if res.is_ended() {
+				return match res {
+					GameOutcome::Player(p) if p == player_to_move => BEST_EVAL,
+					GameOutcome::Player(_) => WORST_EVAL,
+					GameOutcome::Draw => 0,
+					_ => unreachable!()
 				};
 			}
 			return self.eval.evaluate_for(s, player_to_move);
 		}
 		let mut moves = self.move_pool.alloc();
-		if let Some(winner) = E::G::generate_moves(s, &mut moves) {
-			return match winner {
-				Winner::Player(p) if p == player_to_move => BEST_EVAL,
-				Winner::Draw => 0,
-				Winner::Player(_) => WORST_EVAL,
+		let res = E::G::generate_moves(s, &mut moves);
+		if res.is_ended() {
+			return match res {
+				GameOutcome::Player(p) if p == player_to_move => BEST_EVAL,
+				GameOutcome::Draw => 0,
+				GameOutcome::Player(_) => WORST_EVAL,
+				_ => unreachable!()
 			};
 		}
 
@@ -117,7 +120,7 @@ impl<E: Evaluator> ExpectiMinimax<E> {
 			}
 
 			value.round() as Evaluation
-		} else if E::G::current_player(s) == player_to_move {
+		} else if E::G::get_current_player(s) == player_to_move {
 			let mut best_score = WORST_EVAL;
 
 			for m in moves.iter() {
@@ -156,7 +159,7 @@ impl<E: Evaluator> ExpectiMinimax<E> {
 
 #[cfg(test)]
 mod tests {
-	use crate::{Player, ai::minimax::interface::Winner};
+	use crate::{GameOutcome, Player};
 
 	use super::{Evaluator, ExpectiMinimax, Game, Strategy};
 
@@ -184,7 +187,7 @@ mod tests {
 		fn generate_moves(
 			state: &Self::S,
 			moves: &mut Vec<Self::M>,
-		) -> Option<super::super::interface::Winner> {
+		) -> GameOutcome {
 			match state.choice {
 				Some(d) => {
 					moves.push(Move::Random(1));
@@ -211,7 +214,7 @@ mod tests {
 					moves.push(Move::DiceChoice(DiceChoice::D8));
 				}
 			}
-			None
+			GameOutcome::OnGoing
 		}
 
 		fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -227,10 +230,10 @@ mod tests {
 			Some(clone)
 		}
 
-		fn get_winner(_state: &Self::S) -> Option<Winner> {
-			None
+		fn get_winner(_state: &Self::S) -> GameOutcome {
+			GameOutcome::OnGoing
 		}
-		fn current_player(state: &Self::S) -> Player {
+		fn get_current_player(state: &Self::S) -> Player {
 			if state.to_move {
 				Player(1)
 			} else {

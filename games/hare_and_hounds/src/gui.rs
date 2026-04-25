@@ -1,7 +1,7 @@
 use eframe::egui;
 use egui::{Color32, Rect};
 use kudchuet::gui::board_drawer::SquareDrawer;
-use kudchuet::{GameResult, Player, new_move_searcher_vec};
+use kudchuet::{GameOutcome, Player, new_move_searcher_vec};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
 use kudchuet::gui::shapes::{Shape, StrokeData};
 
@@ -48,7 +48,7 @@ impl BoardGame for HareAndHounds {
 		self.play_unchecked(mv);
 	}
 
-	fn result(&self) -> GameResult {
+	fn result(&self) -> GameOutcome {
 		self.result()
 	}
 

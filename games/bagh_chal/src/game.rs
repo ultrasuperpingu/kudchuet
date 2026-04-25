@@ -2,9 +2,9 @@
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
 
-use kudchuet::Player;
+use kudchuet::{GameOutcome, Player};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game, Winner};
+use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 use crate::rules::{Move, BaghChal};
 
 impl Game for BaghChal {
@@ -12,15 +12,15 @@ impl Game for BaghChal {
 
 	type M = Move;
 
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> Option<Winner> {
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		if state.goats_captured >= 5 {
-			return Some(Winner::PLAYER2);
+			return GameOutcome::PLAYER2;
 		}
 		state.legal_moves_inplace(moves);
 		if state.tigers_turn() && moves.is_empty() {
-			return Some(Winner::PLAYER1);
+			return GameOutcome::PLAYER1;
 		}
-		None
+		GameOutcome::OnGoing
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -33,18 +33,18 @@ impl Game for BaghChal {
 	fn undo(_state: &mut Self::S, _m: Self::M) {
 		_state.undo_unchecked(&_m);
 	}
-	fn get_winner(state: &Self::S) -> Option<Winner> {
-		state.result().into()
+	fn get_winner(state: &Self::S) -> GameOutcome {
+		state.result()
 	}
 
-	fn zobrist_hash(state: &Self::S) -> u64 {
+	fn get_hash(state: &Self::S) -> u64 {
 		//let mut hasher = DefaultHasher::new();
 		//state.hash(&mut hasher);
 		//hasher.finish()
 		state.get_hash()
 		//state.compute_hash()
 	}
-	fn current_player(state: &Self::S) -> Player {
+	fn get_current_player(state: &Self::S) -> Player {
 		if state.turn_tiger {
 			Player::PLAYER2
 		} else {
