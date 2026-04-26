@@ -3,7 +3,7 @@ extern crate kudchuet;
 #[path = "../examples/ttt.rs"]
 mod ttt;
 
-use kudchuet::{ai::minimax::{ExpectiMinimax, Random, mcts::MCTSTree, util::battle_royale}};
+use kudchuet::ai::minimax::{ExpectiMinimax, Random, mcts::MCTS, util::battle_royale};
 
 use crate::ttt::TTTGame;
 
@@ -34,8 +34,8 @@ fn test_ttt_minimax_vs_random_always_wins_or_draws() {
 #[test]
 fn test_ttt_mcts_vs_mcts_always_draws() {
 	for _ in 0..100 {
-		let mut s1 = MCTSTree::<TTTGame>::default();
-		let mut s2 = MCTSTree::<TTTGame>::default();
+		let mut s1 = MCTS::<TTTGame>::default();
+		let mut s2 = MCTS::<TTTGame>::default();
 		assert_eq!(battle_royale(&mut s1, &mut s2), None);
 	}
 }
@@ -55,7 +55,7 @@ fn test_ttt_mcts_vs_random_always_wins_or_draws() {
 	//s1.choose_move(&state);
 
 	for _ in 0..100 {
-		let mut s1 = MCTSTree::<TTTGame>::default();
+		let mut s1 = MCTS::<TTTGame>::default();
 		let mut s2 = Random::new();
 		assert_ne!(battle_royale(&mut s1, &mut s2), Some(1));
 	}
