@@ -46,7 +46,7 @@ impl Game for Mancala {
 	type M = Move;
 
 	fn generate_moves(board: &Mancala, moves: &mut Vec<Move>) -> GameOutcome {
-		let res = Self::get_winner(board);
+		let res = Self::get_outcome(board);
 		if res.is_ended()  {
 			return res;
 		}
@@ -104,7 +104,7 @@ impl Game for Mancala {
 		Some(board)
 	}
 
-	fn get_winner(board: &Mancala) -> GameOutcome {
+	fn get_outcome(board: &Mancala) -> GameOutcome {
 		if board.pits[0][1..].iter().sum::<u8>() == 0 || board.pits[1][1..].iter().sum::<u8>() == 0
 		{
 			let to_move_total = board.pits[board.to_move as usize].iter().sum::<u8>();
@@ -223,7 +223,7 @@ use super::super::mancala::{Mancala, EvaluatorMancala};
 		let opts = IterativeOptions::new().verbose();
 		let mut strategy = IterativeSearch::new(EvaluatorMancala::default(), opts);
 		strategy.set_timeout(std::time::Duration::from_secs(1));
-		while !Mancala::get_winner(&board).is_ended() {
+		while !Mancala::get_outcome(&board).is_ended() {
 			println!("{}", board);
 			match strategy.choose_move(&board) {
 				Some(m) => board = Mancala::apply(&mut board, m).unwrap(),

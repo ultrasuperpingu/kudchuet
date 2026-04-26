@@ -1,5 +1,7 @@
 //! The common structures and traits.
 
+use std::fmt::Debug;
+
 use crate::{GameOutcome, Player};
 
 /// An assessment of a game state from the perspective of the player whose turn it is to play.
@@ -90,11 +92,11 @@ impl Winner {
 /// This is meant to be defined on an empty newtype so that a game engine can
 /// be implemented in a separate crate without having to know about these
 /// `minimax` traits.
-pub trait Game: Sized {
+pub trait Game: Sized+Debug {
 	/// The type of the game state.
-	type S;
+	type S : Debug;
 	/// The type of game moves.
-	type M: Copy;
+	type M: Copy+Debug;
 
 	/// Generate moves at the given state.
 	///
@@ -137,7 +139,7 @@ pub trait Game: Sized {
 	/// Returns `Some(PlayerJustMoved)` or `Some(PlayerToMove)` if there's a winner,
 	/// `Some(Draw)` if the state is terminal without a winner, and `None` if
 	/// the state is non-terminal.
-	fn get_winner(state: &Self::S) -> GameOutcome;
+	fn get_outcome(state: &Self::S) -> GameOutcome;
 
 	/// Hash of the game state.
 	/// Expected to be pre-calculated and cheaply updated with each apply.

@@ -164,7 +164,7 @@ where
 		if self.timeout_check() {
 			return None;
 		}
-		let res  = E::G::get_winner(s);
+		let res  = E::G::get_outcome(s);
 		if res.is_ended() {
 			return match res {
 				GameOutcome::Player(p) if p == player_to_move => Some(BEST_EVAL),

@@ -7,7 +7,7 @@ use kudchuet::{
 };
 use std::fmt;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct Board {
 	// First index by player.
 	// Next index by pit, counting down from 6 to 1 for the pits in play.
@@ -32,7 +32,7 @@ impl Default for Board {
 // 1-6 means play from that pit.
 // 0 means pass (because of being skipped).
 type Move = u8;
-
+#[derive(Debug)]
 struct Mancala;
 
 impl Game for Mancala {
@@ -40,7 +40,7 @@ impl Game for Mancala {
 	type M = Move;
 
 	fn generate_moves(board: &Board, moves: &mut Vec<Move>) -> GameOutcome {
-		let res = Self::get_winner(board);
+		let res = Self::get_outcome(board);
 		if res.is_ended() {
 			return res;
 		}
@@ -101,7 +101,7 @@ impl Game for Mancala {
 		Some(board)
 	}
 
-	fn get_winner(board: &Board) -> GameOutcome {
+	fn get_outcome(board: &Board) -> GameOutcome {
 		if board.pits[0][1..].iter().sum::<u8>() == 0 || board.pits[1][1..].iter().sum::<u8>() == 0
 		{
 			let to_move_total = board.pits[board.to_move as usize].iter().sum::<u8>();
@@ -186,7 +186,7 @@ fn main() {
 	let opts = IterativeOptions::new().verbose();
 	let mut strategy = IterativeSearch::new(MancalaEvaluator::default(), opts);
 	strategy.set_timeout(std::time::Duration::from_secs(1));
-	while !Mancala::get_winner(&board).is_ended() {
+	while !Mancala::get_outcome(&board).is_ended() {
 		println!("{}", board);
 		match strategy.choose_move(&board) {
 			Some(m) => board = Mancala::apply(&mut board, m).unwrap(),

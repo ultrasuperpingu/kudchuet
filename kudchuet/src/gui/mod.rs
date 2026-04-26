@@ -181,7 +181,7 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	/// This is a convinient method. Default implementation call Game::get_winner(self) and convert it to GameResult.
 	/// This does not need to be reimplemented.
 	fn result(&self) -> GameOutcome {
-		Self::get_winner(self).into()
+		Self::get_outcome(self).into()
 	}
 	/// Get the player which have to play
 	/// 

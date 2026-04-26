@@ -34,7 +34,7 @@ impl Game for Neutron {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		state.result()
 	}
 

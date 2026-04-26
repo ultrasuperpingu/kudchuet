@@ -18,7 +18,7 @@ impl Game for HareAndHounds {
 	type M = Move;
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
-		let res = Self::get_winner(state);
+		let res = Self::get_outcome(state);
 		if res.is_ended()  {
 			return res;
 		}
@@ -37,7 +37,7 @@ impl Game for HareAndHounds {
 		//println!("apply after\nstate\n{}\ns\n{}", state, s);
 		Some(s)
 	}
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		state.result().into()
 	}
 	fn get_hash(state: &Self::S) -> u64 {

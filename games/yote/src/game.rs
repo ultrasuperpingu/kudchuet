@@ -13,7 +13,7 @@ impl Game for Yote {
 	#[inline]
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		state.legal_moves_inplace(moves);
-		Self::get_winner(state)
+		Self::get_outcome(state)
 	}
 
 	#[inline]
@@ -23,7 +23,7 @@ impl Game for Yote {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		state.result()
 	}
 	fn get_current_player(state: &Self::S) -> Player {

@@ -14,7 +14,7 @@ impl Game for ChineseCheckers {
 	type M = Move;
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
-		let res = Self::get_winner(state);
+		let res = Self::get_outcome(state);
 		if res.is_ended()  {
 			return res;
 		}
@@ -43,7 +43,7 @@ impl Game for ChineseCheckers {
 			ChineseCheckersPlayer::White => Player(5),
 		}
 	}
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		match state.winner() {
 			Some(w) => GameOutcome::Player(Player(w.idx() as u8)),
 			None => GameOutcome::OnGoing,

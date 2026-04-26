@@ -35,7 +35,7 @@ impl Game for ChessGame {
 		}
 	}
 
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		match state.outcome() {
 			shakmaty::Outcome::Known(known_outcome) => {
 				match known_outcome {

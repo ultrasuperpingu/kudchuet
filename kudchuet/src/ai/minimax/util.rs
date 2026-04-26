@@ -60,7 +60,7 @@ where
 	let mut strategies: [&mut dyn interface::Strategy<G>; 2] = [s1, s2];
 	let mut s = 0;
 	loop {
-		let res = G::get_winner(&state);
+		let res = G::get_outcome(&state);
 		if res.is_ended()  {
 			return match res {
 				GameOutcome::Draw => None,
@@ -261,7 +261,7 @@ where
 	if depth == 0 {
 		return 1;
 	}
-	if G::get_winner(state).is_ended() {
+	if G::get_outcome(state).is_ended() {
 		return 0;
 	}
 

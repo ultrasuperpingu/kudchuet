@@ -16,7 +16,7 @@ impl Game for ConnectFour {
 		let nb = state.legal_moves_array(&mut mvs);
 		moves.extend_from_slice(&mvs[0..nb]);
 		// TODO: check winner
-		Self::get_winner(state)
+		Self::get_outcome(state)
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -29,7 +29,7 @@ impl Game for ConnectFour {
 	fn notation(_state: &Self::S, mv: Self::M) -> Option<String> {
 		Some(mv.0.to_string())
 	}
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		if state.is_victory() {
 			match state.player_turn() {
 				Cell::Empty => unreachable!(),

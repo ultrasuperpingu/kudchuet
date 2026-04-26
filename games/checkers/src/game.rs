@@ -16,7 +16,7 @@ impl Game for Checkers10 {
 		let mut mvs: Vec<Move>=state.legal_moves();
 		moves.append(&mut mvs);
 		// TODO: check winner
-		Self::get_winner(state)
+		Self::get_outcome(state)
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -25,7 +25,7 @@ impl Game for Checkers10 {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		if state.is_victory() {
 			GameOutcome::Player(state.player_turn().opponent())
 		} else if state.is_over() {

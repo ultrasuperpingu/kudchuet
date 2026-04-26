@@ -50,7 +50,7 @@ impl BoardGame for Mancala {
 		todo!()
 	}
 	fn result(&self) -> GameOutcome {
-		<Self as Game>::get_winner(self)
+		<Self as Game>::get_outcome(self)
 	}
 }
 impl BoardMove<Mancala> for Move {}
@@ -82,7 +82,7 @@ impl eframe::App for MancalaApp {
 				ui.label(format!("Score Bas : {}", self.game.bottom_pit(0)));
 				ui.label(format!("Score Haut : {}", self.game.top_pit(0)));
 
-				if Mancala::get_winner(&self.game).is_ended() {
+				if Mancala::get_outcome(&self.game).is_ended() {
 					ui.colored_label(egui::Color32::RED, "Partie terminée");
 				}
 
@@ -204,7 +204,7 @@ impl eframe::App for MancalaApp {
 							);
 
 							if pit_rect.contains(pos) {
-								if !Mancala::get_winner(&self.game).is_ended()
+								if !Mancala::get_outcome(&self.game).is_ended()
 									&& self.game.to_move == is_top
 								{
 									let mv = if is_top { 12 - i } else { 6 - i } as u8;
@@ -215,7 +215,7 @@ impl eframe::App for MancalaApp {
 						}
 					}
 				}
-			} else if !Mancala::get_winner(&self.game).is_ended() {
+			} else if !Mancala::get_outcome(&self.game).is_ended() {
 				let mv = self.computer.choose_move(&self.game);
 				self.game = Mancala::apply(&mut self.game, mv.unwrap()).unwrap();
 			}

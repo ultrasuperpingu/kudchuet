@@ -39,7 +39,7 @@ impl Game for Chess {
 		}
 	}
 
-	fn get_winner(b: &Board) -> GameOutcome {
+	fn get_outcome(b: &Board) -> GameOutcome {
 		match b.status() {
 			BoardStatus::Ongoing => GameOutcome::OnGoing,
 			BoardStatus::Stalemate => GameOutcome::Draw,

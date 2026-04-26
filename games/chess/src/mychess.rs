@@ -1345,11 +1345,11 @@ impl Game for ChessBoard {
 		}
 		moves.extend_from_slice(&array[..len]);
 		// TODO: check winner
-		Self::get_winner(b)
+		Self::get_outcome(b)
 	}
 
 	#[inline]
-	fn get_winner(b: &Self::S) -> GameOutcome {
+	fn get_outcome(b: &Self::S) -> GameOutcome {
 		b.status()
 	}
 

@@ -14,7 +14,7 @@ impl Game for Gomoku {
 		state.legal_moves_inplace(moves);
 		// randomize moves.
 		fastrand::shuffle(moves);
-		Self::get_winner(state)
+		Self::get_outcome(state)
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -28,7 +28,7 @@ impl Game for Gomoku {
 		state.undo_unchecked(m);
 	}
 
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		state.result()
 	}
 	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {

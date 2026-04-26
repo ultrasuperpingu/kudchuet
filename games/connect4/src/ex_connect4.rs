@@ -93,7 +93,7 @@ impl Game for C4Game {
 	type M = Place;
 
 	fn generate_moves(b: &Board, moves: &mut Vec<Place>) -> GameOutcome {
-		let res = Self::get_winner(b);
+		let res = Self::get_outcome(b);
 		if res.is_ended()  {
 			return res;
 		}
@@ -107,7 +107,7 @@ impl Game for C4Game {
 		GameOutcome::OnGoing
 	}
 
-	fn get_winner(b: &Board) -> GameOutcome {
+	fn get_outcome(b: &Board) -> GameOutcome {
 		// Position of pieces for the player that just moved.
 		let pieces = b.pieces_just_moved();
 

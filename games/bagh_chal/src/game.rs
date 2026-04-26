@@ -33,7 +33,7 @@ impl Game for BaghChal {
 	fn undo(_state: &mut Self::S, _m: Self::M) {
 		_state.undo_unchecked(&_m);
 	}
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		state.result()
 	}
 

@@ -14,7 +14,7 @@ impl Game for FootBoard {
 	type M = Move;
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
-		let res = Self::get_winner(state);
+		let res = Self::get_outcome(state);
 		if res.is_ended() {
 			return res;
 		}
@@ -27,7 +27,7 @@ impl Game for FootBoard {
 		s.play_unchecked(&m);
 		Some(s)
 	}
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		state.result().into()
 	}
 

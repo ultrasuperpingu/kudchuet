@@ -17,7 +17,7 @@ impl Game for Reversi {
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		state.legal_moves(moves);
-		Self::get_winner(state)
+		Self::get_outcome(state)
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -26,7 +26,7 @@ impl Game for Reversi {
 		Some(s2)
 	}
 
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		if state.is_over() {
 			if let Some(winner) = state.winner() {
 				if winner == Cell::Black {

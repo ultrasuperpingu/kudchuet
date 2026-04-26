@@ -38,7 +38,7 @@ impl<E: Evaluator> PlainMinimax<E> {
 	where
 		<<E as Evaluator>::G as Game>::M: Copy,
 	{
-		let res = E::G::get_winner(s);
+		let res = E::G::get_outcome(s);
 		if res.is_ended() {
 			return res.evaluate(player_to_move);
 		}
@@ -124,7 +124,7 @@ fn generate_random_state(depth: u8) -> connect4::Board {
 		connect4::Connect4Game::generate_moves(&b, &mut moves);
 		let m = fastrand::choice(moves).unwrap();
 		let next = connect4::Connect4Game::apply(&mut b, m).unwrap();
-		if connect4::Connect4Game::get_winner(&next).is_ended() {
+		if connect4::Connect4Game::get_outcome(&next).is_ended() {
 			// Oops, undo and try again on the next iter.
 		} else {
 			b = next;
@@ -145,7 +145,7 @@ fn test_winning_position() {
 	b = connect4::Connect4Game::apply(&mut b, connect4::Place { col: 2 }).unwrap();
 	assert_eq!(
 		GameOutcome::PLAYER1,
-		connect4::Connect4Game::get_winner(&b)
+		connect4::Connect4Game::get_outcome(&b)
 	);
 
 	// Make sure none of the strategies die when given a winning position.

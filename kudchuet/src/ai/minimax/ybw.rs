@@ -118,7 +118,7 @@ where
 		if self.timeout.load(Ordering::Relaxed) {
 			return None;
 		}
-		let res = E::G::get_winner(s);
+		let res = E::G::get_outcome(s);
 		if res.is_ended() {
 			return Some(res.evaluate(player_to_move));
 		}
@@ -665,7 +665,7 @@ where
 {
 	fn choose_move(&mut self, s: &<E::G as Game>::S) -> Option<<E::G as Game>::M> {
 		let player_to_move = E::G::get_current_player(s);
-		if E::G::get_winner(s).is_ended() {
+		if E::G::get_outcome(s).is_ended() {
 			return None;
 		}
 		// Cancel any ongoing background processing.

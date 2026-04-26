@@ -11,7 +11,7 @@ impl Game for Diaballik {
 	type M = Move;
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
-		let res = Self::get_winner(state);
+		let res = Self::get_outcome(state);
 		if res.is_ended()  {
 			return res;
 		}
@@ -31,7 +31,7 @@ impl Game for Diaballik {
 	fn undo(_state: &mut Self::S, _m: Self::M) {
 		_state.undo_unchecked(&_m);
 	}
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		if state.turn == Player::PLAYER2 && state.ball_player1 > 41 {
 			GameOutcome::PLAYER1
 		}

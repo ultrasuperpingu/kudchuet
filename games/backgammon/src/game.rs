@@ -12,7 +12,7 @@ impl Game for Backgammon {
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		*moves = state.legal_moves();
-		Self::get_winner(state)
+		Self::get_outcome(state)
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
@@ -34,7 +34,7 @@ impl Game for Backgammon {
 	fn get_current_player(state: &Self::S) -> Player {
 		state.current_player()
 	}
-	fn get_winner(state: &Self::S) -> GameOutcome {
+	fn get_outcome(state: &Self::S) -> GameOutcome {
 		if state.is_game_over() {
 			if let Some(winner) = state.winner() {
 				GameOutcome::Player(winner)

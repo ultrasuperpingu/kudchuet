@@ -9,8 +9,8 @@ extern crate kudchuet;
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 
-use kudchuet::{GameOutcome, Player};
 use kudchuet::ai::minimax::*;
+use kudchuet::{GameOutcome, Player};
 
 const RACE_LENGTH: u8 = 48;
 
@@ -30,7 +30,7 @@ pub enum Move {
 	Choice(Dice),
 	Random(u8),
 }
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
 	p1: u8,
 	p2: u8,
@@ -90,7 +90,7 @@ impl Game for DiceGame {
 	type M = Move;
 
 	fn generate_moves(b: &Board, ms: &mut Vec<Move>) -> GameOutcome {
-		let res = Self::get_winner(b);
+		let res = Self::get_outcome(b);
 		if res.is_ended() {
 			return res;
 		}
@@ -200,7 +200,7 @@ impl Game for DiceGame {
 			Player::PLAYER1
 		}
 	}
-	fn get_winner(b: &Board) -> GameOutcome {
+	fn get_outcome(b: &Board) -> GameOutcome {
 		if b.p1 == RACE_LENGTH {
 			GameOutcome::PLAYER1
 		} else if b.p2 == RACE_LENGTH {
@@ -247,7 +247,7 @@ pub struct DiceRaceEvaluator;
 
 impl Default for DiceRaceEvaluator {
 	fn default() -> Self {
-		Self { }
+		Self {}
 	}
 }
 impl Evaluator for DiceRaceEvaluator {
@@ -312,7 +312,7 @@ fn main() {
 	);
 	minimax2.set_max_depth(8);
 	let mut b = Board::default();
-	while !DiceGame::get_winner(&b).is_ended() {
+	while !DiceGame::get_outcome(&b).is_ended() {
 		println!("{}", b);
 		let strategy: &mut dyn Strategy<DiceGame> = if b.to_move {
 			&mut minimax2

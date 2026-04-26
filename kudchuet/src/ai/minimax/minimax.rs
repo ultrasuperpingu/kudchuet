@@ -84,7 +84,7 @@ impl<E: Evaluator> ExpectiMinimax<E> {
 		mut beta: Evaluation,
 	) -> Evaluation {
 		if depth == 0 {
-			let res = E::G::get_winner(s);
+			let res = E::G::get_outcome(s);
 			if res.is_ended() {
 				return match res {
 					GameOutcome::Player(p) if p == player_to_move => BEST_EVAL,
@@ -230,7 +230,7 @@ mod tests {
 			Some(clone)
 		}
 
-		fn get_winner(_state: &Self::S) -> GameOutcome {
+		fn get_outcome(_state: &Self::S) -> GameOutcome {
 			GameOutcome::OnGoing
 		}
 		fn get_current_player(state: &Self::S) -> Player {

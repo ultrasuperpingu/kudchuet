@@ -9,12 +9,13 @@ extern crate kudchuet;
 
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 use kudchuet::{GameOutcome, Player};
 use kudchuet::ai::minimax::{Evaluation, Evaluator, ExpectiMinimax};
 use kudchuet::ai::minimax::{Game, Strategy};
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[repr(u8)]
 pub enum Square {
 	Empty,
@@ -52,7 +53,7 @@ impl Display for Square {
 	}
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Board {
 	squares: [Square; 9],
 	to_move: Square,
@@ -93,7 +94,7 @@ impl Display for Board {
 		Ok(())
 	}
 }
-
+#[derive(Debug)]
 pub struct TTTGame;
 
 impl Game for TTTGame {
@@ -101,7 +102,7 @@ impl Game for TTTGame {
 	type M = Place;
 
 	fn generate_moves(b: &Board, ms: &mut Vec<Place>) -> GameOutcome {
-		let res = Self::get_winner(b);
+		let res = Self::get_outcome(b);
 		if res.is_ended() {
 			return res;
 		}
@@ -113,7 +114,7 @@ impl Game for TTTGame {
 		GameOutcome::OnGoing
 	}
 
-	fn get_winner(b: &Board) -> GameOutcome {
+	fn get_outcome(b: &Board) -> GameOutcome {
 		// A player can only cause themselves to win on their turn, so only check for that.
 
 		// horizontal wins
@@ -188,6 +189,11 @@ impl Game for TTTGame {
 	fn get_current_player(state: &Self::S) -> Player {
 		square_to_player(state.to_move)
 	}
+	fn get_hash(state: &Self::S) -> u64 {
+		let mut hasher = DefaultHasher::new();
+		state.hash(&mut hasher);
+		hasher.finish()
+	}
 }
 fn square_to_player(square: Square) -> Player {
 	match square {
@@ -203,7 +209,7 @@ fn square_to_winner(square: Square) -> GameOutcome {
 		Square::O => GameOutcome::PLAYER2,
 	}
 }
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Place {
 	i: u8,
 }
@@ -278,7 +284,7 @@ fn main() {
 		ExpectiMinimax::new(TTTEvaluator::default(), 10, true),
 	];
 	let mut s = 0;
-	while !TTTGame::get_winner(&b).is_ended() {
+	while !TTTGame::get_outcome(&b).is_ended() {
 		println!("{}", b);
 		let ref mut strategy = strategies[s];
 		match strategy.choose_move(&mut b) {
@@ -288,4 +294,5 @@ fn main() {
 		s = 1 - s;
 	}
 	println!("{}", b);
+	println!("{:?}", TTTGame::get_outcome(&b));
 }

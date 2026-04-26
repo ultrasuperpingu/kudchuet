@@ -10,7 +10,7 @@ use kudchuet::{GameOutcome, Player};
 use kudchuet::ai::minimax::util::perft;
 use kudchuet::ai::minimax::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Board {
 	// Some bitboard ideas from http://blog.gamesolver.org/solving-connect-four/06-bitboard/
 	/* bit order example:
@@ -104,6 +104,7 @@ impl Place {
 	}
 }
 
+#[derive(Debug)]
 pub struct Connect4Game;
 
 impl Game for Connect4Game {
@@ -111,7 +112,7 @@ impl Game for Connect4Game {
 	type M = Place;
 
 	fn generate_moves(b: &Board, moves: &mut Vec<Place>) -> GameOutcome {
-		let res = Self::get_winner(b);
+		let res = Self::get_outcome(b);
 		if res.is_ended() {
 			return res;
 		}
@@ -125,7 +126,7 @@ impl Game for Connect4Game {
 		GameOutcome::OnGoing
 	}
 
-	fn get_winner(b: &Board) -> GameOutcome {
+	fn get_outcome(b: &Board) -> GameOutcome {
 		// Position of pieces for the player that just moved.
 		let pieces = b.pieces_just_moved();
 
@@ -314,7 +315,7 @@ fn main() {
 	let mut strategies: [&mut dyn Strategy<Connect4Game>; 2] = [&mut dumb, &mut iterative];
 
 	let mut s = 0;
-	while !Connect4Game::get_winner(&b).is_ended() {
+	while !Connect4Game::get_outcome(&b).is_ended() {
 		println!("{}", b);
 		let ref mut strategy = strategies[s];
 		match strategy.choose_move(&mut b) {
