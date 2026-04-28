@@ -43,6 +43,17 @@ impl<'a, G: Game> AppliedMove<'a, G> {
 		let new = G::apply(old, m);
 		AppliedMove { old, new, m }
 	}
+	pub(crate) fn applied_clone(state: &'a <G as Game>::S, m: <G as Game>::M) -> <G as Game>::S
+		where G::S: Clone
+	{
+		let mut old=state.clone();
+		let new = G::apply(&mut old, m);
+		if let Some(s) = new {
+			s
+		} else {
+			old
+		}
+	}
 }
 
 /// Play a complete, new game with players using the two provided strategies.

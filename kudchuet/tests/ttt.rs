@@ -3,7 +3,7 @@ extern crate kudchuet;
 #[path = "../examples/ttt.rs"]
 mod ttt;
 
-use kudchuet::ai::minimax::{ExpectiMinimax, Random, mcts::MCTS, util::battle_royale};
+use kudchuet::{Player, ai::minimax::{ExpectiMinimax, Game, Random, Strategy, gametree::GameTree, mcts::MCTS, util::battle_royale}};
 
 use crate::ttt::TTTGame;
 
@@ -50,13 +50,22 @@ fn test_ttt_mcts_vs_random_always_wins_or_draws() {
 	//	TTTGame::apply(&mut state, m);
 	//	println!("{}", state);
 	//}
-	//let state = ttt::Board::default();
-	//let mut s1 = MonteCarloTreeSearch::<TTTGame>::new().with_alpha_beta_pruning(false);
+	let mut state = ttt::Board::default();
+	TTTGame::apply(&mut state, ttt::Place{i: 0});
+	TTTGame::apply(&mut state, ttt::Place{i: 4});
+	TTTGame::apply(&mut state, ttt::Place{i: 1});
+	TTTGame::apply(&mut state, ttt::Place{i: 2});
+	println!("{state}");
+	//let mut s1 = MCTS::<TTTGame>::default();
 	//s1.choose_move(&state);
-
-	for _ in 0..100 {
-		let mut s1 = MCTS::<TTTGame>::default();
-		let mut s2 = Random::new();
-		assert_ne!(battle_royale(&mut s1, &mut s2), Some(1));
-	}
+	let mut tree=GameTree::<TTTGame>::from(state);
+	let res = tree.expand_all(0);
+	//let res = tree.get_outcome(0, Player::PLAYER1);
+	//println!("{res:?}\n");
+	println!("{res:?}:\n{}", tree);
+	//for _ in 0..100 {
+	//	let mut s1 = MCTS::<TTTGame>::default();
+	//	let mut s2 = Random::new();
+	//	assert_ne!(battle_royale(&mut s1, &mut s2), Some(1));
+	//}
 }

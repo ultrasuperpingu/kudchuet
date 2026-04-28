@@ -232,29 +232,6 @@ fn test_game() {
 	println!("{}", hah);
 }
 #[test]
-fn test_game_bug() {
-	let mut hah = HareAndHounds::default();
-	hah.houds=Board::from_storage(0b0110010000000);
-	hah.hare=6;
-	hah.turn_and_count = 0;
-	println!("{}", hah.houds);
-	println!("{}", hah);
-	let mut len = 0;
-	let mut moves=[Move::default();HareAndHounds::MAX_MOVES];
-	hah.legal_moves(&mut moves, &mut len);
-	println!("{} {:?}", len, moves);
-	hah.play_unchecked(moves[0]);
-	println!("{}", hah);
-	
-}
-
-#[test]
-fn test_game_bug2() {
-	for _ in 0..1000 {
-		test_game_bug();
-	} 
-}
-#[test]
 fn test_display() {
 	//println!("0\n{}", NEIGHBORS_HOUDS[0]);
 	//println!("1\n{}", NEIGHBORS_HOUDS[1]);

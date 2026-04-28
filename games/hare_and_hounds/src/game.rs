@@ -120,7 +120,7 @@ impl Evaluator for HareAndHoundsEval {
 #[cfg(test)]
 mod tests {
 	
-	use kudchuet::ai::minimax::{IterativeOptions, iterative::IterativeSearch, Strategy, util::perft};
+	use kudchuet::ai::minimax::{IterativeOptions, Strategy, gametree::GameTree, iterative::IterativeSearch, util::perft};
 	use crate::game::HareAndHoundsEval;
 
 	use super::HareAndHounds;
@@ -223,6 +223,11 @@ mod tests {
 		let winner = solve_hare_and_hounds();
 		println!("Winner: {:?}", winner);
 		assert!(matches!(winner, GameResult::HareWin | GameResult::HoundsWin));
+		let mut tree=GameTree::<HareAndHounds>::from(HareAndHounds::default());
+		let winner = tree.expand_all(0);
+		println!("Winner: {:?}", winner);
+		println!("len: {:?}", tree.states.len());
+		
 	}
 
 	#[test]

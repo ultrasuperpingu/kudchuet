@@ -1,9 +1,11 @@
 use core::f64;
-use std::ops::{Deref, DerefMut};
 
 use crate::{
-	GameOutcome, Player,
-	ai::minimax::{Game, Strategy, util::AppliedMove},
+	GameOutcome, Player, ai::minimax::{
+		Game, Strategy,
+		gametree::{GameTree, Node, StateInfo},
+		util::AppliedMove,
+	}
 };
 pub struct MCTSOptions {
 	pub max_nb_iteration: usize,
@@ -27,290 +29,231 @@ impl MCTSOptions {
 		self
 	}
 }
+
 pub struct MCTS<G: Game> {
-	tree: Option<MCTSTree<G>>,
-	root_id: usize,
+	tree: Option<GameTree<G>>,
+	//root_id: usize,
 	opts: MCTSOptions,
 }
 impl<G: Game> Default for MCTS<G> {
 	fn default() -> Self {
 		Self {
 			tree: Default::default(),
-			root_id: 0,
+			//root_id: 0,
 			opts: Default::default(),
 		}
 	}
 }
 
-pub struct Node<S, M> {
-	state: S,
-	parent: Option<usize>,
-	children: Vec<usize>,
+impl<G: Game> GameTree<G> {
 
-	visits: f64,
-	wins: f64,
+	pub(crate) fn expand(&mut self, mut node_id: usize) -> usize
+	where
+		G::S: Clone,
+	{
+		if !self.nodes[node_id].untried_moves.is_empty() {
+			let m = self.nodes[node_id].untried_moves.pop().unwrap();
+			let mut state = self.get_state(self.nodes[node_id].state).unwrap().clone();
+			let new_state = AppliedMove::<G>::new(&mut state, m).clone();
+			let new_state_hash = G::get_hash(&new_state);
+			let child_id = self.nodes.len();
+			self.states.insert(new_state_hash, StateInfo { state: new_state.clone(), expanded_node: child_id });
+			let mut moves = vec![];
+			let outcome = G::generate_moves(&new_state, &mut moves);
+			self.nodes.push(Node {
+				state: new_state_hash,
+				parent: Some(node_id),
+				children: vec![],
+				visits: 0.0,
+				wins: 0.0,
+				draws: 0.0,
+				untried_moves: moves,
+				player_to_move: G::get_current_player(&new_state),
+				outcome,
+				incoming_move: Some(m),
+			});
 
-	untried_moves: Vec<M>,
-	player_to_move: Player,
-	outcome: GameOutcome,
-	incoming_move: Option<M>,
-}
-impl<G: Game> MCTSTree<G> {
-	fn get_outcome(&mut self, id: usize, root_player: Player) -> GameOutcome {
-		if self.0[id].untried_moves.is_empty() && self.0[id].outcome == GameOutcome::OnGoing {
-			let children = self.0[id].children.clone();
+			self.nodes[node_id].children.push(child_id);
+			node_id = child_id;
+		}
+		node_id
+	}
 
-			let outcomes: Vec<_> = children
+
+	pub(crate) fn backpropagate(
+		&mut self,
+		root_player: Player,
+		node_id: usize,
+		result: GameOutcome,
+	) {
+		let mut current = Some(node_id);
+		while let Some(id) = current {
+			self.nodes[id].visits += 1.0;
+
+			if result.is_win_for(root_player) {
+				self.nodes[id].wins += 1.0;
+			} else if result.is_draw() {
+				self.nodes[id].wins += 0.5;
+			}
+			//self.get_outcome(id, root_player);
+			self.get_outcome(id);
+
+			current = self.nodes[id].parent;
+		}
+	}
+
+	pub fn find_best_move(&self) -> <G as Game>::M {
+		let mut filtered: Vec<_> = self.nodes[self.root_id]
+			.children
+			.iter()
+			.filter(|id| {
+				self.nodes[**id]
+					.outcome
+					.is_win_for(self.nodes[self.root_id].player_to_move)
+			})
+			.collect();
+		if filtered.is_empty() {
+			filtered = self.nodes[self.root_id]
+				.children
 				.iter()
-				.map(|c| self.get_outcome(*c, root_player))
+				.filter(|id| self.nodes[**id].outcome.is_draw())
 				.collect();
-
-			let result = if self.0[id].player_to_move == root_player {
-				if outcomes.iter().any(|o| o.is_win_for(root_player)) {
-					root_player.into()
-				} else if outcomes.iter().all(|o| o.is_lose_for(root_player)) {
-					root_player.opponent().into()
-				} else if outcomes.iter().any(|o| o.is_draw()) {
-					GameOutcome::Draw
-				} else {
-					GameOutcome::OnGoing
-				}
-			} else {
-				if outcomes.iter().all(|o| o.is_win_for(root_player)) {
-					root_player.into()
-				} else if outcomes.iter().any(|o| o.is_lose_for(root_player)) {
-					root_player.opponent().into()
-				} else if outcomes.iter().any(|o| o.is_draw()) {
-					GameOutcome::Draw
-				} else {
-					GameOutcome::OnGoing
-				}
-			};
-
-			self.0[id].outcome = result;
+		}
+		if filtered.is_empty() {
+			filtered = self.nodes[self.root_id].children.iter().collect();
 		}
 
-		self.0[id].outcome
-	}
-}
+		let best_child = filtered
+			.iter()
+			.max_by(|&&a, &&b| {
+				self.nodes[*a]
+					.visits
+					.partial_cmp(&self.nodes[*b].visits)
+					.unwrap()
+			})
+			.unwrap();
 
-impl<S, M: std::fmt::Debug> Node<S, M> {
-	pub fn winrate(&self) -> f64 {
-		if self.visits == 0.0 {
-			0.0
-		} else {
-			self.wins / self.visits
-		}
+		let best_move = self.nodes[**best_child]
+			.incoming_move
+			.clone()
+			.expect("root child must have a move");
+		println!(
+			"to_move: {}\n{}",
+			self.nodes[self.root_id].player_to_move, self
+		);
+		best_move
 	}
+	
 }
-
-pub struct MCTSTree<G: Game>(Vec<Node<G::S, G::M>>);
-impl<G: Game> Default for MCTSTree<G> {
-	fn default() -> Self {
-		Self(Default::default())
-	}
-}
-impl<G: Game> Deref for MCTSTree<G> {
-	type Target = Vec<Node<G::S, G::M>>;
-
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
-}
-impl<G: Game> DerefMut for MCTSTree<G> {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.0
-	}
-}
-impl<G: Game> MCTS<G>
-{
+impl<G: Game> MCTS<G> {
 	pub fn mcts(&mut self, root_state: &G::S, iterations: usize) -> G::M
 	where
 		G::S: Clone,
 	{
-		if self.tree.is_none() {
-			self.tree = Some(MCTSTree::<G>::default());
-		}
-		let mut tree = self.tree.take().unwrap();
+		/*let mut tree = self.tree.take();
+		if let Some(tree) = tree {
+			if let Some(id) = Self::find_node_by_state(&tree, root_state) {
+				self.root_id = id;
+			} else {
+				tree = MCTSTree::<G>::default();
+				self.root_id = 0;
+			}
+		}*/
+		let mut tree = GameTree::<G>::default();
+		//let mut tree = tree.unwrap();
+
 		let mut moves = vec![];
 		G::generate_moves(&root_state, &mut moves);
-		self.root_id = tree.0.len();
-		tree.push(Node {
-			state: root_state.clone(),
+		let root_state_hash = G::get_hash(root_state);
+		tree.root_id = tree.nodes.len();
+		tree.nodes.push(Node {
+			state: root_state_hash,
 			parent: None,
 			children: vec![],
 			visits: 0.0,
 			wins: 0.0,
+			draws: 0.0,
 			untried_moves: moves,
 			player_to_move: G::get_current_player(&root_state),
 			outcome: GameOutcome::OnGoing,
 			incoming_move: None,
 		});
+		let root_player = tree.get_root().player_to_move;
 
 		for _ in 0..iterations {
-			// 1. SELECTION
-			let mut node_id = self.root_id;
-			let mut already_computed = false;
-			while tree[node_id].untried_moves.is_empty() && !tree[node_id].children.is_empty() {
-				let parent_visits = tree[node_id].visits;
-
-				let selected = tree[node_id]
-					.children
-					.iter()
-					.filter(|id| !tree[**id].outcome.is_ended())
-					.max_by(|&&a, &&b| {
-						let ua = self.ucb1(parent_visits, tree[a].wins, tree[a].visits);
-						let ub = self.ucb1(parent_visits, tree[b].wins, tree[b].visits);
-						ua.partial_cmp(&ub).unwrap()
-					});
-				if let Some(id) = selected {
-					node_id = *id;
-				} else {
-					// nothing to select
-					already_computed = true;
-					break;
-				}
-			}
+			let (mut node_id, already_computed) = self.select(&tree);
 			if already_computed {
 				break;
 			}
 
-			// 2. EXPANSION
-			if !tree[node_id].untried_moves.is_empty() {
-				let m = tree[node_id].untried_moves.pop().unwrap();
-				let mut state = tree[node_id].state.clone();
-				let new_state = AppliedMove::<G>::new(&mut state, m);
+			node_id = tree.expand(node_id);
 
-				let child_id = tree.len();
-				let mut moves = vec![];
-				let outcome = G::generate_moves(&new_state, &mut moves);
-				tree.push(Node {
-					state: new_state.clone(),
-					parent: Some(node_id),
-					children: vec![],
-					visits: 0.0,
-					wins: 0.0,
-					untried_moves: moves,
-					player_to_move: G::get_current_player(&new_state),
-					outcome,
-					incoming_move: Some(m),
-				});
+			let sim_state_hash = tree.nodes[node_id].state;
+			let sim_state = tree.states.get(&sim_state_hash).unwrap().state.clone();
+			let result = simulate::<G>(sim_state);
 
-				tree[node_id].children.push(child_id);
-				node_id = child_id;
-			}
-
-			// 3. SIMULATION
-			let mut sim_state = tree[node_id].state.clone();
-			let mut result = G::get_outcome(&sim_state);
-
-			while !result.is_ended() {
-				let mut moves = vec![];
-				result = G::generate_moves(&sim_state, &mut moves);
-				if result == GameOutcome::OnGoing {
-					let m = fastrand::choice(moves);
-					sim_state = AppliedMove::<G>::new(&mut sim_state.clone(), m.unwrap()).clone();
-				}
-			}
-
-			// 4. BACKPROP (ROOT POV)
-			let root_player = tree[self.root_id].player_to_move;
-
-			let mut current = Some(node_id);
-			while let Some(id) = current {
-				tree[id].visits += 1.0;
-
-				if result.is_win_for(root_player) {
-					tree[id].wins += 1.0;
-				} else if result.is_draw() {
-					tree[id].wins += 0.5;
-				}
-				tree.get_outcome(id, root_player);
-
-				current = tree[id].parent;
-			}
+			tree.backpropagate(root_player, node_id, result);
 		}
 
-		let mut filtered: Vec<_> = tree[0]
-			.children
-			.iter()
-			.filter(|id| tree[**id].outcome == tree[0].player_to_move.into())
-			.collect();
-		if filtered.is_empty() {
-			filtered = tree[0]
+		let res = tree.find_best_move();
+		self.tree = Some(tree);
+		res
+	}
+
+	fn select(&mut self, tree: &GameTree<G>) -> (usize, bool) {
+		let mut node_id = tree.root_id;
+		let mut already_computed = false;
+		while tree.nodes[node_id].untried_moves.is_empty()
+			&& !tree.nodes[node_id].children.is_empty()
+		{
+			let parent_visits = tree.nodes[node_id].visits;
+
+			let selected = tree.nodes[node_id]
 				.children
 				.iter()
-				.filter(|id| tree[**id].outcome == GameOutcome::Draw)
-				.collect();
+				.filter(|id| !tree.nodes[**id].outcome.is_ended())
+				.max_by(|&&a, &&b| {
+					let ua = self.ucb1(parent_visits, tree.nodes[a].wins, tree.nodes[a].visits);
+					let ub = self.ucb1(parent_visits, tree.nodes[b].wins, tree.nodes[b].visits);
+					ua.partial_cmp(&ub).unwrap()
+				});
+			if let Some(id) = selected {
+				node_id = *id;
+			} else {
+				// nothing to select
+				already_computed = true;
+				break;
+			}
 		}
-		if filtered.is_empty() {
-			filtered = tree[self.root_id].children.iter().collect();
-		}
-
-		let best_child = filtered
-			.iter()
-			.max_by(|&&a, &&b| tree[*a].visits.partial_cmp(&tree[*b].visits).unwrap())
-			.unwrap();
-
-		let best_move = tree[**best_child]
-			.incoming_move
-			.clone()
-			.expect("root child must have a move");
-		//println!("to_move: {}\n{}", tree.0[self.root_id].player_to_move, tree);
-		self.tree = Some(tree);
-		best_move
+		(node_id, already_computed)
 	}
-		
+
 	fn ucb1(&self, parent_visits: f64, wins: f64, visits: f64) -> f64 {
 		if visits == 0.0 {
 			return f64::INFINITY;
 		}
+		debug_assert!(parent_visits >= 0.0);
 		let exploitation = wins / visits;
-		let exploration = (parent_visits.ln().max(1.0) / visits).sqrt();
+		let exploration = (parent_visits.ln() / visits).sqrt();
 		exploitation + self.opts.exploration_factor * exploration
 	}
 }
-use std::fmt::{self, Display, Formatter};
 
-impl<G: Game> Display for MCTSTree<G>
+fn simulate<G: Game>(mut sim_state: <G as Game>::S) -> GameOutcome
 where
-	G::S: std::fmt::Debug,
-	G::M: std::fmt::Debug,
+	G::S: Clone,
 {
-	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-		fn dfs<S: std::fmt::Debug, M: std::fmt::Debug>(
-			tree: &Vec<Node<S, M>>,
-			id: usize,
-			depth: usize,
-			f: &mut Formatter<'_>,
-		) -> fmt::Result {
-			let node = &tree[id];
-			let indent = "  ".repeat(depth);
+	let mut result = G::get_outcome(&sim_state);
 
-			writeln!(
-				f,
-				"{}Node {} | move: {:?} | visits: {} | winrate: {:.2} | outcome: {:?}",
-				indent,
-				id,
-				node.incoming_move,
-				node.visits as usize,
-				node.winrate(),
-				node.outcome
-			)?;
-
-			let mut children = node.children.clone();
-
-			children.sort_by(|&a, &b| tree[b].visits.partial_cmp(&tree[a].visits).unwrap());
-
-			for child in children {
-				dfs(tree, child, depth + 1, f)?;
-			}
-
-			Ok(())
+	while !result.is_ended() {
+		let mut moves = vec![];
+		result = G::generate_moves(&sim_state, &mut moves);
+		if result == GameOutcome::OnGoing {
+			let m = fastrand::choice(moves);
+			sim_state = AppliedMove::<G>::new(&mut sim_state.clone(), m.unwrap()).clone();
 		}
-
-		dfs(&self.0, 0, 0, f)
 	}
+	result
 }
 
 impl<G: Game> Strategy<G> for MCTS<G>

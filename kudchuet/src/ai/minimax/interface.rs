@@ -167,8 +167,14 @@ pub trait Game: Sized+Debug {
 	fn max_table_index() -> u16 {
 		0
 	}
-	/// Returns the current player (e.g. 1 or -1) for the given state.
+	/// Returns the current player for the given state.
 	fn get_current_player(state: &Self::S) -> Player;
+	/// Returns the player who will play after the current player (for multi player games).
+	/// 
+	/// Returns the current player opponent by default (for 2 players games)
+	fn get_next_player(state: &Self::S) -> Player {
+		Self::get_current_player(state).opponent()
+	}
 	/// Returns true if the current state requires a random move.
 	fn is_random_move(_state: &Self::S) -> bool {
 		false

@@ -211,7 +211,7 @@ fn square_to_winner(square: Square) -> GameOutcome {
 }
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Place {
-	i: u8,
+	pub(crate) i: u8,
 }
 
 impl Display for Place {

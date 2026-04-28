@@ -88,6 +88,9 @@ impl Player {
 	pub fn idx(&self) -> usize {
 		self.0 as usize
 	}
+	pub fn next<G: Game>(&self, state: &G::S) -> Self {
+		G::get_next_player(&state)
+	}
 }
 impl From<Player> for GameOutcome {
 	fn from(val: Player) -> Self {

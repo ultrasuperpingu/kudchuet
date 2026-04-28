@@ -18,7 +18,7 @@ pub mod random;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod ybw;
 pub mod mcts;
-
+pub mod gametree;
 mod common;
 pub mod interface;
 #[cfg(not(target_arch = "wasm32"))]
