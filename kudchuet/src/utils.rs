@@ -1,19 +1,160 @@
+/// Computes a 64‑bit SplitMix64 hash of the input.
+///
+/// SplitMix64 is a fast, high‑quality mixing function commonly used in
+/// pseudo‑random number generators and hash table implementations.
+/// It provides excellent bit diffusion and is suitable for:
+///
+/// - hashing 64‑bit integers
+/// - generating Zobrist keys
+/// - scrambling sequential values into well‑distributed hashes
+///
+/// This function is **bijective** over 64 bits and has no collisions.
+///
+/// # Performance
+///
+/// - Extremely fast (a handful of arithmetic operations)
+/// - High statistical quality
+/// - Not cryptographically secure
+///
+/// # Example
+///
+/// ```
+/// use kudchuet::utils::splitmix64;
+/// 
+/// let h = splitmix64(123456789);
+/// println!("hash = {h}");
+/// ```
+///
+/// # Reference
+///
+/// Sebastiano Vigna, *"An experimental exploration of Marsaglia's xorshift generators, 
+/// scrambled"*, 2014.
 pub const fn splitmix64(mut x: u64) -> u64 {
 	x = x.wrapping_add(0x9E3779B97F4A7C15);
 	x = (x ^ (x >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
 	x = (x ^ (x >> 27)).wrapping_mul(0x94D049BB133111EB);
 	x ^ (x >> 31)
 }
+/// Computes a fast 64‑bit Fibonacci hash of the input.
+///
+/// Fibonacci hashing multiplies the input by a constant derived from the
+/// golden ratio in 64‑bit space. This produces a well‑distributed hash
+/// with minimal computational cost.
+///
+/// This variant also applies a final XOR‑shift to improve bit mixing.
+///
+/// # Use cases
+///
+/// - fast hashing of `u64` keys
+/// - index generation for power‑of‑two table sizes
+/// - lightweight pre‑mixing before insertion into a hash table
+///
+/// # Properties
+///
+/// - Very fast
+/// - Good bit diffusion
+/// - Not cryptographically secure
+///
+/// # Example
+///
+/// ```
+/// use kudchuet::utils::fibo_hash_64;
+/// 
+/// let h = fibo_hash_64(42);
+/// println!("hash = {h}");
+/// ```
 pub const fn fibo_hash_64(x: u64) -> u64 {
 	const K: u64 = 11400714819323198485;
 	let h = x.wrapping_mul(K);
 	//h.swap_bytes()
 	h ^ (h >> 32)
 }
+use std::hash::{BuildHasher, Hasher};
+
+/// A hasher that performs **no hashing at all** for `u64` keys.
+///
+/// This hasher simply interprets the written `u64` as the final hash value.
+/// It is intended for use cases where:
+///
+/// - the key **is already a good hash** (e.g. Zobrist hashing for game states)
+/// - hashing cost must be minimized
+/// - keys are trusted (no untrusted user input)
+///
+/// # Important
+///
+/// - Only `u64` keys are supported efficiently.
+/// - Calling `write()` with anything other than 8 bytes will panic in debug.
+/// - This is **not** a secure hasher. Do not use it with untrusted input.
+#[derive(Default)]
+pub struct NoHashHasher(u64);
+
+impl Hasher for NoHashHasher {
+	fn write(&mut self, bytes: &[u8]) {
+		debug_assert!(bytes.len() == 8);
+		self.0 = u64::from_ne_bytes(bytes.try_into().unwrap());
+	}
+
+	fn write_u64(&mut self, i: u64) {
+		self.0 = i;
+	}
+
+	fn finish(&self) -> u64 {
+		self.0
+	}
+}
+/// A `BuildHasher` that constructs `NoHashHasher`.
+///
+/// This allows using `NoHashHasher` as the hashing algorithm
+/// for a `HashMap` or `HashSet`.
+#[derive(Default)]
+pub struct NoHashBuilder;
+
+impl BuildHasher for NoHashBuilder {
+	type Hasher = NoHashHasher;
+
+	fn build_hasher(&self) -> Self::Hasher {
+		NoHashHasher::default()
+	}
+}
+use std::collections::HashMap;
+/// A `HashMap` that uses `NoHashHasher`, ideal for `u64` keys that are
+/// already hashed (e.g. Zobrist hashes in game engines).
+///
+/// This avoids the cost of hashing entirely.
+///
+/// # Example
+///
+/// ```
+/// use kudchuet::utils::NHHashMap;
+/// 
+/// let mut states: NHHashMap<u64, String> = NHHashMap::default();
+/// states.insert(0xDEADBEEF, "state".into());
+/// ```
+pub type NHHashMap<K, V> = HashMap<K, V, NoHashBuilder>;
+/// A `HashSet` that uses `NoHashHasher`, ideal for `u64` keys that are
+/// already hashed (e.g. Zobrist hashes in game engines).
+///
+/// This avoids the cost of hashing entirely, making it extremely fast
+/// for lookups and insertions when the key is already a well‑distributed
+/// 64‑bit value.
+///
+/// # Example
+///
+/// ```
+/// use kudchuet::utils::NHHashSet;
+///
+/// let mut visited: NHHashSet<u64> = NHHashSet::default();
+/// visited.insert(0xDEADBEEF);
+/// assert!(visited.contains(&0xDEADBEEF));
+/// ```
+pub type NHHashSet<K> = std::collections::HashSet<K, NoHashBuilder>;
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 use std::{
-	cell::{Ref, RefCell}, io::Write, time::{Duration, Instant}
+	cell::{Ref, RefCell},
+	io::Write,
+	time::{Duration, Instant},
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,11 +221,7 @@ impl Rng {
 		T::sign(self)
 	}
 
-	pub fn range<T: RngRange>(
-		&mut self,
-		low: T,
-		high: T,
-	) -> T {
+	pub fn range<T: RngRange>(&mut self, low: T, high: T) -> T {
 		T::range(self, low, high)
 	}
 
@@ -93,10 +230,7 @@ impl Rng {
 		T::normal(self)
 	}
 
-	pub fn shuffle<T>(
-		&mut self,
-		data: &mut [T],
-	) {
+	pub fn shuffle<T>(&mut self, data: &mut [T]) {
 		let length = data.len();
 		for dst in 0..length {
 			let src = self.range(dst, length);
@@ -213,11 +347,7 @@ macro_rules! impl_rng_sign {
 impl_rng_sign! { i8, i16, i32, i64, i128, isize, f32, f64 }
 
 pub trait RngRange {
-	fn range(
-		rng: &mut Rng,
-		low: Self,
-		high: Self,
-	) -> Self;
+	fn range(rng: &mut Rng, low: Self, high: Self) -> Self;
 }
 
 macro_rules! impl_rng_range_int {
@@ -322,10 +452,7 @@ pub struct BenchmarkTimer {
 }
 
 impl BenchmarkTimer {
-	pub fn add<T>(
-		&mut self,
-		fnct: impl FnOnce() -> T,
-	) -> T {
+	pub fn add<T>(&mut self, fnct: impl FnOnce() -> T) -> T {
 		let t0 = Instant::now();
 		let r = fnct();
 		self.elapsed += t0.elapsed();
@@ -343,9 +470,7 @@ pub struct Benchmark {
 impl Benchmark {
 	pub fn new(title: impl Into<String>) -> Self {
 		if cfg!(debug_assertions) {
-			eprintln!(
-				"!!! benchmarking in DEBUG mode is totally irrelevant !!!"
-			);
+			eprintln!("!!! benchmarking in DEBUG mode is totally irrelevant !!!");
 		}
 		Self {
 			title: title.into(),
@@ -404,8 +529,8 @@ impl Benchmark {
 			.unwrap()
 			.as_secs_f64();
 		for record in records.iter_mut() {
-			record.performance = (best_avg > f64::EPSILON)
-				.then(|| best_avg / record.avg_duration.as_secs_f64());
+			record.performance =
+				(best_avg > f64::EPSILON).then(|| best_avg / record.avg_duration.as_secs_f64());
 		}
 	}
 
@@ -419,25 +544,20 @@ impl Benchmark {
 }
 
 impl std::fmt::Display for Benchmark {
-	fn fmt(
-		&self,
-		f: &mut std::fmt::Formatter<'_>,
-	) -> std::fmt::Result {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let records = self.records.borrow();
 		if records.is_empty() {
 			writeln!(f, "{}: no record", self.title)
 		} else {
-			let show_perf = records.len() > 1
-				&& records.iter().all(|r| r.performance.is_some());
+			let show_perf = records.len() > 1 && records.iter().all(|r| r.performance.is_some());
 			writeln!(f, "{}:", self.title)?;
 			let title_w = records
 				.iter()
 				.map(|r| r.title.chars().count())
 				.max()
 				.unwrap_or(0);
-			let avg_texts = Vec::from_iter(
-				records.iter().map(|r| format!("{:.3?}", r.avg_duration)),
-			);
+			let avg_texts =
+				Vec::from_iter(records.iter().map(|r| format!("{:.3?}", r.avg_duration)));
 			let avg_w = avg_texts
 				.iter()
 				.map(|a| a.chars().count())
@@ -470,9 +590,7 @@ fn filter_outliers(samples: &mut Vec<(f64, f64)>) -> usize {
 	if n > 0 {
 		// https://en.wikipedia.org/wiki/Outlier#Tukey's_fences
 		// https://en.wikipedia.org/wiki/Quartile#Method_4
-		samples.sort_unstable_by(|&(r1, e1), &(r2, e2)| {
-			(e1 * r2).partial_cmp(&(e2 * r1)).unwrap()
-		});
+		samples.sort_unstable_by(|&(r1, e1), &(r2, e2)| (e1 * r2).partial_cmp(&(e2 * r1)).unwrap());
 		let make_q = |mut q: f64| {
 			q *= n as f64;
 			let (qi, qf) = (q as usize, q.fract());
@@ -539,14 +657,9 @@ pub struct BenchmarkRecord {
 }
 
 impl BenchmarkRecord {
-	fn new(
-		title: String,
-		iterations: usize,
-		samples: &mut Vec<(f64, f64)>,
-	) -> Self {
+	fn new(title: String, iterations: usize, samples: &mut Vec<(f64, f64)>) -> Self {
 		let outliers = filter_outliers(samples);
-		let (slope, _offset, goodness_of_fit) =
-			ordinary_least_squares(samples);
+		let (slope, _offset, goodness_of_fit) = ordinary_least_squares(samples);
 		let (avg, relative_deviation) = relative_deviation(samples);
 		let avg_duration = Duration::from_secs_f64(if slope > f64::EPSILON {
 			slope
@@ -594,10 +707,7 @@ impl BenchmarkRecord {
 }
 
 impl std::fmt::Display for BenchmarkRecord {
-	fn fmt(
-		&self,
-		f: &mut std::fmt::Formatter<'_>,
-	) -> std::fmt::Result {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(
 			f,
 			"{}: {:.3?} ({})",
@@ -617,15 +727,10 @@ pub struct MiniSvg {
 }
 
 impl MiniSvg {
-	pub fn new(
-		width: f64,
-		height: f64,
-	) -> Self {
+	pub fn new(width: f64, height: f64) -> Self {
 		let mut svg = Vec::new();
-		write!(&mut svg, r#"<svg viewBox="0 0 {} {}""#, width, height)
-			.unwrap();
-		writeln!(&mut svg, r#" xmlns="http://www.w3.org/2000/svg">"#)
-			.unwrap();
+		write!(&mut svg, r#"<svg viewBox="0 0 {} {}""#, width, height).unwrap();
+		writeln!(&mut svg, r#" xmlns="http://www.w3.org/2000/svg">"#).unwrap();
 		Self { width, height, svg }
 	}
 
@@ -683,8 +788,7 @@ impl MiniSvg {
 		title: Option<&str>,
 	) {
 		let svg = &mut self.svg;
-		write!(svg, r#"<circle cx="{}" cy="{}" r="{}""#, cx, cy, radius)
-			.unwrap();
+		write!(svg, r#"<circle cx="{}" cy="{}" r="{}""#, cx, cy, radius).unwrap();
 		write!(
 			svg,
 			r#" fill="{}" stroke="{}" stroke-width="{}""#,
@@ -718,8 +822,7 @@ impl MiniSvg {
 			x1, y1, x2, y2
 		)
 		.unwrap();
-		write!(svg, r#" stroke="{}" stroke-width="{}""#, color, width)
-			.unwrap();
+		write!(svg, r#" stroke="{}" stroke-width="{}""#, color, width).unwrap();
 		if let Some(title) = title {
 			writeln!(svg, r#"><title>{}</title></line>"#, title).unwrap();
 		} else {
