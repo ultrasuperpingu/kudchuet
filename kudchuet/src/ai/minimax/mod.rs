@@ -12,7 +12,7 @@ pub use crate::ai::minimax::random::Random;
 #[cfg(not(target_arch = "wasm32"))]
 pub use crate::ai::minimax::ybw::ParallelSearch;
 pub use crate::ai::minimax::mcts::{MCTS, MCTSOptions};
-pub use crate::ai::minimax::gametree::PerfectSolver;
+pub use crate::ai::minimax::perfect_solver::PerfectSolver;
 
 pub mod iterative;
 pub mod minimax;
@@ -26,6 +26,7 @@ pub mod interface;
 #[cfg(not(target_arch = "wasm32"))]
 mod sync_util;
 pub mod table;
+pub mod perfect_solver;
 pub mod util;
 
 /// A shared signal used to request the termination of an ongoing search.

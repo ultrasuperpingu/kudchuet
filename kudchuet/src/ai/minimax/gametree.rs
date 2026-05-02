@@ -1,9 +1,6 @@
 use crate::{
-	GameOutcome, Player, StrategyWithOptions,
-	ai::{
-		AIOptions,
-		minimax::{Evaluation, Game, Strategy, util::AppliedMove},
-	},
+	GameOutcome, Player,
+	ai::minimax::{Evaluation, Game, util::AppliedMove},
 	utils::NHHashMap,
 };
 
@@ -22,6 +19,7 @@ pub struct Node<M> {
 	pub(crate) untried_moves: Vec<M>,
 	pub(crate) player_to_move: Player,
 	pub(crate) outcome: GameOutcome,
+	pub(crate) depth_to_end: u16,
 	pub(crate) incoming_move: Option<M>,
 }
 #[derive(Debug, Clone)]
@@ -104,6 +102,7 @@ where
 			untried_moves: moves,
 			player_to_move: G::get_current_player(&state),
 			outcome: GameOutcome::OnGoing,
+			depth_to_end: u16::MAX,
 			incoming_move: None,
 		});
 		let hash = G::get_hash(&state);
@@ -136,27 +135,57 @@ where
 		let player = self.nodes[id].player_to_move;
 		let children = self.nodes[id].children.clone();
 
-		let outcomes: Vec<_> = children.iter().map(|c| self.get_outcome(*c)).collect();
+		let outcomes: Vec<_> = children
+			.iter()
+			.map(|c| {
+				(
+					self.get_outcome(*c),
+					self.get_node_expanded_node(*c).unwrap().depth_to_end,
+				)
+			})
+			.collect();
 
-		let result = if outcomes.iter().any(|o| o.is_win_for(player)) {
+		let (result, depth_to_end) = if outcomes.iter().any(|(o, _)| o.is_win_for(player)) {
 			//TODO: o.is_win_for(G::get_next_player(state))
-			player.into()
-		} else if outcomes.iter().any(|o| !o.is_ended()) {
-			GameOutcome::OnGoing
-		} else if outcomes.iter().all(|o| o.is_win_for(player.opponent())) {
-			player.opponent().into()
-		} else if outcomes.iter().any(|o| o.is_draw()) {
-			GameOutcome::Draw
+			let depth = outcomes
+				.iter()
+				.filter(|(o, _)| o.is_win_for(player))
+				.map(|(_, d)| *d)
+				.min()
+				.unwrap();
+			(player.into(), depth + 1)
+		} else if outcomes.iter().any(|(o, _d)| !o.is_ended()) {
+			(GameOutcome::OnGoing, u16::MAX)
+		} else if outcomes
+			.iter()
+			.all(|(o, _d)| o.is_win_for(player.opponent()))
+		{
+			let worst = outcomes
+				.iter()
+				.filter(|(o, _)| o.is_win_for(player.opponent()))
+				.map(|(_, d)| *d)
+				.max()
+				.unwrap();
+			(player.opponent().into(), worst + 1)
+		} else if outcomes.iter().any(|(o, _d)| o.is_draw()) {
+			let depth = outcomes
+				.iter()
+				.filter(|(o, _)| o.is_draw())
+				.map(|(_, d)| *d)
+				.min()
+				.unwrap();
+			(GameOutcome::Draw, depth)
 		} else {
 			unreachable!()
 		};
 
 		self.nodes[id].outcome = result;
+		self.nodes[id].depth_to_end = depth_to_end;
 
 		self.nodes[id].outcome
 	}
 
-	pub fn expand_all(&mut self, node_id: usize) -> GameOutcome
+	pub fn expand_all(&mut self, node_id: usize, use_pruning: bool) -> GameOutcome
 	where
 		G::S: Clone,
 	{
@@ -181,11 +210,11 @@ where
 				untried_moves: moves,
 				player_to_move: G::get_current_player(&new_state),
 				outcome,
+				depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
 				incoming_move: Some(*m),
 			});
 			let new_state_entry = self.states.get(&new_state_hash);
 			if let Some(_entry) = new_state_entry {
-				//let child_id = entry.expanded_node;
 				self.nodes[node_id].children.push(child_id);
 			} else {
 				self.nodes[node_id].children.push(child_id);
@@ -197,16 +226,87 @@ where
 					},
 				);
 
-				let result = self.expand_all(child_id);
+				let result = self.expand_all(child_id, use_pruning);
 				// pruning
-				if result.is_win_for(self.nodes[node_id].player_to_move) {
+				if use_pruning && result.is_win_for(self.nodes[node_id].player_to_move) {
 					//TODO: o.is_win_for(G::get_next_player(state))
-					return self.nodes[node_id].player_to_move.into();
+					let res = self.nodes[node_id].player_to_move.into();
+					self.nodes[node_id].outcome = res;
+					self.nodes[node_id].depth_to_end = self.nodes[child_id].depth_to_end + 1;
+					return res;
 				}
 			}
 		}
 		self.get_outcome(node_id)
 		//GameOutcome::OnGoing
+	}
+	pub fn find_best_proved_move(&self) -> Option<<G as Game>::M> {
+		if self.nodes[self.root_id]
+			.children
+			.iter()
+			.any(|id| !self.get_node_expanded_node(*id).unwrap().outcome.is_ended())
+		{
+			return None;
+		}
+		let mut maximize_depth = false;
+		let mut filtered: Vec<_> = self.nodes[self.root_id]
+			.children
+			.iter()
+			.filter(|id| {
+				self.get_node_expanded_node(**id)
+					.unwrap()
+					.outcome
+					.is_win_for(self.nodes[self.root_id].player_to_move)
+			})
+			.collect();
+		if filtered.is_empty() {
+			println!(
+				"No winning moves, looking for draws:\n{}",
+				self.nodes[self.root_id].player_to_move
+			);
+			filtered = self.nodes[self.root_id]
+				.children
+				.iter()
+				.filter(|id| self.get_node_expanded_node(**id).unwrap().outcome.is_draw())
+				.collect();
+		}
+		if filtered.is_empty() {
+			maximize_depth = true;
+			println!(
+				"No winning moves nor draws, looking for best loss:\n{}",
+				self.nodes[self.root_id].player_to_move
+			);
+			filtered = self.nodes[self.root_id]
+				.children
+				.iter()
+				.filter(|id| {
+					self.get_node_expanded_node(**id)
+						.unwrap()
+						.outcome
+						.is_lose_for(self.nodes[self.root_id].player_to_move)
+				})
+				.collect();
+		}
+		if !filtered.is_empty() {
+			let best_child = if !maximize_depth {
+				filtered
+					.iter()
+					.min_by_key(|&&id| self.get_node_expanded_node(*id).unwrap().depth_to_end)
+			} else {
+				filtered
+					.iter()
+					.max_by_key(|&&id| self.get_node_expanded_node(*id).unwrap().depth_to_end)
+			};
+			if let Some(best_child) = best_child {
+				let best_move = self.nodes[**best_child]
+					.incoming_move
+					.clone()
+					.expect("root child must have a move");
+				return Some(best_move);
+			}
+		}
+
+		None
 	}
 	pub fn simulate(&self, node_id: usize) -> GameOutcome
 	where
@@ -385,14 +485,15 @@ where
 			if !is_link {
 				writeln!(
 					f,
-					"{}Node {} | to_move: {:?} | move: {:?} | visits: {} | winrate: {:.2} | outcome: {:?}",
+					"{}Node {} | to_move: {:?} | move: {:?} | visits: {} | winrate: {:.2} | outcome: {:?} ({})",
 					indent,
 					id,
 					node.player_to_move,
 					node.incoming_move,
 					node.visits as usize,
 					node.winrate(),
-					outcome
+					outcome,
+					node.depth_to_end,
 				)?;
 			}
 			if info.expanded_node != id {
@@ -412,51 +513,4 @@ where
 
 		dfs(&self.nodes, 0, 0, &self.states, false, f)
 	}
-}
-#[derive(Default, Clone)]
-pub struct PerfectSolver<G: Game>(Option<GameTree<G>>)
-where
-	G::S: Clone;
-impl<G: Game> Strategy<G> for PerfectSolver<G>
-where
-	G::S: Clone,
-{
-	fn choose_move(&mut self, state: &G::S) -> Option<G::M> {
-		if self.0.is_none() {
-			let mut tree = GameTree::<G>::from(state.clone());
-			tree.expand_all(tree.root_id);
-			self.0 = Some(tree);
-		} else {
-			let tree = self.0.as_mut().unwrap();
-			let hash = G::get_hash(state);
-			if let Some(si) = tree.states.get(&hash) {
-				tree.set_root_id(si.expanded_node);
-				//tree.cleanup();
-				tree.expand_all(tree.root_id);
-			} else {
-				let mut tree = GameTree::<G>::from(state.clone());
-				tree.expand_all(tree.root_id);
-				self.0 = Some(tree);
-			}
-		}
-		Some(self.0.as_ref()?.find_best_move())
-	}
-	fn root_value(&self) -> Evaluation {
-		if let Some(t) = &self.0 {
-			t.get_root().score()
-		} else {
-			0
-		}
-	}
-}
-impl<G> StrategyWithOptions<G, AIOptions> for PerfectSolver<G>
-where
-	G: Game,
-	G::S: Clone,
-{
-	fn get_options(&self) -> AIOptions {
-		AIOptions::default()
-	}
-
-	fn reset_with_options(&mut self, _opts: AIOptions) {}
 }

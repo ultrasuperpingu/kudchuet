@@ -6,11 +6,12 @@ use std::sync::{
 use crate::{
 	GameOutcome, Player, StrategyWithOptions,
 	ai::{
-		AIOptions, minimax::{
+		AIOptions,
+		minimax::{
 			Evaluation, Game, SearchStopSignal, Strategy,
 			gametree::{GameTree, Node, StateInfo},
 			util::AppliedMove,
-		}
+		},
 	},
 };
 pub struct MCTSOptions {
@@ -176,6 +177,7 @@ where
 				untried_moves: moves,
 				player_to_move: G::get_current_player(&new_state),
 				outcome,
+				depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
 				incoming_move: Some(m),
 			});
 		} else {
@@ -191,6 +193,7 @@ where
 				untried_moves: vec![],
 				player_to_move: expanded_node.player_to_move,
 				outcome: expanded_node.outcome,
+				depth_to_end: expanded_node.depth_to_end,
 				incoming_move: Some(m),
 			});
 		}
@@ -265,53 +268,35 @@ where
 		self.backpropagate(root_player, new_id, result, use_min_max);
 	}
 
-	pub fn find_best_move(&self) -> <G as Game>::M {
-		let mut filtered: Vec<_> = self.nodes[self.root_id]
-			.children
-			.iter()
-			.filter(|id| {
-				self.nodes[**id]
-					.outcome
-					.is_win_for(self.nodes[self.root_id].player_to_move)
-			})
-			.collect();
-		if filtered.is_empty() {
-			filtered = self.nodes[self.root_id]
-				.children
-				.iter()
-				.filter(|id| self.nodes[**id].outcome.is_draw())
-				.collect();
+	pub fn find_best_move(&self) -> Option<<G as Game>::M> {
+		if let Some(best) = self.find_best_proved_move() {
+			return Some(best);
 		}
-		if filtered.is_empty() {
-			filtered = self.nodes[self.root_id].children.iter().collect();
+		let best_child = self.nodes[self.root_id].children.iter().max_by(|&a, &b| {
+			let na = self.get_node_expanded_node(*a).unwrap();
+			let nb = self.get_node_expanded_node(*b).unwrap();
+			na.visits.partial_cmp(&nb.visits).unwrap()
+		});
+		if let Some(best_child) = best_child {
+			let best_move = self.nodes[*best_child]
+				.incoming_move
+				.clone()
+				.expect("root child must have a move");
+			//println!(
+			//	"to_move: {}\n{}",
+			//	self.nodes[self.root_id].player_to_move, self
+			//);
+			Some(best_move)
+		} else {
+			None
 		}
-		println!("best_moves len: {}", filtered.len());
-		let best_child = filtered
-			.iter()
-			.max_by(|&&a, &&b| {
-				self.nodes[*a]
-					.visits
-					.partial_cmp(&self.nodes[*b].visits)
-					.unwrap()
-			})
-			.unwrap();
-
-		let best_move = self.nodes[**best_child]
-			.incoming_move
-			.clone()
-			.expect("root child must have a move");
-		//println!(
-		//	"to_move: {}\n{}",
-		//	self.nodes[self.root_id].player_to_move, self
-		//);
-		best_move
 	}
 }
 impl<G: Game> MCTS<G>
 where
 	G::S: Clone,
 {
-	pub fn mcts(&mut self, root_state: &G::S, iterations: usize) -> G::M
+	pub fn mcts(&mut self, root_state: &G::S, iterations: usize) -> Option<G::M>
 	where
 		G::S: Clone,
 	{
@@ -342,6 +327,7 @@ where
 			untried_moves: moves,
 			player_to_move: G::get_current_player(&root_state),
 			outcome: GameOutcome::OnGoing,
+			depth_to_end: u16::MAX,
 			incoming_move: None,
 		});
 		tree.states.insert(
@@ -391,7 +377,7 @@ where
 	G::S: Clone,
 {
 	fn choose_move(&mut self, state: &<G as Game>::S) -> Option<<G as Game>::M> {
-		Some(self.mcts(&state, self.opts.max_nb_iteration))
+		self.mcts(&state, self.opts.max_nb_iteration)
 	}
 	fn root_value(&self) -> Evaluation {
 		if let Some(t) = &self.tree {

@@ -224,7 +224,7 @@ mod tests {
 		println!("Winner: {:?}", winner);
 		assert!(matches!(winner, GameResult::HareWin | GameResult::HoundsWin));
 		let mut tree=GameTree::<HareAndHounds>::from(HareAndHounds::default());
-		let winner = tree.expand_all(0);
+		let winner = tree.expand_all(0, false);
 		println!("Winner: {:?}", winner);
 		println!("len: {:?}", tree.states.len());
 		

@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug, mem::discriminant, pin::Pin, time::Duration};
 
 use crate::ai::internal_engine::InternalEngine;
-use crate::ai::minimax::gametree::PerfectSolver;
+use crate::ai::minimax::perfect_solver::PerfectSolver;
 use crate::ai::uci::{UciOptionConfig, UciValue};
 use crate::gui::{BoardGame, BoardMove};
 use crate::{StrategyWithOptions, MoveSearcher, new_move_searcher_static};

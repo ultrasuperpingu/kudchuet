@@ -143,7 +143,7 @@ fn main() {
 
 	let b = Board::new(nb_sticks);
 	let mut tree = GameTree::<NimGame>::from(b);
-	let outcome2 = tree.expand_all(0);
+	let outcome2 = tree.expand_all(0, false);
 	println!("{:?}", outcome2);
 	println!("{}", tree);
 	tree.set_root_id(38);
