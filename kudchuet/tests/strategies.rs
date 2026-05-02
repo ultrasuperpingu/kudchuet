@@ -93,6 +93,9 @@ where
 		self.root_value = best_value;
 		self.best_moves.first().map(|m| *m)
 	}
+	fn root_value(&self) -> Evaluation {
+		self.root_value
+	}
 }
 
 #[derive(Clone)]
@@ -259,7 +262,7 @@ fn compare_deep_minimax() {
 		.with_table_byte_size(64000)
 		.with_countermoves()
 		.with_countermove_history();
-	for iter in 0..10 {
+	for _iter in 0..10 {
 		for max_depth in 1..10 {
 			let b = generate_random_state(10);
 
@@ -292,7 +295,7 @@ fn compare_deep_minimax() {
 				assert_eq!(
 					value, parallel_value,
 					"search iter={} depth={}\n{}",
-					iter, max_depth, b
+					_iter, max_depth, b
 				);
 			}
 		}

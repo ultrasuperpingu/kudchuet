@@ -176,7 +176,7 @@ where
 		return 1;
 	}
 	let mut moves = pool.alloc();
-	if G::generate_moves(state, &mut moves).is_some() {
+	if G::generate_moves(state, &mut moves).is_ended() {
 		// Apparently perft rules only count positions at the target depth.
 		return 0;
 	}

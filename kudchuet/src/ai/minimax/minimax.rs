@@ -60,6 +60,9 @@ where
 	fn set_depth_or_timeout(&mut self, _depth: u8, _timeout: std::time::Duration) {
 		self.max_depth = _depth;
 	}
+	fn root_value(&self) -> super::Evaluation {
+		self.root_value()
+	}
 }
 impl<E: Evaluator> ExpectiMinimax<E> {
 	pub fn new(evaluator: E, depth: u8, shuffle_moves: bool) -> Self {

@@ -1,9 +1,16 @@
+use std::sync::{
+	Arc,
+	atomic::{AtomicBool, Ordering},
+};
+
 use crate::{
-	GameOutcome, Player,
-	ai::minimax::{
-		Game, Strategy,
-		gametree::{GameTree, Node, StateInfo},
-		util::AppliedMove,
+	GameOutcome, Player, StrategyWithOptions,
+	ai::{
+		AIOptions, minimax::{
+			Evaluation, Game, SearchStopSignal, Strategy,
+			gametree::{GameTree, Node, StateInfo},
+			util::AppliedMove,
+		}
 	},
 };
 pub struct MCTSOptions {
@@ -31,20 +38,31 @@ impl MCTSOptions {
 	}
 }
 
-pub struct MCTS<G: Game> {
+pub struct MCTS<G: Game>
+where
+	G::S: Clone,
+{
 	tree: Option<GameTree<G>>,
 	pub opts: MCTSOptions,
+	stop_signal: Arc<AtomicBool>,
 }
-impl<G: Game> Default for MCTS<G> {
+impl<G: Game> Default for MCTS<G>
+where
+	G::S: Clone,
+{
 	fn default() -> Self {
 		Self {
 			tree: Default::default(),
 			opts: Default::default(),
+			stop_signal: Arc::new(AtomicBool::new(false)),
 		}
 	}
 }
 
-impl<G: Game> GameTree<G> {
+impl<G: Game> GameTree<G>
+where
+	G::S: Clone,
+{
 	fn select(&self, exploration_factor: f32, mut node_id: usize) -> (usize, bool) {
 		let mut already_computed = false;
 		let root_player = self.get_root().player_to_move;
@@ -214,7 +232,7 @@ impl<G: Game> GameTree<G> {
 		}
 	}
 
-	fn simulate_expand(&mut self, mut node_id: usize) -> GameOutcome
+	fn _simulate_expand(&mut self, mut node_id: usize) -> GameOutcome
 	where
 		G::S: Clone,
 	{
@@ -267,7 +285,7 @@ impl<G: Game> GameTree<G> {
 		if filtered.is_empty() {
 			filtered = self.nodes[self.root_id].children.iter().collect();
 		}
-
+		println!("best_moves len: {}", filtered.len());
 		let best_child = filtered
 			.iter()
 			.max_by(|&&a, &&b| {
@@ -282,14 +300,17 @@ impl<G: Game> GameTree<G> {
 			.incoming_move
 			.clone()
 			.expect("root child must have a move");
-		println!(
-			"to_move: {}\n{}",
-			self.nodes[self.root_id].player_to_move, self
-		);
+		//println!(
+		//	"to_move: {}\n{}",
+		//	self.nodes[self.root_id].player_to_move, self
+		//);
 		best_move
 	}
 }
-impl<G: Game> MCTS<G> {
+impl<G: Game> MCTS<G>
+where
+	G::S: Clone,
+{
 	pub fn mcts(&mut self, root_state: &G::S, iterations: usize) -> G::M
 	where
 		G::S: Clone,
@@ -304,6 +325,7 @@ impl<G: Game> MCTS<G> {
 			}
 		}*/
 		let mut tree = GameTree::<G>::default();
+		self.stop_signal.store(false, Ordering::Relaxed);
 		//let mut tree = tree.unwrap();
 
 		let mut moves = vec![];
@@ -331,7 +353,7 @@ impl<G: Game> MCTS<G> {
 		);
 		let root_player = tree.get_root().player_to_move;
 
-		for _ in 0..iterations {
+		for _i in 0..iterations {
 			/*let (mut node_id, already_computed) = tree.select(self.opts.exploration_factor, tree.root_id);
 			if already_computed {
 				break;
@@ -351,6 +373,11 @@ impl<G: Game> MCTS<G> {
 				self.opts.exploration_factor,
 				self.opts.use_min_max,
 			);
+			if self.stop_signal.load(Ordering::Relaxed) {
+				println!("stop_signal received");
+				break;
+			}
+			//println!("end of iteration {}", _i);
 		}
 
 		let res = tree.find_best_move();
@@ -365,5 +392,37 @@ where
 {
 	fn choose_move(&mut self, state: &<G as Game>::S) -> Option<<G as Game>::M> {
 		Some(self.mcts(&state, self.opts.max_nb_iteration))
+	}
+	fn root_value(&self) -> Evaluation {
+		if let Some(t) = &self.tree {
+			let root = t.get_root();
+
+			if root.outcome.is_ended() {
+				root.outcome.evaluate(root.player_to_move)
+			} else {
+				let winrate = root.winrate();
+				let drawrate = root.drawrate();
+				let lossrate = 1.0 - winrate - drawrate;
+
+				let score = (winrate * 8000.0) - (lossrate * 8000.0);
+				score as Evaluation
+			}
+		} else {
+			0
+		}
+	}
+}
+impl<G: Game> StrategyWithOptions<G, AIOptions> for MCTS<G>
+where
+	G::S: Clone,
+{
+	fn get_options(&self) -> AIOptions {
+		AIOptions::default()
+	}
+
+	fn reset_with_options(&mut self, _opts: AIOptions) {}
+
+	fn stop_signal(&self) -> SearchStopSignal {
+		SearchStopSignal(self.stop_signal.clone())
 	}
 }

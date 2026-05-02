@@ -11,6 +11,8 @@ pub use crate::ai::minimax::minimax::ExpectiMinimax;
 pub use crate::ai::minimax::random::Random;
 #[cfg(not(target_arch = "wasm32"))]
 pub use crate::ai::minimax::ybw::ParallelSearch;
+pub use crate::ai::minimax::mcts::{MCTS, MCTSOptions};
+pub use crate::ai::minimax::gametree::PerfectSolver;
 
 pub mod iterative;
 pub mod minimax;

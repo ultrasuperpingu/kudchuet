@@ -9,6 +9,10 @@ use std::fmt::{Display, Error as FmtError, Formatter, Result as FmtResult};
 
 use std::time::Duration;
 
+use egui::Id;
+use egui_field_editor::EguiInspect;
+use serde::{Deserialize, Serialize};
+
 /// Specifies whether a message is engine- or GUI-bound.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum CommunicationDirection {
@@ -1541,109 +1545,7 @@ impl Display for UciInfoAttribute{
 		write!(f, "{}", self.serialize())
 	}
 }
-/*
-/// An enum representing the chess piece types.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
-#[cfg(not(feature = "chess"))]
-pub enum UciPiece {
-	Pawn,
-	Knight,
-	Bishop,
-	Rook,
-	Queen,
-	King,
-}
 
-#[cfg(not(feature = "chess"))]
-impl UciPiece {
-	/// Returns a character representing a piece in UCI move notation. Used for specifying promotion in moves.
-	///
-	/// `n` – knight
-	/// `b` - bishop
-	/// `r` - rook
-	/// `q` - queen
-	/// `k` - king
-	/// `None` - pawn
-	pub fn as_char(self) -> Option<char> {
-		match self {
-			UciPiece::Pawn => None,
-			UciPiece::Knight => Some('n'),
-			UciPiece::Bishop => Some('b'),
-			UciPiece::Rook => Some('r'),
-			UciPiece::Queen => Some('q'),
-			UciPiece::King => Some('k')
-		}
-	}
-}
-
-#[cfg(not(feature = "chess"))]
-impl FromStr for UciPiece {
-	type Err = FmtError;
-
-	/// Creates a `UciPiece` from a `&str`, according to these rules:
-	///
-	/// `"n"` - Knight
-	/// `"p"` - Pawn
-	/// `"b"` - Bishop
-	/// `"r"` - Rook
-	/// `"k"` - King
-	/// `"q"` - Queen
-	///
-	/// Works with uppercase letters as well.
-	fn from_str(s: &str) -> Result<UciPiece, FmtError> {
-		match s.to_ascii_lowercase().as_str() {
-			"n" => Ok(UciPiece::Knight),
-			"p" => Ok(UciPiece::Pawn),
-			"b" => Ok(UciPiece::Bishop),
-			"r" => Ok(UciPiece::Rook),
-			"k" => Ok(UciPiece::King),
-			"q" => Ok(UciPiece::Queen),
-			_ => Err(FmtError)
-		}
-	}
-}
-
-/// A representation of a chessboard square.
-#[cfg(not(feature = "chess"))]
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
-pub struct UciSquare {
-	/// The file. A character in the range of `a..h`.
-	pub file: char,
-
-	/// The rank. A number in the range of `1..8`.
-	pub rank: u8,
-}
-
-#[cfg(not(feature = "chess"))]
-impl UciSquare {
-	/// Create a `UciSquare` from file character and a rank number.
-	pub fn from(file: char, rank: u8) -> UciSquare {
-		UciSquare {
-			file,
-			rank,
-		}
-	}
-}
-
-#[cfg(not(feature = "chess"))]
-impl Display for UciSquare {
-	/// Formats the square in the regular notation (as in, `e4`).
-	fn fmt(&self, f: &mut Formatter) -> FmtResult {
-		write!(f, "{}{}", self.file, self.rank)
-	}
-}
-
-#[cfg(not(feature = "chess"))]
-impl Default for UciSquare {
-	/// Default square is an invalid square with a file of `\0` and the rank of `0`.
-	fn default() -> Self {
-		UciSquare {
-			file: '\0',
-			rank: 0,
-		}
-	}
-}
-*/
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
 /// A representation of the notation in the [FEN notation](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation).
 pub struct UciFen(pub String);
@@ -1713,5 +1615,151 @@ impl AsRef<UciMessage> for ByteVecUciMessage{
 impl AsRef<[u8]> for ByteVecUciMessage{
 	fn as_ref(&self) -> &[u8] {
 		self.bytes.as_ref()
+	}
+}
+
+#[derive(EguiInspect, Clone, PartialEq, Default, Serialize, Deserialize, Debug)]
+pub enum UciValue {
+	#[default]
+	Button,
+	Bool(bool),
+	Spin(i64, Option<i64>, Option<i64>),
+	String(String),
+	Combo(String, Vec<String>),
+}
+impl From<UciOptionConfig> for UciValue {
+	fn from(val: UciOptionConfig) -> Self {
+		match val {
+			UciOptionConfig::Check { name: _, default } => {
+				UciValue::Bool(default.is_some_and(|v| v))
+			}
+			UciOptionConfig::Spin {
+				name: _,
+				default,
+				min,
+				max,
+			} => UciValue::Spin(default.map_or(0, |v| v), min, max),
+			UciOptionConfig::Combo {
+				name: _,
+				default,
+				var,
+			} => UciValue::Combo(default.map_or("".to_string(), |v| v), var),
+			UciOptionConfig::Button { name: _ } => UciValue::Button,
+			UciOptionConfig::String { name: _, default } => {
+				UciValue::String(default.map_or("".to_string(), |v| v))
+			}
+		}
+	}
+}
+impl UciValue {
+	pub fn to_option_string(&self) -> Option<String> {
+		match self {
+			UciValue::Button => None,
+			UciValue::Bool(v) => Some(v.to_string()),
+			UciValue::Spin(v, _, _) => Some(v.to_string()),
+			UciValue::String(v) => Some(v.to_string()),
+			UciValue::Combo(v, _) => Some(v.to_string()),
+		}
+	}
+	pub fn set_bool(&mut self, val: bool) {
+		if let UciValue::Bool(v) = self {
+			*v = val
+		}
+	}
+}
+pub fn inspect_uci_value(
+	item: &mut UciValue,
+	parent_id: egui::Id,
+	label: &str,
+	tooltip: &str,
+	label_ratio: f32,
+	read_only: bool,
+	ui: &mut egui::Ui,
+) -> egui::Response {
+	match item {
+		UciValue::Button => {
+			if ui.button(label).clicked() {
+				println!("coucou {:?}", Id::new(label));
+				let mut resp = ui.response();
+				resp.id = Id::new(label);
+				resp.mark_changed();
+				resp
+			} else {
+				ui.response()
+			}
+		}
+		UciValue::Bool(v) => {
+			let mut resp =
+				v.inspect_with_custom_id(parent_id, label, tooltip, label_ratio, read_only, ui);
+			resp.id = Id::new(label);
+			resp
+		}
+		UciValue::Spin(v, min, max) => {
+			let mut resp = if let Some(min) = min {
+				if let Some(max) = max {
+					egui_field_editor::add_number_slider(
+						v,
+						label,
+						tooltip,
+						label_ratio,
+						read_only,
+						*min,
+						*max,
+						ui,
+					)
+				} else {
+					egui_field_editor::add_number_slider(
+						v,
+						label,
+						tooltip,
+						label_ratio,
+						read_only,
+						*min,
+						i64::MAX,
+						ui,
+					)
+				}
+			} else {
+				if let Some(max) = max {
+					egui_field_editor::add_number_slider(
+						v,
+						label,
+						tooltip,
+						label_ratio,
+						read_only,
+						i64::MIN,
+						*max,
+						ui,
+					)
+				} else {
+					v.inspect(label, tooltip, label_ratio, read_only, ui)
+				}
+			};
+			resp.id = Id::new(label);
+			resp
+		}
+		UciValue::String(v) => {
+			let mut resp =
+				v.inspect_with_custom_id(parent_id, label, tooltip, label_ratio, read_only, ui);
+			resp.id = Id::new(label);
+			resp
+		}
+		UciValue::Combo(v, var) => {
+			let mut index = var.iter().position(|e| e == v).map_or(0, |v| v);
+			let mut resp = egui_field_editor::add_combobox(
+				&mut index,
+				label,
+				tooltip,
+				label_ratio,
+				read_only,
+				var,
+				ui,
+			);
+			if resp.changed() {
+				*v = var[index].clone();
+			}
+			resp.id = Id::new(label);
+			resp
+		}
 	}
 }

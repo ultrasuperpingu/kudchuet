@@ -1,8 +1,8 @@
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
+use crate::StrategyWithOptions;
 use crate::gui::{BoardGame, BoardMove};
 use crate::ai::{AIEngine, AIOptions};
-use crate::{ConcreteStrategy};
 
 #[cfg(not(target_arch = "wasm32"))]
 use futures::channel::oneshot;
@@ -13,7 +13,7 @@ pub struct InternalEngine<G, AI>
 where
 	G: BoardGame,
 	G::M: BoardMove<G> + Copy + 'static,
-	AI: ConcreteStrategy<G> + 'static,
+	AI: StrategyWithOptions<G, AIOptions> + 'static,
 {
 	ai: Arc<Mutex<AI>>,
 	stop_signal: Option<SearchStopSignal>,
@@ -24,7 +24,7 @@ impl<G, AI> InternalEngine<G, AI>
 where
 	G: BoardGame,
 	G::M: BoardMove<G> + Copy + 'static,
-	AI: ConcreteStrategy<G> + 'static,
+	AI: StrategyWithOptions<G, AIOptions> + 'static,
 {
 	pub fn new(ai: AI) -> Self {
 		Self {
@@ -43,7 +43,7 @@ impl<G, AI> AIEngine<G> for InternalEngine<G, AI>
 where
 	G: BoardGame + Clone + Send + Sync+ 'static,
 	G::M: BoardMove<G> + Copy + Send + 'static,
-	AI: ConcreteStrategy<G> + Send + 'static,
+	AI: StrategyWithOptions<G, AIOptions> + Send + 'static,
 {
 	fn get_options(&self) -> Option<AIOptions> {
 		if let Ok(l) = self.ai.try_lock() {

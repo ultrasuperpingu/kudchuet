@@ -106,7 +106,7 @@ impl Hasher for NoHashHasher {
 ///
 /// This allows using `NoHashHasher` as the hashing algorithm
 /// for a `HashMap` or `HashSet`.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct NoHashBuilder;
 
 impl BuildHasher for NoHashBuilder {

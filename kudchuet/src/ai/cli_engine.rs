@@ -4,9 +4,10 @@ use std::io::Write;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
+use crate::ai::AIOptions;
 use crate::ai::minimax::SearchStopSignal;
 
-use crate::ConcreteStrategy;
+use crate::StrategyWithOptions;
 use crate::ai::uci::{UciInfoAttribute, UciMessage, UciOptionConfig, UciTimeControl};
 use crate::gui::{BoardGame, BoardMove};
 
@@ -14,7 +15,7 @@ pub struct UCILikeCLIEngine<G, AI>
 where
 	G: BoardGame + Send + 'static,
 	G::M: BoardMove<G> + Copy + Send + 'static,
-	AI: ConcreteStrategy<G> + Send + 'static,
+	AI: StrategyWithOptions<G, AIOptions> + Send + 'static,
 {
 	ai: Option<AI>,
 	current_search: Option<SearchHandle<AI>>,
@@ -28,7 +29,7 @@ impl<G, AI> UCILikeCLIEngine<G, AI>
 where
 	G: BoardGame + Send + 'static,
 	G::M: BoardMove<G> + Copy + Send + 'static,
-	AI: ConcreteStrategy<G> + Send + 'static,
+	AI: StrategyWithOptions<G, AIOptions> + Send + 'static,
 {
 	pub fn new(ai: AI) -> Self {
 		Self {

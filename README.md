@@ -28,6 +28,8 @@ Define any turn-based board game by implementing:
 ---
 
 ### AI system
+Kudchuet AI is a fork of https://github.com/edre/minimax-rs
+See [here](kudchuet/src/ai/minimax/README.md) for more information.
 
 Kudchuet supports multiple AI backends:
 
@@ -76,3 +78,4 @@ Each game is implemented using the same `BoardGame` abstraction, and can be used
 - the generic `egui` UI system
 
 This makes Kudchuet a unified testbed for board game AI research and experimentation.
+

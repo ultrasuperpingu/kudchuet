@@ -1,24 +1,22 @@
-
+pub mod cli_engine;
+pub mod engine_manager;
 pub mod external_engine;
 pub mod internal_engine;
-pub mod cli_engine;
-pub mod uci;
 pub mod minimax;
-pub mod engine_manager;
+pub mod uci;
 
-use std::{collections::HashMap, fmt::Debug, mem::discriminant, pin::Pin, time::Duration};
-use egui::Id;
 use egui_field_editor::EguiInspect;
 use minimax::IterativeOptions;
 #[cfg(not(target_arch = "wasm32"))]
 use minimax::ParallelOptions;
 use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, fmt::Debug, mem::discriminant, pin::Pin, time::Duration};
 
-use crate::{MoveSearcher, new_move_searcher_static};
 use crate::ai::internal_engine::InternalEngine;
-use crate::ai::uci::UciOptionConfig;
-use crate:: gui::{BoardGame, BoardMove};
-
+use crate::ai::minimax::gametree::PerfectSolver;
+use crate::ai::uci::{UciOptionConfig, UciValue};
+use crate::gui::{BoardGame, BoardMove};
+use crate::{StrategyWithOptions, MoveSearcher, new_move_searcher_static};
 pub trait AIEngine<G: BoardGame + Sync>: Send
 where
 	G::M: BoardMove<G> + Send,
@@ -28,13 +26,10 @@ where
 	fn set_position(&self, game: &G);
 
 	fn choose_move(&self, game: &G) -> Option<G::M>;
-	fn choose_move_async(
-		&mut self,
-		game: G,
-	) -> Pin<Box<dyn Future<Output = Option<G::M>> + Send>>;
+	fn choose_move_async(&mut self, game: G) -> Pin<Box<dyn Future<Output = Option<G::M>> + Send>>;
 
-	fn set_depth_or_timeout(&mut self, depth:u8, timeout: Duration);
-	fn set_max_depth(&mut self, depth:u8) {
+	fn set_depth_or_timeout(&mut self, depth: u8, timeout: Duration);
+	fn set_max_depth(&mut self, depth: u8) {
 		self.set_depth_or_timeout(depth, Duration::new(0, 0));
 	}
 	fn set_timeout(&mut self, timeout: Duration) {
@@ -45,8 +40,8 @@ where
 
 impl<G> AIEngine<G> for Box<dyn AIEngine<G>>
 where
-	G: BoardGame+Sync,
-	G::M: BoardMove<G>+Send,
+	G: BoardGame + Sync,
+	G::M: BoardMove<G> + Send,
 {
 	fn get_options(&self) -> Option<AIOptions> {
 		(**self).get_options()
@@ -67,10 +62,7 @@ where
 	fn set_depth_or_timeout(&mut self, depth: u8, timeout: Duration) {
 		(**self).set_depth_or_timeout(depth, timeout)
 	}
-	fn choose_move_async(
-		&mut self,
-		game: G,
-	) -> Pin<Box<dyn Future<Output = Option<G::M>> + Send>> {
+	fn choose_move_async(&mut self, game: G) -> Pin<Box<dyn Future<Output = Option<G::M>> + Send>> {
 		(**self).choose_move_async(game)
 	}
 	fn stop_thinking(&self) {
@@ -78,57 +70,92 @@ where
 	}
 }
 
-pub trait AIEngineProvider<G: BoardGame+Sync>
+pub trait AIEngineProvider<G: BoardGame + Sync>
 where
-	G::M: BoardMove<G>+Send,
+	G::M: BoardMove<G> + Send,
 {
 	type Engine: AIEngine<G>;
 	fn get_name(&self) -> &String;
 
 	fn build_engine(&self) -> Self::Engine;
 }
-
-pub struct FunctionAIBuilder<G, F, E>
+pub struct AIBuilder<G, AI>
 where
-	G: BoardGame+Sync,
-	G::M: BoardMove<G>+Send,
-	F: Fn() -> E,
-	E: AIEngine<G>,
+	G: BoardGame + Sync,
+	G::M: BoardMove<G> + Send,
+	AI: StrategyWithOptions<G, AIOptions> + Default
 {
 	name: String,
-	builder: F,
-	phantom: std::marker::PhantomData<(G, E)>,
+	phantom: std::marker::PhantomData<G>,
+	phantom2: std::marker::PhantomData<AI>,
 }
 
-impl<G, F, E> FunctionAIBuilder<G, F, E>
+impl<G, AI> AIBuilder<G, AI>
 where
-	G: BoardGame+Sync,
-	G::M: BoardMove<G>+Send,
-	F: Fn() -> E,
-	E: AIEngine<G>,
+	G: BoardGame + Sync,
+	G::M: BoardMove<G> + Send,
+	AI: StrategyWithOptions<G, AIOptions> + Default
 {
-	pub fn new(name: String, builder: F) -> Self {
+	pub fn new(name: String) -> Self {
 		Self {
 			name,
-			builder,
 			phantom: std::marker::PhantomData,
+			phantom2: std::marker::PhantomData,
 		}
 	}
 }
-
-impl<G, F, E> AIEngineProvider<G> for FunctionAIBuilder<G, F, E>
+impl<G, AI> AIEngineProvider<G> for AIBuilder<G, AI>
 where
-	G: BoardGame+Sync,
-	G::M: BoardMove<G>+Send,
-	F: Fn() -> E,
-	E: AIEngine<G>,
+	G: BoardGame + Send + Sync + 'static,
+	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
+	AI: StrategyWithOptions<G, AIOptions> + Default
 {
-	type Engine = E;
+	type Engine = InternalEngine<G, PerfectSolver<G>>;
 	fn get_name(&self) -> &String {
 		&self.name
 	}
 	fn build_engine(&self) -> Self::Engine {
-		(self.builder)()
+		InternalEngine::new(PerfectSolver::default())
+	}
+}
+pub struct AIBuilderDyn<G, AI>
+where
+	G: BoardGame + Sync,
+	G::M: BoardMove<G> + Send,
+	AI: StrategyWithOptions<G, AIOptions> + Default
+{
+	name: String,
+	phantom: std::marker::PhantomData<G>,
+	phantom2: std::marker::PhantomData<AI>,
+}
+
+impl<G, AI> AIBuilderDyn<G, AI>
+where
+	G: BoardGame + Sync,
+	G::M: BoardMove<G> + Send,
+	AI: StrategyWithOptions<G, AIOptions> + Default
+{
+	pub fn new(name: String) -> Self {
+		Self {
+			name,
+			phantom: std::marker::PhantomData,
+			phantom2: std::marker::PhantomData,
+		}
+	}
+}
+impl<G, AI> AIEngineProvider<G> for AIBuilderDyn<G, AI>
+where
+	G: BoardGame + Send + Sync + 'static,
+	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
+	AI: StrategyWithOptions<G, AIOptions> + Default + Send + 'static,
+{
+	type Engine = Box<dyn AIEngine<G>>;
+	fn get_name(&self) -> &String {
+		&self.name
+	}
+	fn build_engine(&self) -> Self::Engine {
+		let engine = InternalEngine::new(AI::default());
+		Box::new(engine)
 	}
 }
 
@@ -171,7 +198,10 @@ where
 		&self.name
 	}
 	fn build_engine(&self) -> Self::Engine {
-		InternalEngine::new(new_move_searcher_static(self.evaluator.clone(), self.initial_depth))
+		InternalEngine::new(new_move_searcher_static(
+			self.evaluator.clone(),
+			self.initial_depth,
+		))
 	}
 }
 
@@ -214,112 +244,21 @@ where
 		&self.name
 	}
 	fn build_engine(&self) -> Self::Engine {
-		let engine = InternalEngine::new(new_move_searcher_static(self.evaluator.clone(), self.initial_depth));
+		let engine = InternalEngine::new(new_move_searcher_static(
+			self.evaluator.clone(),
+			self.initial_depth,
+		));
 		Box::new(engine)
 	}
 }
 
-#[derive(EguiInspect, Clone, PartialEq, Default, Serialize, Deserialize, Debug)]
-pub enum UciValue {
-	#[default]
-	Button,
-	Bool(bool),
-	Spin(i64, Option<i64>, Option<i64>),
-	String(String),
-	Combo(String, Vec<String>),
-}
-impl From<UciOptionConfig> for UciValue {
-	fn from(val: UciOptionConfig) -> Self {
-		match val {
-			UciOptionConfig::Check { name:_, default } => UciValue::Bool(default.is_some_and(|v| v)),
-			UciOptionConfig::Spin { name:_, default, min, max } => UciValue::Spin(default.map_or(0, |v| v), min, max),
-			UciOptionConfig::Combo { name:_, default, var } => UciValue::Combo(default.map_or("".to_string(), |v| v), var),
-			UciOptionConfig::Button { name:_ } => UciValue::Button,
-			UciOptionConfig::String { name:_, default } => UciValue::String(default.map_or("".to_string(), |v| v)),
-		}
-	}
-}
-impl UciValue {
-	pub fn to_option_string(&self) -> Option<String> {
-		match self {
-			UciValue::Button => None,
-			UciValue::Bool(v) => Some(v.to_string()),
-			UciValue::Spin(v, _, _) => Some(v.to_string()),
-			UciValue::String(v) => Some(v.to_string()),
-			UciValue::Combo(v, _) => Some(v.to_string()),
-		}
-	}
-	pub fn set_bool(&mut self, val: bool) {
-		if let UciValue::Bool(v) = self { *v = val }
-	}
-}
-fn inspect_uci_value(
-	item: &mut UciValue,
-	parent_id: egui::Id,
-	label: &str,
-	tooltip: &str,
-	label_ratio: f32,
-	read_only: bool,
-	ui: &mut egui::Ui) -> egui::Response
-{
-	match item {
-		UciValue::Button => {
-			if ui.button(label).clicked() {
-				println!("coucou {:?}", Id::new(label));
-				let mut resp = ui.response();
-				resp.id = Id::new(label);
-				resp.mark_changed();
-				resp
-			}
-			else {
-				ui.response()
-			}
-		},
-		UciValue::Bool(v) => {
-			let mut resp = v.inspect_with_custom_id(parent_id, label, tooltip, label_ratio, read_only, ui);
-			resp.id = Id::new(label);
-			resp
-		},
-		UciValue::Spin(v, min, max) => {
-			let mut resp = if let Some(min) = min {
-				if let Some(max) = max {
-					egui_field_editor::add_number_slider(v, label, tooltip, label_ratio, read_only, *min, *max, ui)
-				} else {
-					egui_field_editor::add_number_slider(v, label, tooltip, label_ratio, read_only, *min, i64::MAX, ui)
-				}
-			} else {
-				if let Some(max) = max {
-					egui_field_editor::add_number_slider(v, label, tooltip, label_ratio, read_only, i64::MIN, *max, ui)
-				} else {
-					v.inspect(label, tooltip, label_ratio, read_only, ui)
-				}
-			};
-			resp.id = Id::new(label);
-			resp
-		},
-		UciValue::String(v) => {
-			let mut resp = v.inspect_with_custom_id(parent_id, label, tooltip, label_ratio, read_only, ui);
-			resp.id = Id::new(label);
-			resp
-		},
-		UciValue::Combo(v, var) => {
-			let mut index = var.iter().position(|e| e == v).map_or(0, |v| v);
-			let mut resp = egui_field_editor::add_combobox(&mut index, label, tooltip, label_ratio, read_only, var, ui);
-			if resp.changed() {
-				*v = var[index].clone();
-			}
-			resp.id = Id::new(label);
-			resp
-		},
-	}
-}
 #[derive(EguiInspect, Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct AIOptions {
 	pub table_megabyte_size: usize,
 	pub max_depth: u8,
 	pub max_time: f32,
 	pub threads: Option<usize>,
-	#[inspect(transparent=true, hashmap(custom_fn="inspect_uci_value"))]
+	#[inspect(transparent = true, hashmap(custom_fn = "crate::ai::uci::inspect_uci_value"))]
 	pub uci: HashMap<String, UciValue>,
 }
 impl From<AIOptions> for minimax::IterativeOptions {
@@ -331,10 +270,10 @@ impl From<minimax::IterativeOptions> for AIOptions {
 	fn from(value: minimax::IterativeOptions) -> Self {
 		Self {
 			table_megabyte_size: value.table_byte_size / 1024 / 1024,
-			max_depth:15,
+			max_depth: 15,
 			max_time: 0.0,
 			threads: None,
-			uci: HashMap::new()
+			uci: HashMap::new(),
 		}
 	}
 }
@@ -345,12 +284,11 @@ impl Default for AIOptions {
 			max_depth: 15,
 			max_time: 0.0,
 			threads: None,
-			uci: HashMap::new()
+			uci: HashMap::new(),
 		}
 	}
 }
 impl AIOptions {
-	
 	#[cfg(not(target_arch = "wasm32"))]
 	pub fn new(ioptions: IterativeOptions, poptions: ParallelOptions) -> Self {
 		let mut options: AIOptions = ioptions.into();
@@ -373,7 +311,7 @@ impl AIOptions {
 		}
 	}
 	pub fn merge(&mut self, other: &Self) {
-		for (k,v) in self.uci.iter_mut() {
+		for (k, v) in self.uci.iter_mut() {
 			let val = other.uci.get(k);
 			if let Some(val) = val {
 				if discriminant(val) != discriminant(v) {
@@ -408,7 +346,7 @@ impl AIOptions {
 				}
 			}
 		}
-		for (k,v) in other.uci.iter() {
+		for (k, v) in other.uci.iter() {
 			if !self.uci.contains_key(k) {
 				self.uci.insert(k.clone(), v.clone());
 			}
@@ -418,16 +356,36 @@ impl AIOptions {
 		for opt in options {
 			match opt {
 				UciOptionConfig::Check { name, default } => {
-					self.uci.insert(name.clone(), UciValue::Bool(default.unwrap_or(false)));
+					self.uci
+						.insert(name.clone(), UciValue::Bool(default.unwrap_or(false)));
 				}
-				UciOptionConfig::Spin { name, default, min, max } => {
-					self.uci.insert(name.clone(), UciValue::Spin(default.unwrap_or(0), *min, *max));
+				UciOptionConfig::Spin {
+					name,
+					default,
+					min,
+					max,
+				} => {
+					self.uci.insert(
+						name.clone(),
+						UciValue::Spin(default.unwrap_or(0), *min, *max),
+					);
 				}
 				UciOptionConfig::Combo { name, default, var } => {
-					self.uci.insert(name.clone(), UciValue::Combo(default.clone().unwrap_or_else(|| var.first().cloned().unwrap_or_default()), var.clone()));
+					self.uci.insert(
+						name.clone(),
+						UciValue::Combo(
+							default
+								.clone()
+								.unwrap_or_else(|| var.first().cloned().unwrap_or_default()),
+							var.clone(),
+						),
+					);
 				}
 				UciOptionConfig::String { name, default } => {
-					self.uci.insert(name.clone(), UciValue::String(default.clone().unwrap_or_default()));
+					self.uci.insert(
+						name.clone(),
+						UciValue::String(default.clone().unwrap_or_default()),
+					);
 				}
 				UciOptionConfig::Button { name } => {
 					self.uci.insert(name.clone(), UciValue::Button);
@@ -436,6 +394,6 @@ impl AIOptions {
 		}
 	}
 }
-pub fn eval_to_percent(cp:i16) -> f32 {
+pub fn eval_to_percent(cp: i16) -> f32 {
 	1.0 / (1.0 + -(cp as f32 / 200.0).exp())
 }

@@ -1,11 +1,15 @@
 use crate::{
-	GameOutcome, Player,
-	ai::minimax::{Game, Strategy, util::AppliedMove},
+	GameOutcome, Player, StrategyWithOptions,
+	ai::{
+		AIOptions,
+		minimax::{Evaluation, Game, Strategy, util::AppliedMove},
+	},
 	utils::NHHashMap,
 };
 
 use std::fmt::{self, Display, Formatter};
 
+#[derive(Debug, Clone)]
 pub struct Node<M> {
 	pub(crate) state: u64,
 	pub(crate) parent: Option<usize>,
@@ -20,8 +24,10 @@ pub struct Node<M> {
 	pub(crate) outcome: GameOutcome,
 	pub(crate) incoming_move: Option<M>,
 }
-
-pub struct StateInfo<S> {
+#[derive(Debug, Clone)]
+pub struct StateInfo<S>
+//where S: Send
+{
 	pub(crate) state: S,
 	pub(crate) expanded_node: usize,
 }
@@ -40,13 +46,36 @@ impl<M> Node<M> {
 			self.draws / self.visits
 		}
 	}
+	pub fn lossrate(&self) -> f32 {
+		if self.visits == 0.0 {
+			0.0
+		} else {
+			(self.visits - self.draws - self.wins) / self.visits
+		}
+	}
+	pub fn score(&self) -> Evaluation {
+		if self.outcome.is_ended() {
+			self.outcome.evaluate(self.player_to_move)
+		} else {
+			let winrate = self.winrate();
+			let drawrate = self.drawrate();
+			(8000.0 * (winrate + 0.5 * drawrate - 0.5)) as Evaluation
+		}
+	}
 }
-pub struct GameTree<G: Game> {
+#[derive(Debug, Clone)]
+pub struct GameTree<G: Game>
+where
+	G::S: Clone,
+{
 	pub(crate) root_id: usize,
 	pub(crate) nodes: Vec<Node<G::M>>,
 	pub states: NHHashMap<u64, StateInfo<G::S>>,
 }
-impl<G: Game> Default for GameTree<G> {
+impl<G: Game> Default for GameTree<G>
+where
+	G::S: Clone,
+{
 	fn default() -> Self {
 		Self {
 			root_id: usize::MAX,
@@ -88,7 +117,10 @@ where
 		s
 	}
 }
-impl<G: Game> GameTree<G> {
+impl<G: Game> GameTree<G>
+where
+	G::S: Clone,
+{
 	pub fn get_outcome(&mut self, id: usize) -> GameOutcome {
 		let state_info = self.states.get(&self.nodes[id].state).unwrap();
 		if state_info.expanded_node != id {
@@ -329,6 +361,7 @@ impl<G: Game> GameTree<G> {
 
 impl<G: Game> Display for GameTree<G>
 where
+	G::S: Clone,
 	G::S: std::fmt::Debug,
 	G::M: std::fmt::Debug,
 {
@@ -380,23 +413,50 @@ where
 		dfs(&self.nodes, 0, 0, &self.states, false, f)
 	}
 }
-#[derive(Default)]
-pub struct PerfectSolver<G: Game>(Option<GameTree<G>>);
+#[derive(Default, Clone)]
+pub struct PerfectSolver<G: Game>(Option<GameTree<G>>)
+where
+	G::S: Clone;
 impl<G: Game> Strategy<G> for PerfectSolver<G>
 where
 	G::S: Clone,
 {
 	fn choose_move(&mut self, state: &G::S) -> Option<G::M> {
 		if self.0.is_none() {
-			let tree = GameTree::<G>::from(state.clone());
+			let mut tree = GameTree::<G>::from(state.clone());
+			tree.expand_all(tree.root_id);
 			self.0 = Some(tree);
 		} else {
 			let tree = self.0.as_mut().unwrap();
 			let hash = G::get_hash(state);
-			let si = tree.states.get(&hash).unwrap();
-			tree.set_root_id(si.expanded_node);
-			//tree.cleanup();
+			if let Some(si) = tree.states.get(&hash) {
+				tree.set_root_id(si.expanded_node);
+				//tree.cleanup();
+				tree.expand_all(tree.root_id);
+			} else {
+				let mut tree = GameTree::<G>::from(state.clone());
+				tree.expand_all(tree.root_id);
+				self.0 = Some(tree);
+			}
 		}
 		Some(self.0.as_ref()?.find_best_move())
 	}
+	fn root_value(&self) -> Evaluation {
+		if let Some(t) = &self.0 {
+			t.get_root().score()
+		} else {
+			0
+		}
+	}
+}
+impl<G> StrategyWithOptions<G, AIOptions> for PerfectSolver<G>
+where
+	G: Game,
+	G::S: Clone,
+{
+	fn get_options(&self) -> AIOptions {
+		AIOptions::default()
+	}
+
+	fn reset_with_options(&mut self, _opts: AIOptions) {}
 }

@@ -760,6 +760,9 @@ where
 	fn principal_variation(&self) -> Vec<<E::G as Game>::M> {
 		self.principal_variation.clone()
 	}
+	fn root_value(&self) -> super::Evaluation {
+		self.root_value()
+	}
 }
 
 impl<E: Evaluator> Drop for ParallelSearch<E> {

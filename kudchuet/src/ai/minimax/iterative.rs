@@ -724,4 +724,7 @@ where
 	fn principal_variation(&self) -> Vec<<E::G as Game>::M> {
 		self.pv.clone()
 	}
+	fn root_value(&self) -> Evaluation {
+		self.root_value()
+	}
 }

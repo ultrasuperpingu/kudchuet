@@ -223,7 +223,7 @@ pub struct BasicEvaluator;
 
 impl Evaluator for BasicEvaluator {
 	type G = C4Game;
-	fn evaluate_for(&self, b: &Board, p: Player) -> Evaluation {
+	fn evaluate_for(&self, b: &Board, _p: Player) -> Evaluation {
 		let player_pieces = b.pieces_to_move;
 		let opponent_pieces = b.pieces_just_moved();
 		let mut player_wins = b.find_fourth_moves(player_pieces);

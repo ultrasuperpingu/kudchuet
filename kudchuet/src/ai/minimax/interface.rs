@@ -206,4 +206,6 @@ pub trait Strategy<G: Game> {
 	fn principal_variation(&self) -> Vec<G::M> {
 		Vec::new()
 	}
+
+	fn root_value(&self) -> Evaluation;
 }

@@ -33,4 +33,7 @@ where
 		}
 		fastrand::choice(moves)
 	}
+	fn root_value(&self) -> super::Evaluation {
+		0
+	}
 }

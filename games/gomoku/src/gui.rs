@@ -6,6 +6,8 @@ use kudchuet::ai::AIEngine;
 use kudchuet::ai::AIEngineProvider;
 use kudchuet::ai::MoveSearcherBuilderDyn;
 use kudchuet::Player;
+use kudchuet::ai::AIBuilderDyn;
+use kudchuet::ai::minimax::mcts::MCTS;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, board_drawer::SquareDrawer};
 use kudchuet::gui::shapes::Shape;
 use crate::bitboard::Goban;
@@ -145,6 +147,7 @@ pub fn create_board() -> GenericBoardApp<Gomoku> {
 	let engines: Vec<Box<dyn AIEngineProvider<Gomoku, Engine=Box<dyn AIEngine<Gomoku>>>>> = vec![
 		Box::new(MoveSearcherBuilderDyn::new("Dumb".into(), GomokuEvalDumb::new(), 4)),
 		Box::new(MoveSearcherBuilderDyn::new("Simple".into(), GomokuEvalSimple::new(), 4)),
+		Box::new(AIBuilderDyn::<Gomoku, MCTS<Gomoku>>::new("MCTS".into())),
 	];
 	let mut board=GenericBoardApp::new(Gomoku::default(), engines);
 	board.board_drawer.set_square_drawer(Box::new(GobanSquareDrawer{}));

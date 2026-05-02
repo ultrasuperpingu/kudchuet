@@ -85,7 +85,7 @@ impl Default for ChessPosEval {
 }
 impl Evaluator for ChessPosEval {
 	type G = ChessGame;
-	fn evaluate_for(&self, state: &Chess, p: Player) -> Evaluation {
+	fn evaluate_for(&self, state: &Chess, _p: Player) -> Evaluation {
 		//TODO
 		evaluate_materials(state)
 	}

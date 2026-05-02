@@ -1,5 +1,5 @@
 This part of the crate is a fork of the minimax crate:
-https://github.com/edre/minimax-rs  
+https://github.com/edre/minimax-rs
 It is published under the MIT license (see the LICENSE file), except the game_tree.rs and mcts.rs which are LGPL.
 
 = Why a fork?
