@@ -13,11 +13,18 @@ bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 #minimax = {path="../../minimax"}
 fastrand = "2.4"
 
+[dev-dependencies]
+bencher = "0.1"
+
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElement"] }
 
+[[bench]]
+name = "game_tree"
+harness = false
 
 [lib]
 name = "gomoku"

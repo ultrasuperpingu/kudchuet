@@ -10,6 +10,7 @@ use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 
 use kudchuet::ai::minimax::*;
+use kudchuet::utils::splitmix64;
 use kudchuet::{GameOutcome, Player};
 
 const RACE_LENGTH: u8 = 48;
@@ -76,16 +77,10 @@ impl Display for Board {
 		Ok(())
 	}
 }
-pub(crate) const fn splitmix64(mut x: u64) -> u64 {
-	x = x.wrapping_add(0x9E3779B97F4A7C15);
-	x = (x ^ (x >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
-	x = (x ^ (x >> 27)).wrapping_mul(0x94D049BB133111EB);
-	x ^ (x >> 31)
-}
 #[derive(Debug)]
-pub struct DiceGame;
+pub struct DiceRace;
 
-impl Game for DiceGame {
+impl Game for DiceRace {
 	type S = Board;
 	type M = Move;
 
@@ -186,11 +181,11 @@ impl Game for DiceGame {
 	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {
 		Some(format!("{:?}", _move))
 	}
-	fn get_hash(_state: &Self::S) -> u64 {
-		let hash = (_state.p1 as u64)
-			| ((_state.p2 as u64) << 8)
-			| ((_state.to_move as u64) << 17)
-			| ((_state.current_dice_choice.is_some() as u64) << 18);
+	fn get_hash(state: &Self::S) -> u64 {
+		let hash = (state.p1 as u64)
+			| ((state.p2 as u64) << 8)
+			| ((state.to_move as u64) << 17)
+			| ((state.current_dice_choice.is_some() as u64) << 18);
 		splitmix64(hash)
 	}
 	fn get_current_player(state: &Self::S) -> Player {
@@ -251,7 +246,7 @@ impl Default for DiceRaceEvaluator {
 	}
 }
 impl Evaluator for DiceRaceEvaluator {
-	type G = DiceGame;
+	type G = DiceRace;
 	fn evaluate_for(&self, b: &Board, p: Player) -> Evaluation {
 		let remaining1 = RACE_LENGTH - b.p1;
 		let remaining2 = RACE_LENGTH - b.p2;
@@ -312,9 +307,9 @@ fn main() {
 	);
 	minimax2.set_max_depth(8);
 	let mut b = Board::default();
-	while !DiceGame::get_outcome(&b).is_ended() {
+	while !DiceRace::get_outcome(&b).is_ended() {
 		println!("{}", b);
-		let strategy: &mut dyn Strategy<DiceGame> = if b.to_move {
+		let strategy: &mut dyn Strategy<DiceRace> = if b.to_move {
 			&mut minimax2
 		} else {
 			&mut minimax
@@ -322,13 +317,13 @@ fn main() {
 		match strategy.choose_move(&mut b) {
 			Some(m) => {
 				println!("Choose: {:?}", m);
-				b = DiceGame::apply(&mut b, m).unwrap()
+				b = DiceRace::apply(&mut b, m).unwrap()
 			}
 			None => break,
 		};
 		let dices = b.roll_dices();
 		println!("Rolled: {:?}", dices);
-		b = DiceGame::apply(&mut b, dices).unwrap();
+		b = DiceRace::apply(&mut b, dices).unwrap();
 	}
 	println!("{}", b);
 }

@@ -26,7 +26,7 @@ where
 		let mut best = WORST_EVAL;
 		let mut moves = self.move_pool.alloc();
 		let player = E::G::get_current_player(s);
-		if E::G::generate_moves(s, &mut moves).is_ended() {
+		if E::G::generate_and_filter_moves(s, &mut moves).is_ended() {
 			return None;
 		}
 		if self.shuffle_moves {
@@ -99,7 +99,7 @@ impl<E: Evaluator> ExpectiMinimax<E> {
 			return self.eval.evaluate_for(s, player_to_move);
 		}
 		let mut moves = self.move_pool.alloc();
-		let res = E::G::generate_moves(s, &mut moves);
+		let res = E::G::generate_and_filter_moves(s, &mut moves);
 		if res.is_ended() {
 			return match res {
 				GameOutcome::Player(p) if p == player_to_move => BEST_EVAL,

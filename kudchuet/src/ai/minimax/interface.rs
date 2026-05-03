@@ -104,6 +104,25 @@ pub trait Game: Sized+Debug {
 	/// to generate moves twice.
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome;
 
+	/// Filter bad moves at the given state.
+	///
+	/// When branching factor is really huge, it's sometimes necessary to filter
+	/// obviously/probably bad move to avoid exploring them.
+	#[inline]
+	fn filter_moves(_state: &Self::S, _moves: &mut Vec<Self::M>) {}
+
+	/// Generate and filter moves at the given state.
+	///
+	/// When branching factor is really huge, it's sometimes necessary to filter
+	/// obviously/probably bad move to avoid exploring them. This method is just a convinient method
+	/// to call both function. It does not need to be reimplemented.
+	#[inline]
+	fn generate_and_filter_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
+		let res = Self::generate_moves(state, moves);
+		Self::filter_moves(state, moves);
+		res
+	}
+
 	/// Apply a move to get a new state.
 	///
 	/// If the method returns a new state, the caller should use that. If the

@@ -193,7 +193,7 @@ where
 
 		let mut moves = Vec::new();
 		self.move_pool.local_do(|pool| moves = pool.alloc());
-		let res = E::G::generate_moves(s, &mut moves);
+		let res = E::G::generate_and_filter_moves(s, &mut moves);
 		if res.is_ended() {
 			self.move_pool.local_do(|pool| pool.free(moves));
 			return Some(res.evaluate(player_to_move));

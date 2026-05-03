@@ -4,7 +4,7 @@ use crate::{
 	utils::NHHashMap,
 };
 
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 
 #[derive(Debug, Clone)]
 pub struct Node<M> {
@@ -300,7 +300,7 @@ where
 
 		None
 	}
-	pub fn simulate(&self, node_id: usize) -> GameOutcome
+	pub fn simulate2(&self, node_id: usize) -> GameOutcome
 	where
 		G::S: Clone,
 	{
@@ -315,7 +315,7 @@ where
 
 		while !result.is_ended() {
 			let mut moves = vec![];
-			result = G::generate_moves(&sim_state, &mut moves);
+			result = G::generate_and_filter_moves(&sim_state, &mut moves);
 			if result == GameOutcome::OnGoing {
 				let m = fastrand::choice(moves);
 				sim_state = AppliedMove::<G>::applied_clone(&mut sim_state, m.unwrap());
@@ -327,8 +327,48 @@ where
 				}
 			}
 		}
+
 		result
 	}
+
+	pub fn simulate(&mut self, node_id: usize) -> GameOutcome
+	where
+		G::S: Clone,
+	{
+		Self::simulate_from_state(self.get_node_state_mut(node_id).unwrap())
+	}
+	pub fn simulate_from_state(state: &mut G::S) -> GameOutcome
+	where
+		G::S: Clone,
+	{
+		let mut moves = Vec::with_capacity(64);
+		Self::simulate_from_state_with_pool(state, &mut moves)
+	}
+	pub fn simulate_from_state_with_pool(state: &mut G::S, moves_pool: &mut Vec<G::M>) -> GameOutcome
+	where
+		G::S: Clone,
+	{
+		//let outcome = G::get_outcome(&*state);
+		//if outcome.is_ended() {
+		//	return outcome;
+		//}
+
+		let result = G::generate_and_filter_moves(&*state, moves_pool);
+		if result.is_ended() {
+			return result;
+		}
+		if moves_pool.is_empty() {
+			panic!("Unfinished game returns no moves");
+		}
+
+		let m = *fastrand::choice(moves_pool.iter()).unwrap();
+
+		let mut next = AppliedMove::<G>::new(&mut *state, m);
+
+		moves_pool.clear();
+		Self::simulate_from_state(&mut next)
+	}
+
 	pub fn get_root(&self) -> &Node<G::M> {
 		&self.nodes[self.root_id]
 	}
@@ -338,6 +378,7 @@ where
 	pub fn set_root_id(&mut self, id: usize) -> bool {
 		if id < self.nodes.len() {
 			self.root_id = id;
+			//self.nodes[id].parent = None;
 			true
 		} else {
 			false
@@ -449,6 +490,65 @@ where
 		let si = self.states.get(&n.state)?;
 		self.nodes.get_mut(si.expanded_node)
 	}
+	fn dfs_print<W: std::io::Write>(
+		tree: &Vec<Node<G::M>>,
+		id: usize,
+		depth: usize,
+		max_depth: usize,
+		states: &NHHashMap<u64, StateInfo<G::S>>,
+		is_link: bool,
+		f: &mut W,
+	) -> fmt::Result {
+		if max_depth < depth {
+			return Ok(());
+		}
+		let node = &tree[id];
+		let indent = "  ".repeat(depth);
+		let info = states.get(&node.state).unwrap();
+		let outcome = if info.expanded_node != id {
+			tree[info.expanded_node].outcome
+		} else {
+			node.outcome
+		};
+		if !is_link {
+			let _ = writeln!(
+				f,
+				"{}Node {} | to_move: {:?} | move: {:?} | visits: {} | winrate: {:.2} | outcome: {:?} ({})",
+				indent,
+				id,
+				node.player_to_move,
+				node.incoming_move,
+				node.visits as usize,
+				node.winrate(),
+				outcome,
+				node.depth_to_end,
+			);
+		}
+		if info.expanded_node != id {
+			Self::dfs_print(tree, info.expanded_node, depth, max_depth, states, true, f)?;
+			return Ok(());
+		}
+		let mut children = node.children.clone();
+
+		children.sort_by(|&a, &b| tree[b].visits.partial_cmp(&tree[a].visits).unwrap());
+
+		for child in children {
+			Self::dfs_print(tree, child, depth + 1, max_depth, states, false, f)?;
+		}
+
+		Ok(())
+	}
+	pub fn print(&self, max_depth: usize) {
+		let _ = Self::dfs_print(
+			&self.nodes,
+			self.root_id,
+			0,
+			max_depth,
+			&self.states,
+			false,
+			&mut std::io::stdout(),
+		);
+	}
 }
 
 impl<G: Game> Display for GameTree<G>
@@ -458,51 +558,31 @@ where
 	G::M: std::fmt::Debug,
 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-		fn dfs<S: std::fmt::Debug, M: std::fmt::Debug>(
-			tree: &Vec<Node<M>>,
-			id: usize,
-			depth: usize,
-			states: &NHHashMap<u64, StateInfo<S>>,
-			is_link: bool,
-			f: &mut Formatter<'_>,
-		) -> fmt::Result {
-			let node = &tree[id];
-			let indent = "  ".repeat(depth);
-			let info = states.get(&node.state).unwrap();
-			let outcome = if info.expanded_node != id {
-				tree[info.expanded_node].outcome
-			} else {
-				node.outcome
-			};
-			if !is_link {
-				writeln!(
-					f,
-					"{}Node {} | to_move: {:?} | move: {:?} | visits: {} | winrate: {:.2} | outcome: {:?} ({})",
-					indent,
-					id,
-					node.player_to_move,
-					node.incoming_move,
-					node.visits as usize,
-					node.winrate(),
-					outcome,
-					node.depth_to_end,
-				)?;
+		struct FmtWriter<'a, 'b>(&'a mut Formatter<'b>);
+		impl<'a, 'b> std::io::Write for FmtWriter<'a, 'b> {
+			fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+				match std::str::from_utf8(buf) {
+					Ok(s) => {
+						self.0.write_str(s).map_err(|_| std::io::ErrorKind::Other)?;
+						Ok(buf.len())
+					}
+					Err(_) => Err(std::io::ErrorKind::InvalidData.into()),
+				}
 			}
-			if info.expanded_node != id {
-				dfs(tree, info.expanded_node, depth, states, true, f)?;
-				return Ok(());
+			fn flush(&mut self) -> std::io::Result<()> {
+				Ok(())
 			}
-			let mut children = node.children.clone();
-
-			children.sort_by(|&a, &b| tree[b].visits.partial_cmp(&tree[a].visits).unwrap());
-
-			for child in children {
-				dfs(tree, child, depth + 1, states, false, f)?;
-			}
-
-			Ok(())
 		}
 
-		dfs(&self.nodes, 0, 0, &self.states, false, f)
+		let mut fw = FmtWriter(f);
+		Self::dfs_print(
+			&self.nodes,
+			self.root_id,
+			0,
+			usize::MAX,
+			&self.states,
+			false,
+			&mut fw,
+		)
 	}
 }

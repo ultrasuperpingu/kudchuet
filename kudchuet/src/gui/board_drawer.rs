@@ -3,8 +3,11 @@ use std::{collections::HashMap, marker::PhantomData};
 use egui::{Color32, Painter, Pos2, Rect};
 use egui_field_editor::EguiInspect;
 
-use crate::gui::{
-	BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern, shapes::Shape,
+use crate::{
+	gui::{
+		BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern, shapes::Shape,
+	},
+	utils::short_type_name,
 };
 
 pub trait BoardDrawer<G: BoardGame>
@@ -312,20 +315,22 @@ where
 	fn get_played_highlights(&self) -> &Vec<u16>;
 	fn set_played_highlights(&mut self, played_highlights: Vec<u16>);
 	fn full_reset(&mut self);
-	fn load_style(&mut self, ctx: &egui::Context, prefix: &String) {
-		if let Some(json) =
-			ctx.data_mut(|d| d.get_persisted::<String>((prefix.clone() + "theme").into()))
-		{
+	fn load_style(&mut self, ctx: &egui::Context) {
+		if let Some(json) = ctx.data_mut(|d| {
+			d.get_persisted::<String>((short_type_name::<G>().to_owned() + "_theme").into())
+		}) {
 			eprintln!("loading theme: {}", json);
 			if let Ok(settings) = serde_json::from_str(&json) {
 				*self.get_style_mut() = settings;
 			}
 		}
 	}
-	fn save_style(&mut self, ctx: &egui::Context, prefix: &String) {
+	fn save_style(&mut self, ctx: &egui::Context) {
 		let json = serde_json::to_string(&self.get_style()).unwrap();
 		eprintln!("saving theme: {}", json);
-		ctx.data_mut(|d| d.insert_persisted((prefix.clone() + "theme").into(), json));
+		ctx.data_mut(|d| {
+			d.insert_persisted((short_type_name::<G>().to_owned() + "_theme").into(), json)
+		});
 	}
 }
 pub struct DefaultBoardDrawer<G> {

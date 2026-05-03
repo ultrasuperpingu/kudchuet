@@ -20,14 +20,14 @@
 ///
 /// ```
 /// use kudchuet::utils::splitmix64;
-/// 
+///
 /// let h = splitmix64(123456789);
 /// println!("hash = {h}");
 /// ```
 ///
 /// # Reference
 ///
-/// Sebastiano Vigna, *"An experimental exploration of Marsaglia's xorshift generators, 
+/// Sebastiano Vigna, *"An experimental exploration of Marsaglia's xorshift generators,
 /// scrambled"*, 2014.
 pub const fn splitmix64(mut x: u64) -> u64 {
 	x = x.wrapping_add(0x9E3779B97F4A7C15);
@@ -59,7 +59,7 @@ pub const fn splitmix64(mut x: u64) -> u64 {
 ///
 /// ```
 /// use kudchuet::utils::fibo_hash_64;
-/// 
+///
 /// let h = fibo_hash_64(42);
 /// println!("hash = {h}");
 /// ```
@@ -126,7 +126,7 @@ use std::collections::HashMap;
 ///
 /// ```
 /// use kudchuet::utils::NHHashMap;
-/// 
+///
 /// let mut states: NHHashMap<u64, String> = NHHashMap::default();
 /// states.insert(0xDEADBEEF, "state".into());
 /// ```
@@ -148,6 +148,11 @@ pub type NHHashMap<K, V> = HashMap<K, V, NoHashBuilder>;
 /// assert!(visited.contains(&0xDEADBEEF));
 /// ```
 pub type NHHashSet<K> = std::collections::HashSet<K, NoHashBuilder>;
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pub fn short_type_name<T>() -> &'static str {
+	std::any::type_name::<T>().rsplit("::").next().unwrap()
+}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

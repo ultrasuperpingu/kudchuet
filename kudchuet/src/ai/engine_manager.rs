@@ -3,6 +3,7 @@ use crate::Player;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::external_engine::{ExternalEngine, ExternalEngineEntry};
 use crate::ai::{AIEngine, AIEngineProvider, AIOptions};
+use crate::utils::short_type_name;
 use std::collections::HashMap;
 use std::pin::Pin;
 pub enum ThinkingResult<M> {
@@ -218,13 +219,13 @@ where
 	}
 	pub fn load_engines_parameters(&mut self, ctx: &egui::Context) {
 		#[cfg(not(target_arch = "wasm32"))]
-		if let Some(json) = ctx.data_mut(|d| d.get_persisted::<String>("external_engines".into())) {
+		if let Some(json) = ctx.data_mut(|d| d.get_persisted::<String>((short_type_name::<G>().to_owned() + "_external_engines").into())) {
 			eprintln!("loading externals: {}", json);
 			if let Ok(settings) = serde_json::from_str(&json) {
 				self.external_providers = settings;
 			}
 		}
-		if let Some(json) = ctx.data_mut(|d| d.get_persisted::<String>("engines_options".into())) {
+		if let Some(json) = ctx.data_mut(|d| d.get_persisted::<String>((short_type_name::<G>().to_owned() + "_engines_options").into())) {
 			eprintln!("loading settings: {}", json);
 			if let Ok(settings) = serde_json::from_str(&json) {
 				self.engine_options = settings;
@@ -241,12 +242,12 @@ where
 	pub fn save_external_engines(&self, ctx: &egui::Context) {
 		let json = serde_json::to_string(&self.external_providers).unwrap();
 		eprintln!("saving externals: {}", json);
-		ctx.data_mut(|d| d.insert_persisted("external_engines".into(), json));
+		ctx.data_mut(|d| d.insert_persisted((short_type_name::<G>().to_owned() + "_external_engines").into(), json));
 	}
 	pub fn save_all_engine_options(&self, ctx: &egui::Context) {
 		let json = serde_json::to_string(&self.engine_options).unwrap();
 		eprintln!("saving settings: {}", json);
-		ctx.data_mut(|d| d.insert_persisted("engines_options".into(), json));
+		ctx.data_mut(|d| d.insert_persisted((short_type_name::<G>().to_owned() + "_engines_options").into(), json));
 	}
 	pub fn get_all_engine_names(&self) -> Vec<String> {
 		let mut names = Vec::new();

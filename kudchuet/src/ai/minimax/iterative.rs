@@ -282,7 +282,7 @@ where
 		}
 
 		let mut moves = self.move_pool.alloc();
-		let res  = E::G::generate_moves(s, &mut moves);
+		let res  = E::G::generate_and_filter_moves(s, &mut moves);
 		if res.is_ended() {
 			return match res {
 				GameOutcome::Player(p) if p == player_to_move => Some(BEST_EVAL),
@@ -608,7 +608,7 @@ where
 		let player_to_move = E::G::get_current_player(s);
 		// Store the moves so they can be reordered every iteration.
 		let mut moves = Vec::new();
-		if E::G::generate_moves(&s_clone, &mut moves).is_ended() {
+		if E::G::generate_and_filter_moves(&s_clone, &mut moves).is_ended() {
 			return None;
 		}
 		if self.opts.shuffle_moves {

@@ -55,18 +55,18 @@ pub struct NimGame;
 
 impl Game for NimGame {
 	type S = Board;
-	type M = Place;
+	type M = Move;
 
-	fn generate_moves(b: &Board, ms: &mut Vec<Place>) -> GameOutcome {
+	fn generate_moves(b: &Board, ms: &mut Vec<Move>) -> GameOutcome {
 		if b.nb == 0 {
 			return b.to_move.into();
 		}
 		for i in 1..=3 {
 			if b.nb >= i {
-				ms.push(Place { i: i as u8 });
+				ms.push(Move { nb: i as u8 });
 			}
 		}
-		GameOutcome::OnGoing
+		Self::get_outcome(&b)
 	}
 
 	fn get_outcome(b: &Board) -> GameOutcome {
@@ -77,13 +77,13 @@ impl Game for NimGame {
 		}
 	}
 
-	fn apply(b: &mut Board, m: Place) -> Option<Board> {
-		b.nb -= m.i;
+	fn apply(b: &mut Board, m: Move) -> Option<Board> {
+		b.nb -= m.nb;
 		b.to_move = b.to_move.opponent();
 		None
 	}
-	fn undo(b: &mut Board, m: Place) {
-		b.nb += m.i;
+	fn undo(b: &mut Board, m: Move) {
+		b.nb += m.nb;
 		b.to_move = b.to_move.opponent();
 	}
 	fn get_current_player(state: &Self::S) -> Player {
@@ -94,13 +94,13 @@ impl Game for NimGame {
 	}
 }
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct Place {
-	pub(crate) i: u8,
+pub struct Move {
+	pub(crate) nb: u8,
 }
 
-impl Display for Place {
+impl Display for Move {
 	fn fmt(&self, f: &mut Formatter) -> Result {
-		write!(f, "@{}", self.i)
+		write!(f, "@{}", self.nb)
 	}
 }
 

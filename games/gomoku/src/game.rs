@@ -16,6 +16,14 @@ impl Game for Gomoku {
 		fastrand::shuffle(moves);
 		Self::get_outcome(state)
 	}
+	fn filter_moves(state: &Self::S, moves: &mut Vec<Self::M>) {
+		let mut dilated = state.black.or_const(&state.white);
+		if dilated.is_empty() {
+			dilated = Goban::from_coords(Goban::WIDTH / 2, Goban::HEIGHT / 2);
+		}
+		dilated = dilated.dilated().dilated();
+		moves.retain(|m| dilated.get_at_index(m.to as usize));
+	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
 		//let mut s2 = state.clone();
@@ -35,7 +43,7 @@ impl Game for Gomoku {
 		let (x2, y2) = Goban::coords_from_index(_move.to as usize);
 		let file_char2 = (b'a' + x2) as char;
 
-		Some(format!("{}{}", file_char2, y2+1))
+		Some(format!("{}{}", file_char2, y2 + 1))
 	}
 
 	fn get_hash(state: &Self::S) -> u64 {
@@ -75,13 +83,15 @@ impl Evaluator for GomokuEvalSimple {
 		let mut empty = state.black.or_const(&state.white);
 		empty.not_assign_const();
 		score += Gomoku::open_four(&state.white, &state.black, &empty).count() as Evaluation * 501;
-		score += Gomoku::broken_four(&state.white, &state.black, &empty).count() as Evaluation * 103;
+		score +=
+			Gomoku::broken_four(&state.white, &state.black, &empty).count() as Evaluation * 103;
 		score += Gomoku::closed_four(&state.white, &state.black, &empty).count() as Evaluation * 73;
 		score += Gomoku::open_three(&state.white, &state.black, &empty).count() as Evaluation * 47;
 		score += Gomoku::open_two(&state.white, &state.black, &empty).count() as Evaluation * 5;
-		
+
 		score -= Gomoku::open_four(&state.black, &state.white, &empty).count() as Evaluation * 501;
-		score -= Gomoku::broken_four(&state.black, &state.white, &empty).count() as Evaluation * 103;
+		score -=
+			Gomoku::broken_four(&state.black, &state.white, &empty).count() as Evaluation * 103;
 		score -= Gomoku::closed_four(&state.black, &state.white, &empty).count() as Evaluation * 73;
 		score -= Gomoku::open_three(&state.black, &state.white, &empty).count() as Evaluation * 47;
 		score -= Gomoku::open_two(&state.black, &state.white, &empty).count() as Evaluation * 5;
