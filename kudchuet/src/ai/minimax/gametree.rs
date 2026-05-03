@@ -260,10 +260,6 @@ where
 			})
 			.collect();
 		if filtered.is_empty() {
-			println!(
-				"No winning moves, looking for draws:\n{}",
-				self.nodes[self.root_id].player_to_move
-			);
 			filtered = self.nodes[self.root_id]
 				.children
 				.iter()
@@ -272,10 +268,6 @@ where
 		}
 		if filtered.is_empty() {
 			maximize_depth = true;
-			println!(
-				"No winning moves nor draws, looking for best loss:\n{}",
-				self.nodes[self.root_id].player_to_move
-			);
 			filtered = self.nodes[self.root_id]
 				.children
 				.iter()

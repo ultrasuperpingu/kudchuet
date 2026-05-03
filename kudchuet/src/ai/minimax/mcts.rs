@@ -65,7 +65,7 @@ where
 	G::S: Clone,
 {
 	fn select(&self, exploration_factor: f32, mut node_id: usize) -> (usize, bool) {
-		let mut already_computed = false;
+		let mut already_proved = false;
 		let root_player = self.get_root().player_to_move;
 		while self.nodes[node_id].untried_moves.is_empty()
 			&& !self.nodes[node_id].children.is_empty()
@@ -109,11 +109,11 @@ where
 				node_id = *id;
 			} else {
 				// nothing to select
-				already_computed = true;
+				already_proved = true;
 				break;
 			}
 		}
-		(node_id, already_computed)
+		(node_id, already_proved)
 	}
 
 	fn uct_score(
@@ -261,7 +261,10 @@ where
 	) where
 		G::S: Clone,
 	{
-		let (id, _already_computed) = self.select(exploration_factor, node_id);
+		let (id, already_proved) = self.select(exploration_factor, node_id);
+		if already_proved {
+			return;
+		}
 		let new_id = self.expand(id);
 		let result = self.simulate(new_id);
 		//println!("{:?}", result);

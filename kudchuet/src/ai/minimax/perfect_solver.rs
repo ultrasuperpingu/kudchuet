@@ -27,22 +27,17 @@ where
 	fn choose_move(&mut self, state: &G::S) -> Option<G::M> {
 		if self.0.is_none() {
 			let mut tree = GameTree::<G>::from(state.clone());
-			let res = tree.expand_all(tree.root_id, false);
-			println!("choose_move res: {:?}", res);
-			println!("len: {:?}", tree.get_root().children.len());
+			let _res = tree.expand_all(tree.root_id, false);
 			self.0 = Some(tree);
 		} else {
 			let tree = self.0.as_mut().unwrap();
 			let hash = G::get_hash(state);
 			if let Some(si) = tree.states.get(&hash) {
 				tree.set_root_id(si.expanded_node);
-				println!("choose_move res 2: {:?}", tree.get_root().outcome);
-				tree.cleanup();
-				//tree.expand_all(tree.root_id);
+				//tree.cleanup();
 			} else {
 				let mut tree = GameTree::<G>::from(state.clone());
 				tree.expand_all(tree.root_id, false);
-				println!("choose_move res 3: {:?}", tree.get_root().outcome);
 				self.0 = Some(tree);
 			}
 		}

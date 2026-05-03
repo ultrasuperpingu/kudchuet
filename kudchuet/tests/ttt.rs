@@ -3,9 +3,9 @@ extern crate kudchuet;
 #[path = "../examples/ttt.rs"]
 mod ttt;
 
-use kudchuet::{Player, ai::minimax::{
-	ExpectiMinimax, Game, PerfectSolver, Random, Strategy, gametree::GameTree, mcts::MCTS, util::battle_royale
-}};
+use kudchuet::ai::minimax::{
+	ExpectiMinimax, PerfectSolver, Random, mcts::MCTS, util::battle_royale,
+};
 
 use crate::ttt::TTTGame;
 
@@ -41,7 +41,7 @@ fn test_ttt_mcts_vs_mcts_always_draws() {
 	}
 }
 
-// Ensure that two player using perfect always draws.
+// Ensure that two player using perfect solver always draws.
 #[test]
 fn test_ttt_perfect_always_draws() {
 	for _ in 0..100 {
@@ -55,40 +55,9 @@ fn test_ttt_perfect_always_draws() {
 // either a draw or a win for the former player.
 #[test]
 fn test_ttt_mcts_vs_random_always_wins_or_draws() {
-	let mut state = ttt::Board::default();
-	//while TTTGame::get_outcome(&state) == GameOutcome::OnGoing {
-	//	let m = mcts::<TTTGame>(&state, 20000);
-	//	TTTGame::apply(&mut state, m);
-	//	println!("{}", state);
-	//}
-	//let mut state = ttt::Board::default();
-	TTTGame::apply(&mut state, ttt::Place { i: 0 });
-	TTTGame::apply(&mut state, ttt::Place { i: 2 });
-	//TTTGame::apply(&mut state, ttt::Place{i: 8});
-	//TTTGame::apply(&mut state, ttt::Place{i: 4});
-	//println!("{state}");
-	let mut s1 = MCTS::<TTTGame>::default();
-	s1.opts.use_min_max = false;
-	s1.opts.max_nb_iteration = 200_000;
-	let mv = s1.choose_move(&state);
-	println!("{:?}", mv);
-
-	let mut s2 = PerfectSolver::<TTTGame>::default();
-	let mv = s2.choose_move(&state);
-	println!("{:?}", s2.root_value());
-	println!("{}", s2.get_tree().unwrap());
-	println!("{:?}", mv);
-
-	let mut tree=GameTree::<TTTGame>::from(state);
-	let res = tree.expand_all(0, false);
-	println!("{res:?}\n");
-	//let res = tree.get_outcome(0);
-	//println!("{res:?}\n");
-	println!("{res:?}:\n{}", tree);
-	println!("{:?}", tree.find_best_proved_move());
-	//for _ in 0..100 {
-	//	let mut s1 = MCTS::<TTTGame>::default();
-	//	let mut s2 = Random::new();
-	//	assert_ne!(battle_royale(&mut s1, &mut s2), Some(1));
-	//}
+	for _ in 0..100 {
+		let mut s1 = MCTS::<TTTGame>::default();
+		let mut s2 = Random::new();
+		assert_ne!(battle_royale(&mut s1, &mut s2), Some(1));
+	}
 }

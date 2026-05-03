@@ -1,4 +1,3 @@
-//use std::hash::{DefaultHasher, Hash, Hasher};
 
 use bitboard::BitIter;
 use kudchuet::{GameOutcome, Player};
@@ -26,15 +25,12 @@ impl Game for HareAndHounds {
 		let mut nb = 0;
 		state.legal_moves(&mut mvs, &mut nb);
 		moves.extend_from_slice(&mvs[0..nb]);
-		//println!("GEN: {:?}", moves);
 		GameOutcome::OnGoing
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
 		let mut s=*state;
-		//println!("apply\n{}", state);
 		s.play_unchecked(m);
-		//println!("apply after\nstate\n{}\ns\n{}", state, s);
 		Some(s)
 	}
 	fn get_outcome(state: &Self::S) -> GameOutcome {
@@ -52,21 +48,6 @@ impl Game for HareAndHounds {
 	}
 }
 
-
-#[derive(Clone, Default)]
-pub struct HareAndHoundsEvalDumb;
-
-impl HareAndHoundsEvalDumb {
-	pub fn new() -> Self {
-		Self {}
-	}
-}
-impl Evaluator for HareAndHoundsEvalDumb {
-	type G = HareAndHounds;
-	fn evaluate_for(&self, _state: &HareAndHounds, _p: Player) -> Evaluation {
-		0
-	}
-}
 #[inline(always)]
 fn manhattan_dist(index1: u8, index2: u8) -> u8 {
 	let (x1,y1)=Board::coords_from_index(index1 as usize);
@@ -88,10 +69,8 @@ impl Evaluator for HareAndHoundsEval {
 	fn evaluate_for(&self, state: &HareAndHounds, p: Player) -> Evaluation {
 		let hare = state.hare;
 
-		// 1. Liberté du lièvre (cases disponibles)
 		let hare_moves = (NEIGHBORS_HARE[hare as usize] & !state.houds).count() as i16;
 
-		// 2. Distance moyenne chiens → lièvre (plus c'est petit, mieux pour les chiens)
 		let mut dist_sum = 0i16;
 		let mut count = 0i16;
 		for h in state.houds.iter_bits() {
@@ -100,14 +79,8 @@ impl Evaluator for HareAndHoundsEval {
 		}
 		let avg_dist = if count > 0 { dist_sum / count } else { 0 };
 
-		// 3. Progression du lièvre vers la droite (colonne)
 		let hare_col = Board::column(hare) as i16;
 
-		// Score final :
-		// + liberté du lièvre
-		// + progression du lièvre
-		// - proximité des chiens
-		// pondéré légèrement
 		let score = 10 * hare_moves + 5 * hare_col - 3 * avg_dist;
 		if p == Player::PLAYER1 {
 			-score
@@ -124,105 +97,10 @@ mod tests {
 	use crate::game::HareAndHoundsEval;
 
 	use super::HareAndHounds;
-	use std::collections::HashMap;
 
-	#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-	enum GameResult {
-		OnGoing,
-		HoundsWin,
-		HareWin,
-	}
-
-	fn legal_moves(state: &HareAndHounds) -> Vec<HareAndHounds> {
-		let mut children=vec![];
-		let mut moves= [crate::rules::Move::default(); HareAndHounds::MAX_MOVES];
-		let mut len=0;
-		children.reserve(9);
-		state.legal_moves(&mut moves, &mut len);
-		for i in 0..len {
-			let m=moves[i];
-			let mut c = *state;
-			c.play_unchecked(m);
-			children.push(c);
-		}
-		children
-	}
-
-	// Solveur itératif avec rétro-propagation
-	fn solve_hare_and_hounds() -> GameResult {
-		let root = HareAndHounds::default();
-		let mut max_moves=0;
-		// 1. Exploration DFS itérative
-		let mut memo: HashMap<HareAndHounds, GameResult> = HashMap::new();
-		let mut stack: Vec<HareAndHounds> = vec![root];
-
-		while let Some(state) = stack.pop() {
-			if memo.contains_key(&state) { continue; }
-			let res=state.result();
-			if res.is_ended() {
-				// terminal
-				let r = if res.player1_wins() { GameResult::HoundsWin } else { GameResult::HareWin };
-				memo.insert(state, r);
-				continue;
-			}
-			let children = legal_moves(&state);
-			if max_moves < children.len() {
-				max_moves=children.len();
-			}
-			// On marque temporairement OnGoing
-			memo.insert(state, GameResult::OnGoing);
-
-			// On empile l'état à revisiter + ses enfants
-			stack.push(state);
-			for child in children {
-				if !memo.contains_key(&child) {
-					stack.push(child);
-				}
-			}
-		}
-		println!("len: {}",memo.len());
-		println!("max_moves: {}",max_moves);
-		
-		// 2. Rétro-propagation
-		let mut changed = true;
-		while changed {
-			changed = false;
-			for (&state, &val) in memo.clone().iter() {
-				if val != GameResult::OnGoing { continue; }
-
-				let children = legal_moves(&state);
-				let new_val = if state.turn() {
-					// lièvre joue
-					if children.iter().all(|c| memo[c] == GameResult::HoundsWin) {
-						GameResult::HoundsWin
-					} else if children.iter().any(|c| memo[c] == GameResult::HareWin) {
-						GameResult::HareWin
-					}  else {
-						continue; // pas encore déterminé
-					}
-				} else {
-					// chiens jouent
-					if children.iter().all(|c| memo[c] == GameResult::HareWin) {
-						GameResult::HareWin
-					} else if children.iter().any(|c| memo[c] == GameResult::HoundsWin) {
-						GameResult::HoundsWin
-					} else  {
-						continue; // pas encore déterminé
-					}
-				};
-				memo.insert(state, new_val);
-				changed = true;
-			}
-		}
-
-		memo[&root]
-	}
 
 	#[test]
 	fn test_solve() {
-		let winner = solve_hare_and_hounds();
-		println!("Winner: {:?}", winner);
-		assert!(matches!(winner, GameResult::HareWin | GameResult::HoundsWin));
 		let mut tree=GameTree::<HareAndHounds>::from(HareAndHounds::default());
 		let winner = tree.expand_all(0, false);
 		println!("Winner: {:?}", winner);

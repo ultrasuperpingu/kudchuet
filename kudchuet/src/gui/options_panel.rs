@@ -82,11 +82,11 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 									//ui.heading("Board Style");
 									//if self.board_drawer.get_style_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
 									if ui.add(EguiInspector::new(self.board_drawer.get_style_mut()).id_salt("board_style").with_title("Board Style")).changed() {
-										self.board_drawer.save_style(ui.ctx());
+										self.board_drawer.save_style(ui.ctx(), &self.name);
 									}
 									add_button("Default Board Style", "Reset board style to default", false, ui, |ui| {
 										*self.board_drawer.get_style_mut() = G::default_style();
-										self.board_drawer.save_style(ui.ctx());
+										self.board_drawer.save_style(ui.ctx(), &self.name);
 									});
 									if self.board_drawer.get_piece_drawer().has_custom_properties() {
 										let piece_drawer = self.board_drawer.get_piece_drawer_mut();

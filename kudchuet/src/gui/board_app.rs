@@ -17,6 +17,7 @@ use super::{GameOutcome, Player};
 pub struct GenericBoardApp<G: BoardGame+Sync+Send>
 	where G::M : BoardMove<G> + Send
 {
+	pub name: String,
 	pub(super) ai_engine_manager: EngineManager<G>,
 	
 
@@ -41,7 +42,7 @@ impl<G: BoardGame+Sync+Send+'static> eframe::App for GenericBoardApp<G>
 	fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 		if !self.inited {
 			self.ai_engine_manager.load_engines_parameters(ctx);
-			self.board_drawer.load_style(ctx);
+			self.board_drawer.load_style(ctx, &self.name);
 			self.inited = true;
 		}
 	}
@@ -106,6 +107,7 @@ where G::M: BoardMove<G>+Send
 	//pub fn new(game: G, ai: Box<dyn AIEngine<G>>) -> Self {
 	pub fn new(game: G, internals_ai: Vec<Box<dyn AIEngineProvider<G, Engine = Box<dyn AIEngine<G>>>>>) -> Self {
 		Self {
+			name: std::any::type_name::<G>().to_owned(),
 			ai_engine_manager:  EngineManager::new_with_internals(internals_ai),
 			//players: [PlayerType::Human, PlayerType::Computer],
 
