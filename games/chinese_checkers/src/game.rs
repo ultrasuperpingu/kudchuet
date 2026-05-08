@@ -1,21 +1,20 @@
-
 use bitboard::BitIter;
 
+use super::rules::{ChineseCheckers, Move};
 use crate::bitboard::ChineseCheckerBoard;
 use crate::rules::ChineseCheckersPlayer;
-use super::rules::{ChineseCheckers, Move};
 
-use kudchuet::{GameOutcome, Player};
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::{GameOutcome, Player};
 
 impl Game for ChineseCheckers {
-	type S =  ChineseCheckers;
+	type S = ChineseCheckers;
 
 	type M = Move;
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		let res = Self::get_outcome(state);
-		if res.is_ended()  {
+		if res.is_ended() {
 			return res;
 		}
 		state.generate_moves(moves);
@@ -68,7 +67,6 @@ impl Evaluator for ChineseCheckersMaterialEval {
 			let b = state.board(*p);
 			let target = ChineseCheckerBoard::final_square(*p);
 			let target_board = ChineseCheckerBoard::target_board(*p);
-			
 
 			let mut dist = 0;
 
@@ -99,10 +97,9 @@ impl Evaluator for ChineseCheckersMaterialEval {
 #[cfg(test)]
 mod tests {
 
-
 	use kudchuet::ai::minimax::util::perft;
 
-use super::ChineseCheckers;
+	use super::ChineseCheckers;
 	//cargo test -p chinese_checkers --release game::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
 	//    0               1       2.6µs       384.6
@@ -118,16 +115,7 @@ use super::ChineseCheckers;
 		let mut board = ChineseCheckers::default();
 
 		let nodes = perft::<ChineseCheckers>(&mut board, 7, true);
-		const NB_NODES: [u64; 8] = [
-			1,
-			14,
-			196,
-			4452,
-			101124,
-			2603784,
-			67043344,
-			1937526440,
-		];
+		const NB_NODES: [u64; 8] = [1, 14, 196, 4452, 101124, 2603784, 67043344, 1937526440];
 		for (i, n) in nodes.iter().enumerate() {
 			assert_eq!(NB_NODES[i], *n, "Mismatch at depth {}", i);
 		}

@@ -132,8 +132,8 @@ impl ThreeMusketeers {
 impl ThreeMusketeers {
 	pub fn get_hash(&self) -> u64 {
 		let mut key = 0u64;
-		key |= self.musketeers.storage() as u64;
-		key |= (self.guards.storage() as u64) << 25;
+		key |= *self.musketeers.storage() as u64;
+		key |= (*self.guards.storage() as u64) << 25;
 		key |= (self.turn as u64) << 50;
 		kudchuet::utils::fibo_hash_64(key)
 	}

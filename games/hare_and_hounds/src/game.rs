@@ -1,7 +1,6 @@
 
 use bitboard::BitIter;
 use kudchuet::{GameOutcome, Player};
-use bitboard::Bitboard;
 
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
@@ -97,15 +96,39 @@ mod tests {
 	use crate::game::HareAndHoundsEval;
 
 	use super::HareAndHounds;
+// expand_all/sans pruning
+//Winner: Player(Player(0))
+//nb states: 23246
+//nb nodes: 85602
+//outcome: Player(Player(0)) (23)
 
+// expand_all/avec pruning
+//Winner: Player(Player(0))
+//nb states: 11220
+//nb nodes: 30963
+//outcome: Player(Player(0)) (67)
+
+// expand_all_iterative/sans pruning
+//Winner: Player(Player(0))
+//nb states: 23246
+//nb nodes: 85602
+//outcome: Player(Player(0)) (23)
+
+
+// expand_all_iterative/avec pruning
+//Winner: Player(Player(0))
+//nb states: 19677
+//nb nodes: 64739
+//outcome: Player(Player(0)) (91)
 
 	#[test]
 	fn test_solve() {
 		let mut tree=GameTree::<HareAndHounds>::from(HareAndHounds::default());
-		let winner = tree.expand_all(0, false);
+		let winner = tree.expand_all_iterative(0, true);
 		println!("Winner: {:?}", winner);
-		println!("len: {:?}", tree.states.len());
-		
+		println!("nb states: {:?}", tree.states.len());
+		println!("nb nodes: {:?}", tree.nb_nodes());
+		println!("outcome: {:?} ({})", tree.get_root().outcome(), tree.get_root().depth_to_end());
 	}
 
 	#[test]

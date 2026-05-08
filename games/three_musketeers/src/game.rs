@@ -1,4 +1,4 @@
-use bitboard::{BitIter, Bitboard};
+use bitboard::BitIter;
 
 use kudchuet::{
 	GameOutcome, Player, ai::minimax::{Evaluation, Evaluator, Game}
@@ -174,8 +174,9 @@ impl Evaluator for ThreeMusketeersEvalAdvanced {
 mod tests {
 
 	use kudchuet::ai::minimax::util::perft;
-
 	use crate::rules::ThreeMusketeers;
+
+
 	#[test]
 	fn perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));

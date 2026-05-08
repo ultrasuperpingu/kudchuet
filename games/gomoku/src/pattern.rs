@@ -1,5 +1,5 @@
-use crate::{bitboard::Goban, rules::Gomoku};
-
+use crate::rules::Gomoku;
+use bitboard::common_bitboards::Goban;
 impl Gomoku {
 	pub const fn broken_four(mine: &Goban, _other: &Goban, empty: &Goban) -> Goban {
 		let mut res;
@@ -277,7 +277,8 @@ impl Gomoku {
 }
 #[cfg(test)]
 mod tests {
-	use crate::{bitboard::Goban, rules::Gomoku};
+	use crate::rules::Gomoku;
+	use bitboard::common_bitboards::Goban;
 
 	fn goban_from_coords(coords: &[(u8, u8)]) -> Goban {
 		let mut g = Goban::default();

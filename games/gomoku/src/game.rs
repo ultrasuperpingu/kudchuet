@@ -1,19 +1,16 @@
 use kudchuet::{GameOutcome, Player};
 
-use crate::bitboard::Goban;
+use bitboard::common_bitboards::Goban;
 
 use super::rules::{Gomoku, Move};
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
 impl Game for Gomoku {
 	type S = Gomoku;
-
 	type M = Move;
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		state.legal_moves_inplace(moves);
-		// randomize moves.
-		fastrand::shuffle(moves);
 		Self::get_outcome(state)
 	}
 	fn filter_moves(state: &Self::S, moves: &mut Vec<Self::M>) {

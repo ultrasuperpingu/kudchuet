@@ -1,0 +1,28 @@
+//Tiny Parser Generator v1.6
+
+<% @TinyPG Namespace="sgf" Language="rust" OutputPath="./src/sgf" %>
+
+[Skip]			WHITESPACE		-> @"\s+";
+			EOF			-> @"$";
+
+
+[Color(0, 128, 0)]	BROPEN		-> @"\[";
+[Color(0, 128, 0)]	BRCLOSE	-> @"\]";
+
+[Color(0, 0, 128)]	PAROPEN	-> @"\(";
+[Color(0, 0, 128)]	PARCLOSE	-> @"\)";
+[Color(128, 0, 0)]	SEMICOLON	-> @";";
+
+[Color(255, 128, 128)] IDENT	-> @"[a-zA-Z]+";
+
+[Color(128, 128, 128)] CONTENT -> @"([^\\\]]|\\.)*";
+//[Color(128, 128, 128)] CONTENT -> @"[a-zA-Z0-9 _]*";
+
+
+Start	 	-> Tree;
+Tree -> PAROPEN (TreeNode+|Tree)+ PARCLOSE;
+TreeNode -> SEMICOLON Attribute+;
+Attribute -> IDENT (BROPEN CONTENT BRCLOSE)+;
+
+//(;A[1] B[2](;C[3];D[4](;E[5];F[6]))(;G[7](;H[8])(;I[9];J[10]))))
+

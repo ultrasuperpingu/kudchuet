@@ -3,6 +3,7 @@ https://github.com/edre/minimax-rs
 It is published under the MIT license (see the LICENSE file), except the game_tree.rs and mcts.rs which are LGPL.
 
 = Why a fork?
+
 == Negamax vs Minimax
 
 The original minimax crate uses the elegant Negamax formulation.
@@ -20,5 +21,4 @@ value(state, player) = -value(state, opponent)
 ```
 no longer hold, because the “opponent” may not be unique, and the next player is not always known before the current move is completed.
 
-
-For this reason, kudchuet uses a simpler and more general Minimax model, where all evaluations are expressed from the perspective of the player whose move we want to choose. This approach is more flexible and allows the framework to support a much wider variety of games.
+For this reason, kudchuet uses a more explicit Minimax formulation, where evaluations are expressed directly from the perspective of the player whose move is being selected. This approach is more flexible and allows the framework to support a wider variety of games.

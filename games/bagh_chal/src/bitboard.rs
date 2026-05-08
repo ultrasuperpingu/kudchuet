@@ -21,17 +21,17 @@ impl Bitboard5x5 {
 
 			let mut list = CaptureList { moves: [(0,0); 8], len: 0 };
 
-			let neighbors_from = Self::NEIGHBORS_BAGH_CHAL[from].storage();
+			let neighbors_from = Self::NEIGHBORS_BAGH_CHAL[from];
 			let mut mid = 0;
 
 			while mid < Self::NB_SQUARES {
-				if (neighbors_from & (1 << mid)) != 0 {
+				if neighbors_from.get_at_index(mid) {
 
-					let neighbors_mid = Self::NEIGHBORS_BAGH_CHAL[mid].storage();
+					let neighbors_mid = Self::NEIGHBORS_BAGH_CHAL[mid];
 					let mut to = 0;
 
 					while to < Self::NB_SQUARES {
-						if (neighbors_mid & (1 << to)) != 0 {
+						if neighbors_mid.get_at_index(to) {
 
 							if to != from {
 

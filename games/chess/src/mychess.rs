@@ -1,28 +1,27 @@
 use std::hash::Hash;
 
-use bitboard::{BitIter, Bitboard};
 use crate::bitboard::Bitboard8x8;
+use bitboard::{BitIter, Bitboard};
 
-use super::rules::{Color, Square, Piece, CastlingRights, Move};
+use super::rules::{CastlingRights, Color, Move, Piece, Square};
 
 use kudchuet::Player;
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
 
-use kudchuet::GameOutcome;
 use super::pext_tables;
+use kudchuet::GameOutcome;
 //use super::magic_tables::{MagicEntry, ROOK_MOVES, ROOK_MAGICS};
-
 
 #[derive(Copy, Clone, Debug, Hash)]
 pub struct ChessBoard {
-	pub(crate) whites:Bitboard8x8,
-	pub(crate) blacks:Bitboard8x8,
-	pub(crate) pawns:Bitboard8x8,
-	pub(crate) rooks:Bitboard8x8,
-	pub(crate) knights:Bitboard8x8,
-	pub(crate) bishops:Bitboard8x8,
-	pub(crate) queens:Bitboard8x8,
-	pub(crate) kings:Bitboard8x8,
+	pub(crate) whites: Bitboard8x8,
+	pub(crate) blacks: Bitboard8x8,
+	pub(crate) pawns: Bitboard8x8,
+	pub(crate) rooks: Bitboard8x8,
+	pub(crate) knights: Bitboard8x8,
+	pub(crate) bishops: Bitboard8x8,
+	pub(crate) queens: Bitboard8x8,
+	pub(crate) kings: Bitboard8x8,
 	pub(crate) turn: Color,
 	pub(crate) castling_rights: CastlingRights,
 	pub(crate) ep_square: Option<Square>,
@@ -45,20 +44,16 @@ impl Default for ChessBoard {
 			// Types de pièces
 			pawns: Bitboard8x8::from_storage(rank2 | rank7),
 			rooks: Bitboard8x8::from_storage(
-				(1u64 << 0) | (1u64 << 7) | (1u64 << 56) | (1u64 << 63)
+				(1u64 << 0) | (1u64 << 7) | (1u64 << 56) | (1u64 << 63),
 			),
 			knights: Bitboard8x8::from_storage(
-				(1u64 << 1) | (1u64 << 6) | (1u64 << 57) | (1u64 << 62)
+				(1u64 << 1) | (1u64 << 6) | (1u64 << 57) | (1u64 << 62),
 			),
 			bishops: Bitboard8x8::from_storage(
-				(1u64 << 2) | (1u64 << 5) | (1u64 << 58) | (1u64 << 61)
+				(1u64 << 2) | (1u64 << 5) | (1u64 << 58) | (1u64 << 61),
 			),
-			queens: Bitboard8x8::from_storage(
-				(1u64 << 3) | (1u64 << 59)
-			),
-			kings: Bitboard8x8::from_storage(
-				(1u64 << 4) | (1u64 << 60)
-			),
+			queens: Bitboard8x8::from_storage((1u64 << 3) | (1u64 << 59)),
+			kings: Bitboard8x8::from_storage((1u64 << 4) | (1u64 << 60)),
 			// Trait
 			turn: Color::White,
 			castling_rights: CastlingRights::default(),
@@ -150,7 +145,7 @@ fn magic_index(entry: &MagicEntry, blockers: u64) -> usize {
 }
 
 fn get_rook_moves(square: Square, blockers: u64) -> Bitboard8x8 {
-	let sq = square.0 as usize; 
+	let sq = square.0 as usize;
 	let entry = &ROOK_MAGICS[sq];
 	let moves = ROOK_MOVES[sq];
 
@@ -161,7 +156,7 @@ fn get_rook_moves(square: Square, blockers: u64) -> Bitboard8x8 {
 }
 
 fn get_bishop_moves(square: Square, blockers: u64) -> Bitboard8x8 {
-	let sq = square.0 as usize; 
+	let sq = square.0 as usize;
 	let entry = &BISHOP_MAGICS[sq];
 	let moves = BISHOP_MOVES[sq];
 
@@ -171,25 +166,25 @@ fn get_bishop_moves(square: Square, blockers: u64) -> Bitboard8x8 {
 	Bitboard8x8::from_storage(moves[index])
 }*/
 #[inline(always)]
-fn get_rook_moves(square: Square, blockers: u64) -> Bitboard8x8 {
-	let sq = square.0 as usize; 
+fn get_rook_moves(square: Square, blockers: Bitboard8x8) -> Bitboard8x8 {
+	let sq = square.0 as usize;
 	let mask = pext_tables::ROOK_MASKS[sq];
 	let moves = pext_tables::ROOK_MOVES[sq];
 
 	//let index = Bitboard8x8::from_storage(blockers).pext(&Bitboard8x8::from_storage(mask));
-	let index = Bitboard8x8::from_storage(blockers).pext(&mask);
+	let index = blockers.pext(&mask);
 
 	//Bitboard8x8::from_storage(moves[index as usize])
 	moves[index as usize]
 }
 #[inline(always)]
-fn get_bishop_moves(square: Square, blockers: u64) -> Bitboard8x8 {
-	let sq = square.0 as usize; 
+fn get_bishop_moves(square: Square, blockers: Bitboard8x8) -> Bitboard8x8 {
+	let sq = square.0 as usize;
 	let mask = pext_tables::BISHOP_MASKS[sq];
 	let moves = pext_tables::BISHOP_MOVES[sq];
 
 	//let index = Bitboard8x8::from_storage(blockers).pext(&Bitboard8x8::from_storage(mask));
-	let index = Bitboard8x8::from_storage(blockers).pext(&mask);
+	let index = blockers.pext(&mask);
 
 	//Bitboard8x8::from_storage(moves[index as usize])
 	moves[index as usize]
@@ -200,15 +195,15 @@ impl ChessBoard {
 		&self,
 		piece: Piece,
 		square: Square,
-		blockers: u64
+		blockers: Bitboard8x8,
 	) -> Bitboard8x8 {
 		match piece {
-			Piece::Rook   => get_rook_moves(square, blockers),
+			Piece::Rook => get_rook_moves(square, blockers),
 			Piece::Bishop => get_bishop_moves(square, blockers),
-			Piece::Queen  => get_rook_moves(square, blockers) | get_bishop_moves(square, blockers),
+			Piece::Queen => get_rook_moves(square, blockers) | get_bishop_moves(square, blockers),
 			Piece::Knight => Self::knight_attacks(square),
-			Piece::King   => Self::king_attacks(square),
-			Piece::Pawn   => Self::pawn_attacks::<IS_WHITE>(square),
+			Piece::King => Self::king_attacks(square),
+			Piece::Pawn => Self::pawn_attacks::<IS_WHITE>(square),
 		}
 	}
 }
@@ -237,7 +232,7 @@ impl ChessBoard {
 			&enemy_rooks_queens,
 			&mut pinned,
 			&mut pin_dir,
-			direction_index(0, 1),  // N
+			direction_index(0, 1), // N
 			Bitboard8x8::ray_n_mask,
 		);
 		Self::scan_ray(
@@ -257,7 +252,7 @@ impl ChessBoard {
 			&enemy_rooks_queens,
 			&mut pinned,
 			&mut pin_dir,
-			direction_index(1, 0),  // E
+			direction_index(1, 0), // E
 			Bitboard8x8::ray_e_mask,
 		);
 		Self::scan_ray(
@@ -279,7 +274,7 @@ impl ChessBoard {
 			&enemy_bishops_queens,
 			&mut pinned,
 			&mut pin_dir,
-			direction_index(1, 1),  // NE
+			direction_index(1, 1), // NE
 			Bitboard8x8::ray_ne_mask,
 		);
 		Self::scan_ray(
@@ -433,7 +428,6 @@ fn step_index(idx: isize, dx: i8, dy: i8) -> isize {
 	}
 }
 
-
 impl ChessBoard {
 	pub fn legal_moves(&self) -> Vec<Move> {
 		if self.turn == Color::White {
@@ -443,14 +437,22 @@ impl ChessBoard {
 		}
 	}
 	pub fn legal_moves_template<const IS_WHITE: bool>(&self) -> Vec<Move> {
-		let mut array = [Move{ from: Square(0), to: Square(0), promotion: None }; 256];
+		let mut array = [Move {
+			from: Square(0),
+			to: Square(0),
+			promotion: None,
+		}; 256];
 		let mut len = 0;
 		self.legal_moves_inplace::<IS_WHITE>(&mut array, &mut len);
 		array[0..len].to_vec()
 	}
-	
+
 	#[inline]
-	pub fn legal_moves_inplace<const IS_WHITE: bool>(&self, out: &mut [Move; 256], len: &mut usize) {
+	pub fn legal_moves_inplace<const IS_WHITE: bool>(
+		&self,
+		out: &mut [Move; 256],
+		len: &mut usize,
+	) {
 		*len = 0;
 
 		let (in_check, checkers, block_mask) = self.compute_checkers::<IS_WHITE>();
@@ -469,11 +471,15 @@ impl ChessBoard {
 		self.generate_king_moves::<IS_WHITE>(out, len, us_bb, not_us);
 
 		// 5. Si échec simple → seules les pièces qui capturent ou bloquent
-		let restrict_mask = if in_check { block_mask } else { Bitboard8x8::FULL };
+		let restrict_mask = if in_check {
+			block_mask
+		} else {
+			Bitboard8x8::FULL
+		};
 		let (pinned, pin_dir) = self.compute_pins::<IS_WHITE>();
 
-		let blockers = self.all().storage();
-		let empty = Bitboard8x8::from_storage(!blockers);
+		let blockers = self.all();
+		let empty = !blockers;
 
 		// ---------------------------
 		// PAWNS
@@ -484,7 +490,7 @@ impl ChessBoard {
 			let dir = pin_dir[from_sq as usize];
 
 			let attacks = Self::pawn_attacks::<IS_WHITE>(from);
-			let pushes  = Self::pawn_pushes::<IS_WHITE>(from, empty);
+			let pushes = Self::pawn_pushes::<IS_WHITE>(from, empty);
 
 			let enemy_bb = if IS_WHITE { self.blacks } else { self.whites };
 			// Captures
@@ -498,11 +504,19 @@ impl ChessBoard {
 				let to = Square::from_index(to_sq as u8);
 				if ChessBoard::is_promotion_rank::<IS_WHITE>(to) {
 					for promo in [Piece::Queen, Piece::Rook, Piece::Bishop, Piece::Knight] {
-						out[*len] = Move { from, to, promotion: Some(promo) };
+						out[*len] = Move {
+							from,
+							to,
+							promotion: Some(promo),
+						};
 						*len += 1;
 					}
 				} else {
-					out[*len] = Move { from, to, promotion: None };
+					out[*len] = Move {
+						from,
+						to,
+						promotion: None,
+					};
 					*len += 1;
 				}
 			}
@@ -518,11 +532,19 @@ impl ChessBoard {
 				let to = Square::from_index(to_sq as u8);
 				if ChessBoard::is_promotion_rank::<IS_WHITE>(to) {
 					for promo in [Piece::Queen, Piece::Rook, Piece::Bishop, Piece::Knight] {
-						out[*len] = Move { from, to, promotion: Some(promo) };
+						out[*len] = Move {
+							from,
+							to,
+							promotion: Some(promo),
+						};
 						*len += 1;
 					}
 				} else {
-					out[*len] = Move { from, to, promotion: None };
+					out[*len] = Move {
+						from,
+						to,
+						promotion: None,
+					};
 					*len += 1;
 				}
 			}
@@ -531,7 +553,11 @@ impl ChessBoard {
 			if dir == 0 {
 				if let Some(ep_sq) = self.ep_square {
 					if attacks.get_at_index(ep_sq.0 as usize) {
-						out[*len] = Move { from, to: ep_sq, promotion: None };
+						out[*len] = Move {
+							from,
+							to: ep_sq,
+							promotion: None,
+						};
 						*len += 1;
 					}
 				}
@@ -554,7 +580,11 @@ impl ChessBoard {
 				if !restrict_mask.get_at_index(to_sq as usize) {
 					continue;
 				}
-				out[*len] = Move { from, to: Square::from_index(to_sq as u8), promotion: None };
+				out[*len] = Move {
+					from,
+					to: Square::from_index(to_sq as u8),
+					promotion: None,
+				};
 				*len += 1;
 			}
 		}
@@ -576,7 +606,11 @@ impl ChessBoard {
 				if dir != 0 && !Self::move_respects_pin(from_sq as usize, to_sq as usize, dir) {
 					continue;
 				}
-				out[*len] = Move { from, to: Square::from_index(to_sq as u8), promotion: None };
+				out[*len] = Move {
+					from,
+					to: Square::from_index(to_sq as u8),
+					promotion: None,
+				};
 				*len += 1;
 			}
 		}
@@ -598,7 +632,11 @@ impl ChessBoard {
 				if dir != 0 && !Self::move_respects_pin(from_sq as usize, to_sq as usize, dir) {
 					continue;
 				}
-				out[*len] = Move { from, to: Square::from_index(to_sq as u8), promotion: None };
+				out[*len] = Move {
+					from,
+					to: Square::from_index(to_sq as u8),
+					promotion: None,
+				};
 				*len += 1;
 			}
 		}
@@ -611,7 +649,8 @@ impl ChessBoard {
 			let from = Square::from_index(from_sq as u8);
 			let dir = pin_dir[from_sq as usize];
 
-			let attacks = (get_rook_moves(from, blockers) | get_bishop_moves(from, blockers)) & not_us;
+			let attacks =
+				(get_rook_moves(from, blockers) | get_bishop_moves(from, blockers)) & not_us;
 
 			for to_sq in attacks.iter_bits() {
 				if !restrict_mask.get_at_index(to_sq as usize) {
@@ -620,24 +659,41 @@ impl ChessBoard {
 				if dir != 0 && !Self::move_respects_pin(from_sq as usize, to_sq as usize, dir) {
 					continue;
 				}
-				out[*len] = Move { from, to: Square::from_index(to_sq as u8), promotion: None };
+				out[*len] = Move {
+					from,
+					to: Square::from_index(to_sq as u8),
+					promotion: None,
+				};
 				*len += 1;
 			}
 		}
 		self.generate_legal_castling_moves::<IS_WHITE>(out, len);
 	}
-		
-	fn generate_king_moves<const IS_WHITE:bool>(&self, out: &mut [Move; 256], len: &mut usize, us_bb: Bitboard8x8, not_us: Bitboard8x8) {
+
+	fn generate_king_moves<const IS_WHITE: bool>(
+		&self,
+		out: &mut [Move; 256],
+		len: &mut usize,
+		us_bb: Bitboard8x8,
+		not_us: Bitboard8x8,
+	) {
 		let king = self.kings & us_bb;
 		for from_sq in king.iter_bits() {
 			let from = Square::from_index(from_sq as u8);
 			let attacks = Self::king_attacks(from) & not_us;
 
 			for to_sq in attacks.iter_bits() {
-				if self.is_square_attacked::<IS_WHITE>( Square(to_sq as u8), (self.all() & !king).storage() ) {
-					 continue; // illégal
+				if self.is_square_attacked::<IS_WHITE>(
+					Square(to_sq as u8),
+					self.all() & !king,
+				) {
+					continue; // illégal
 				}
-				out[*len] = Move { from, to: Square::from_index(to_sq as u8), promotion: None };
+				out[*len] = Move {
+					from,
+					to: Square::from_index(to_sq as u8),
+					promotion: None,
+				};
 				*len += 1;
 			}
 		}
@@ -672,15 +728,13 @@ impl ChessBoard {
 
 impl ChessBoard {
 	#[inline]
-	pub fn compute_checkers<const IS_WHITE: bool>(&self)
-		-> (bool, Bitboard8x8, Bitboard8x8)
-	{
+	pub fn compute_checkers<const IS_WHITE: bool>(&self) -> (bool, Bitboard8x8, Bitboard8x8) {
 		let them = if IS_WHITE { self.blacks } else { self.whites };
 
 		let king_sq = self.king_square::<IS_WHITE>();
 		let king_idx = king_sq.0 as usize;
 
-		let blockers = self.all().storage();
+		let blockers = self.all();
 
 		let mut checkers = Bitboard8x8::empty();
 		let mut block_mask = Bitboard8x8::empty();
@@ -703,7 +757,8 @@ impl ChessBoard {
 		let diag_sliders = (self.bishops | self.queens) & them;
 		let diag_attackers = get_bishop_moves(king_sq, blockers) & diag_sliders;
 
-		let d = diag_attackers.storage();
+		//TODO: remove storage call
+		let d = *diag_attackers.storage();
 		if d != 0 {
 			checkers |= diag_attackers;
 
@@ -720,7 +775,8 @@ impl ChessBoard {
 		let ortho_sliders = (self.rooks | self.queens) & them;
 		let ortho_attackers = get_rook_moves(king_sq, blockers) & ortho_sliders;
 
-		let o = ortho_attackers.storage();
+		//TODO: remove storage call
+		let o = *ortho_attackers.storage();
 		if o != 0 {
 			checkers |= ortho_attackers;
 
@@ -734,7 +790,8 @@ impl ChessBoard {
 		// -------------------------
 		// 5. Checkers
 		// -------------------------
-		let c = checkers.storage();
+		//TODO: remove storage call
+		let c = *checkers.storage();
 
 		if c == 0 {
 			return (false, Bitboard8x8::empty(), Bitboard8x8::empty());
@@ -750,7 +807,6 @@ impl ChessBoard {
 		(true, checkers, block_mask)
 	}
 
-
 	/// Retourne les cases entre deux cases (exclut les extrémités)
 	#[inline]
 	fn ray_between(from: usize, to: usize) -> Bitboard8x8 {
@@ -760,7 +816,6 @@ impl ChessBoard {
 	}
 }
 
-
 impl ChessBoard {
 	#[inline(always)]
 	fn is_promotion_rank<const IS_WHITE: bool>(to: Square) -> bool {
@@ -769,79 +824,98 @@ impl ChessBoard {
 	}
 
 	#[inline]
-	fn generate_legal_castling_moves<const IS_WHITE: bool>(&self, moves: &mut [Move; 256], len: &mut usize) {
+	fn generate_legal_castling_moves<const IS_WHITE: bool>(
+		&self,
+		moves: &mut [Move; 256],
+		len: &mut usize,
+	) {
 		const W_KING_SIDE_EMPTY: Bitboard8x8 = Bitboard8x8::from_storage((1 << 5) | (1 << 6));
 		const B_KING_SIDE_EMPTY: Bitboard8x8 = Bitboard8x8::from_storage((1 << 61) | (1 << 62));
-		const W_QUEEN_SIDE_EMPTY: Bitboard8x8 = Bitboard8x8::from_storage((1 << 3) | (1 << 2) | (1 << 1));
-		const B_QUEEN_SIDE_EMPTY: Bitboard8x8 = Bitboard8x8::from_storage((1 << 59) | (1 << 58) | (1 << 57));
-		let blockers = self.all().storage();
-		let empty = Bitboard8x8::from_storage(!blockers);
+		const W_QUEEN_SIDE_EMPTY: Bitboard8x8 =
+			Bitboard8x8::from_storage((1 << 3) | (1 << 2) | (1 << 1));
+		const B_QUEEN_SIDE_EMPTY: Bitboard8x8 =
+			Bitboard8x8::from_storage((1 << 59) | (1 << 58) | (1 << 57));
+		let blockers = self.all();
+		let empty = !blockers;
 		if IS_WHITE {
 			// Petit roque
-			if self.castling_rights.white_kingside() &&
-				empty & W_KING_SIDE_EMPTY == W_KING_SIDE_EMPTY &&
-				!self.is_square_attacked::<true>(Square(4), blockers) &&
-				!self.is_square_attacked::<true>(Square(5), blockers) &&
-				!self.is_square_attacked::<true>(Square(6), blockers)
+			if self.castling_rights.white_kingside()
+				&& empty & W_KING_SIDE_EMPTY == W_KING_SIDE_EMPTY
+				&& !self.is_square_attacked::<true>(Square(4), blockers)
+				&& !self.is_square_attacked::<true>(Square(5), blockers)
+				&& !self.is_square_attacked::<true>(Square(6), blockers)
 			{
-				moves[*len] = Move { from: Square(4), to: Square(6), promotion: None };
+				moves[*len] = Move {
+					from: Square(4),
+					to: Square(6),
+					promotion: None,
+				};
 				*len += 1;
 			}
 
 			// Grand roque
-			if self.castling_rights.white_queenside() &&
-				empty & W_QUEEN_SIDE_EMPTY == W_QUEEN_SIDE_EMPTY &&
-				!self.is_square_attacked::<true>(Square(4), blockers) &&
-				!self.is_square_attacked::<true>(Square(3), blockers) &&
-				!self.is_square_attacked::<true>(Square(2), blockers)
-
+			if self.castling_rights.white_queenside()
+				&& empty & W_QUEEN_SIDE_EMPTY == W_QUEEN_SIDE_EMPTY
+				&& !self.is_square_attacked::<true>(Square(4), blockers)
+				&& !self.is_square_attacked::<true>(Square(3), blockers)
+				&& !self.is_square_attacked::<true>(Square(2), blockers)
 			{
-				moves[*len] = Move { from: Square(4), to: Square(2), promotion: None };
+				moves[*len] = Move {
+					from: Square(4),
+					to: Square(2),
+					promotion: None,
+				};
 				*len += 1;
 			}
-		}
-
-		else {
+		} else {
 			// Petit roque
-			if self.castling_rights.black_kingside() &&
-				empty & B_KING_SIDE_EMPTY == B_KING_SIDE_EMPTY &&
-				!self.is_square_attacked::<false>(Square(60), blockers) &&
-				!self.is_square_attacked::<false>(Square(61), blockers) &&
-				!self.is_square_attacked::<false>(Square(62), blockers)
-
+			if self.castling_rights.black_kingside()
+				&& empty & B_KING_SIDE_EMPTY == B_KING_SIDE_EMPTY
+				&& !self.is_square_attacked::<false>(Square(60), blockers)
+				&& !self.is_square_attacked::<false>(Square(61), blockers)
+				&& !self.is_square_attacked::<false>(Square(62), blockers)
 			{
-				moves[*len] = Move { from: Square(60), to: Square(62), promotion: None };
-				*len +=1;
+				moves[*len] = Move {
+					from: Square(60),
+					to: Square(62),
+					promotion: None,
+				};
+				*len += 1;
 			}
 
 			// Grand roque
-			if self.castling_rights.black_queenside() &&
-				empty & B_QUEEN_SIDE_EMPTY == B_QUEEN_SIDE_EMPTY &&
-				!self.is_square_attacked::<false>(Square(60), blockers) &&
-				!self.is_square_attacked::<false>(Square(59), blockers) &&
-				!self.is_square_attacked::<false>(Square(58), blockers)
-
+			if self.castling_rights.black_queenside()
+				&& empty & B_QUEEN_SIDE_EMPTY == B_QUEEN_SIDE_EMPTY
+				&& !self.is_square_attacked::<false>(Square(60), blockers)
+				&& !self.is_square_attacked::<false>(Square(59), blockers)
+				&& !self.is_square_attacked::<false>(Square(58), blockers)
 			{
-				moves[*len] = Move { from: Square(60), to: Square(58), promotion: None };
+				moves[*len] = Move {
+					from: Square(60),
+					to: Square(58),
+					promotion: None,
+				};
 				*len += 1;
 			}
 		}
 	}
 }
 
-
-
 impl ChessBoard {
-	pub const KNIGHT_ATTACKS: &[Bitboard8x8;64] = &Bitboard8x8::generate_jump_attacks_table(&[
-			(1,2),(2,1),(2,-1),(1,-2),
-			(-1,-2),(-2,-1),(-2,1),(-1,2),
-		]);
-	pub const WPAWN_ATTACKS: &[Bitboard8x8;64] = &Bitboard8x8::generate_jump_attacks_table(&[
-		(1,1),(-1,1)
+	pub const KNIGHT_ATTACKS: &[Bitboard8x8; 64] = &Bitboard8x8::generate_jump_attacks_table(&[
+		(1, 2),
+		(2, 1),
+		(2, -1),
+		(1, -2),
+		(-1, -2),
+		(-2, -1),
+		(-2, 1),
+		(-1, 2),
 	]);
-	pub const BPAWN_ATTACKS: &[Bitboard8x8;64] = &Bitboard8x8::generate_jump_attacks_table(&[
-		(1,-1),(-1,-1)
-	]);
+	pub const WPAWN_ATTACKS: &[Bitboard8x8; 64] =
+		&Bitboard8x8::generate_jump_attacks_table(&[(1, 1), (-1, 1)]);
+	pub const BPAWN_ATTACKS: &[Bitboard8x8; 64] =
+		&Bitboard8x8::generate_jump_attacks_table(&[(1, -1), (-1, -1)]);
 	#[inline(always)]
 	pub fn knight_attacks(square: Square) -> Bitboard8x8 {
 		Self::KNIGHT_ATTACKS[square.0 as usize]
@@ -865,12 +939,24 @@ impl ChessBoard {
 	pub fn piece_at(&self, sq: Square) -> Option<Piece> {
 		let bb = Bitboard8x8::from_index(sq.0 as usize);
 
-		if (self.pawns   & bb).any() { return Some(Piece::Pawn); }
-		if (self.rooks   & bb).any() { return Some(Piece::Rook); }
-		if (self.knights & bb).any() { return Some(Piece::Knight); }
-		if (self.bishops & bb).any() { return Some(Piece::Bishop); }
-		if (self.queens  & bb).any() { return Some(Piece::Queen); }
-		if (self.kings   & bb).any() { return Some(Piece::King); }
+		if (self.pawns & bb).any() {
+			return Some(Piece::Pawn);
+		}
+		if (self.rooks & bb).any() {
+			return Some(Piece::Rook);
+		}
+		if (self.knights & bb).any() {
+			return Some(Piece::Knight);
+		}
+		if (self.bishops & bb).any() {
+			return Some(Piece::Bishop);
+		}
+		if (self.queens & bb).any() {
+			return Some(Piece::Queen);
+		}
+		if (self.kings & bb).any() {
+			return Some(Piece::King);
+		}
 
 		None
 	}
@@ -878,8 +964,12 @@ impl ChessBoard {
 	pub fn color_at(&self, sq: Square) -> Option<Color> {
 		let bb = Bitboard8x8::from_index(sq.0 as usize);
 
-		if (self.whites   & bb).any() { return Some(Color::White); }
-		if (self.blacks   & bb).any() { return Some(Color::Black); }
+		if (self.whites & bb).any() {
+			return Some(Color::White);
+		}
+		if (self.blacks & bb).any() {
+			return Some(Color::Black);
+		}
 		None
 	}
 }
@@ -900,8 +990,7 @@ impl ChessBoard {
 			} else {
 				one
 			}
-		}
-		else {
+		} else {
 			let one = (bb >> 8usize) & free;
 
 			// double push depuis rangée 7
@@ -915,7 +1004,6 @@ impl ChessBoard {
 	}
 }
 
-
 impl ChessBoard {
 	#[inline]
 	pub fn play(&mut self, mv: &Move) {
@@ -927,24 +1015,24 @@ impl ChessBoard {
 	}
 	pub fn play_template<const IS_WHITE: bool>(&mut self, mv: &Move) {
 		let from_bb = Bitboard8x8::from_index(mv.from.0 as usize);
-		let to_bb   = Bitboard8x8::from_index(mv.to.0 as usize);
+		let to_bb = Bitboard8x8::from_index(mv.to.0 as usize);
 		let ep_square_prev = self.ep_square.take();
 		// Reset previous move EP done by take
 		//self.ep_square = None;
 
-		debug_assert!( (self.whites & from_bb).any() == IS_WHITE);
+		debug_assert!((self.whites & from_bb).any() == IS_WHITE);
 
-		let piece = self.piece_at(mv.from)
-			.expect("No piece on source square");
+		let piece = self.piece_at(mv.from).expect("No piece on source square");
 		let mut is_en_passant = false;
 		let mut capture = None;
 		// Castling
 		if piece == Piece::King {
 			match (mv.from.0, mv.to.0) {
-				(4, 6) => { // white king
+				(4, 6) => {
+					// white king
 					// rook h1 → f1
 					let rook_from = Bitboard8x8::from_index(7);
-					let rook_to   = Bitboard8x8::from_index(5);
+					let rook_to = Bitboard8x8::from_index(5);
 
 					self.rooks ^= rook_from;
 					self.rooks |= rook_to;
@@ -952,10 +1040,11 @@ impl ChessBoard {
 					self.whites ^= rook_from;
 					self.whites |= rook_to;
 				}
-				(4, 2) => { // white queen
+				(4, 2) => {
+					// white queen
 					// rook a1 → d1
 					let rook_from = Bitboard8x8::from_index(0);
-					let rook_to   = Bitboard8x8::from_index(3);
+					let rook_to = Bitboard8x8::from_index(3);
 
 					self.rooks ^= rook_from;
 					self.rooks |= rook_to;
@@ -964,9 +1053,10 @@ impl ChessBoard {
 					self.whites |= rook_to;
 				}
 
-				(60, 62) => { // black king
+				(60, 62) => {
+					// black king
 					let rook_from = Bitboard8x8::from_index(63);
-					let rook_to   = Bitboard8x8::from_index(61);
+					let rook_to = Bitboard8x8::from_index(61);
 
 					self.rooks ^= rook_from;
 					self.rooks |= rook_to;
@@ -975,9 +1065,10 @@ impl ChessBoard {
 					self.blacks |= rook_to;
 				}
 
-				(60, 58) => { // black queen
+				(60, 58) => {
+					// black queen
 					let rook_from = Bitboard8x8::from_index(56);
-					let rook_to   = Bitboard8x8::from_index(59);
+					let rook_to = Bitboard8x8::from_index(59);
 
 					self.rooks ^= rook_from;
 					self.rooks |= rook_to;
@@ -988,24 +1079,24 @@ impl ChessBoard {
 				_ => {}
 			}
 		}
-		
+
 		// remove from origin
 		match piece {
-			Piece::Pawn   => self.pawns   &= !from_bb,
-			Piece::Rook   => self.rooks   &= !from_bb,
+			Piece::Pawn => self.pawns &= !from_bb,
+			Piece::Rook => self.rooks &= !from_bb,
 			Piece::Knight => self.knights &= !from_bb,
 			Piece::Bishop => self.bishops &= !from_bb,
-			Piece::Queen  => self.queens  &= !from_bb,
-			Piece::King   => self.kings   &= !from_bb,
+			Piece::Queen => self.queens &= !from_bb,
+			Piece::King => self.kings &= !from_bb,
 		}
 
 		if (self.all() & to_bb).any() {
 			// capture
-			if (self.pawns & to_bb).any()   {
-				self.pawns   &= !to_bb;
+			if (self.pawns & to_bb).any() {
+				self.pawns &= !to_bb;
 				capture = Some(Piece::Pawn);
 			} else if (self.rooks & to_bb).any() {
-				self.rooks   &= !to_bb;
+				self.rooks &= !to_bb;
 				capture = Some(Piece::Rook);
 			} else if (self.knights & to_bb).any() {
 				self.knights &= !to_bb;
@@ -1014,7 +1105,7 @@ impl ChessBoard {
 				self.bishops &= !to_bb;
 				capture = Some(Piece::Bishop);
 			} else if (self.queens & to_bb).any() {
-				self.queens  &= !to_bb;
+				self.queens &= !to_bb;
 				capture = Some(Piece::Queen);
 			}
 			//else if (self.kings & to_bb).any()   { self.kings   &= !to_bb; }
@@ -1042,8 +1133,11 @@ impl ChessBoard {
 					let cap_bb = Bitboard8x8::from_index(captured_sq.0 as usize);
 
 					self.pawns &= !cap_bb;
-					if IS_WHITE { self.blacks &= !cap_bb; }
-					else        { self.whites &= !cap_bb; }
+					if IS_WHITE {
+						self.blacks &= !cap_bb;
+					} else {
+						self.whites &= !cap_bb;
+					}
 				}
 			}
 		}
@@ -1052,8 +1146,8 @@ impl ChessBoard {
 		self.castling_rights.0 |= CastlingRights::CASTLING_MASK_TO[mv.to.0 as usize];
 		let castling_changed = CastlingRights(old_castling_rights.0 ^ self.castling_rights.0);
 		match mv.promotion {
-			Some(Piece::Queen)  => self.queens  |= to_bb,
-			Some(Piece::Rook)   => self.rooks   |= to_bb,
+			Some(Piece::Queen) => self.queens |= to_bb,
+			Some(Piece::Rook) => self.rooks |= to_bb,
 			Some(Piece::Bishop) => self.bishops |= to_bb,
 			Some(Piece::Knight) => self.knights |= to_bb,
 			Some(Piece::King) => panic!("Promoting to King"),
@@ -1061,12 +1155,12 @@ impl ChessBoard {
 			None => {
 				// coup normal
 				match piece {
-					Piece::Pawn   => self.pawns   |= to_bb,
-					Piece::Rook   => self.rooks   |= to_bb,
+					Piece::Pawn => self.pawns |= to_bb,
+					Piece::Rook => self.rooks |= to_bb,
 					Piece::Knight => self.knights |= to_bb,
 					Piece::Bishop => self.bishops |= to_bb,
-					Piece::Queen  => self.queens  |= to_bb,
-					Piece::King   => self.kings   |= to_bb,
+					Piece::Queen => self.queens |= to_bb,
+					Piece::King => self.kings |= to_bb,
 				}
 			}
 		}
@@ -1081,13 +1175,20 @@ impl ChessBoard {
 			self.whites &= !to_bb;
 		}
 
-		self.update_hash_move::<IS_WHITE>(mv, piece, capture, is_en_passant, castling_changed, ep_square_prev);
-		
+		self.update_hash_move::<IS_WHITE>(
+			mv,
+			piece,
+			capture,
+			is_en_passant,
+			castling_changed,
+			ep_square_prev,
+		);
+
 		self.turn = self.turn.opponent();
 		self.update_hash_turn();
 	}
 	#[inline]
-	pub fn is_square_attacked<const IS_WHITE: bool>(&self, sq: Square, blockers: u64) -> bool {
+	pub fn is_square_attacked<const IS_WHITE: bool>(&self, sq: Square, blockers: Bitboard8x8) -> bool {
 		let attackers = if IS_WHITE { self.blacks } else { self.whites };
 		let all = blockers;
 		if IS_WHITE {
@@ -1125,8 +1226,16 @@ impl ChessBoard {
 
 	#[inline]
 	pub fn king_square<const IS_WHITE: bool>(&self) -> Square {
-		let bb = if IS_WHITE { self.kings & self.whites } else { self.kings & self.blacks };
-		debug_assert!(bb.any(), "king_square: no king for {:?}", if IS_WHITE {Color::White} else {Color::Black});
+		let bb = if IS_WHITE {
+			self.kings & self.whites
+		} else {
+			self.kings & self.blacks
+		};
+		debug_assert!(
+			bb.any(),
+			"king_square: no king for {:?}",
+			if IS_WHITE { Color::White } else { Color::Black }
+		);
 
 		Square::from_index(bb.storage().trailing_zeros() as u8)
 	}
@@ -1164,7 +1273,7 @@ impl Zobrist {
 		let mut kings = [[0u64; 2]; Bitboard8x8::NB_SQUARES];
 		let mut castling_rights = [0u64; 4];
 		let mut en_passant = [0u64; 8];
-		
+
 		let mut i = 0;
 		while i < Bitboard8x8::NB_SQUARES {
 			pawns[i][0] = rng.u64();
@@ -1191,7 +1300,7 @@ impl Zobrist {
 			en_passant[i] = rng.u64();
 			i += 1;
 		}
-		
+
 		Self {
 			pawns,
 			rooks,
@@ -1209,18 +1318,42 @@ impl ChessBoard {
 	const ZOBRIST_KEYS: Zobrist = Zobrist::new(0x91F4A12);
 	pub(crate) fn compute_zobrist(&self) -> u64 {
 		let mut h = 0u64;
-		for i in (self.pawns & self.whites).iter_bits() { h ^= Self::ZOBRIST_KEYS.pawns[i as usize][0]; }
-		for i in (self.pawns & self.blacks).iter_bits() { h ^= Self::ZOBRIST_KEYS.pawns[i as usize][1]; }
-		for i in (self.rooks & self.whites).iter_bits() { h ^= Self::ZOBRIST_KEYS.rooks[i as usize][0]; }
-		for i in (self.rooks & self.blacks).iter_bits() { h ^= Self::ZOBRIST_KEYS.rooks[i as usize][1]; }
-		for i in (self.knights & self.whites).iter_bits() { h ^= Self::ZOBRIST_KEYS.knights[i as usize][0]; }
-		for i in (self.knights & self.blacks).iter_bits() { h ^= Self::ZOBRIST_KEYS.knights[i as usize][1]; }
-		for i in (self.bishops & self.whites).iter_bits() { h ^= Self::ZOBRIST_KEYS.bishops[i as usize][0]; }
-		for i in (self.bishops & self.blacks).iter_bits() { h ^= Self::ZOBRIST_KEYS.bishops[i as usize][1]; }
-		for i in (self.queens & self.whites).iter_bits() { h ^= Self::ZOBRIST_KEYS.queens[i as usize][0]; }
-		for i in (self.queens & self.blacks).iter_bits() { h ^= Self::ZOBRIST_KEYS.queens[i as usize][1]; }
-		for i in (self.kings & self.whites).iter_bits() { h ^= Self::ZOBRIST_KEYS.kings[i as usize][0]; }
-		for i in (self.kings & self.blacks).iter_bits() { h ^= Self::ZOBRIST_KEYS.kings[i as usize][1]; }
+		for i in (self.pawns & self.whites).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.pawns[i as usize][0];
+		}
+		for i in (self.pawns & self.blacks).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.pawns[i as usize][1];
+		}
+		for i in (self.rooks & self.whites).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.rooks[i as usize][0];
+		}
+		for i in (self.rooks & self.blacks).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.rooks[i as usize][1];
+		}
+		for i in (self.knights & self.whites).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.knights[i as usize][0];
+		}
+		for i in (self.knights & self.blacks).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.knights[i as usize][1];
+		}
+		for i in (self.bishops & self.whites).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.bishops[i as usize][0];
+		}
+		for i in (self.bishops & self.blacks).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.bishops[i as usize][1];
+		}
+		for i in (self.queens & self.whites).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.queens[i as usize][0];
+		}
+		for i in (self.queens & self.blacks).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.queens[i as usize][1];
+		}
+		for i in (self.kings & self.whites).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.kings[i as usize][0];
+		}
+		for i in (self.kings & self.blacks).iter_bits() {
+			h ^= Self::ZOBRIST_KEYS.kings[i as usize][1];
+		}
 		if self.castling_rights.white_kingside() {
 			h ^= Self::ZOBRIST_KEYS.castling_rights[0];
 		}
@@ -1237,23 +1370,33 @@ impl ChessBoard {
 		if let Some(ep) = self.ep_square {
 			h ^= Self::ZOBRIST_KEYS.en_passant[ep.file()];
 		}
-		if self.turn == Color::Black { h ^= Self::ZOBRIST_KEYS.turn; }
+		if self.turn == Color::Black {
+			h ^= Self::ZOBRIST_KEYS.turn;
+		}
 		h
 	}
 	fn zobrist_piece(piece: Piece, sq: usize, color: usize) -> u64 {
 		match piece {
-			Piece::Pawn   => Self::ZOBRIST_KEYS.pawns[sq][color],
-			Piece::Rook   => Self::ZOBRIST_KEYS.rooks[sq][color],
+			Piece::Pawn => Self::ZOBRIST_KEYS.pawns[sq][color],
+			Piece::Rook => Self::ZOBRIST_KEYS.rooks[sq][color],
 			Piece::Knight => Self::ZOBRIST_KEYS.knights[sq][color],
 			Piece::Bishop => Self::ZOBRIST_KEYS.bishops[sq][color],
-			Piece::Queen  => Self::ZOBRIST_KEYS.queens[sq][color],
-			Piece::King   => Self::ZOBRIST_KEYS.kings[sq][color],
+			Piece::Queen => Self::ZOBRIST_KEYS.queens[sq][color],
+			Piece::King => Self::ZOBRIST_KEYS.kings[sq][color],
 		}
 	}
-	fn update_hash_move<const IS_WHITE: bool>(&mut self, m: &Move, piece: Piece, capture: Option<Piece>, is_en_passant: bool, castling_changed: CastlingRights, ep_square_prev: Option<Square>) {
+	fn update_hash_move<const IS_WHITE: bool>(
+		&mut self,
+		m: &Move,
+		piece: Piece,
+		capture: Option<Piece>,
+		is_en_passant: bool,
+		castling_changed: CastlingRights,
+		ep_square_prev: Option<Square>,
+	) {
 		let from = m.from.0 as usize;
 		let to = m.to.0 as usize;
-		let (color, opp) = if IS_WHITE {(0, 1)} else {(1, 0)};
+		let (color, opp) = if IS_WHITE { (0, 1) } else { (1, 0) };
 		//println!("{m}, {piece:?}, {capture:?}, {is_en_passant}, {castling_changed:?}, {ep_square_prev:?}, {:?}", self.ep_square);
 		// --- 1. REMOVE PIECE FROM SOURCE ---
 		self.hash ^= Self::zobrist_piece(piece, from, color);
@@ -1298,21 +1441,25 @@ impl ChessBoard {
 		self.hash ^= Self::zobrist_piece(piece_to_place, to, color);
 
 		// --- 6. CASTLING MOVE ---
-		 if let Some(ct) = m.castling_type(piece) {
+		if let Some(ct) = m.castling_type(piece) {
 			match ct {
-				0 => { // white king side
+				0 => {
+					// white king side
 					self.hash ^= Self::zobrist_piece(Piece::Rook, 7, color);
 					self.hash ^= Self::zobrist_piece(Piece::Rook, 5, color);
 				}
-				1 => { // white queen side
+				1 => {
+					// white queen side
 					self.hash ^= Self::zobrist_piece(Piece::Rook, 0, color);
 					self.hash ^= Self::zobrist_piece(Piece::Rook, 3, color);
 				}
-				2 => { // black king side
+				2 => {
+					// black king side
 					self.hash ^= Self::zobrist_piece(Piece::Rook, 63, color);
 					self.hash ^= Self::zobrist_piece(Piece::Rook, 61, color);
 				}
-				3 => { // black queen side
+				3 => {
+					// black queen side
 					self.hash ^= Self::zobrist_piece(Piece::Rook, 56, color);
 					self.hash ^= Self::zobrist_piece(Piece::Rook, 59, color);
 				}
@@ -1336,7 +1483,11 @@ impl Game for ChessBoard {
 
 	#[inline]
 	fn generate_moves(b: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
-		let mut array = [Move { from: Square(0), to: Square(0), promotion: None }; 256];
+		let mut array = [Move {
+			from: Square(0),
+			to: Square(0),
+			promotion: None,
+		}; 256];
 		let mut len = 0;
 		if b.turn == Color::White {
 			b.legal_moves_inplace::<true>(&mut array, &mut len);
@@ -1357,7 +1508,7 @@ impl Game for ChessBoard {
 	fn apply(b: &mut Self::S, m: Self::M) -> Option<Self::S> {
 		let mut copy = *b;
 		copy.play(&m);
-		
+
 		Some(copy)
 	}
 
@@ -1396,21 +1547,17 @@ impl Evaluator for ChessMaterialEval {
 		const B: i16 = 330;
 		const R: i16 = 500;
 		const Q: i16 = 900;
-		let w = (state.pawns & state.whites).count() as i16 * P +
-			(state.knights & state.whites).count() as i16 * N +
-			(state.bishops & state.whites).count() as i16 * B +
-			(state.rooks & state.whites).count() as i16 * R +
-			(state.queens & state.whites).count() as i16 * Q;
-		let b = (state.pawns & state.blacks).count() as i16 * P +
-			(state.knights & state.blacks).count() as i16 * N +
-			(state.bishops & state.blacks).count() as i16 * B +
-			(state.rooks & state.blacks).count() as i16 * R +
-			(state.queens & state.blacks).count() as i16 * Q;
-		if p == Player::PLAYER1 {
-			w - b
-		} else {
-			b - w
-		}
+		let w = (state.pawns & state.whites).count() as i16 * P
+			+ (state.knights & state.whites).count() as i16 * N
+			+ (state.bishops & state.whites).count() as i16 * B
+			+ (state.rooks & state.whites).count() as i16 * R
+			+ (state.queens & state.whites).count() as i16 * Q;
+		let b = (state.pawns & state.blacks).count() as i16 * P
+			+ (state.knights & state.blacks).count() as i16 * N
+			+ (state.bishops & state.blacks).count() as i16 * B
+			+ (state.rooks & state.blacks).count() as i16 * R
+			+ (state.queens & state.blacks).count() as i16 * Q;
+		if p == Player::PLAYER1 { w - b } else { b - w }
 	}
 }
 
@@ -1437,87 +1584,84 @@ impl Evaluator for ChessPosEval {
 		const Q: i16 = 900;
 
 		const KNIGHT_TABLE: [i16; 64] = [
-			-25,-20,-15,-15,-15,-15,-20,-25,
-			-20,-10,  0,  0,  0,  0,-10,-20,
-			-15,  0,  5,  8,  8,  5,  0,-15,
-			-15,  5,  8, 10, 10,  8,  3,-15,
-			-15,  0,  8, 10, 10,  8,  0,-15,
-			-15,  5,  5,  8,  8,  5,  3,-15,
-			-20,-10,  0,  3,  3,  0,-10,-20,
-			-25,-40,-15,-15,-15,-15,-20,-25,
+			-25, -20, -15, -15, -15, -15, -20, -25, -20, -10, 0, 0, 0, 0, -10, -20, -15, 0, 5, 8,
+			8, 5, 0, -15, -15, 5, 8, 10, 10, 8, 3, -15, -15, 0, 8, 10, 10, 8, 0, -15, -15, 5, 5, 8,
+			8, 5, 3, -15, -20, -10, 0, 3, 3, 0, -10, -20, -25, -40, -15, -15, -15, -15, -20, -25,
 		];
 
 		const BISHOP_TABLE: [i16; 64] = [
-			-10,-10,-10,-10,-10,-10,-10,-10,
-			-10,  0,  0,  0,  0,  0,  0,-10,
-			-10,  0,  5, 10, 10,  5,  0,-10,
-			-10,  5,  5, 10, 10,  5,  5,-10,
-			-10,  0, 10, 10, 10, 10,  0,-10,
-			-10, 10, 10, 10, 10, 10, 10,-10,
-			-10,  5,  0,  0,  0,  0,  5,-10,
-			-10,-10,-10,-10,-10,-10,-10,-10,
+			-10, -10, -10, -10, -10, -10, -10, -10, -10, 0, 0, 0, 0, 0, 0, -10, -10, 0, 5, 10, 10,
+			5, 0, -10, -10, 5, 5, 10, 10, 5, 5, -10, -10, 0, 10, 10, 10, 10, 0, -10, -10, 10, 10,
+			10, 10, 10, 10, -10, -10, 5, 0, 0, 0, 0, 5, -10, -10, -10, -10, -10, -10, -10, -10,
+			-10,
 		];
 
 		const ROOK_TABLE: [i16; 64] = [
-			0, 0, 0, 0, 0, 0, 0, 0,
-			5,10,10,10,10,10,10, 5,
-			-5, 0, 0, 0, 0, 0, 0,-5,
-			-5, 0, 0, 0, 0, 0, 0,-5,
-			-5, 0, 0, 0, 0, 0, 0,-5,
-			-5, 0, 0, 0, 0, 0, 0,-5,
-			-5, 0, 0, 0, 0, 0, 0,-5,
-			0, 0, 0, 5, 5, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 10, 10, 10, 10, 10, 5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0,
+			0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0, 0, 0, -5, -5, 0, 0, 0, 0,
+			0, 0, -5, 0, 0, 0, 5, 5, 0, 0, 0,
 		];
 
 		const PAWN_TABLE: [i16; 64] = [
-			0, 0, 0, 0, 0, 0, 0, 0,
-			50,50,50,50,50,50,50,50,
-			10,10,20,30,30,20,10,10,
-			5, 5,10,25,25,10, 5, 5,
-			0, 0, 0,20,20, 0, 0, 0,
-			5,-5,-10, 0, 0,-10,-5, 5,
-			5,10,10,-20,-20,10,10, 5,
-			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 20, 30, 30, 20, 10, 10,
+			5, 5, 10, 25, 25, 10, 5, 5, 0, 0, 0, 20, 20, 0, 0, 0, 5, -5, -10, 0, 0, -10, -5, 5, 5,
+			10, 10, -20, -20, 10, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0,
 		];
 
-		let mut w_score = (state.pawns & state.whites).count() as i16 * P +
-						(state.knights & state.whites).count() as i16 * N +
-						(state.bishops & state.whites).count() as i16 * B +
-						(state.rooks & state.whites).count() as i16 * R +
-						(state.queens & state.whites).count() as i16 * Q;
+		let mut w_score = (state.pawns & state.whites).count() as i16 * P
+			+ (state.knights & state.whites).count() as i16 * N
+			+ (state.bishops & state.whites).count() as i16 * B
+			+ (state.rooks & state.whites).count() as i16 * R
+			+ (state.queens & state.whites).count() as i16 * Q;
 
-		let mut b_score = (state.pawns & state.blacks).count() as i16 * P +
-						(state.knights & state.blacks).count() as i16 * N +
-						(state.bishops & state.blacks).count() as i16 * B +
-						(state.rooks & state.blacks).count() as i16 * R +
-						(state.queens & state.blacks).count() as i16 * Q;
+		let mut b_score = (state.pawns & state.blacks).count() as i16 * P
+			+ (state.knights & state.blacks).count() as i16 * N
+			+ (state.bishops & state.blacks).count() as i16 * B
+			+ (state.rooks & state.blacks).count() as i16 * R
+			+ (state.queens & state.blacks).count() as i16 * Q;
 
 		for sq in state.knights.iter_bits() {
 			let sq = sq as usize;
 			let bb = Bitboard8x8::from_index(sq);
-			if (state.whites & bb).any() { w_score += KNIGHT_TABLE[sq]; }
-			if (state.blacks & bb).any() { b_score += KNIGHT_TABLE[63 - sq]; }
+			if (state.whites & bb).any() {
+				w_score += KNIGHT_TABLE[sq];
+			}
+			if (state.blacks & bb).any() {
+				b_score += KNIGHT_TABLE[63 - sq];
+			}
 		}
 
 		for sq in state.bishops.iter_bits() {
 			let sq = sq as usize;
 			let bb = Bitboard8x8::from_index(sq);
-			if (state.whites & bb).any() { w_score += BISHOP_TABLE[sq]; }
-			if (state.blacks & bb).any() { b_score += BISHOP_TABLE[63 - sq]; }
+			if (state.whites & bb).any() {
+				w_score += BISHOP_TABLE[sq];
+			}
+			if (state.blacks & bb).any() {
+				b_score += BISHOP_TABLE[63 - sq];
+			}
 		}
 
 		for sq in state.rooks.iter_bits() {
 			let sq = sq as usize;
 			let bb = Bitboard8x8::from_index(sq);
-			if (state.whites & bb).any() { w_score += ROOK_TABLE[sq]; }
-			if (state.blacks & bb).any() { b_score += ROOK_TABLE[63 - sq]; }
+			if (state.whites & bb).any() {
+				w_score += ROOK_TABLE[sq];
+			}
+			if (state.blacks & bb).any() {
+				b_score += ROOK_TABLE[63 - sq];
+			}
 		}
 
 		for sq in state.pawns.iter_bits() {
 			let sq = sq as usize;
 			let bb = Bitboard8x8::from_index(sq);
-			if (state.whites & bb).any() { w_score += PAWN_TABLE[sq] / 2; }
-			if (state.blacks & bb).any() { b_score += PAWN_TABLE[63 - sq] / 2; }
+			if (state.whites & bb).any() {
+				w_score += PAWN_TABLE[sq] / 2;
+			}
+			if (state.blacks & bb).any() {
+				b_score += PAWN_TABLE[63 - sq] / 2;
+			}
 		}
 
 		let w_mobility = state.legal_moves_template::<true>().len() as i16;
@@ -1530,7 +1674,11 @@ impl Evaluator for ChessPosEval {
 		//w_score -= w_files.iter().filter(|&&c| c > 1).sum::<i16>() * 20;
 		//b_score -= b_files.iter().filter(|&&c| c > 1).sum::<i16>() * 20;
 
-		if p == Player::PLAYER1 { w_score - b_score } else { b_score - w_score }
+		if p == Player::PLAYER1 {
+			w_score - b_score
+		} else {
+			b_score - w_score
+		}
 	}
 }
 #[cfg(test)]
@@ -1538,9 +1686,9 @@ mod tests {
 
 	use kudchuet::ai::minimax::util::perft;
 
-use crate::bitboard::Bitboard8x8;
+	use crate::bitboard::Bitboard8x8;
 
-use super::ChessBoard;
+	use super::ChessBoard;
 	#[test]
 	fn test_display() {
 		let mut chess = ChessBoard::default();
@@ -1551,9 +1699,8 @@ use super::ChessBoard;
 			chess.play(&legal_moves[0]);
 			println!("{}", chess);
 			legal_moves = chess.legal_moves();
-			count+=1;
+			count += 1;
 		}
-		
 	}
 	#[test]
 	fn test_play() {
@@ -1568,47 +1715,36 @@ use super::ChessBoard;
 			println!("{}", chess);
 			legal_moves = chess.legal_moves();
 			assert_eq!(chess.compute_zobrist(), chess.hash);
-			count+=1;
+			count += 1;
 		}
 		println!("{}", chess);
 	}
 	#[test]
 	fn test_compute_pins_simple_diagonal_pin() {
 		// Position :
-		let board = ChessBoard::from_fen("4r3/8/8/4P3/8/2b5/3R4/4K3 w - - 0 1")
-			.expect("FEN invalide");
+		let board =
+			ChessBoard::from_fen("4r3/8/8/4P3/8/2b5/3R4/4K3 w - - 0 1").expect("FEN invalide");
 		println!("{}", board);
 		let (pinned, pin_dir) = board.compute_pins::<true>();
 		println!("{}", pinned);
 		let d2 = 11usize;
 		let e5 = 36usize;
 
-		assert!(
-			pinned.get_at_index(d2),
-			"Rook d2 should be pinned"
-		);
-		assert!(
-			pinned.get_at_index(e5),
-			"Pawn e5 should be pinned"
-		);
+		assert!(pinned.get_at_index(d2), "Rook d2 should be pinned");
+		assert!(pinned.get_at_index(e5), "Pawn e5 should be pinned");
 
 		let dir = pin_dir[d2];
-		assert!(
-			dir != 0,
-			"direction for d2 should not be 0"
-		);
+		assert!(dir != 0, "direction for d2 should not be 0");
 		println!("Direction détectée pour d2 = {}", dir);
 		let dir = pin_dir[e5];
-		assert!(
-			dir != 0,
-			"direction for e5 should not be 0"
-		);
+		assert!(dir != 0, "direction for e5 should not be 0");
 		println!("Direction détectée pour e5 = {}", dir);
 	}
 	#[test]
 	fn test_compute_pins_first_failed() {
-		let board = ChessBoard::from_fen("rnbqkbnr/1ppppppp/8/p7/Q7/2P5/PP1PPPPP/RNB1KBNR b KQkq - 0 1")
-			.expect("FEN invalide");
+		let board =
+			ChessBoard::from_fen("rnbqkbnr/1ppppppp/8/p7/Q7/2P5/PP1PPPPP/RNB1KBNR b KQkq - 0 1")
+				.expect("FEN invalide");
 		println!("{}", board);
 		let (pinned, _pin_dir) = board.compute_pins::<false>();
 		println!("{}", pinned);
@@ -1626,7 +1762,8 @@ use super::ChessBoard;
 
 	#[test]
 	fn test_compute_promote() {
-		let board = ChessBoard::from_fen("8/2P5/8/8/2p5/1r6/K7/6rk w - - 0 1").expect("FEN invalide");
+		let board =
+			ChessBoard::from_fen("8/2P5/8/8/2p5/1r6/K7/6rk w - - 0 1").expect("FEN invalide");
 		println!("{}", board);
 		let moves = board.legal_moves();
 		println!("{:?}", moves);
@@ -1637,23 +1774,31 @@ use super::ChessBoard;
 	#[test]
 	fn test_compute_checkers() {
 		// Position :
-		let board = ChessBoard::from_fen("4r3/8/8/8/8/2b5/8/4K3 w - - 0 1")
-			.expect("FEN invalid");
+		let board = ChessBoard::from_fen("4r3/8/8/8/8/2b5/8/4K3 w - - 0 1").expect("FEN invalid");
 		println!("{}", board);
-		let (check, checkers, blockers)=board.compute_checkers::<true>();
-		println!("check: {}, checkers: {}, blockers: {}",check, checkers, blockers);
-		
-		let board = ChessBoard::from_fen("8/8/8/8/8/2b5/8/4K3 w - - 0 1")
-			.expect("FEN invalide");
-		println!("{}", board);
-		let (check, checkers, blockers)=board.compute_checkers::<true>();
-		println!("check: {}, checkers: {}, blockers: {}",check, checkers, blockers);
+		let (check, checkers, blockers) = board.compute_checkers::<true>();
+		println!(
+			"check: {}, checkers: {}, blockers: {}",
+			check, checkers, blockers
+		);
 
-		let board = ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/8/8/P1pP4/1PPKPPPP/RNBQ1BNR w - - 0 1")
-			.expect("FEN invalide");
+		let board = ChessBoard::from_fen("8/8/8/8/8/2b5/8/4K3 w - - 0 1").expect("FEN invalide");
 		println!("{}", board);
-		let (check, checkers, blockers)=board.compute_checkers::<true>();
-		println!("check: {}, checkers: {}, blockers: {}",check, checkers, blockers);
+		let (check, checkers, blockers) = board.compute_checkers::<true>();
+		println!(
+			"check: {}, checkers: {}, blockers: {}",
+			check, checkers, blockers
+		);
+
+		let board =
+			ChessBoard::from_fen("rnbqkbnr/pp1ppppp/8/8/8/P1pP4/1PPKPPPP/RNBQ1BNR w - - 0 1")
+				.expect("FEN invalide");
+		println!("{}", board);
+		let (check, checkers, blockers) = board.compute_checkers::<true>();
+		println!(
+			"check: {}, checkers: {}, blockers: {}",
+			check, checkers, blockers
+		);
 	}
 	// cargo test --release -p chess@0.1 mychess::tests::perft_test -- --nocapture
 	//depth           count        time        kn/s
@@ -1666,7 +1811,7 @@ use super::ChessBoard;
 	//    6       119060324     197.4ms    603000.4
 	//    7      3195901860        5.1s    631837.3
 	//cargo flamegraph --unit-test abstract_strategy -- chess::mychess::tests::perft_test --perfdata perf.data
-	
+
 	#[test]
 	fn perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));
@@ -1674,21 +1819,21 @@ use super::ChessBoard;
 		let mut board = ChessBoard::default();
 		let max_depth = 7;
 		let nodes = perft::<ChessBoard>(&mut board, max_depth, true);
-		assert!(nodes.len() == (max_depth+1) as usize);
+		assert!(nodes.len() == (max_depth + 1) as usize);
 		const NB_NODES: [u64; 13] = [
-			1,                     // depth 0
-			20,                    // depth 1
-			400,                   // depth 2
-			8_902,                 // depth 3
-			197_281,               // depth 4
-			4_865_609,             // depth 5
-			119_060_324,           // depth 6
-			3_195_901_860,         // depth 7
-			84_998_978_956,        // depth 8
-			2_357_039_609_552,     // depth 9
-			69_352_859_712_417,    // depth 10
-			2_097_651_003_696_806, // depth 11
-			71_852_195_823_968_866 // depth 12
+			1,                      // depth 0
+			20,                     // depth 1
+			400,                    // depth 2
+			8_902,                  // depth 3
+			197_281,                // depth 4
+			4_865_609,              // depth 5
+			119_060_324,            // depth 6
+			3_195_901_860,          // depth 7
+			84_998_978_956,         // depth 8
+			2_357_039_609_552,      // depth 9
+			69_352_859_712_417,     // depth 10
+			2_097_651_003_696_806,  // depth 11
+			71_852_195_823_968_866, // depth 12
 		];
 
 		for (i, n) in nodes.iter().enumerate() {
@@ -1699,23 +1844,24 @@ use super::ChessBoard;
 	fn middle_perft_test() {
 		// Position Kiwipete (position de test standard)
 		let mut board = ChessBoard::from_fen(
-			"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
-		).expect("FEN should be valid");
+			"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
+		)
+		.expect("FEN should be valid");
 
 		let max_depth = 7;
 		let nodes = perft::<ChessBoard>(&mut board, max_depth, true);
 		assert!(nodes.len() == (max_depth + 1) as usize);
 
 		const NB_NODES: [u64; 9] = [
-			1,                     // depth 0
-			48,                    // depth 1
-			2039,                  // depth 2
-			97_862,                // depth 3
-			4_085_603,             // depth 4
-			193_690_690,           // depth 5
-			8_031_647_685,         // depth 6
-			302_457_915_873,       // depth 7
-			10_595_738_199_614,    // depth 8
+			1,                  // depth 0
+			48,                 // depth 1
+			2039,               // depth 2
+			97_862,             // depth 3
+			4_085_603,          // depth 4
+			193_690_690,        // depth 5
+			8_031_647_685,      // depth 6
+			302_457_915_873,    // depth 7
+			10_595_738_199_614, // depth 8
 		];
 
 		for (i, n) in nodes.iter().enumerate() {
@@ -1750,37 +1896,28 @@ use super::ChessBoard;
 		pub const TEST_FENS: &[&str] = &[
 			// 1. Initial
 			"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-
 			// 2. 1.e4
 			"rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-
 			// 3. En passant
 			"rnbqkbnr/pp1ppppp/8/3P4/8/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3",
-
 			// 4. Partial castling
 			"rnbq1rk1/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQK2R w K - 5 5",
-
 			// 5. Partial castling
 			"r3k2r/pppq1ppp/2np4/4p3/4P3/2NP1N2/PPPQ1PPP/2KR1B1R b kq - 7 7",
-
 			// 6. Kiwi
 			"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
-
 			// 7. Promotion imminente
 			"8/6P1/8/8/8/8/8/7K w - - 0 1",
-
 			// 8. Mat du berger
 			"rnbqkb1r/pppp1Qpp/5n2/4p3/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 3",
-
 			// 9. Only kings
 			"4k3/8/8/8/8/8/8/4K3 w - - 0 1",
-
 			// 10. Stress test (illegal)
 			"rnbqkbnr/pppppppp/pppppppp/pppppppp/PPPPPPPP/PPPPPPPP/pppppppp/RNBQKBNR w KQkq - 0 1",
 		];
 		for fen in TEST_FENS {
 			let board = ChessBoard::from_fen(fen);
-			
+
 			let board = board.unwrap_or_else(|e| panic!("{} {:?}", fen, e));
 
 			let fen_out = board.to_fen();
@@ -1789,12 +1926,26 @@ use super::ChessBoard;
 
 		assert!(ChessBoard::from_fen("").is_err());
 		// Missing square
-		assert!(ChessBoard::from_fen("rnbqkbn/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").is_err());
+		assert!(
+			ChessBoard::from_fen("rnbqkbn/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+				.is_err()
+		);
 		// Missing line
-		assert!(ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").is_err());
+		assert!(
+			ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").is_err()
+		);
 		// Invalid trait
-		assert!(ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR A KQkq - 0 1").is_err());
+		assert!(
+			ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR A KQkq - 0 1")
+				.is_err()
+		);
 		// No optional fields
-		ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -").unwrap_or_else(|e| panic!("{} {:?}", "rnbqkbnr/pppppppp/8/8/8/PPPPPPPP/RNBQKBNR A KQkq -", e));
+		ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -")
+			.unwrap_or_else(|e| {
+				panic!(
+					"{} {:?}",
+					"rnbqkbnr/pppppppp/8/8/8/PPPPPPPP/RNBQKBNR A KQkq -", e
+				)
+			});
 	}
 }

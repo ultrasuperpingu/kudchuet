@@ -112,8 +112,7 @@ fn flips_dir_compact(
 	ray_mask: Bitboard8x8,
 	offset: i16, // seul le signe compte
 ) -> Bitboard8x8 {
-	let ray = ray_mask.storage();
-	if ray == 0 {
+	if ray_mask.is_empty() {
 		return Bitboard8x8::EMPTY;
 	}
 

@@ -1,10 +1,13 @@
-use eframe::egui;
+use eframe::egui::{self, Rect};
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::MoveSearcherBuilderDyn;
+use kudchuet::ai::minimax::MCTS;
+use kudchuet::ai::{AIBuilderDyn, AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
 use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::Player;
 
 use crate::game::EinsteinWurfeltNichtDumbEval;
 
@@ -21,27 +24,30 @@ impl EGUIPieceType for Piece {
 	fn shape(&self) -> Shape {
 		match self {
 			Piece::Player1(nb) => Shape::Circle {
-				fill_color: Some(Color32::BLUE),
+				fill_color: Some(Color32::from_rgb(30, 30, 200)),
 				text: Some(TextData {
 					text: nb.to_string(),
 					size: 0.5,
 					color: Color32::BLACK,
 				}),
-				size: 0.98,
+				size: 0.9,
 				stroke: Some(StrokeData {
 					stroke: Stroke::new(3.0, Color32::BLACK),
 					kind: StrokeKind::Inside,
 				}),
 			},
 			Piece::Player2(nb) => Shape::Circle {
-				fill_color: Some(Color32::RED),
+				fill_color: Some(Color32::from_rgb(200, 30, 30)),
 				text: Some(TextData {
 					text: nb.to_string(),
 					size: 0.5,
 					color: Color32::WHITE,
 				}),
-				size: 0.98,
-				stroke: None,
+				size: 0.9,
+				stroke: Some(StrokeData {
+					stroke: Stroke::new(3.0, Color32::BLACK),
+					kind: StrokeKind::Inside,
+				}),
 			},
 			Piece::Dice(d) => Shape::Rect {
 				fill_color: Some(Color32::WHITE),
@@ -103,7 +109,9 @@ impl BoardGame for EinsteinWurfeltNicht {
 			}
 		}
 		if let Some(d) = self.dice {
-			if x == 0 && y == 5 {
+			if x == 0 && y == 5 && self.is_red {
+				return Some(Piece::Dice(d));
+			} else if x == 4 && y == 5 && !self.is_red {
 				return Some(Piece::Dice(d));
 			}
 		}
@@ -120,13 +128,20 @@ impl BoardGame for EinsteinWurfeltNicht {
 	fn play_random(&mut self) {
 		self.roll_dice();
 	}
-
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "Blue",
+			Player::PLAYER2 => "Red",
+			_ => unreachable!(),
+		}
+		.into()
+	}
 	fn default_style() -> BoardStyle {
 		BoardStyle {
 			checkerboard_mod: CheckerBoardMod::OddDark,
-			uniform_color: Color32::from_rgb(40, 70, 125),
-			dark_color: Color32::from_rgb(60, 45, 30),
-			light_color: Color32::from_rgb(200, 175, 140),
+			uniform_color: Color32::from_rgb(40, 40, 55),
+			dark_color: Color32::from_rgb(73, 97, 38),
+			light_color: Color32::from_rgb(110, 150, 100),
 			show_coordinates_mod: CoordMod::None,
 			square_stroke_color: None,
 			..Default::default()
@@ -144,10 +159,58 @@ fn dice_string(dice: u8) -> String {
 		_ => dice.to_string(),
 	}
 }
-
+struct MySquareDrawer {
+	default: DefaultSquareDrawer,
+}
+impl MySquareDrawer {
+	fn new() -> Self {
+		Self {
+			default: DefaultSquareDrawer {},
+		}
+	}
+}
+impl SquareDrawer<EinsteinWurfeltNicht> for MySquareDrawer {
+	fn draw(
+		&self,
+		painter: &egui::Painter,
+		style: &BoardStyle,
+		game: &EinsteinWurfeltNicht,
+		square: &Rect,
+		x_coord: u8,
+		y_coord: u8,
+	) {
+		if y_coord == 5 {
+			painter.rect_filled(*square, 0.0, style.uniform_color);
+		} else {
+			self.default
+				.draw(painter, style, game, square, x_coord, y_coord);
+		}
+	}
+}
 pub fn create_board() -> GenericBoardApp<EinsteinWurfeltNicht> {
-	let ai_provider =
-		MoveSearcherBuilderDyn::new("Dumb".into(), EinsteinWurfeltNichtDumbEval::default(), 4);
-	let board = GenericBoardApp::new(EinsteinWurfeltNicht::default(), vec![Box::new(ai_provider)]);
+	let engines: Vec<
+		Box<
+			dyn AIEngineProvider<
+				EinsteinWurfeltNicht,
+				Engine = Box<dyn AIEngine<EinsteinWurfeltNicht>>,
+			>,
+		>,
+	> = vec![
+		Box::new(MoveSearcherBuilderDyn::new(
+			"Dumb".into(),
+			EinsteinWurfeltNichtDumbEval::default(),
+			20,
+		)),
+		Box::new(AIBuilderDyn::<
+			EinsteinWurfeltNicht,
+			MCTS<EinsteinWurfeltNicht>,
+		>::new("MCTS".into())),
+	];
+	//let ai_provider =
+	//	MoveSearcherBuilderDyn::new("Dumb".into(), EinsteinWurfeltNichtDumbEval::default(), 20);
+	let mut board = GenericBoardApp::new(EinsteinWurfeltNicht::default(), engines);
+	board
+		.board_drawer
+		.set_square_drawer(Box::new(MySquareDrawer::new()));
 	board
 }

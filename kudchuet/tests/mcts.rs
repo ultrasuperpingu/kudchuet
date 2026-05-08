@@ -5,7 +5,7 @@ mod nim;
 #[path = "../examples/ttt.rs"]
 mod ttt;
 use kudchuet::ai::minimax::{Game, Strategy};
-use kudchuet::ai::minimax::{PerfectSolver, Random, mcts::MCTS, util::battle_royale};
+use kudchuet::ai::minimax::mcts::MCTS;
 
 use crate::nim::NimGame;
 use crate::ttt::TTTGame;

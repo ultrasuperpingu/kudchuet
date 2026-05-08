@@ -1,14 +1,12 @@
-
 //use std::hash::{DefaultHasher, Hash, Hasher};
-
 
 use kudchuet::{GameOutcome, Player};
 
+use crate::rules::{BaghChal, Move};
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
-use crate::rules::{Move, BaghChal};
 
 impl Game for BaghChal {
-	type S =  BaghChal;
+	type S = BaghChal;
 
 	type M = Move;
 
@@ -86,10 +84,9 @@ impl Evaluator for BaghChalMaterialEval {
 //    9     85724933628       21.1s   4070769.6
 #[cfg(test)]
 mod tests {
-
 	use kudchuet::ai::minimax::util::perft;
+	use super::super::game::BaghChal;
 
-	use super::super::{game::BaghChal};
 	#[test]
 	fn perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));

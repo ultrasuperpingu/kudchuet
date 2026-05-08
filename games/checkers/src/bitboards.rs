@@ -49,7 +49,7 @@ impl Bitboard5x10Checkers10 {
 		let mut res=[Self::empty();Self::NB_SQUARES];
 		let mut sq=0;
 		while sq < Self::NB_SQUARES {
-			res[sq] = Self::from_storage(Self::white_pawn_advance_mask(sq).storage() | Self::black_pawn_advance_mask(sq).storage());
+			res[sq] = Self::white_pawn_advance_mask(sq).or_const(&Self::black_pawn_advance_mask(sq));
 			sq +=1;
 		}
 		res
@@ -98,12 +98,11 @@ impl Bitboard5x10Checkers10 {
 		let mut x = fx + step_x;
 		let mut y = fy + step_y;
 
-		// On avance jusqu'à la case 'to' exclue
 		while x != tx || y != ty {
-			// On ne remplit que si on est sur une case jouable (x+y impair)
 			if (x + y) % 2 != 0 {
 				let idx = Self::index_from_coords((x / 2) as u8, y as u8);
-				bb = Self::from_storage(bb.storage() | (1 << idx));
+				//TODO: remove storage call
+				bb = Self::from_storage(*bb.storage() | (1 << idx));
 			}
 			x += step_x;
 			y += step_y;
@@ -141,7 +140,8 @@ impl Bitboard5x10Checkers10 {
 		while x < 10 && y < 10 {
 			if (x + y) % 2 != 0 {
 				let idx = Self::index_from_coords((x / 2) as u8, y as u8);
-				bb = Self::from_storage(bb.storage() | (1 << idx));
+				//TODO: remove storage call
+				bb = Self::from_storage(*bb.storage() | (1 << idx));
 			}
 			x += 1;
 			y += 1;
@@ -153,7 +153,8 @@ impl Bitboard5x10Checkers10 {
 		while x >= 0 && y >= 0 {
 			if (x + y) % 2 != 0 {
 				let idx = Self::index_from_coords((x / 2) as u8, y as u8);
-				bb = Self::from_storage(bb.storage() | (1 << idx));
+				//TODO: remove storage call
+				bb = Self::from_storage(*bb.storage() | (1 << idx));
 			}
 			x -= 1;
 			y -= 1;
@@ -185,7 +186,8 @@ impl Bitboard5x10Checkers10 {
 		while x < 10 && y >= 0 {
 			if (x + y) % 2 != 0 { 
 				let idx = Self::index_from_coords((x / 2) as u8, y as u8);
-				bb = Self::from_storage(bb.storage() | (1 << idx));
+				//TODO: remove storage call
+				bb = Self::from_storage(*bb.storage() | (1 << idx));
 			}
 			x += 1;
 			y -= 1;
@@ -196,7 +198,8 @@ impl Bitboard5x10Checkers10 {
 		while x >= 0 && y < 10 {
 			if (x + y) % 2 != 0 {
 				let idx = Self::index_from_coords((x / 2) as u8, y as u8);
-				bb = Self::from_storage(bb.storage() | (1 << idx));
+				//TODO: remove storage call
+				bb = Self::from_storage(*bb.storage() | (1 << idx));
 			}
 			x -= 1;
 			y += 1;

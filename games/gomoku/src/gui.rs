@@ -1,18 +1,24 @@
-
 use eframe::egui;
 use egui::{Color32, Stroke};
 
+use bitboard::common_bitboards::Goban;
+use crate::game::GomokuEvalDumb;
+use crate::sgf::{parse_sgf, serialize_sgf};
+use crate::{
+	game::GomokuEvalSimple,
+	rules::{Cell, Gomoku, Move},
+};
+use kudchuet::Player;
+use kudchuet::ai::AIBuilderDyn;
 use kudchuet::ai::AIEngine;
 use kudchuet::ai::AIEngineProvider;
 use kudchuet::ai::MoveSearcherBuilderDyn;
-use kudchuet::Player;
-use kudchuet::ai::AIBuilderDyn;
 use kudchuet::ai::minimax::mcts::MCTS;
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, board_drawer::SquareDrawer};
 use kudchuet::gui::shapes::Shape;
-use crate::bitboard::Goban;
-use crate::game::GomokuEvalDumb;
-use crate::{game::GomokuEvalSimple, rules::{Cell, Gomoku, Move}};
+use kudchuet::gui::{
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType,
+	board_drawer::SquareDrawer,
+};
 
 use kudchuet::gui::board_app::GenericBoardApp;
 
@@ -28,15 +34,25 @@ impl BoardMove<Gomoku> for Move {
 impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
-			Cell::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: None },
-			Cell::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: None },
+			Cell::White => Shape::Circle {
+				fill_color: Some(Color32::WHITE),
+				size: 0.7,
+				text: None,
+				stroke: None,
+			},
+			Cell::Black => Shape::Circle {
+				fill_color: Some(Color32::BLACK),
+				size: 0.7,
+				text: None,
+				stroke: None,
+			},
 			Cell::Empty => unreachable!(),
 		}
 	}
 }
 
 impl BoardGame for Gomoku {
-	type PieceType=Cell;
+	type PieceType = Cell;
 	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
@@ -61,7 +77,12 @@ impl BoardGame for Gomoku {
 			Cell::Empty => None,
 		}
 	}
-
+	fn get_position_from_string(&self, _pos_str: &str) -> Result<Self, String> {
+		parse_sgf(_pos_str)
+	}
+	fn position_to_string(&self) -> Option<String> {
+		Some(serialize_sgf(self))
+	}
 	fn index_from_coords(x: u8, y: u8) -> u16 {
 		Goban::index_from_coords(x, y) as u16
 	}
@@ -81,75 +102,98 @@ impl BoardGame for Gomoku {
 }
 pub struct GobanSquareDrawer;
 impl SquareDrawer<Gomoku> for GobanSquareDrawer {
-	fn draw(&self, painter: &egui::Painter, style: &BoardStyle, _game: &Gomoku, square: &egui::Rect, x_coord:u8,y_coord:u8) {
+	fn draw(
+		&self,
+		painter: &egui::Painter,
+		style: &BoardStyle,
+		_game: &Gomoku,
+		square: &egui::Rect,
+		x_coord: u8,
+		y_coord: u8,
+	) {
 		painter.rect_filled(*square, 0.0, style.uniform_color);
 		let stroke = Stroke::new(2.0, style.dark_color);
 		if x_coord == 0 {
 			if y_coord == 0 {
-				let lines=vec![square.center_top(), square.center()];
+				let lines = vec![square.center_top(), square.center()];
 				painter.line(lines, stroke);
-				let lines=vec![square.center(), square.right_center()];
+				let lines = vec![square.center(), square.right_center()];
 				painter.line(lines, stroke);
 			} else if y_coord == 18 {
-				let lines=vec![square.center(), square.center_bottom()];
+				let lines = vec![square.center(), square.center_bottom()];
 				painter.line(lines, stroke);
-				let lines=vec![square.center(), square.right_center()];
+				let lines = vec![square.center(), square.right_center()];
 				painter.line(lines, stroke);
 			} else {
-				let lines=vec![square.center_top(), square.center_bottom()];
+				let lines = vec![square.center_top(), square.center_bottom()];
 				painter.line(lines, stroke);
-				let lines=vec![square.center(), square.right_center()];
+				let lines = vec![square.center(), square.right_center()];
 				painter.line(lines, stroke);
 			}
 		} else if x_coord == 18 {
 			if y_coord == 0 {
-				let lines=vec![square.center_top(), square.center()];
+				let lines = vec![square.center_top(), square.center()];
 				painter.line(lines, stroke);
-				let lines=vec![square.center(), square.left_center()];
+				let lines = vec![square.center(), square.left_center()];
 				painter.line(lines, stroke);
 			} else if y_coord == 18 {
-				let lines=vec![square.center(), square.center_bottom()];
+				let lines = vec![square.center(), square.center_bottom()];
 				painter.line(lines, stroke);
-				let lines=vec![square.center(), square.left_center()];
+				let lines = vec![square.center(), square.left_center()];
 				painter.line(lines, stroke);
 			} else {
-				let lines=vec![square.center_top(), square.center_bottom()];
+				let lines = vec![square.center_top(), square.center_bottom()];
 				painter.line(lines, stroke);
-				let lines=vec![square.center(), square.left_center()];
+				let lines = vec![square.center(), square.left_center()];
 				painter.line(lines, stroke);
 			}
 		} else if y_coord == 0 {
-			let lines=vec![square.center_top(), square.center()];
+			let lines = vec![square.center_top(), square.center()];
 			painter.line(lines, stroke);
-			let lines=vec![square.right_center(), square.left_center()];
+			let lines = vec![square.right_center(), square.left_center()];
 			painter.line(lines, stroke);
 		} else if y_coord == 18 {
-			let lines=vec![square.center_bottom(), square.center()];
+			let lines = vec![square.center_bottom(), square.center()];
 			painter.line(lines, stroke);
-			let lines=vec![square.right_center(), square.left_center()];
+			let lines = vec![square.right_center(), square.left_center()];
 			painter.line(lines, stroke);
 		} else {
-			let lines=vec![square.center_top(), square.center_bottom()];
+			let lines = vec![square.center_top(), square.center_bottom()];
 			painter.line(lines, stroke);
-			let lines=vec![square.right_center(), square.left_center()];
+			let lines = vec![square.right_center(), square.left_center()];
 			painter.line(lines, stroke);
-			if x_coord == 9 && y_coord == 9 ||
-				x_coord == 3 && y_coord == 9 || x_coord == 9 && y_coord == 3 ||
-				x_coord == 15 && y_coord == 9|| x_coord == 9 && y_coord == 15 ||
-				x_coord == 3 && y_coord == 3|| x_coord == 3 && y_coord == 15 ||
-				x_coord == 15 && y_coord == 3|| x_coord == 15 && y_coord == 15 {
-				painter.circle_filled(square.center(), square.width()*0.15, style.dark_color);
+			if x_coord == 9 && y_coord == 9
+				|| x_coord == 3 && y_coord == 9
+				|| x_coord == 9 && y_coord == 3
+				|| x_coord == 15 && y_coord == 9
+				|| x_coord == 9 && y_coord == 15
+				|| x_coord == 3 && y_coord == 3
+				|| x_coord == 3 && y_coord == 15
+				|| x_coord == 15 && y_coord == 3
+				|| x_coord == 15 && y_coord == 15
+			{
+				painter.circle_filled(square.center(), square.width() * 0.15, style.dark_color);
 			}
 		}
 	}
 }
 pub fn create_board() -> GenericBoardApp<Gomoku> {
-	let engines: Vec<Box<dyn AIEngineProvider<Gomoku, Engine=Box<dyn AIEngine<Gomoku>>>>> = vec![
-		Box::new(MoveSearcherBuilderDyn::new("Dumb".into(), GomokuEvalDumb::new(), 4)),
-		Box::new(MoveSearcherBuilderDyn::new("Simple".into(), GomokuEvalSimple::new(), 4)),
+	let engines: Vec<Box<dyn AIEngineProvider<Gomoku, Engine = Box<dyn AIEngine<Gomoku>>>>> = vec![
+		Box::new(MoveSearcherBuilderDyn::new(
+			"Dumb".into(),
+			GomokuEvalDumb::new(),
+			4,
+		)),
+		Box::new(MoveSearcherBuilderDyn::new(
+			"Simple".into(),
+			GomokuEvalSimple::new(),
+			4,
+		)),
 		Box::new(AIBuilderDyn::<Gomoku, MCTS<Gomoku>>::new("MCTS".into())),
 	];
-	let mut board=GenericBoardApp::new(Gomoku::default(), engines);
-	board.board_drawer.set_square_drawer(Box::new(GobanSquareDrawer{}));
+	let mut board = GenericBoardApp::new(Gomoku::default(), engines);
+	board
+		.board_drawer
+		.set_square_drawer(Box::new(GobanSquareDrawer {}));
 	board
 }

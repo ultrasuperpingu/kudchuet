@@ -49,10 +49,10 @@ pub static RAY_BETWEEN_MASKS: [[Bitboard9x13; Bitboard9x13::NB_SQUARES]; Bitboar
 impl Bitboard9x13 {
 	pub const fn compute_shoot_mask(sq:u8) -> Self {
 		let index = sq as usize;
-		let mut mask = Self::compute_diag_inc_mask(index).storage() | Self::compute_diag_dec_mask(index).storage();
-		mask |= Self::compute_col_mask(index).storage() | Self::compute_row_mask(index).storage();
-		mask &= !Self::from_index(index).storage();
-		Self::from_storage(mask)
+		let mut mask = Self::compute_diag_inc_mask(index).or_const(&Self::compute_diag_dec_mask(index));
+		mask.or_assign_const(&Self::compute_col_mask(index).or_const(&Self::compute_row_mask(index)));
+		mask.or_assign_const(&Self::from_index(index).not_const());
+		mask
 	}
 	pub const fn generate_pass_mask_table() -> [Self; Self::NB_SQUARES] {
 		let mut arr = [Self(0); Self::NB_SQUARES];
@@ -65,31 +65,31 @@ impl Bitboard9x13 {
 	}
 	pub const fn all_lines_at_south(sq:u8) -> Self {
 		let mut i=0;
-		let mut mask = Self::EMPTY.storage();
+		let mut mask = Self::EMPTY;
 		while i < sq / Self::WIDTH * Self::WIDTH {
-			mask |= Self::from_index(i as usize).storage();
+			mask.or_assign_const(&Self::from_index(i as usize));
 			i+=1;
 		}
-		Bitboard9x13::from_storage(mask)
+		mask
 	}
 	pub const fn all_lines_at_north(sq:u8) -> Self {
 		let mut i=Self::NB_SQUARES-1;
-		let mut mask = Self::EMPTY.storage();
+		let mut mask = Self::EMPTY;
 		while i as u8 >= (sq / Self::WIDTH + 1) * Self::WIDTH {
-			mask |= Self::from_index(i).storage();
+			mask.or_assign_const(&Self::from_index(i));
 			i-=1;
 		}
-		Bitboard9x13::from_storage(mask)
+		mask
 	}
 	pub const fn compute_black_tackle_position_mask(sq:u8) -> Self {
 		let index = sq as usize;
-		let mask = Self::NEIGHBORS_8[index].storage() & !Self::all_lines_at_south(sq).storage();
-		Self::from_storage(mask)
+		let mask = Self::NEIGHBORS_8[index].and_const(&Self::all_lines_at_south(sq).not_const());
+		mask
 	}
 	pub const fn compute_white_tackle_position_mask(sq:u8) -> Self {
 		let index = sq as usize;
-		let mask = Self::NEIGHBORS_8[index].storage() & !Self::all_lines_at_north(sq).storage();
-		Self::from_storage(mask)
+		let mask = Self::NEIGHBORS_8[index].and_const(&Self::all_lines_at_north(sq).not_const());
+		mask
 	}
 	pub const fn generate_black_tackle_position_table() -> [Self; Self::NB_SQUARES] {
 		let mut arr = [Self(0); Self::NB_SQUARES];
@@ -148,7 +148,7 @@ impl Bitboard9x13 {
 	pub const SHOOT_MASK: [Self; Self::NB_SQUARES] = Self::generate_pass_mask_table();
 	pub const PLAYER1_TACKLE_POS_MASK: [Self; Self::NB_SQUARES] = Self::generate_white_tackle_position_table();
 	pub const PLAYER2_TACKLE_POS_MASK: [Self; Self::NB_SQUARES] = Self::generate_black_tackle_position_table();
-	pub const BEHIND_GOALS : Self = Bitboard9x13::from_storage(Bitboard9x13::NORTH_BORDER.storage()|Bitboard9x13::SOUTH_BORDER.storage());
+	pub const BEHIND_GOALS : Self = Bitboard9x13::NORTH_BORDER.or_const(&Bitboard9x13::SOUTH_BORDER);
 	pub const PLAYER1_GOAL : Self = Bitboard9x13::from_storage(0b000111000);
 	pub const PLAYER2_GOAL : Self = Bitboard9x13::from_storage(0b000111000 << (9*12));
 }

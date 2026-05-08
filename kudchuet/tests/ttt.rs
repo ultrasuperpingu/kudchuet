@@ -3,8 +3,9 @@ extern crate kudchuet;
 #[path = "../examples/ttt.rs"]
 mod ttt;
 
-use kudchuet::ai::minimax::{
-	ExpectiMinimax, PerfectSolver, Random, mcts::MCTS, util::battle_royale,
+use kudchuet::{
+	GameOutcome,
+	ai::minimax::{ExpectiMinimax, Game, PerfectSolver, Random, mcts::MCTS, util::battle_royale},
 };
 
 use crate::ttt::TTTGame;
@@ -39,6 +40,24 @@ fn test_ttt_mcts_vs_mcts_always_draws() {
 		let mut s2 = MCTS::<TTTGame>::default();
 		assert_eq!(battle_royale(&mut s1, &mut s2), None);
 	}
+}
+
+// Test TTT Perfect Solver
+#[test]
+fn test_ttt_perfect() {
+	let mut game = ttt::Board::default();
+	let mut tree: kudchuet::ai::minimax::gametree::GameTree<TTTGame> =
+		kudchuet::ai::minimax::gametree::GameTree::from(game.clone());
+	assert_eq!(tree.expand_all_iterative(0, false), GameOutcome::Draw);
+	assert_eq!(tree.get_outcome(0), GameOutcome::Draw);
+	tree.print(2);
+	assert_eq!(tree.get_root().depth_to_end(), 9);
+	TTTGame::apply(&mut game, ttt::Place { i: 0 });
+	TTTGame::apply(&mut game, ttt::Place { i: 1 });
+	let node = tree.get_state_expanded_node_id(TTTGame::get_hash(&game)).unwrap();
+	assert_eq!(tree.get_node(node).unwrap().outcome(), GameOutcome::PLAYER1);
+	assert_eq!(tree.get_node(node).unwrap().depth_to_end(), 5);
+	tree.print(2);
 }
 
 // Ensure that two player using perfect solver always draws.

@@ -1,11 +1,12 @@
-use bitboard::{BitIter, Bitboard};
+use bitboard::{BitIterRef, Bitboard};
 use std::fmt::{self, Display, Formatter};
 
 use kudchuet::{GameOutcome, Player};
+use bitboard::common_bitboards::Goban;
 
-use crate::bitboard::Goban;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
 pub struct Move {
 	pub to: u16,
 }
@@ -62,7 +63,9 @@ impl Gomoku {
 	}
 	#[inline(always)]
 	fn free(&self) -> Goban {
-		self.occupied().flipped()
+		let mut occ = self.occupied();
+		occ.flip();
+		occ
 	}
 }
 impl Gomoku {
@@ -75,13 +78,14 @@ impl Gomoku {
 	#[inline]
 	pub fn legal_moves_inplace(&self, out: &mut Vec<Move>) {
 		let free = self.free();
-		//for i in free.iter_bits() {
-		//	out.push(Move{to: i as u16});
+		//v1
+		//for i in 0..Goban::NB_SQUARES {
+		//	if free.get_at_index(i) {
+		//		out.push(Move { to: i as u16 });
+		//	}
 		//}
-		for i in 0..Goban::NB_SQUARES {
-			if free.get_at_index(i) {
-				out.push(Move { to: i as u16 });
-			}
+		for i in free.iter_bits_ref() {
+			out.push(Move { to: i as u16 });
 		}
 	}
 }
@@ -173,12 +177,12 @@ impl Gomoku {
 	pub fn get_hash(&self) -> u64 {
 		self.hash
 	}
-	fn compute_zobrist(&self) -> u64 {
+	pub(crate) fn compute_zobrist(&self) -> u64 {
 		let mut h = 0u64;
-		for i in self.black.clone().iter_bits() {
+		for i in self.black.iter_bits_ref() {
 			h ^= Self::ZOBRIST_KEYS.pieces[i as usize][0];
 		}
-		for i in self.white.clone().iter_bits() {
+		for i in self.white.iter_bits_ref() {
 			h ^= Self::ZOBRIST_KEYS.pieces[i as usize][1];
 		}
 		if self.turn == Player::PLAYER2 {

@@ -139,3 +139,28 @@ fn apply_consecutive_bonus(scorep1: &mut i16, scorep2: &mut i16, consecutive: i1
 		}
 	}
 }
+#[cfg(test)]
+mod tests {
+
+	use kudchuet::ai::minimax::util::perft;
+
+	use super::Backgammon;
+	//cargo test -p backgammon --release game::tests::perft_test -- --nocapture
+	//depth           count        time        kn/s
+	//    0               1     200.0ns      5000.0
+	//    1              36       4.8µs      7500.0
+	//    2            2574       2.7ms       937.7
+	//    3           92664       3.6ms     26027.0
+	//    4         6545432        2.0s      3348.8
+	//    5       235635552        1.8s    132538.9
+	#[test]
+	fn perft_test() {
+		let mut board = Backgammon::default();
+
+		let nodes = perft::<Backgammon>(&mut board, 5, true);
+		const NB_NODES: [u64; 6] = [1, 36, 2574, 92664, 6545432, 235635552];
+		for (i, n) in nodes.iter().enumerate() {
+			assert_eq!(NB_NODES[i], *n, "Mismatch at depth {}", i);
+		}
+	}
+}

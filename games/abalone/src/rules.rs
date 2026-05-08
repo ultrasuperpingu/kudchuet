@@ -104,7 +104,7 @@ pub const fn generate_ray_table(dir: usize) -> [BitboardAbalone; 61] {
 		let mut h = HEXES[i];
 		let mut current_index = idx(h); 
 		while let Some(index) = current_index {
-			mask |= BitboardAbalone::from_index(index).storage();
+			mask |= *BitboardAbalone::from_index(index).storage();
 			h = h.add(Hex::DIRS[dir]);
 			current_index = idx(h); 
 		}

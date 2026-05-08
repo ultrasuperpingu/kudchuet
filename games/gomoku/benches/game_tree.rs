@@ -10,17 +10,18 @@ use gomoku::rules::Gomoku;
 fn bench_simulate(b: &mut Bencher) {
 	let board = Gomoku::default();
 	b.iter(|| {
-		let mut s = GameTree::<Gomoku>::from(board.clone());
+		let s = GameTree::<Gomoku>::from(board.clone());
 		for _ in 0..1000 {
 			s.simulate(0);
 		}
 	});
 }
 
+
 fn bench_simulate2(b: &mut Bencher) {
 	let board = Gomoku::default();
 	b.iter(|| {
-		let s = GameTree::<Gomoku>::from(board.clone());
+		let mut s = GameTree::<Gomoku>::from(board.clone());
 		for _ in 0..1000 {
 			s.simulate2(0);
 		}

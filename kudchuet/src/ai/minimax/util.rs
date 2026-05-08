@@ -43,7 +43,7 @@ impl<'a, G: Game> AppliedMove<'a, G> {
 		let new = G::apply(old, m);
 		AppliedMove { old, new, m }
 	}
-	pub(crate) fn applied_clone(state: &'a <G as Game>::S, m: <G as Game>::M) -> <G as Game>::S
+	/*pub(crate) fn applied_clone(state: &'a <G as Game>::S, m: <G as Game>::M) -> <G as Game>::S
 		where G::S: Clone
 	{
 		let mut old=state.clone();
@@ -52,6 +52,18 @@ impl<'a, G: Game> AppliedMove<'a, G> {
 			s
 		} else {
 			old
+		}
+	}*/
+	pub(crate) fn applied_clone(state: &'a mut <G as Game>::S, m: <G as Game>::M) -> <G as Game>::S
+		where G::S: Clone
+	{
+		let new = G::apply(state, m);
+		if let Some(s) = new {
+			s
+		} else {
+			let res = state.clone();
+			G::undo(state, m);
+			res
 		}
 	}
 }

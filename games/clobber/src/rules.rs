@@ -1,34 +1,34 @@
 use bitboard::{BitIter, Bitboard};
 use bitboard_proc_macro::bitboard;
-use kudchuet::{GameOutcome, Player, utils::splitmix64};
+use kudchuet::{GameOutcome, Player, gui::BoardGame, utils::splitmix64};
 #[bitboard(width = 5, height = 6)]
 #[derive(Debug, Hash)]
-pub(crate) struct Bitboard6x5;
+pub(crate) struct Bitboard5x6;
+
 #[derive(Clone, Debug, PartialEq, Hash)]
 pub struct Clobber {
-	pub(crate) white: Bitboard6x5,
-	pub(crate) black: Bitboard6x5,
+	pub(crate) white: Bitboard5x6,
+	pub(crate) black: Bitboard5x6,
 	pub(crate) is_black: bool,
 }
 impl Default for Clobber {
 	fn default() -> Self {
 		Self {
-			white: Bitboard6x5::EVEN_SQUARES,
-			black: Bitboard6x5::ODD_SQUARES,
+			white: Bitboard5x6::EVEN_SQUARES,
+			black: Bitboard5x6::ODD_SQUARES,
 			is_black: false,
 		}
 	}
 }
-static NEIGHBORS: [Bitboard6x5; Bitboard6x5::NB_SQUARES] =
-	Bitboard6x5::generate_neighbors_ortho_table();
+pub(crate) static NEIGHBORS: [Bitboard5x6; Bitboard5x6::NB_SQUARES] =
+	Bitboard5x6::generate_neighbors_ortho_table();
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Move {
 	pub from: u8,
 	pub to: u8,
 }
 impl Clobber {
-	pub fn legal_moves(&self) -> Vec<Move> {
-		let mut moves = vec![];
+	pub fn legal_moves_inplace(&self, moves: &mut Vec<Move>) {
 		let (mine, other) = &mut if self.is_black {
 			(self.black, self.white)
 		} else {
@@ -42,7 +42,6 @@ impl Clobber {
 				});
 			}
 		}
-		moves
 	}
 	pub fn play_unchecked(&mut self, m: Move) {
 		if self.is_black {
@@ -70,8 +69,10 @@ impl Clobber {
 	}
 	pub fn get_hash(&self) -> u64 {
 		let mut h = 0u64;
-		h ^= splitmix64(self.white.storage() as u64);
-		h ^= splitmix64((self.black.storage()as u64).rotate_left(17));
+		let whites = *self.white.storage() as u64;
+		let blacks = (*self.black.storage() as u64).rotate_left(17);
+		h ^= splitmix64(whites);
+		h ^= splitmix64(blacks);
 		if self.is_black {
 			h ^= 0x9E3D70B97F4A7C14;
 		}

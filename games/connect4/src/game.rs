@@ -1,18 +1,16 @@
-
-
 use crate::rules::Cell;
 
 use super::rules::{Column, ConnectFour};
-use kudchuet::{GameOutcome, Player};
 use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::{GameOutcome, Player};
 
 impl Game for ConnectFour {
-	type S =  ConnectFour;
+	type S = ConnectFour;
 
 	type M = Column;
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
-		let mut mvs: [Column;7] = [Column::from_index(0);7];
+		let mut mvs: [Column; 7] = [Column::from_index(0); 7];
 		let nb = state.legal_moves_array(&mut mvs);
 		moves.extend_from_slice(&mvs[0..nb]);
 		// TODO: check winner
@@ -43,7 +41,6 @@ impl Game for ConnectFour {
 		}
 	}
 	fn get_current_player(state: &Self::S) -> Player {
-		
 		match state.player_turn() {
 			Cell::Empty => panic!(),
 			Cell::PlayerOne => Player::PLAYER1,
@@ -54,7 +51,6 @@ impl Game for ConnectFour {
 		state.encode()
 	}
 }
-
 
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
 pub struct ConnectFourEval;
@@ -73,9 +69,22 @@ impl Evaluator for ConnectFourEval {
 }
 #[cfg(test)]
 mod tests {
+	use super::ConnectFour;
 	use kudchuet::ai::minimax::util::perft;
 
-use super::ConnectFour;
+	#[test]
+	fn test_solve() {
+		let mut tree = kudchuet::ai::minimax::gametree::GameTree::<ConnectFour>::from(ConnectFour::default());
+		let winner = tree.expand_all_iterative(0, true);
+		println!("Winner: {:?}", winner);
+		println!("nb states: {:?}", tree.states.len());
+		println!("nb nodes: {:?}", tree.nb_nodes());
+		println!(
+			"outcome: {:?} ({})",
+			tree.get_root().outcome(),
+			tree.get_root().depth_to_end()
+		);
+	}
 
 	// cargo test --release -p connect4 game::tests::perft_test -- --nocapture
 
@@ -97,7 +106,7 @@ use super::ConnectFour;
 		let mut board = ConnectFour::default();
 		let max_depth = 13;
 		let nodes = perft::<ConnectFour>(&mut board, max_depth, true);
-		const NB_NODES: [u64;14] = [
+		const NB_NODES: [u64; 14] = [
 			1,
 			7,
 			49,

@@ -345,3 +345,4 @@ where
 pub mod ai;
 pub mod gui;
 pub mod utils;
+pub mod sgf;

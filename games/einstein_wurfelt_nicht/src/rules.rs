@@ -181,10 +181,11 @@ impl EinsteinWurfeltNicht {
 						}
 					}
 				}
+				self.dice = None;
+				self.is_red = !self.is_red;
 			}
 		}
-		self.dice = None;
-		self.is_red = !self.is_red;
+
 	}
 	pub fn result(&self) -> GameOutcome {
 		if self.blue.iter().any(|e| e == &20) || self.red.iter().all(|e| e == &25) {

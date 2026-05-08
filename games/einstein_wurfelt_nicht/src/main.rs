@@ -8,7 +8,7 @@ use einstein_wurfelt_nicht::gui::create_board;
 fn main() -> eframe::Result<()> {
 	let options = eframe::NativeOptions::default();
 	eframe::run_native(
-		"Einstein Wurfelt Nicht",
+		"Einstein Würfelt Nicht",
 		options,
 		Box::new(|_cc| Ok(Box::new(create_board()))),
 	)

@@ -11,6 +11,8 @@ wasm-bindgen-futures = "0.4"
 fastrand = "2.4"
 bitboard = {path="../../bitboards/bitboard"}
 bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
+#bitboard = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
+#bitboard_proc_macro = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
 
 [lib]
 name="clobber"

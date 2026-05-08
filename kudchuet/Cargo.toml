@@ -18,6 +18,8 @@ fastrand = "2.4"
 serde = "1.0"
 serde_json = "1.0"
 futures = "0.3"
+fancy-regex = "0.18"
+regex = "1.0"
 
 [target.'cfg(not(target_arch="wasm32"))'.dependencies]
 num_cpus = "1.0"

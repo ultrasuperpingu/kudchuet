@@ -8,10 +8,10 @@ eframe = { version = "0.34", features=["persistence"] }
 kudchuet = { path = "../../kudchuet" }
 bitboard = {path="../../bitboards/bitboard"}
 bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
-#magic_bitboard_proc_macro = {path="../../magic_bitboard_proc_macro"}
-#minimax = "0.5"
-#minimax = {path="../../minimax"}
+#bitboard = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
+#bitboard_proc_macro = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
 fastrand = "2.4"
+regex = "1.12"
 
 [dev-dependencies]
 bencher = "0.1"

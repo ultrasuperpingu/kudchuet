@@ -1,14 +1,17 @@
+
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::MoveSearcherBuilderDyn;
+use kudchuet::Player;
+use kudchuet::ai::minimax::MCTS;
+use kudchuet::ai::{AIBuilderDyn, AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
 
-use crate::game::ClobberDumbEval;
-use crate::rules::Bitboard6x5;
+use crate::game::{ClobberDumbEval, ClobberSimpleEval};
+use crate::rules::Bitboard5x6;
 
 use super::rules::{Clobber, Move};
 
@@ -71,11 +74,18 @@ impl BoardGame for Clobber {
 	}
 
 	fn index_from_coords(x: u8, y: u8) -> u16 {
-		Bitboard6x5::index_from_coords(x, y) as u16
+		Bitboard5x6::index_from_coords(x, y) as u16
 	}
 
 	fn coords_from_index(index: u16) -> (u8, u8) {
-		Bitboard6x5::coords_from_index(index as usize)
+		Bitboard5x6::coords_from_index(index as usize)
+	}
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "White",
+			Player::PLAYER2 => "Black",
+			_ => unreachable!(),
+		}.into()
 	}
 
 	fn default_style() -> BoardStyle {
@@ -84,7 +94,7 @@ impl BoardGame for Clobber {
 			uniform_color: Color32::from_rgb(40, 70, 125),
 			dark_color: Color32::from_rgb(60, 45, 30),
 			light_color: Color32::from_rgb(200, 175, 140),
-			show_coordinates_mod: CoordMod::None,
+			show_coordinates_mod: CoordMod::FileRankOnSquare,
 			square_stroke_color: None,
 			..Default::default()
 		}
@@ -92,7 +102,20 @@ impl BoardGame for Clobber {
 }
 
 pub fn create_board() -> GenericBoardApp<Clobber> {
-	let ai_provider = MoveSearcherBuilderDyn::new("Dumb".into(), ClobberDumbEval::default(), 8);
-	let board = GenericBoardApp::new(Clobber::default(), vec![Box::new(ai_provider)]);
+	let engines: Vec<Box<dyn AIEngineProvider<Clobber, Engine = Box<dyn AIEngine<Clobber>>>>> = vec![
+		Box::new(MoveSearcherBuilderDyn::new(
+			"Dumb".into(),
+			ClobberDumbEval {},
+			8,
+		)),
+		Box::new(MoveSearcherBuilderDyn::new(
+			"Simple".into(),
+			ClobberSimpleEval {},
+			8,
+		)),
+		Box::new(AIBuilderDyn::<Clobber, MCTS<Clobber>>::new("MCTS".into())),
+	];
+	//let ai_provider = MoveSearcherBuilderDyn::new("Dumb".into(), ClobberDumbEval::default(), 8);
+	let board = GenericBoardApp::new(Clobber::default(), engines);
 	board
 }

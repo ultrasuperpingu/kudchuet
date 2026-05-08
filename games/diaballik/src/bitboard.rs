@@ -33,11 +33,11 @@ impl Bitboard7x7 {
 impl Bitboard7x7 {
 	const fn compute_pass_mask(sq:u8) -> Self {
 		let index = sq as usize;
-		let mut mask = Self::compute_diag_inc_mask(index).storage() | Self::compute_diag_dec_mask(index).storage();
-		mask |= Self::compute_col_mask(index).storage() | Self::compute_row_mask(index).storage();
-		mask &= !Self::from_index(index).storage();
+		let mut mask = Self::compute_diag_inc_mask(index).or_const(&Self::compute_diag_dec_mask(index));
+		mask.or_assign_const(&Self::compute_col_mask(index).or_const(&Self::compute_row_mask(index)));
+		mask.and_assign_const(&Self::from_index(index).not_const());
 		
-		Self::from_storage(mask)
+		mask
 	}
 	pub const fn generate_pass_mask_table() -> [Self; Self::NB_SQUARES] {
 		let mut arr = [Self(0); Self::NB_SQUARES];

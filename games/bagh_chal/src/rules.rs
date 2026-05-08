@@ -65,8 +65,8 @@ impl BaghChal {
 impl BaghChal {
 	pub fn get_hash(&self) -> u64 {
 		let mut key = 0u64;
-		key |= self.tigers.storage() as u64;           // 25 bits
-		key |= (self.goats.storage() as u64) << 25;   // 25 bits
+		key |= *self.tigers.storage() as u64;           // 25 bits
+		key |= (*self.goats.storage() as u64) << 25;   // 25 bits
 		key |= (self.turn_tiger as u64) << 50;           // 1 bit
 		key |= (self.goats_deposited as u64) << 51; // 5 bits
 		key |= (self.goats_captured as u64) << 56; // 3 bits

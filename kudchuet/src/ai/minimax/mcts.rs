@@ -1,6 +1,9 @@
-use std::sync::{
-	Arc,
-	atomic::{AtomicBool, Ordering},
+use std::{
+	sync::{
+		Arc,
+		atomic::{AtomicBool, Ordering},
+	},
+	time::Duration,
 };
 
 use crate::{
@@ -10,14 +13,16 @@ use crate::{
 		minimax::{
 			Evaluation, Game, SearchStopSignal, Strategy,
 			gametree::{GameTree, Node, StateInfo},
+			sync_util::timeout_signal,
 			util::AppliedMove,
 		},
 	},
 };
 pub struct MCTSOptions {
-	pub max_nb_iteration: usize,
+	pub max_nb_iteration: u32,
 	pub exploration_factor: f32,
 	pub use_min_max: bool,
+	pub max_time: Duration,
 }
 impl Default for MCTSOptions {
 	fn default() -> Self {
@@ -25,11 +30,12 @@ impl Default for MCTSOptions {
 			max_nb_iteration: 20000,
 			exploration_factor: std::f32::consts::SQRT_2,
 			use_min_max: true,
+			max_time: Duration::from_secs(5),
 		}
 	}
 }
 impl MCTSOptions {
-	pub fn with_max_nb_iteration(&mut self, value: usize) -> &mut Self {
+	pub fn with_max_nb_iteration(&mut self, value: u32) -> &mut Self {
 		self.max_nb_iteration = value;
 		self
 	}
@@ -60,17 +66,16 @@ where
 	}
 }
 impl<M> Node<M> {
-	pub fn uct_score(&self, exploration_factor: f32, parent_visits: f32, is_min: bool) -> f32 {
-		if self.visits == 0.0 {
+	pub fn uct_score(&self, exploration_factor: f32, parent_visits: u32, is_min: bool) -> f32 {
+		if self.visits == 0 {
 			return i32::MAX as f32;
 		}
-		debug_assert!(parent_visits >= 0.0);
 		let exploitation = if is_min {
-			-self.wins / self.visits
+			-(self.wins as f32) / self.visits as f32
 		} else {
-			self.wins / self.visits
+			self.wins as f32 / self.visits as f32
 		};
-		let exploration = (parent_visits.ln() / self.visits).sqrt();
+		let exploration = ((parent_visits  as f32).ln() / self.visits as f32).sqrt();
 		exploitation + exploration_factor * exploration
 	}
 }
@@ -86,28 +91,43 @@ where
 		{
 			let parent_visits = self.get_node(node_id).unwrap().visits;
 			let node = self.get_node_expanded_node(node_id).unwrap();
+			let selected = if G::is_random_move(self.get_state(node.state_hash).unwrap()) {
+				let mut sum_proba = 0.0;
+				let rand = fastrand::f32();
+				let mut ch_node = None;
+				for child_id in node.children.iter() {
+					let child_node = &self.nodes[*child_id];
+					let mv = child_node.incoming_move.unwrap();
+					sum_proba += G::get_probability(self.get_state(node.state_hash).unwrap(), mv);
+					if sum_proba > rand {
+						ch_node = Some(child_id);
+						break;
+					}
+				}
+				ch_node
+			} else {
+				node.children
+					.iter()
+					//.filter(|id| {
+					//	!self
+					//		.get_node_expanded_node(**id)
+					//		.unwrap()
+					//		.outcome
+					//		.is_ended()
+					//})
+					.max_by(|&&a, &&b| {
+						let ca = self.get_node(a).unwrap();
+						let cb = self.get_node(b).unwrap();
+						let player = self.get_node(a).unwrap().player_to_move;
+						let is_root_player = player == root_player;
 
-			let selected = node
-				.children
-				.iter()
-				//.filter(|id| {
-				//	!self
-				//		.get_node_expanded_node(**id)
-				//		.unwrap()
-				//		.outcome
-				//		.is_ended()
-				//})
-				.max_by(|&&a, &&b| {
-					let ca = self.get_node(a).unwrap();
-					let cb = self.get_node(b).unwrap();
-					let player = self.get_node(a).unwrap().player_to_move;
-					let is_root_player = player == root_player;
+						// minimize if next move is root player
+						let ua = ca.uct_score(exploration_factor, parent_visits, is_root_player);
+						let ub = cb.uct_score(exploration_factor, parent_visits, is_root_player);
+						ua.partial_cmp(&ub).unwrap()
+					})
+			};
 
-					// minimize if next move is root player
-					let ua = ca.uct_score(exploration_factor, parent_visits, is_root_player);
-					let ub = cb.uct_score(exploration_factor, parent_visits, is_root_player);
-					ua.partial_cmp(&ub).unwrap()
-				});
 			if let Some(id) = selected {
 				node_id = *id;
 			} else {
@@ -135,7 +155,7 @@ where
 	where
 		G::S: Clone,
 	{
-		let state = self.get_node_state(parent_id).unwrap();
+		let state = self.get_node_state_mut(parent_id).unwrap();
 		let new_state = AppliedMove::<G>::applied_clone(state, m);
 		let new_state_hash = G::get_hash(&new_state);
 		let tt_state = self.states.get(&new_state_hash);
@@ -151,12 +171,12 @@ where
 			let mut moves = vec![];
 			let outcome = G::generate_and_filter_moves(&new_state, &mut moves);
 			self.nodes.push(Node {
-				state: new_state_hash,
+				state_hash: new_state_hash,
 				parent: Some(parent_id),
 				children: vec![],
-				visits: 0.0,
-				wins: 0.0,
-				draws: 0.0,
+				visits: 0,
+				wins: 0,
+				draws: 0,
 				untried_moves: moves,
 				player_to_move: G::get_current_player(&new_state),
 				outcome,
@@ -167,12 +187,12 @@ where
 			let si = tt_state.unwrap();
 			let expanded_node = &self.nodes[si.expanded_node];
 			self.nodes.push(Node {
-				state: new_state_hash,
+				state_hash: new_state_hash,
 				parent: Some(parent_id),
 				children: vec![],
-				visits: 0.0,
-				wins: 0.0,
-				draws: 0.0,
+				visits: 0,
+				wins: 0,
+				draws: 0,
 				untried_moves: vec![],
 				player_to_move: expanded_node.player_to_move,
 				outcome: expanded_node.outcome,
@@ -200,14 +220,14 @@ where
 				.unwrap_or(id);
 
 			let node = &mut self.nodes[id];
-			node.visits += 1.0;
+			node.visits += 1;
 
 			if result.is_win_for(root_player) {
-				node.wins += 1.0;
+				node.wins += 1;
 			} else if result.is_draw() {
-				node.draws += 1.0;
+				node.draws += 1;
 			} else if result.is_lose_for(root_player) {
-				node.wins -= 1.0;
+				node.wins -= 1;
 			}
 
 			if use_min_max {
@@ -286,7 +306,7 @@ impl<G: Game> MCTS<G>
 where
 	G::S: Clone,
 {
-	pub fn mcts(&mut self, root_state: &G::S, iterations: usize) -> Option<G::M>
+	pub fn mcts(&mut self, root_state: &G::S, iterations: u32) -> Option<G::M>
 	where
 		G::S: Clone,
 	{
@@ -294,11 +314,18 @@ where
 		let mut tree = self.tree.take().unwrap_or_default();
 		if let Some(si) = tree.states.get(&root_state_hash) {
 			tree.set_root_id(si.expanded_node);
-			println!("Reusing tree: {}/{} v.", tree.get_root().winrate(),tree.get_root().visits);
+			println!(
+				"Reusing tree: {}/{} v.",
+				tree.get_root().winrate(),
+				tree.get_root().visits
+			);
 			//TODO: clean only when tree is too large??...
 			//tree.cleanup();
 		} else {
-			println!("Tree does not contains the state. size={}", tree.nodes.len());
+			println!(
+				"Tree does not contains the state. size={}",
+				tree.nodes.len()
+			);
 			if !tree.nodes.is_empty() {
 				println!("Resetting tree");
 				tree = GameTree::default();
@@ -307,12 +334,12 @@ where
 			G::generate_and_filter_moves(&root_state, &mut moves);
 			tree.root_id = tree.nodes.len();
 			tree.nodes.push(Node {
-				state: root_state_hash,
+				state_hash: root_state_hash,
 				parent: None,
 				children: vec![],
-				visits: 0.0,
-				wins: 0.0,
-				draws: 0.0,
+				visits: 0,
+				wins: 0,
+				draws: 0,
 				untried_moves: moves,
 				player_to_move: G::get_current_player(&root_state),
 				outcome: GameOutcome::OnGoing,
@@ -329,6 +356,11 @@ where
 		}
 
 		self.stop_signal.store(false, Ordering::Relaxed);
+		let _cancel_when_dropped = if !self.opts.max_time.is_zero() {
+			timeout_signal(self.opts.max_time, &self.stop_signal)
+		} else {
+			Arc::new(())
+		};
 
 		let root_player = tree.get_root().player_to_move;
 		let mut i = 0;
@@ -382,6 +414,20 @@ where
 		} else {
 			0
 		}
+	}
+	fn set_timeout(&mut self, _timeout: std::time::Duration) {
+		self.opts.max_time = _timeout;
+	}
+	fn set_max_depth(&mut self, depth: u8) {
+		// Set some arbitrary function of rollouts.
+		self.opts.max_time = Duration::default();
+		self.opts.max_nb_iteration = 5u32
+			.saturating_pow(depth as u32);
+	}
+
+	fn set_depth_or_timeout(&mut self, depth: u8, max_time: Duration) {
+		self.set_max_depth(depth);
+		self.opts.max_time = max_time;
 	}
 }
 impl<G: Game> StrategyWithOptions<G, AIOptions> for MCTS<G>
