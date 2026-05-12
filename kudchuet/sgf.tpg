@@ -1,9 +1,46 @@
 //Tiny Parser Generator v1.6
 
 <% @TinyPG Namespace="sgf" Language="rust" OutputPath="./src/sgf" %>
+<% @ParseTree CustomCode={
+	//TODO
 
-[Skip]			WHITESPACE		-> @"\s+";
-			EOF			-> @"$";
+}; HeaderCode={
+use std::collections::HashMap;
+pub struct SGFTreeNode {
+	pub attributes: HashMap<String, Vec<Vec<String>>>,
+	pub children: Vec<SGFTreeNode>,
+}
+impl SGFTreeNode {
+	fn new() -> Self {
+		Self {
+			attributes: HashMap::new(),
+			children: Vec::new(),
+
+		}
+	}
+	fn attr_string(&self, name:&str) -> Option<String> {
+		let att=self.attributes.get(name)?;
+		let l=att.iter().next()?;
+		Some(l.get(0)?.clone())
+	}
+	fn attr_string_tuple(&self, name:&str) -> Option<Vec<String>> {
+		let att=self.attributes.get(name)?;
+		let l=att.iter().next()?;
+		Some(l.clone())
+	}
+	fn attr_string_set(&self, name:&str) -> Option<Vec<String>> {
+		let att=self.attributes.get(name)?;
+		let l=att.iter().map(|v| v.get(0).cloned()).collect();
+		l
+	}
+
+}
+};
+%>
+
+
+[Skip]			WHITESPACE	-> @"\s+";
+			EOF		-> @"$";
 
 
 [Color(0, 128, 0)]	BROPEN		-> @"\[";
@@ -12,17 +49,66 @@
 [Color(0, 0, 128)]	PAROPEN	-> @"\(";
 [Color(0, 0, 128)]	PARCLOSE	-> @"\)";
 [Color(128, 0, 0)]	SEMICOLON	-> @";";
+[Color(128, 0, 0)]	COLON		-> @":";
 
-[Color(255, 128, 128)] IDENT	-> @"[a-zA-Z]+";
+[Color(255, 128, 128)] IDENT	-> @"[a-zA-Z][a-zA-Z0-9]*";
 
-[Color(128, 128, 128)] CONTENT -> @"([^\\\]]|\\.)*";
+[Color(128, 128, 128)] CONTENT -> @"([^\\\]:]|\\.)*";
 //[Color(128, 128, 128)] CONTENT -> @"[a-zA-Z0-9 _]*";
 
 
-Start	 	-> Tree;
-Tree -> PAROPEN (TreeNode+|Tree)+ PARCLOSE;
-TreeNode -> SEMICOLON Attribute+;
-Attribute -> IDENT (BROPEN CONTENT BRCLOSE)+;
+Start	 	-> Tree : SGFTreeNode {
+	$Tree
+};
+Tree -> PAROPEN TreeNode+ PARCLOSE : SGFTreeNode {
+	let mut root = SGFTreeNode::new();
+	let mut i = 0;
+	while ?TreeNode[i]
+	{
+		let c = $TreeNode[i];
+		root.children.push(c);
+		i+=1;
+	}
+	root
+};
+TreeNode -> LeafNode|Tree : SGFTreeNode {
+	if ?LeafNode {
+		$LeafNode
+	} else {
+		$Tree
+	}
+};
+
+LeafNode -> SEMICOLON Attribute* : SGFTreeNode {
+	let mut node = SGFTreeNode::new();
+	let mut i = 0;
+	while ?Attribute[i] {
+		let att = $Attribute[i];
+		node.attributes.insert(att.0, att.1);
+		i += 1;
+	}
+	node
+};
+
+Attribute -> IDENT (BROPEN Tuple BRCLOSE)+ : (String, Vec<Vec<String>>)
+{
+	let mut content = Vec::new();
+	let mut i = 0;
+	while ?Tuple[i] {
+		content.push($Tuple[i]);
+		i += 1;
+	}
+	($IDENT, content)
+};
+Tuple -> CONTENT (COLON CONTENT)* : Vec<String> {
+	let mut tuple = vec![];
+	let mut i = 0;
+	while ?CONTENT[i] {
+		tuple.push($CONTENT[i]);
+		i += 1;
+	}
+	tuple
+};
 
 //(;A[1] B[2](;C[3];D[4](;E[5];F[6]))(;G[7](;H[8])(;I[9];J[10]))))
 

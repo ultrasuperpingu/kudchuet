@@ -1,7 +1,38 @@
 // Automatically generated from source file: sgf.tpg
 // By TinyPG v1.6 available at https://github.com/ultrasuperpingu/TinyPG
+#![allow(unused)]
 
 
+use std::collections::HashMap;
+pub struct SGFTreeNode {
+	pub attributes: HashMap<String, Vec<Vec<String>>>,
+	pub children: Vec<SGFTreeNode>,
+}
+impl SGFTreeNode {
+	fn new() -> Self {
+		Self {
+			attributes: HashMap::new(),
+			children: Vec::new(),
+
+		}
+	}
+	fn attr_string(&self, name:&str) -> Option<String> {
+		let att=self.attributes.get(name)?;
+		let l=att.iter().next()?;
+		Some(l.get(0)?.clone())
+	}
+	fn attr_string_tuple(&self, name:&str) -> Option<Vec<String>> {
+		let att=self.attributes.get(name)?;
+		let l=att.iter().next()?;
+		Some(l.clone())
+	}
+	fn attr_string_set(&self, name:&str) -> Option<Vec<String>> {
+		let att=self.attributes.get(name)?;
+		let l=att.iter().map(|v| v.get(0).cloned()).collect();
+		l
+	}
+
+}
 
 
 use super::scanner::{Token, TokenType};
@@ -120,14 +151,18 @@ pub trait IParseNode {
 	fn get_nodes(&self) -> &Vec<Box<dyn IParseNode>>;
 	fn eval(&self, paramlist: &mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>;
 
-	fn eval_start(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>;
-	fn get_start_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>;
-	fn eval_tree(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>;
-	fn get_tree_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>;
-	fn eval_treenode(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>;
-	fn get_treenode_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>;
-	fn eval_attribute(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>;
-	fn get_attribute_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>;
+	fn eval_start(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode;
+	fn get_start_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode;
+	fn eval_tree(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode;
+	fn get_tree_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode;
+	fn eval_treenode(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode;
+	fn get_treenode_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode;
+	fn eval_leafnode(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode;
+	fn get_leafnode_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode;
+	fn eval_attribute(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> (String, Vec<Vec<String>>);
+	fn get_attribute_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> (String, Vec<Vec<String>>);
+	fn eval_tuple(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Vec<String>;
+	fn get_tuple_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Vec<String>;
 
 }
 pub struct ParseNode
@@ -241,8 +276,14 @@ impl IParseNode for ParseNode {
 			TokenType::TreeNode => {
 				Some(Box::new(self.eval_treenode(paramlist)))
 			},
+			TokenType::LeafNode => {
+				Some(Box::new(self.eval_leafnode(paramlist)))
+			},
 			TokenType::Attribute => {
 				Some(Box::new(self.eval_attribute(paramlist)))
+			},
+			TokenType::Tuple => {
+				Some(Box::new(self.eval_tuple(paramlist)))
 			},
 
 			_ => {
@@ -252,12 +293,12 @@ impl IParseNode for ParseNode {
 	}
 
 
-	fn eval_start(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>
+	fn eval_start(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode
 	{
-		panic!("Could not interpret input; no semantics implemented.");
+		self.get_tree_value(0, paramlist)
 	}
 
-	fn get_start_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>
+	fn get_start_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode
 	{
 		let node = self.get_token_node(TokenType::Start, index);
 		if let Some(n) = node {
@@ -266,12 +307,20 @@ impl IParseNode for ParseNode {
 		panic!("No Start[index] found.");
 	}
 
-	fn eval_tree(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>
+	fn eval_tree(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode
 	{
-		panic!("Could not interpret input; no semantics implemented.");
+		let mut root = SGFTreeNode::new();
+		let mut i = 0;
+		while self.is_token_present(TokenType::TreeNode, i)
+		{
+			let c = self.get_treenode_value(i, paramlist);
+			root.children.push(c);
+			i+=1;
+		}
+		root
 	}
 
-	fn get_tree_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>
+	fn get_tree_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode
 	{
 		let node = self.get_token_node(TokenType::Tree, index);
 		if let Some(n) = node {
@@ -280,12 +329,16 @@ impl IParseNode for ParseNode {
 		panic!("No Tree[index] found.");
 	}
 
-	fn eval_treenode(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>
+	fn eval_treenode(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode
 	{
-		panic!("Could not interpret input; no semantics implemented.");
+		if self.is_token_present(TokenType::LeafNode, 0) {
+			self.get_leafnode_value(0, paramlist)
+		} else {
+			self.get_tree_value(0, paramlist)
+		}
 	}
 
-	fn get_treenode_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>
+	fn get_treenode_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode
 	{
 		let node = self.get_token_node(TokenType::TreeNode, index);
 		if let Some(n) = node {
@@ -294,18 +347,65 @@ impl IParseNode for ParseNode {
 		panic!("No TreeNode[index] found.");
 	}
 
-	fn eval_attribute(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>
+	fn eval_leafnode(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode
 	{
-		panic!("Could not interpret input; no semantics implemented.");
+		let mut node = SGFTreeNode::new();
+		let mut i = 0;
+		while self.is_token_present(TokenType::Attribute, i) {
+			let att = self.get_attribute_value(i, paramlist);
+			node.attributes.insert(att.0, att.1);
+			i += 1;
+		}
+		node
 	}
 
-	fn get_attribute_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Option<Box<dyn std::any::Any>>
+	fn get_leafnode_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> SGFTreeNode
+	{
+		let node = self.get_token_node(TokenType::LeafNode, index);
+		if let Some(n) = node {
+			return n.eval_leafnode(paramlist);
+		}
+		panic!("No LeafNode[index] found.");
+	}
+
+	fn eval_attribute(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> (String, Vec<Vec<String>>)
+	{
+		let mut content = Vec::new();
+		let mut i = 0;
+		while self.is_token_present(TokenType::Tuple, i) {
+			content.push(self.get_tuple_value(i, paramlist));
+			i += 1;
+		}
+		(self.get_terminal_value(TokenType::IDENT, 0), content)
+	}
+
+	fn get_attribute_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> (String, Vec<Vec<String>>)
 	{
 		let node = self.get_token_node(TokenType::Attribute, index);
 		if let Some(n) = node {
 			return n.eval_attribute(paramlist);
 		}
 		panic!("No Attribute[index] found.");
+	}
+
+	fn eval_tuple(&self, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Vec<String>
+	{
+		let mut tuple = vec![];
+		let mut i = 0;
+		while self.is_token_present(TokenType::CONTENT, i) {
+			tuple.push(self.get_terminal_value(TokenType::CONTENT, i));
+			i += 1;
+		}
+		tuple
+	}
+
+	fn get_tuple_value(&self, index : i32, paramlist:&mut Vec<Box<dyn std::any::Any>>) -> Vec<String>
+	{
+		let node = self.get_token_node(TokenType::Tuple, index);
+		if let Some(n) = node {
+			return n.eval_tuple(paramlist);
+		}
+		panic!("No Tuple[index] found.");
 	}
 
 
@@ -322,4 +422,7 @@ impl ParseNode {
 		}
 	}
 	
+	//TODO
+
+
 }

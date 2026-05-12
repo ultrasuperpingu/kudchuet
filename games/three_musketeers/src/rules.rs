@@ -1,6 +1,6 @@
 use bitboard::{BitIter, Bitboard};
-use std::fmt::{self, Display, Formatter};
 use kudchuet::{GameOutcome, Player};
+use std::fmt::{self, Display, Formatter};
 
 use crate::bitboard::Bitboard5x5;
 
@@ -21,10 +21,9 @@ impl Display for ThreeMusketeers {
 
 		for y in 0..5 {
 			for x in 0..5 {
-				
-				let c = if self.musketeers.get(x,y) {
+				let c = if self.musketeers.get(x, y) {
 					'M'
-				} else if self.guards.get(x,y) {
+				} else if self.guards.get(x, y) {
 					'G'
 				} else {
 					'.'
@@ -74,7 +73,7 @@ impl ThreeMusketeers {
 impl ThreeMusketeers {
 	#[inline(always)]
 	pub fn legal_moves(&self) -> Vec<Move> {
-		let mut out= vec![];
+		let mut out = vec![];
 		self.legal_moves_inplace(&mut out);
 		out
 	}
@@ -85,17 +84,17 @@ impl ThreeMusketeers {
 			0 => {
 				out.reserve(12);
 				self.legal_moves_musketeers_inplace(out)
-			},
+			}
 			1 => {
 				out.reserve(24);
 				self.legal_moves_guards_inplace(out)
-			},
-			_ => unreachable!()
+			}
+			_ => unreachable!(),
 		}
 	}
 	#[inline(always)]
 	pub fn legal_moves_musketeers(&self) -> Vec<Move> {
-		let mut out= vec![];
+		let mut out = vec![];
 		self.legal_moves_musketeers_inplace(&mut out);
 		out
 	}
@@ -108,11 +107,19 @@ impl ThreeMusketeers {
 		self.moves_from_mask(self.guards, !self.occupied(), out)
 	}
 	#[inline]
-	fn moves_from_mask(&self, from_mask: Bitboard5x5, target_mask: Bitboard5x5, out: &mut Vec<Move>) {
+	fn moves_from_mask(
+		&self,
+		from_mask: Bitboard5x5,
+		target_mask: Bitboard5x5,
+		out: &mut Vec<Move>,
+	) {
 		for from in from_mask.iter_bits() {
 			let mask = target_mask.neighbors_ortho(from as usize);
 			for to in mask.iter_bits() {
-				out.push(Move { from: from as u8, to: to as u8 });
+				out.push(Move {
+					from: from as u8,
+					to: to as u8,
+				});
 			}
 		}
 	}
@@ -126,7 +133,18 @@ impl ThreeMusketeers {
 		}
 		false
 	}
-
+	#[inline]
+	fn has_legal_move_guards(&self) -> bool {
+		let mut free = self.occupied();
+		free.flip();
+		for from in self.guards.iter_bits() {
+			let mask = free.neighbors_ortho(from as usize);
+			if mask.any() {
+				return true;
+			}
+		}
+		false
+	}
 }
 
 impl ThreeMusketeers {
@@ -150,7 +168,7 @@ impl ThreeMusketeers {
 	pub fn play_unchecked(&mut self, mv: Move) {
 		let from = Bitboard5x5::from_index(mv.from as usize);
 		let to = Bitboard5x5::from_index(mv.to as usize);
-		
+
 		match self.turn {
 			0 => {
 				self.musketeers = (self.musketeers & !from) | to;
@@ -162,10 +180,9 @@ impl ThreeMusketeers {
 				self.guards = (self.guards & !from) | to;
 				self.turn = 0;
 			}
-			_ => unreachable!()
+			_ => unreachable!(),
 		}
 	}
-
 }
 
 impl ThreeMusketeers {
@@ -192,16 +209,16 @@ impl ThreeMusketeers {
 			None
 		}
 	}
-	fn set_cell(&mut self, x: u8, y: u8, player:Player) {
+	fn set_cell(&mut self, x: u8, y: u8, player: Player) {
 		match player {
 			Player::PLAYER1 => {
 				self.musketeers.set(x, y);
 				self.guards.reset(x, y);
-			},
+			}
 			Player::PLAYER2 => {
 				self.musketeers.reset(x, y);
 				self.guards.set(x, y);
-			},
+			}
 			_ => unreachable!(),
 		}
 	}
@@ -215,6 +232,17 @@ impl ThreeMusketeers {
 		}
 		if self.turn == 0 {
 			if !self.has_legal_move_musketeers() {
+				return GameOutcome::PLAYER1;
+			}
+		} else {
+			//Don't know the rule when guard aren't able to move (ex:
+			//. M . . .
+			//. . . . .
+			//. . . . .
+			//M . . . .
+			//G M . . .
+			//). For now, considering musketeers won.
+			if !self.has_legal_move_guards() {
 				return GameOutcome::PLAYER1;
 			}
 		}
@@ -252,7 +280,6 @@ impl ThreeMusketeers {
 		let board_part = parts.next().ok_or("Missing board part")?;
 		let player_part = parts.next().ok_or("Missing player part")?;
 
-	
 		for (y, row) in board_part.split('/').enumerate() {
 			if y >= 5 {
 				return Err("Too many rows".into());
@@ -284,9 +311,9 @@ impl ThreeMusketeers {
 }
 #[cfg(test)]
 mod tests {
-	use super::ThreeMusketeers;
 	use super::GameOutcome;
-		
+	use super::ThreeMusketeers;
+
 	#[test]
 	fn play_one_move() {
 		let mut game = ThreeMusketeers::new();
@@ -304,7 +331,7 @@ mod tests {
 	#[test]
 	fn play() {
 		let mut game = ThreeMusketeers::new();
-		
+
 		let mut moves = game.legal_moves();
 		assert!(!moves.is_empty());
 		while !moves.is_empty() {
@@ -322,5 +349,24 @@ mod tests {
 		assert_eq!(game.musketeers, game2.musketeers);
 		assert_eq!(game.guards, game2.guards);
 		assert_eq!(game.turn, game2.turn);
+	}
+	#[test]
+	fn bug() {
+		//8093597896897545293
+		let game = ThreeMusketeers {
+			musketeers: crate::bitboard::Bitboard5x5(0b00010_00001_00000_00000_00010),
+			guards: crate::bitboard::Bitboard5x5(0b00001_00000_00000_00000_00000),
+			turn: 1,
+		};
+		println!("{}", ThreeMusketeers::get_hash(&game));
+		println!("{}", game);
+		let game = ThreeMusketeers {
+			musketeers: crate::bitboard::Bitboard5x5(0b00010_00001_00000_10000_00000),
+			guards: crate::bitboard::Bitboard5x5(0b00001_00000_00000_00000_00000),
+			turn: 1,
+		};
+		println!("{}", game);
+		println!("{:?}", game.legal_moves());
+		println!("{:?}", game.result());
 	}
 }

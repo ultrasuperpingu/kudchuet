@@ -77,11 +77,15 @@ impl Scanner {
 		ret.patterns.insert(TokenType::SEMICOLON, regex);
 		ret.tokens.push(TokenType::SEMICOLON);
 
-		regex = RegexBuilder::new("^(?:[a-zA-Z]+)").build().expect("Invalid regex");
+		regex = RegexBuilder::new("^(?::)").build().expect("Invalid regex");
+		ret.patterns.insert(TokenType::COLON, regex);
+		ret.tokens.push(TokenType::COLON);
+
+		regex = RegexBuilder::new("^(?:[a-zA-Z][a-zA-Z0-9]*)").build().expect("Invalid regex");
 		ret.patterns.insert(TokenType::IDENT, regex);
 		ret.tokens.push(TokenType::IDENT);
 
-		regex = RegexBuilder::new("^(?:([^\\\\\\]]|\\\\.)*)").build().expect("Invalid regex");
+		regex = RegexBuilder::new("^(?:([^\\\\\\]:]|\\\\.)*)").build().expect("Invalid regex");
 		ret.patterns.insert(TokenType::CONTENT, regex);
 		ret.tokens.push(TokenType::CONTENT);
 
@@ -235,18 +239,21 @@ pub enum TokenType
 	Start              = 2,
 	Tree               = 3,
 	TreeNode           = 4,
-	Attribute          = 5,
+	LeafNode           = 5,
+	Attribute          = 6,
+	Tuple              = 7,
 
 		//Terminal tokens:
-	WHITESPACE         = 6,
-	EOF                = 7,
-	BROPEN             = 8,
-	BRCLOSE            = 9,
-	PAROPEN            = 10,
-	PARCLOSE           = 11,
-	SEMICOLON          = 12,
-	IDENT              = 13,
-	CONTENT            = 14,
+	WHITESPACE         = 8,
+	EOF                = 9,
+	BROPEN             = 10,
+	BRCLOSE            = 11,
+	PAROPEN            = 12,
+	PARCLOSE           = 13,
+	SEMICOLON          = 14,
+	COLON              = 15,
+	IDENT              = 16,
+	CONTENT            = 17,
 
 
 	//End

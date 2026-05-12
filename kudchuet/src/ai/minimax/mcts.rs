@@ -75,7 +75,7 @@ impl<M> Node<M> {
 		} else {
 			self.wins as f32 / self.visits as f32
 		};
-		let exploration = ((parent_visits  as f32).ln() / self.visits as f32).sqrt();
+		let exploration = ((parent_visits as f32).ln() / self.visits as f32).sqrt();
 		exploitation + exploration_factor * exploration
 	}
 }
@@ -282,11 +282,22 @@ where
 		if let Some(best) = self.find_best_proved_move() {
 			return Some(best);
 		}
-		let best_child = self.get_root().children.iter().max_by(|&a, &b| {
-			let na = self.get_node_expanded_node(*a).unwrap();
-			let nb = self.get_node_expanded_node(*b).unwrap();
-			na.visits.partial_cmp(&nb.visits).unwrap()
-		});
+		let p = self.get_root().player_to_move;
+		let best_child = self
+			.get_root()
+			.children
+			.iter()
+			.filter(|c| {
+				!self.get_node_expanded_node(**c)
+					.unwrap()
+					.outcome
+					.is_lose_for(p)
+			})
+			.max_by(|&a, &b| {
+				let na = self.get_node_expanded_node(*a).unwrap();
+				let nb = self.get_node_expanded_node(*b).unwrap();
+				na.visits.partial_cmp(&nb.visits).unwrap()
+			});
 		if let Some(best_child) = best_child {
 			let best_move = self.nodes[*best_child]
 				.incoming_move
@@ -421,8 +432,7 @@ where
 	fn set_max_depth(&mut self, depth: u8) {
 		// Set some arbitrary function of rollouts.
 		self.opts.max_time = Duration::default();
-		self.opts.max_nb_iteration = 5u32
-			.saturating_pow(depth as u32);
+		self.opts.max_nb_iteration = 5u32.saturating_pow(depth as u32);
 	}
 
 	fn set_depth_or_timeout(&mut self, depth: u8, max_time: Duration) {

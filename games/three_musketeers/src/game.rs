@@ -16,7 +16,7 @@ impl Game for ThreeMusketeers {
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		state.legal_moves_inplace(moves);
-		Self::get_outcome(state)
+		state.result()
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {

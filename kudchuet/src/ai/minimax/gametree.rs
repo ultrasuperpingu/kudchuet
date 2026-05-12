@@ -13,7 +13,7 @@ pub struct Node<M> {
 	pub(crate) children: Vec<usize>,
 
 	pub(crate) visits: u32,
-	pub(crate) wins: u32,
+	pub(crate) wins: i32,
 	pub(crate) draws: u32,
 
 	pub(crate) untried_moves: Vec<M>,
@@ -410,6 +410,9 @@ where
 					}
 					ch_mv
 				} else {
+					if moves.is_empty() {
+						println!("{hash}: {sim_state:?}");
+					}
 					fastrand::choice(&moves).unwrap()
 				};
 				if let Some(state) = G::apply(&mut sim_state, *m) {

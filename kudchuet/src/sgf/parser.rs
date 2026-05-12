@@ -1,5 +1,6 @@
 // Automatically generated from source file: sgf.tpg
 // By TinyPG v1.6 available at https://github.com/ultrasuperpingu/TinyPG
+#![allow(unused)]
 
 
 use super::{parse_tree::{IParseNode, IParserTree, ParseError, ParseTree}, scanner::{Scanner, Token, TokenType}};
@@ -91,25 +92,7 @@ impl Parser {
 
 		 // Concat Rule
 		loop { // OneOrMore Rule
-			tok = self.scanner.look_ahead(vec![TokenType::SEMICOLON, TokenType::PAROPEN]);
-			match tok._type
-			{ // Choice Rule
-				TokenType::SEMICOLON => {
-					loop { // OneOrMore Rule
-						self.parse_node_treenode(tree, Some(&mut node)); // NonTerminal Rule: TreeNode
-						tok = self.scanner.look_ahead(vec![TokenType::SEMICOLON]);
-						if tok._type == TokenType::SEMICOLON {
-							break;
-						}
-					} // OneOrMore Rule
-				},
-				TokenType::PAROPEN => {
-					self.parse_node_tree(tree, Some(&mut node)); // NonTerminal Rule: Tree
-				},
-				_ => {
-					tree.errors.push(ParseError::from_token("Unexpected token '".to_string() + tok.text.replace("\n", "").as_str() + "' found. Expected SEMICOLON or PAROPEN.", 0x0002, &tok, false));
-				}
-			} // Choice Rule
+			self.parse_node_treenode(tree, Some(&mut node)); // NonTerminal Rule: TreeNode
 			tok = self.scanner.look_ahead(vec![TokenType::SEMICOLON, TokenType::PAROPEN]);
 			if tok._type == TokenType::SEMICOLON
 		    || tok._type == TokenType::PAROPEN {
@@ -158,6 +141,46 @@ impl Parser {
 		let mut n: Box<dyn IParseNode>;
 		let mut node = tree.create_node(self.scanner.get_token(TokenType::TreeNode), "TreeNode".to_string());
 
+		tok = self.scanner.look_ahead(vec![TokenType::SEMICOLON, TokenType::PAROPEN]);
+		match tok._type
+		{ // Choice Rule
+			TokenType::SEMICOLON => {
+				self.parse_node_leafnode(tree, Some(&mut node)); // NonTerminal Rule: LeafNode
+			},
+			TokenType::PAROPEN => {
+				self.parse_node_tree(tree, Some(&mut node)); // NonTerminal Rule: Tree
+			},
+			_ => {
+				tree.errors.push(ParseError::from_token("Unexpected token '".to_string() + tok.text.replace("\n", "").as_str() + "' found. Expected SEMICOLON or PAROPEN.", 0x0002, &tok, false));
+			}
+		} // Choice Rule
+
+		if let Some(p) = parent {
+			p.get_token_mut().update_range(node.get_token());
+			p.add_node(node);
+		} else {
+			tree.root = Some(node);
+		}
+	} // NonTerminalSymbol: TreeNode
+
+	pub fn parse_leafnode(&mut self, input: &str, mut tree : ParseTree) -> ParseTree // NonTerminalSymbol: LeafNode
+	{
+		self.scanner.init(input);
+		let mut node = tree.root.take().unwrap();
+		self.parse_node_leafnode(&mut tree, Some(&mut node));
+		tree.skipped = self.scanner.skipped.clone();
+		tree.root = Some(node);
+		tree
+	}
+
+	fn parse_node_leafnode(&mut self, tree:&mut ParseTree, parent : Option<&mut Box<dyn IParseNode>>) // NonTerminalSymbol: LeafNode
+	{
+		#[allow(unused_variables, unused_mut)]
+		let mut tok: Token;
+		#[allow(unused_variables, unused_mut)]
+		let mut n: Box<dyn IParseNode>;
+		let mut node = tree.create_node(self.scanner.get_token(TokenType::LeafNode), "LeafNode".to_string());
+
 
 		 // Concat Rule
 		tok = self.scanner.scan(vec![TokenType::SEMICOLON]); // Terminal Rule: SEMICOLON
@@ -175,13 +198,12 @@ impl Parser {
 		}
 
 		 // Concat Rule
-		loop { // OneOrMore Rule
+		tok = self.scanner.look_ahead(vec![TokenType::IDENT]); // ZeroOrMore Rule
+		while tok._type == TokenType::IDENT
+		{
 			self.parse_node_attribute(tree, Some(&mut node)); // NonTerminal Rule: Attribute
-			tok = self.scanner.look_ahead(vec![TokenType::IDENT]);
-			if tok._type == TokenType::IDENT {
-				break;
-			}
-		} // OneOrMore Rule
+			tok = self.scanner.look_ahead(vec![TokenType::IDENT]); // ZeroOrMore Rule
+		}
 
 		if let Some(p) = parent {
 			p.get_token_mut().update_range(node.get_token());
@@ -189,7 +211,7 @@ impl Parser {
 		} else {
 			tree.root = Some(node);
 		}
-	} // NonTerminalSymbol: TreeNode
+	} // NonTerminalSymbol: LeafNode
 
 	pub fn parse_attribute(&mut self, input: &str, mut tree : ParseTree) -> ParseTree // NonTerminalSymbol: Attribute
 	{
@@ -244,19 +266,7 @@ impl Parser {
 			}
 
 			 // Concat Rule
-			tok = self.scanner.scan(vec![TokenType::CONTENT]); // Terminal Rule: CONTENT
-			n = tree.create_node(tok.clone(), tok.to_string() );
-			node.get_token_mut().update_range(&tok);
-			node.add_node(n);
-			if tok._type != TokenType::CONTENT {
-				tree.errors.push(ParseError::from_token("Unexpected token '".to_string() + tok.text.replace(&"\n".to_string(), "").as_str() + "' found. Expected 'CONTENT'.", 0x1001, &tok, false));
-				if let Some(p) = parent {
-					p.add_node(node);
-				} else {
-					tree.root = Some(node);
-				}
-				return;
-			}
+			self.parse_node_tuple(tree, Some(&mut node)); // NonTerminal Rule: Tuple
 
 			 // Concat Rule
 			tok = self.scanner.scan(vec![TokenType::BRCLOSE]); // Terminal Rule: BRCLOSE
@@ -285,6 +295,85 @@ impl Parser {
 			tree.root = Some(node);
 		}
 	} // NonTerminalSymbol: Attribute
+
+	pub fn parse_tuple(&mut self, input: &str, mut tree : ParseTree) -> ParseTree // NonTerminalSymbol: Tuple
+	{
+		self.scanner.init(input);
+		let mut node = tree.root.take().unwrap();
+		self.parse_node_tuple(&mut tree, Some(&mut node));
+		tree.skipped = self.scanner.skipped.clone();
+		tree.root = Some(node);
+		tree
+	}
+
+	fn parse_node_tuple(&mut self, tree:&mut ParseTree, parent : Option<&mut Box<dyn IParseNode>>) // NonTerminalSymbol: Tuple
+	{
+		#[allow(unused_variables, unused_mut)]
+		let mut tok: Token;
+		#[allow(unused_variables, unused_mut)]
+		let mut n: Box<dyn IParseNode>;
+		let mut node = tree.create_node(self.scanner.get_token(TokenType::Tuple), "Tuple".to_string());
+
+
+		 // Concat Rule
+		tok = self.scanner.scan(vec![TokenType::CONTENT]); // Terminal Rule: CONTENT
+		n = tree.create_node(tok.clone(), tok.to_string() );
+		node.get_token_mut().update_range(&tok);
+		node.add_node(n);
+		if tok._type != TokenType::CONTENT {
+			tree.errors.push(ParseError::from_token("Unexpected token '".to_string() + tok.text.replace(&"\n".to_string(), "").as_str() + "' found. Expected 'CONTENT'.", 0x1001, &tok, false));
+			if let Some(p) = parent {
+				p.add_node(node);
+			} else {
+				tree.root = Some(node);
+			}
+			return;
+		}
+
+		 // Concat Rule
+		tok = self.scanner.look_ahead(vec![TokenType::COLON]); // ZeroOrMore Rule
+		while tok._type == TokenType::COLON
+		{
+
+			 // Concat Rule
+			tok = self.scanner.scan(vec![TokenType::COLON]); // Terminal Rule: COLON
+			n = tree.create_node(tok.clone(), tok.to_string() );
+			node.get_token_mut().update_range(&tok);
+			node.add_node(n);
+			if tok._type != TokenType::COLON {
+				tree.errors.push(ParseError::from_token("Unexpected token '".to_string() + tok.text.replace(&"\n".to_string(), "").as_str() + "' found. Expected 'COLON'.", 0x1001, &tok, false));
+				if let Some(p) = parent {
+					p.add_node(node);
+				} else {
+					tree.root = Some(node);
+				}
+				return;
+			}
+
+			 // Concat Rule
+			tok = self.scanner.scan(vec![TokenType::CONTENT]); // Terminal Rule: CONTENT
+			n = tree.create_node(tok.clone(), tok.to_string() );
+			node.get_token_mut().update_range(&tok);
+			node.add_node(n);
+			if tok._type != TokenType::CONTENT {
+				tree.errors.push(ParseError::from_token("Unexpected token '".to_string() + tok.text.replace(&"\n".to_string(), "").as_str() + "' found. Expected 'CONTENT'.", 0x1001, &tok, false));
+				if let Some(p) = parent {
+					p.add_node(node);
+				} else {
+					tree.root = Some(node);
+				}
+				return;
+			}
+			tok = self.scanner.look_ahead(vec![TokenType::COLON]); // ZeroOrMore Rule
+		}
+
+		if let Some(p) = parent {
+			p.get_token_mut().update_range(node.get_token());
+			p.add_node(node);
+		} else {
+			tree.root = Some(node);
+		}
+	} // NonTerminalSymbol: Tuple
 
 
 
