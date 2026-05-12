@@ -1,10 +1,11 @@
 use crate::bitboard::Bitboard9x13;
 use eframe::egui;
 use egui::{Align2, Color32, FontId, Rect, Vec2};
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StripData, StrokeData, TextData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
-use kudchuet::{Player, new_move_searcher_vec};
+use kudchuet::Player;
 
 use crate::rules::Action;
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -570,9 +571,12 @@ impl PieceDrawer<FootBoard> for FootboardPieceDrawer
 }*/
 
 pub fn create_board() -> GenericBoardApp<FootBoard> {
+	let engines: Vec<Box<dyn AIEngineProvider<FootBoard>>> = vec![
+		Box::new(MoveSearcherBuilder::new("Dumb".into(), FootboardEvalDumb::new(), 3)),
+	];
 	let mut board = GenericBoardApp::new(
 		FootBoard::default(),
-		new_move_searcher_vec("Dumb".into(), FootboardEvalDumb::new(), 3),
+		engines,
 	);
 	board.depth = 3;
 	board.max_depth = 6;

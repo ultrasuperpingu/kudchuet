@@ -1,7 +1,7 @@
 // Automatically generated from source file: sgf.tpg
 // By TinyPG v1.6 available at https://github.com/ultrasuperpingu/TinyPG
-
 //use fancy_regex::{Regex, RegexBuilder};
+//use regex::{Regex, RegexBuilder};
 use regex::{Regex, RegexBuilder};
 use std::collections::HashMap;
 
@@ -85,7 +85,7 @@ impl Scanner {
 		ret.patterns.insert(TokenType::IDENT, regex);
 		ret.tokens.push(TokenType::IDENT);
 
-		regex = RegexBuilder::new("^(?:([^\\\\\\]:]|\\\\.)*)").build().expect("Invalid regex");
+		regex = RegexBuilder::new("^(?:([^\\\\\\]:]|\\\\(.|\\n))*)").build().expect("Invalid regex");
 		ret.patterns.insert(TokenType::CONTENT, regex);
 		ret.tokens.push(TokenType::CONTENT);
 
@@ -168,8 +168,9 @@ impl Scanner {
 				let r = &self.patterns[scantoken];
 				//let m = r.match(Input, startpos);
 				//if (m.Success && m.Index == startpos && ((m.Length > len) || (scantokens[i] < index && m.Length == len)))
-				if let Some(caps) = r.captures(&self.input[startpos..]) 
+				//if let Some(caps) = r.captures(&self.input[startpos..]) 
 				//if let Ok(Some(caps)) = r.captures(&self.input[startpos..]) 
+				if let Some(caps) = r.captures(&self.input[startpos..])
 				{
 					//if (m.Index == startpos && ((m.Length > len) || (scantokens[i] < index && m.Length == len)))
 					{

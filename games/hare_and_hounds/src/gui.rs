@@ -1,6 +1,6 @@
 use eframe::egui;
 use egui::{Color32, Rect};
-use kudchuet::ai::{AIBuilderDyn, AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
+use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::ai::minimax::perfect_solver::PerfectSolver;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::{GameOutcome, Player};
@@ -197,9 +197,9 @@ impl<G> SquareDrawer<G> for HareAndHoundsSquareDrawer
 	}
 }
 pub fn create_board() -> GenericBoardApp<HareAndHounds> {
-	let engines: Vec<Box<dyn AIEngineProvider<HareAndHounds, Engine=Box<dyn AIEngine<HareAndHounds>>>>> = vec![
-		Box::new(MoveSearcherBuilderDyn::new("Simple".into(), HareAndHoundsEval::new(), 4)),
-		Box::new(AIBuilderDyn::<HareAndHounds, PerfectSolver<HareAndHounds>>::new("Perfect".into())),
+	let engines: Vec<Box<dyn AIEngineProvider<HareAndHounds>>> = vec![
+		Box::new(MoveSearcherBuilder::new("Simple".into(), HareAndHoundsEval::new(), 4)),
+		Box::new(AIBuilder::<HareAndHounds, PerfectSolver<HareAndHounds>>::new("Perfect".into())),
 	];
 	let mut board=GenericBoardApp::new(HareAndHounds::default(), engines);
 	board.board_drawer.set_square_drawer(Box::new(HareAndHoundsSquareDrawer{}));

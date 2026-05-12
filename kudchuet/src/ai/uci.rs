@@ -4,7 +4,6 @@
 //!
 //! This code comes from mainly from vampirc_uci (https://github.com/vampirc/vampirc-uci)
 
-
 use std::fmt::{Display, Error as FmtError, Formatter, Result as FmtResult};
 
 use std::time::Duration;
@@ -97,7 +96,6 @@ pub enum UciMessage {
 	},
 
 	// From this point on we have client-bound messages
-
 	/// The `id` GUI-bound message.
 	Id {
 		/// The name of the engine, possibly including the version.
@@ -135,7 +133,7 @@ pub enum UciMessage {
 	Info(Vec<UciInfoAttribute>),
 
 	/// Indicating unknown message.
-	Unknown(String)
+	Unknown(String),
 }
 impl UciMessage {
 	pub fn parse(line: &str) -> UciMessage {
@@ -164,13 +162,23 @@ impl UciMessage {
 					let mut i = 1;
 					while i < tokens.len() {
 						match tokens[i] {
-							"name" => { i += 1; name = tokens.get(i).map(|s| s.to_string()); },
-							"code" => { i += 1; code = tokens.get(i).map(|s| s.to_string()); },
+							"name" => {
+								i += 1;
+								name = tokens.get(i).map(|s| s.to_string());
+							}
+							"code" => {
+								i += 1;
+								code = tokens.get(i).map(|s| s.to_string());
+							}
 							_ => {}
 						}
 						i += 1;
 					}
-					UciMessage::Register { later: false, name, code }
+					UciMessage::Register {
+						later: false,
+						name,
+						code,
+					}
 				}
 			}
 			"position" => {
@@ -204,7 +212,11 @@ impl UciMessage {
 					i += 1;
 				}
 
-				UciMessage::Position { startpos, fen, moves }
+				UciMessage::Position {
+					startpos,
+					fen,
+					moves,
+				}
 			}
 			"setoption" => {
 				let mut name = String::new();
@@ -257,7 +269,8 @@ impl UciMessage {
 						"movetime" => {
 							if let Some(t) = tokens.get(i + 1) {
 								if let Ok(ms) = t.parse::<u64>() {
-									time_control = Some(MoveTime(std::time::Duration::from_millis(ms)));
+									time_control =
+										Some(MoveTime(std::time::Duration::from_millis(ms)));
 								}
 								i += 1;
 							}
@@ -265,7 +278,8 @@ impl UciMessage {
 						"wtime" => {
 							if let Some(t) = tokens.get(i + 1) {
 								if let Ok(ms) = t.parse::<u64>() {
-									if let Some(TimeLeft { white_time, .. }) = time_control.as_mut() {
+									if let Some(TimeLeft { white_time, .. }) = time_control.as_mut()
+									{
 										*white_time = Some(std::time::Duration::from_millis(ms));
 									} else {
 										time_control = Some(TimeLeft {
@@ -283,7 +297,8 @@ impl UciMessage {
 						"btime" => {
 							if let Some(t) = tokens.get(i + 1) {
 								if let Ok(ms) = t.parse::<u64>() {
-									if let Some(TimeLeft { black_time, .. }) = time_control.as_mut() {
+									if let Some(TimeLeft { black_time, .. }) = time_control.as_mut()
+									{
 										*black_time = Some(std::time::Duration::from_millis(ms));
 									} else {
 										time_control = Some(TimeLeft {
@@ -301,8 +316,12 @@ impl UciMessage {
 						"winc" => {
 							if let Some(t) = tokens.get(i + 1) {
 								if let Ok(ms) = t.parse::<u64>() {
-									if let Some(TimeLeft{white_increment, ..}) = &mut time_control {
-										*white_increment = Some(std::time::Duration::from_millis(ms));
+									if let Some(TimeLeft {
+										white_increment, ..
+									}) = &mut time_control
+									{
+										*white_increment =
+											Some(std::time::Duration::from_millis(ms));
 									}
 								}
 								i += 1;
@@ -311,8 +330,12 @@ impl UciMessage {
 						"binc" => {
 							if let Some(t) = tokens.get(i + 1) {
 								if let Ok(ms) = t.parse::<u64>() {
-									if let Some(TimeLeft{black_increment, ..}) = &mut time_control {
-										*black_increment = Some(std::time::Duration::from_millis(ms));
+									if let Some(TimeLeft {
+										black_increment, ..
+									}) = &mut time_control
+									{
+										*black_increment =
+											Some(std::time::Duration::from_millis(ms));
 									}
 								}
 								i += 1;
@@ -321,7 +344,7 @@ impl UciMessage {
 						"movestogo" => {
 							if let Some(t) = tokens.get(i + 1) {
 								if let Ok(n) = t.parse::<u8>() {
-									if let Some(TimeLeft{moves_to_go, ..}) = &mut time_control {
+									if let Some(TimeLeft { moves_to_go, .. }) = &mut time_control {
 										*moves_to_go = Some(n);
 									}
 								}
@@ -362,9 +385,15 @@ impl UciMessage {
 					i += 1;
 				}
 				if has_search_control {
-					UciMessage::Go { time_control, search_control: Some(search_control) }
+					UciMessage::Go {
+						time_control,
+						search_control: Some(search_control),
+					}
 				} else {
-					UciMessage::Go { time_control, search_control: None }
+					UciMessage::Go {
+						time_control,
+						search_control: None,
+					}
 				}
 			}
 			"bestmove" => {
@@ -461,7 +490,9 @@ impl UciMessage {
 						"time" => {
 							if let Some(v) = tokens.get(i + 1) {
 								if let Ok(ms) = v.parse::<u64>() {
-									infos.push(UciInfoAttribute::Time(std::time::Duration::from_millis(ms)));
+									infos.push(UciInfoAttribute::Time(
+										std::time::Duration::from_millis(ms),
+									));
 								}
 							}
 							i += 2;
@@ -595,7 +626,9 @@ impl UciMessage {
 							while i < tokens.len() {
 								// stop si prochain keyword connu
 								match tokens[i] {
-									"depth" | "nodes" | "score" | "nps" | "time" | "multipv" => break,
+									"depth" | "nodes" | "score" | "nps" | "time" | "multipv" => {
+										break;
+									}
 									_ => {
 										moves.push(tokens[i].to_string());
 										i += 1;
@@ -724,14 +757,9 @@ impl UciMessage {
 						var: vars,
 					},
 
-					"button" => UciOptionConfig::Button {
-						name,
-					},
+					"button" => UciOptionConfig::Button { name },
 
-					"string" => UciOptionConfig::String {
-						name,
-						default,
-					},
+					"string" => UciOptionConfig::String { name, default },
 
 					_ => {
 						return UciMessage::Unknown(line.to_string());
@@ -740,13 +768,13 @@ impl UciMessage {
 
 				UciMessage::Option(option)
 			}
-			_ => UciMessage::Unknown(line.to_string())
+			_ => UciMessage::Unknown(line.to_string()),
 		}
 	}
 }
-impl UciMessage{
+impl UciMessage {
 	/// Constructs a `register later` [UciMessage::Register](enum.UciMessage.html#variant.Register)  message.
-	pub fn register_later() -> UciMessage{
+	pub fn register_later() -> UciMessage {
 		UciMessage::Register {
 			later: true,
 			name: None,
@@ -755,7 +783,7 @@ impl UciMessage{
 	}
 
 	/// Constructs a `register <code> <name>` [UciMessage::Register](enum.UciMessage.html#variant.Register) message.
-	pub fn register_code(name: &str, code: &str) -> UciMessage{
+	pub fn register_code(name: &str, code: &str) -> UciMessage {
 		UciMessage::Register {
 			later: false,
 			name: Some(name.to_string()),
@@ -764,7 +792,7 @@ impl UciMessage{
 	}
 
 	/// Constructs an empty [UciMessage::Register](enum.UciMessage.html#variant.Go) message.
-	pub fn go() -> UciMessage{
+	pub fn go() -> UciMessage {
 		UciMessage::Go {
 			search_control: None,
 			time_control: None,
@@ -772,7 +800,7 @@ impl UciMessage{
 	}
 
 	/// Construct a `go ponder` [UciMessage::Register](enum.UciMessage.html#variant.Go) message.
-	pub fn go_ponder() -> UciMessage{
+	pub fn go_ponder() -> UciMessage {
 		UciMessage::Go {
 			search_control: None,
 			time_control: Some(UciTimeControl::Ponder),
@@ -780,16 +808,16 @@ impl UciMessage{
 	}
 
 	/// Constructs a `go infinite` [UciMessage::Register](enum.UciMessage.html#variant.Go) message.
-	pub fn go_infinite() -> UciMessage{
+	pub fn go_infinite() -> UciMessage {
 		UciMessage::Go {
 			search_control: None,
-			time_control: Some(UciTimeControl::Infinite)
+			time_control: Some(UciTimeControl::Infinite),
 		}
 	}
 
 	/// Constructs a `go movetime <milliseconds>` [UciMessage::Register](enum.UciMessage.html#variant.Go) message, with
 	/// `milliseconds` as the argument.
-	pub fn go_movetime(milliseconds: Duration) -> UciMessage{
+	pub fn go_movetime(milliseconds: Duration) -> UciMessage {
 		UciMessage::Go {
 			search_control: None,
 			time_control: Some(UciTimeControl::MoveTime(milliseconds)),
@@ -797,7 +825,7 @@ impl UciMessage{
 	}
 
 	/// Constructs an `id <name>` GUI-bound message.
-	pub fn id_name(name: &str) -> UciMessage{
+	pub fn id_name(name: &str) -> UciMessage {
 		UciMessage::Id {
 			name: Some(name.to_string()),
 			author: None,
@@ -805,7 +833,7 @@ impl UciMessage{
 	}
 
 	/// Constructs an `id <name>` GUI-bound message.
-	pub fn id_author(author: &str) -> UciMessage{
+	pub fn id_author(author: &str) -> UciMessage {
 		UciMessage::Id {
 			name: None,
 			author: Some(author.to_string()),
@@ -813,7 +841,7 @@ impl UciMessage{
 	}
 
 	/// Constructs a `bestmove` GUI-bound message without the ponder move.
-	pub fn best_move(best_move: String) -> UciMessage{
+	pub fn best_move(best_move: String) -> UciMessage {
 		UciMessage::BestMove {
 			best_move,
 			ponder: None,
@@ -821,7 +849,7 @@ impl UciMessage{
 	}
 
 	/// Constructs a `bestmove` GUI-bound message _with_ the ponder move.
-	pub fn best_move_with_ponder(best_move: String, ponder: String) -> UciMessage{
+	pub fn best_move_with_ponder(best_move: String, ponder: String) -> UciMessage {
 		UciMessage::BestMove {
 			best_move,
 			ponder: Some(ponder),
@@ -829,25 +857,25 @@ impl UciMessage{
 	}
 
 	/// Constructs an `info string ...` message.
-	pub fn info_string(s: String) -> UciMessage{
+	pub fn info_string(s: String) -> UciMessage {
 		UciMessage::Info(vec![UciInfoAttribute::String(s)])
 	}
 
 	/// Returns whether the command was meant for the engine or for the GUI.
 	pub fn direction(&self) -> CommunicationDirection {
 		match self {
-			UciMessage::Uci |
-			UciMessage::Debug(..) |
-			UciMessage::IsReady |
-			UciMessage::Register { .. } |
-			UciMessage::Position { .. } |
-			UciMessage::SetOption { .. } |
-			UciMessage::UciNewGame |
-			UciMessage::Stop |
-			UciMessage::PonderHit |
-			UciMessage::Quit |
-			UciMessage::Go { .. } => CommunicationDirection::GuiToEngine,
-			_ => CommunicationDirection::EngineToGui
+			UciMessage::Uci
+			| UciMessage::Debug(..)
+			| UciMessage::IsReady
+			| UciMessage::Register { .. }
+			| UciMessage::Position { .. }
+			| UciMessage::SetOption { .. }
+			| UciMessage::UciNewGame
+			| UciMessage::Stop
+			| UciMessage::PonderHit
+			| UciMessage::Quit
+			| UciMessage::Go { .. } => CommunicationDirection::GuiToEngine,
+			_ => CommunicationDirection::EngineToGui,
 		}
 	}
 
@@ -865,7 +893,7 @@ impl UciMessage{
 
 				None
 			}
-			_ => None
+			_ => None,
 		}
 	}
 
@@ -883,7 +911,7 @@ impl UciMessage{
 
 				None
 			}
-			_ => None
+			_ => None,
 		}
 	}
 
@@ -893,13 +921,13 @@ impl UciMessage{
 	}
 }
 
-impl Display for UciMessage{
+impl Display for UciMessage {
 	fn fmt(&self, f: &mut Formatter) -> FmtResult {
 		write!(f, "{}", self.serialize())
 	}
 }
 
-impl Serializable for UciMessage{
+impl Serializable for UciMessage {
 	/// Serializes the command into a String.
 	///
 	/// # Examples
@@ -910,7 +938,13 @@ impl Serializable for UciMessage{
 	/// ```
 	fn serialize(&self) -> String {
 		match self {
-			UciMessage::Debug(on) => if *on { String::from("debug on") } else { String::from("debug off") },
+			UciMessage::Debug(on) => {
+				if *on {
+					String::from("debug on")
+				} else {
+					String::from("debug off")
+				}
+			}
 			UciMessage::Register { later, name, code } => {
 				if *later {
 					return String::from("register later");
@@ -929,7 +963,11 @@ impl Serializable for UciMessage{
 
 				s
 			}
-			UciMessage::Position { startpos, fen, moves } => {
+			UciMessage::Position {
+				startpos,
+				fen,
+				moves,
+			} => {
 				let mut s = String::from("position ");
 				if *startpos {
 					s += String::from("startpos").as_str();
@@ -962,17 +1000,30 @@ impl Serializable for UciMessage{
 
 				s
 			}
-			UciMessage::Go { time_control, search_control } => {
+			UciMessage::Go {
+				time_control,
+				search_control,
+			} => {
 				let mut s = String::from("go ");
 
 				if let Some(tc) = time_control {
 					match tc {
-						UciTimeControl::Infinite => { s += "infinite "; }
-						UciTimeControl::Ponder => { s += "ponder "; }
+						UciTimeControl::Infinite => {
+							s += "infinite ";
+						}
+						UciTimeControl::Ponder => {
+							s += "ponder ";
+						}
 						UciTimeControl::MoveTime(duration) => {
 							s += format!("movetime {} ", duration.as_millis()).as_str();
 						}
-						UciTimeControl::TimeLeft { white_time, black_time, white_increment, black_increment, moves_to_go } => {
+						UciTimeControl::TimeLeft {
+							white_time,
+							black_time,
+							white_increment,
+							black_increment,
+							moves_to_go,
+						} => {
 							if let Some(wt) = white_time {
 								s += format!("wtime {} ", wt.as_millis()).as_str();
 							}
@@ -1026,21 +1077,21 @@ impl Serializable for UciMessage{
 			UciMessage::PonderHit => "ponderhit".to_string(),
 			UciMessage::Quit => "quit".to_string(),
 
-
 			// GUI-bound from this point on
-
 			UciMessage::Id { name, author } => {
 				let mut s = String::from("id ");
 				if let Some(n) = name {
 					s += &format!("name {}", n);
 				}
 				if let Some(a) = author {
-					if !s.is_empty() { s += " "; }
+					if !s.is_empty() {
+						s += " ";
+					}
 					s += &format!("author {}", a);
 				}
 
 				s
-			},
+			}
 			UciMessage::UciOk => String::from("uciok"),
 			UciMessage::ReadyOk => String::from("readyok"),
 			UciMessage::BestMove { best_move, ponder } => {
@@ -1051,12 +1102,12 @@ impl Serializable for UciMessage{
 				}
 
 				s
-			},
+			}
 			UciMessage::CopyProtection(cp_state) | UciMessage::Registration(cp_state) => {
 				let mut s = match self {
 					UciMessage::CopyProtection(..) => String::from("copyprotection "),
 					UciMessage::Registration(..) => String::from("registration "),
-					_ => unreachable!()
+					_ => unreachable!(),
 				};
 
 				match cp_state {
@@ -1066,7 +1117,7 @@ impl Serializable for UciMessage{
 				}
 
 				s
-			},
+			}
 			UciMessage::Option(config) => config.serialize(),
 			UciMessage::Info(info_line) => {
 				let mut s = String::from("info");
@@ -1076,16 +1127,13 @@ impl Serializable for UciMessage{
 				}
 
 				s
-			},
+			}
 			UciMessage::Unknown(msg, ..) => {
 				format!("UNKNOWN MESSAGE: {}", msg)
-
 			}
 		}
 	}
 }
-
-
 
 /// This enum represents the possible variants of the `go` UCI message that deal with the chess game's time controls
 /// and the engine's thinking time.
@@ -1116,7 +1164,7 @@ pub enum UciTimeControl {
 	},
 
 	/// Specifies how much time the engine should think about the move, in milliseconds.
-	MoveTime(Duration)
+	MoveTime(Duration),
 }
 
 impl UciTimeControl {
@@ -1127,7 +1175,7 @@ impl UciTimeControl {
 			black_time: None,
 			white_increment: None,
 			black_increment: None,
-			moves_to_go: None
+			moves_to_go: None,
 		}
 	}
 }
@@ -1148,9 +1196,9 @@ pub struct UciSearchControl {
 	pub nodes: Option<u64>,
 }
 
-impl UciSearchControl{
+impl UciSearchControl {
 	/// Creates an `UciSearchControl` with `depth` set to the parameter and everything else set to empty or `None`.
-	pub fn depth(depth: u8) -> UciSearchControl{
+	pub fn depth(depth: u8) -> UciSearchControl {
 		UciSearchControl {
 			search_moves: vec![],
 			mate: None,
@@ -1160,7 +1208,7 @@ impl UciSearchControl{
 	}
 
 	/// Creates an `UciSearchControl` with `mate` set to the parameter and everything else set to empty or `None`.
-	pub fn mate(mate: u8) -> UciSearchControl{
+	pub fn mate(mate: u8) -> UciSearchControl {
 		UciSearchControl {
 			search_moves: vec![],
 			mate: Some(mate),
@@ -1170,7 +1218,7 @@ impl UciSearchControl{
 	}
 
 	/// Creates an `UciSearchControl` with `nodes` set to the parameter and everything else set to empty or `None`.
-	pub fn nodes(nodes: u64) -> UciSearchControl{
+	pub fn nodes(nodes: u64) -> UciSearchControl {
 		UciSearchControl {
 			search_moves: vec![],
 			mate: None,
@@ -1181,11 +1229,14 @@ impl UciSearchControl{
 
 	/// Returns `true` if all of the struct's settings are either `None` or empty.
 	pub fn is_empty(&self) -> bool {
-		self.search_moves.is_empty() && self.mate.is_none() && self.depth.is_none() && self.nodes.is_none()
+		self.search_moves.is_empty()
+			&& self.mate.is_none()
+			&& self.depth.is_none()
+			&& self.nodes.is_none()
 	}
 }
 
-impl Default for UciSearchControl{
+impl Default for UciSearchControl {
 	/// Creates an empty `UciSearchControl`.
 	fn default() -> Self {
 		UciSearchControl {
@@ -1252,7 +1303,7 @@ pub enum UciOptionConfig {
 	/// The option of type `button` (an action).
 	Button {
 		/// The name of the option.
-		name: String
+		name: String,
 	},
 
 	/// The option of type `string` (a string, unsurprisingly).
@@ -1266,15 +1317,18 @@ pub enum UciOptionConfig {
 }
 impl Default for UciOptionConfig {
 	fn default() -> Self {
-		Self::Button {name:"".into()}
+		Self::Button { name: "".into() }
 	}
 }
 impl UciOptionConfig {
 	/// Returns the name of the option.
 	pub fn get_name(&self) -> &str {
 		match self {
-			UciOptionConfig::Check { name, .. } | UciOptionConfig::Spin { name, .. } | UciOptionConfig::Combo { name, .. } | UciOptionConfig::Button { name } |
-			UciOptionConfig::String { name, .. } => name.as_str()
+			UciOptionConfig::Check { name, .. }
+			| UciOptionConfig::Spin { name, .. }
+			| UciOptionConfig::Combo { name, .. }
+			| UciOptionConfig::Button { name }
+			| UciOptionConfig::String { name, .. } => name.as_str(),
 		}
 	}
 
@@ -1285,7 +1339,7 @@ impl UciOptionConfig {
 			UciOptionConfig::Spin { .. } => "spin",
 			UciOptionConfig::Combo { .. } => "combo",
 			UciOptionConfig::Button { .. } => "button",
-			UciOptionConfig::String { .. } => "string"
+			UciOptionConfig::String { .. } => "string",
 		}
 	}
 }
@@ -1306,14 +1360,20 @@ impl Serializable for UciOptionConfig {
 	/// assert_eq!(m.serialize(), "option name Nullmove type check default true");
 	/// ```
 	fn serialize(&self) -> String {
-		let mut s = format!("option name {} type {}", self.get_name(), self.get_type_str());
+		let mut s = format!(
+			"option name {} type {}",
+			self.get_name(),
+			self.get_type_str()
+		);
 		match self {
 			UciOptionConfig::Check { default, .. } => {
 				if let Some(def) = default {
 					s += format!(" default {}", *def).as_str();
 				}
-			},
-			UciOptionConfig::Spin { default, min, max, .. } => {
+			}
+			UciOptionConfig::Spin {
+				default, min, max, ..
+			} => {
 				if let Some(def) = default {
 					s += format!(" default {}", *def).as_str();
 				}
@@ -1433,10 +1493,10 @@ pub enum UciInfoAttribute {
 	Any(String, String),
 }
 
-impl UciInfoAttribute{
+impl UciInfoAttribute {
 	/// Creates a `UciInfoAttribute::Score` with the `cp` attribute set to the value of the parameter and all other
 	/// fields set to `None`.
-	pub fn from_centipawns(cp: i32) -> UciInfoAttribute{
+	pub fn from_centipawns(cp: i32) -> UciInfoAttribute {
 		UciInfoAttribute::Score {
 			cp: Some(cp),
 			mate: None,
@@ -1447,7 +1507,7 @@ impl UciInfoAttribute{
 
 	/// Creates a `UciInfoAttribute::Score` with the `mate` attribute set to the value of the parameter and all other
 	/// fields set to `None`. A negative value indicates it is the engine that is getting mated.
-	pub fn from_mate(mate: i8) -> UciInfoAttribute{
+	pub fn from_mate(mate: i8) -> UciInfoAttribute {
 		UciInfoAttribute::Score {
 			cp: None,
 			mate: Some(mate),
@@ -1476,12 +1536,12 @@ impl UciInfoAttribute{
 			UciInfoAttribute::String(..) => "string",
 			UciInfoAttribute::Refutation(..) => "refutation",
 			UciInfoAttribute::CurrLine { .. } => "currline",
-			UciInfoAttribute::Any(name, ..) => name.as_str()
+			UciInfoAttribute::Any(name, ..) => name.as_str(),
 		}
 	}
 }
 
-impl Serializable for UciInfoAttribute{
+impl Serializable for UciInfoAttribute {
 	/// Returns the attribute serialized as a String.
 	fn serialize(&self) -> String {
 		let mut s = self.get_name().to_string();
@@ -1496,9 +1556,14 @@ impl Serializable for UciInfoAttribute{
 						s += format!(" {}", m).as_str();
 					}
 				}
-			},
+			}
 			UciInfoAttribute::MultiPv(num) => s += format!(" {}", *num).as_str(),
-			UciInfoAttribute::Score { cp, mate, lower_bound, upper_bound } => {
+			UciInfoAttribute::Score {
+				cp,
+				mate,
+				lower_bound,
+				upper_bound,
+			} => {
 				if let Some(c) = cp {
 					s += format!(" cp {}", *c).as_str();
 				}
@@ -1512,12 +1577,14 @@ impl Serializable for UciInfoAttribute{
 				} else if upper_bound.is_some() {
 					s += " upperbound";
 				}
-			},
+			}
 			UciInfoAttribute::CurrMove(uci_move) => s += &format!(" {}", *uci_move),
 			UciInfoAttribute::CurrMoveNum(num) => s += &format!(" {}", *num),
 			UciInfoAttribute::HashFull(permill) => s += &format!(" {}", *permill),
 			UciInfoAttribute::Nps(nps) => s += &format!(" {}", *nps),
-			UciInfoAttribute::TbHits(hits) | UciInfoAttribute::SbHits(hits) => s += &format!(" {}", *hits),
+			UciInfoAttribute::TbHits(hits) | UciInfoAttribute::SbHits(hits) => {
+				s += &format!(" {}", *hits)
+			}
 			UciInfoAttribute::CpuLoad(load) => s += &format!(" {}", *load),
 			UciInfoAttribute::String(string) => s += &format!(" {}", string),
 			UciInfoAttribute::CurrLine { cpu_nr, line } => {
@@ -1530,7 +1597,7 @@ impl Serializable for UciInfoAttribute{
 						s += &format!(" {}", m);
 					}
 				}
-			},
+			}
 			UciInfoAttribute::Any(_, value) => {
 				s += &format!(" {}", value);
 			}
@@ -1540,7 +1607,7 @@ impl Serializable for UciInfoAttribute{
 	}
 }
 
-impl Display for UciInfoAttribute{
+impl Display for UciInfoAttribute {
 	fn fmt(&self, f: &mut Formatter) -> FmtResult {
 		write!(f, "{}", self.serialize())
 	}
@@ -1573,7 +1640,6 @@ impl Display for UciFen {
 	}
 }
 
-
 /// A vector containing several `UciMessage`s.
 pub type MessageList = Vec<UciMessage>;
 
@@ -1586,13 +1652,13 @@ pub struct ByteVecUciMessage {
 	pub bytes: Vec<u8>,
 }
 
-impl Display for ByteVecUciMessage{
+impl Display for ByteVecUciMessage {
 	fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
 		write!(f, "{}", self.message)
 	}
 }
 
-impl From<UciMessage> for ByteVecUciMessage{
+impl From<UciMessage> for ByteVecUciMessage {
 	fn from(m: UciMessage) -> Self {
 		let b = Vec::from((m.serialize() + "\n").as_bytes());
 		ByteVecUciMessage {
@@ -1601,24 +1667,24 @@ impl From<UciMessage> for ByteVecUciMessage{
 		}
 	}
 }
-impl From<ByteVecUciMessage> for UciMessage{
+impl From<ByteVecUciMessage> for UciMessage {
 	fn from(val: ByteVecUciMessage) -> Self {
 		val.message
 	}
 }
-impl AsRef<UciMessage> for ByteVecUciMessage{
-	fn as_ref(&self) -> &UciMessage{
+impl AsRef<UciMessage> for ByteVecUciMessage {
+	fn as_ref(&self) -> &UciMessage {
 		&self.message
 	}
 }
 
-impl AsRef<[u8]> for ByteVecUciMessage{
+impl AsRef<[u8]> for ByteVecUciMessage {
 	fn as_ref(&self) -> &[u8] {
 		self.bytes.as_ref()
 	}
 }
 
-#[derive(EguiInspect, Clone, PartialEq, Default, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Default, Serialize, Deserialize, Debug)]
 pub enum UciValue {
 	#[default]
 	Button,
@@ -1665,6 +1731,19 @@ impl UciValue {
 		if let UciValue::Bool(v) = self {
 			*v = val
 		}
+	}
+}
+impl EguiInspect for UciValue {
+	fn inspect_with_custom_id(
+		&mut self,
+		parent_id: egui::Id,
+		label: &str,
+		tooltip: &str,
+		label_ratio: f32,
+		read_only: bool,
+		ui: &mut egui::Ui,
+	) -> egui::Response {
+		inspect_uci_value(self, parent_id, label, tooltip, label_ratio, read_only, ui)
 	}
 }
 pub fn inspect_uci_value(

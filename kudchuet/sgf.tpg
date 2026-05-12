@@ -1,10 +1,8 @@
 //Tiny Parser Generator v1.6
 
 <% @TinyPG Namespace="sgf" Language="rust" OutputPath="./src/sgf" %>
-<% @ParseTree CustomCode={
-	//TODO
-
-}; HeaderCode={
+<% @Scanner UseFancyRegex="False" %>
+<% @ParseTree HeaderCode={
 use std::collections::HashMap;
 pub struct SGFTreeNode {
 	pub attributes: HashMap<String, Vec<Vec<String>>>,
@@ -18,24 +16,23 @@ impl SGFTreeNode {
 
 		}
 	}
-	fn attr_string(&self, name:&str) -> Option<String> {
-		let att=self.attributes.get(name)?;
-		let l=att.iter().next()?;
-		Some(l.get(0)?.clone())
-	}
-	fn attr_string_tuple(&self, name:&str) -> Option<Vec<String>> {
-		let att=self.attributes.get(name)?;
-		let l=att.iter().next()?;
-		Some(l.clone())
-	}
-	fn attr_string_set(&self, name:&str) -> Option<Vec<String>> {
-		let att=self.attributes.get(name)?;
-		let l=att.iter().map(|v| v.get(0).cloned()).collect();
-		l
-	}
-
 }
-};
+fn unescape(s: &str) -> String {
+	let mut out = String::new();
+	let mut escaped = false;
+
+	for c in s.chars() {
+		if escaped {
+			out.push(c);
+			escaped = false;
+		} else if c == '\\' {
+			escaped = true;
+		} else {
+			out.push(c);
+		}
+	}
+	out
+}};
 %>
 
 
@@ -53,7 +50,7 @@ impl SGFTreeNode {
 
 [Color(255, 128, 128)] IDENT	-> @"[a-zA-Z][a-zA-Z0-9]*";
 
-[Color(128, 128, 128)] CONTENT -> @"([^\\\]:]|\\.)*";
+[Color(128, 128, 128)] CONTENT -> @"([^\\\]:]|\\(.|\n))*";
 //[Color(128, 128, 128)] CONTENT -> @"[a-zA-Z0-9 _]*";
 
 
@@ -104,7 +101,7 @@ Tuple -> CONTENT (COLON CONTENT)* : Vec<String> {
 	let mut tuple = vec![];
 	let mut i = 0;
 	while ?CONTENT[i] {
-		tuple.push($CONTENT[i]);
+		tuple.push(unescape($CONTENT[i].replace("\\\n", "").as_str()));
 		i += 1;
 	}
 	tuple

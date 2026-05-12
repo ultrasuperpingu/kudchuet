@@ -1,5 +1,6 @@
 use eframe::egui;
 use egui::{Color32, Stroke, StrokeKind};
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::Shape;
 use kudchuet::{
@@ -8,7 +9,6 @@ use kudchuet::{
 		BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType,
 		shapes::{StrokeData, TextData},
 	},
-	new_move_searcher_vec,
 };
 
 use crate::game::CheckersEval;
@@ -167,9 +167,12 @@ impl BoardGame for Checkers10 {
 }
 
 pub fn create_board() -> GenericBoardApp<Checkers10> {
+	let engines: Vec<Box<dyn AIEngineProvider<Checkers10>>> = vec![Box::new(
+		MoveSearcherBuilder::new("Material".into(), CheckersEval::new(), 5),
+	)];
 	let board = GenericBoardApp::new(
 		Checkers10::default(),
-		new_move_searcher_vec("Material".into(), CheckersEval::new(), 5),
+		engines,
 	);
 	board
 }

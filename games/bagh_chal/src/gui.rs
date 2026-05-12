@@ -1,21 +1,24 @@
+use crate::bitboard::Bitboard5x5;
+use crate::game::BaghChalMaterialEval;
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::{Color32, Rect, Stroke, StrokeKind};
-use crate::bitboard::Bitboard5x5;
-use crate::game::BaghChalMaterialEval;
+use kudchuet::Player;
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
-use kudchuet::{Player, new_move_searcher_vec};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
 
 use crate::rules::{BaghChal, Move};
 
-
 impl BoardMove<BaghChal> for Move {
-	fn from(&self) -> Option<u16> { self.from.map(|f| f as u16) }
-	fn to(&self) -> u16 { self.to as u16 }
-
+	fn from(&self) -> Option<u16> {
+		self.from.map(|f| f as u16)
+	}
+	fn to(&self) -> u16 {
+		self.to as u16
+	}
 }
 #[derive(Copy, Clone)]
 pub enum BaghChalPiece {
@@ -25,23 +28,37 @@ pub enum BaghChalPiece {
 impl EGUIPieceType for BaghChalPiece {
 	fn shape(&self) -> Shape {
 		match self {
-			BaghChalPiece::Goat => Shape::Circle{
+			BaghChalPiece::Goat => Shape::Circle {
 				fill_color: Some(Color32::WHITE),
 				size: 0.7,
-				text: Some(TextData { text: "🐐".into(), color: Color32::BLACK, size: 0.5, }),
-				stroke: Some(StrokeData { stroke: Stroke::new(3.0, Color32::BLACK), kind: StrokeKind::Inside }),
+				text: Some(TextData {
+					text: "🐐".into(),
+					color: Color32::BLACK,
+					size: 0.5,
+				}),
+				stroke: Some(StrokeData {
+					stroke: Stroke::new(3.0, Color32::BLACK),
+					kind: StrokeKind::Inside,
+				}),
 			},
-			BaghChalPiece::Tiger => Shape::Circle{
+			BaghChalPiece::Tiger => Shape::Circle {
 				fill_color: Some(Color32::ORANGE),
 				size: 0.7,
-				text: Some(TextData { text: "🐅".into(), color: Color32::BLACK, size: 0.5, }),
-				stroke: Some(StrokeData { stroke: Stroke::new(3.0, Color32::BLACK), kind: StrokeKind::Inside }),
-			}
+				text: Some(TextData {
+					text: "🐅".into(),
+					color: Color32::BLACK,
+					size: 0.5,
+				}),
+				stroke: Some(StrokeData {
+					stroke: Stroke::new(3.0, Color32::BLACK),
+					kind: StrokeKind::Inside,
+				}),
+			},
 		}
 	}
 }
 impl BoardGame for BaghChal {
-	type PieceType=BaghChalPiece;
+	type PieceType = BaghChalPiece;
 	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
@@ -85,11 +102,21 @@ impl BoardGame for BaghChal {
 }
 struct BaghChalSquareDrawer;
 impl<G> SquareDrawer<G> for BaghChalSquareDrawer
-	where G: BoardGame,
-		G::M: BoardMove<G> {
-	fn draw(&self, painter: &egui::Painter, style: &BoardStyle, _game: &G, square: &Rect, x_coord: u8, y_coord: u8) {
+where
+	G: BoardGame,
+	G::M: BoardMove<G>,
+{
+	fn draw(
+		&self,
+		painter: &egui::Painter,
+		style: &BoardStyle,
+		_game: &G,
+		square: &Rect,
+		x_coord: u8,
+		y_coord: u8,
+	) {
 		let index = if style.mirrored {
-			Bitboard5x5::index_from_coords(x_coord, 4-y_coord)
+			Bitboard5x5::index_from_coords(x_coord, 4 - y_coord)
 		} else {
 			Bitboard5x5::index_from_coords(x_coord, y_coord)
 		};
@@ -121,7 +148,7 @@ impl<G> SquareDrawer<G> for BaghChalSquareDrawer
 				painter.line(vec![square.center(), square.right_center()], stroke);
 				painter.line(vec![square.center_bottom(), square.center_top()], stroke);
 			}
-			6 | 8 | 12 | 16| 18 => {
+			6 | 8 | 12 | 16 | 18 => {
 				painter.line(vec![square.left_bottom(), square.right_top()], stroke);
 				painter.line(vec![square.right_bottom(), square.left_top()], stroke);
 				painter.line(vec![square.left_center(), square.right_center()], stroke);
@@ -175,11 +202,16 @@ impl<G> SquareDrawer<G> for BaghChalSquareDrawer
 	}
 }
 pub fn create_board() -> GenericBoardApp<BaghChal> {
-	let mut board=GenericBoardApp::new(BaghChal::default(), new_move_searcher_vec("Material".into(), BaghChalMaterialEval::new(), 8));
+	let engines: Vec<Box<dyn AIEngineProvider<BaghChal>>> = vec![Box::new(
+		MoveSearcherBuilder::new("Material".into(), BaghChalMaterialEval::new(), 8),
+	)];
+	let mut board = GenericBoardApp::new(BaghChal::default(), engines);
 	//board.board_drawer.get_style_mut().dark_color=egui::Color32::from_rgb(181, 136, 99);
 	//board.board_drawer.get_style_mut().light_color=Color32::from_rgb(240, 217, 181);
 	//board.board_drawer.get_style_mut().show_coordinates_mod=crate::common::gui::CoordMod::NumbersAside;
-	board.board_drawer.set_square_drawer(Box::new(BaghChalSquareDrawer{}));
+	board
+		.board_drawer
+		.set_square_drawer(Box::new(BaghChalSquareDrawer {}));
 	board.max_depth = 13;
 	board.depth = 8;
 	board

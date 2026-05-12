@@ -1,8 +1,8 @@
 use eframe::egui;
 use egui::Color32;
-use kudchuet::new_move_searcher_vec;
 use kudchuet::Player;
- use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+ use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
  use kudchuet::gui::shapes::{Shape, StrokeData};
  use crate::bitboard::Bitboard7x7Col;
 
@@ -74,6 +74,9 @@ impl BoardGame for ConnectFour {
 }
 
 pub fn create_board() -> GenericBoardApp<ConnectFour> {
-	let board=GenericBoardApp::new(ConnectFour::new(), new_move_searcher_vec("Simple".into(), ConnectFourEval::new(), 6));
+	let engines: Vec<Box<dyn AIEngineProvider<ConnectFour>>> = vec![Box::new(
+		MoveSearcherBuilder::new("Simple".into(), ConnectFourEval::new(), 9),
+	)];
+	let board=GenericBoardApp::new(ConnectFour::new(), engines);
 	board
 }

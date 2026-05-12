@@ -3,10 +3,10 @@
 
 use egui_field_editor::EguiInspect;
 
-use crate::ai::uci::{Serializable, UciFen, UciInfoAttribute, UciMessage, UciOptionConfig, UciSearchControl, UciTimeControl};
-use crate::ai::{AIEngine, AIEngineProvider, AIOptions};
+use crate::ai::uci::{Serializable, UciFen, UciInfoAttribute, UciMessage, UciOptionConfig, UciSearchControl, UciTimeControl, UciValue};
+use crate::ai::{AIEngine, AIEngineProvider};
 use crate::gui::{BoardGame, BoardMove};
-use std::collections::VecDeque;
+use std::collections::{VecDeque, HashMap};
 use std::path::PathBuf;
 use futures::channel::oneshot;
 
@@ -33,7 +33,9 @@ pub struct EngineInfo {
 pub struct ExternalEngine {
 	_child: Child,
 
-	options: AIOptions,
+	options: HashMap<String, UciValue>,
+	pub max_depth: u8,
+	pub max_time: f32,
 
 	cmd_tx: Sender<UciMessage>,
 	result_rx: Arc<Mutex<Receiver<String>>>,
@@ -165,7 +167,9 @@ impl ExternalEngine
 
 		let mut engine = Self {
 			_child: child,
-			options: AIOptions::default(),
+			options: HashMap::default(),
+			max_depth: 0,
+			max_time: 0.0,
 			cmd_tx,
 			result_rx: Arc::new(Mutex::new(result_rx)),
 			stop_flag,
@@ -201,7 +205,7 @@ impl ExternalEngine
 
 			let value = opt.clone();
 
-			self.options.uci.insert(name.into(), value.into());
+			self.options.insert(name.into(), value.into());
 			
 		}
 	}
@@ -225,7 +229,7 @@ impl ExternalEngine
 	pub fn get_engine_info(&self) -> EngineInfo {
 		self.info.read().map(|i| i.clone()).unwrap_or_default()
 	}
-	pub fn get_options_mut(&mut self) -> &mut AIOptions {
+	pub fn get_options_mut(&mut self) -> &mut HashMap<String, UciValue> {
 		&mut self.options
 	}
 
@@ -298,13 +302,16 @@ impl<G: BoardGame+Sync+Send+'static> AIEngine<G> for ExternalEngine
 where
 	G::M: BoardMove<G>+Send
 {
-	fn get_options(&self) -> Option<AIOptions> {
-		Some(self.options.clone())
+	fn get_options(&self) -> Option<&HashMap<String, UciValue>> {
+		Some(&self.options)
+	}
+	fn get_options_mut(&mut self) -> Option<&mut HashMap<String, UciValue>> {
+		Some(&mut self.options)
 	}
 
-	fn reset_with_options(&mut self, opts: AIOptions) {
+	fn set_options(&mut self, opts: HashMap<String, UciValue>) {
 		self.options = opts;
-		for (name, value) in &self.options.uci {
+		for (name, value) in &self.options {
 			let _ = self.send_msg(UciMessage::SetOption { name: name.clone(), value: value.to_option_string() });
 		}
 	}
@@ -320,27 +327,27 @@ where
 
 	fn choose_move(&self, game: &G) -> Option<G::M> {
 		self.set_position(game);
-		let go = if self.options.max_time > 0.0 {
-			if self.options.max_depth == 0 {
+		let go = if self.max_time > 0.0 {
+			if self.max_depth == 0 {
 				UciMessage::Go {
 					time_control: Some(UciTimeControl::MoveTime(
-						Duration::from_secs_f32(self.options.max_time)
+						Duration::from_secs_f32(self.max_time)
 					)),
 					search_control: None,
 				}
 			} else {
 				UciMessage::Go {
 					time_control: Some(UciTimeControl::MoveTime(
-						Duration::from_secs_f32(self.options.max_time)
+						Duration::from_secs_f32(self.max_time)
 					)),
-					search_control: Some(UciSearchControl::depth(self.options.max_depth)),
+					search_control: Some(UciSearchControl::depth(self.max_depth)),
 				}
 			}
 		} else {
-			if self.options.max_depth == 0 {
+			if self.max_depth == 0 {
 				UciMessage::Go {
 					time_control: None,
-					search_control: Some(UciSearchControl::depth(self.options.max_depth)),
+					search_control: Some(UciSearchControl::depth(self.max_depth)),
 				}
 			} else {
 				UciMessage::Go {
@@ -376,27 +383,27 @@ where
 	//	G::M: BoardMove<G> + Send + 'static,
 	{
 		self.set_position(&game);
-		let go = if self.options.max_time > 0.0 {
-			if self.options.max_depth == 0 {
+		let go = if self.max_time > 0.0 {
+			if self.max_depth == 0 {
 				UciMessage::Go {
 					time_control: Some(UciTimeControl::MoveTime(
-						Duration::from_secs_f32(self.options.max_time)
+						Duration::from_secs_f32(self.max_time)
 					)),
 					search_control: None,
 				}
 			} else {
 				UciMessage::Go {
 					time_control: Some(UciTimeControl::MoveTime(
-						Duration::from_secs_f32(self.options.max_time)
+						Duration::from_secs_f32(self.max_time)
 					)),
-					search_control: Some(UciSearchControl::depth(self.options.max_depth)),
+					search_control: Some(UciSearchControl::depth(self.max_depth)),
 				}
 			}
 		} else {
-			if self.options.max_depth == 0 {
+			if self.max_depth == 0 {
 				UciMessage::Go {
 					time_control: None,
-					search_control: Some(UciSearchControl::depth(self.options.max_depth)),
+					search_control: Some(UciSearchControl::depth(self.max_depth)),
 				}
 			} else {
 				UciMessage::Go {
@@ -456,8 +463,8 @@ where
 		})
 	}
 	fn set_depth_or_timeout(&mut self, depth:u8, timeout: Duration) {
-		self.options.max_depth = depth;
-		self.options.max_time = timeout.as_secs_f32();
+		self.max_depth = depth;
+		self.max_time = timeout.as_secs_f32();
 	}
 }
 impl Drop for ExternalEngine {
@@ -478,15 +485,15 @@ impl<G: BoardGame+Sync+Send+'static> AIEngineProvider<G> for ExternalEngineEntry
 where
 	G::M: BoardMove<G>+Send,
 {
-	type Engine = ExternalEngine;
+	//type Engine = ExternalEngine;
 
-	fn get_name(&self) -> &String {
+	fn get_name(&self) -> &str {
 		&self.name
 	}
 
-	fn build_engine(&self) -> Self::Engine {
+	fn build_engine(&self) -> Box<dyn AIEngine<G>> {
 		match ExternalEngine::new(&self.path, &self.args) {
-			Ok(engine) => engine,
+			Ok(engine) => Box::new(engine),
 			Err(e) => {
 				eprintln!("Failed to create engine '{}': {}", self.name, e);
 				panic!("Failed to create engine '{}': {}", self.name, e);

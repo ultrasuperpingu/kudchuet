@@ -9,10 +9,9 @@ use crate::{
 	rules::{Cell, Gomoku, Move},
 };
 use kudchuet::Player;
-use kudchuet::ai::AIBuilderDyn;
-use kudchuet::ai::AIEngine;
+use kudchuet::ai::AIBuilder;
 use kudchuet::ai::AIEngineProvider;
-use kudchuet::ai::MoveSearcherBuilderDyn;
+use kudchuet::ai::MoveSearcherBuilder;
 use kudchuet::ai::minimax::mcts::MCTS;
 use kudchuet::gui::shapes::Shape;
 use kudchuet::gui::{
@@ -178,18 +177,18 @@ impl SquareDrawer<Gomoku> for GobanSquareDrawer {
 	}
 }
 pub fn create_board() -> GenericBoardApp<Gomoku> {
-	let engines: Vec<Box<dyn AIEngineProvider<Gomoku, Engine = Box<dyn AIEngine<Gomoku>>>>> = vec![
-		Box::new(MoveSearcherBuilderDyn::new(
+	let engines: Vec<Box<dyn AIEngineProvider<Gomoku>>> = vec![
+		Box::new(MoveSearcherBuilder::new(
 			"Dumb".into(),
 			GomokuEvalDumb::new(),
 			4,
 		)),
-		Box::new(MoveSearcherBuilderDyn::new(
+		Box::new(MoveSearcherBuilder::new(
 			"Simple".into(),
 			GomokuEvalSimple::new(),
 			4,
 		)),
-		Box::new(AIBuilderDyn::<Gomoku, MCTS<Gomoku>>::new("MCTS".into())),
+		Box::new(AIBuilder::<Gomoku, MCTS<Gomoku>>::new("MCTS".into())),
 	];
 	let mut board = GenericBoardApp::new(Gomoku::default(), engines);
 	board

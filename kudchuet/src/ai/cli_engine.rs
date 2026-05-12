@@ -4,18 +4,17 @@ use std::io::Write;
 use std::thread::JoinHandle;
 use std::time::Duration;
 
-use crate::ai::AIOptions;
 use crate::ai::minimax::SearchStopSignal;
 
 use crate::StrategyWithOptions;
-use crate::ai::uci::{UciInfoAttribute, UciMessage, UciOptionConfig, UciTimeControl};
+use crate::ai::uci::{UciInfoAttribute, UciMessage, UciOptionConfig, UciTimeControl, UciValue};
 use crate::gui::{BoardGame, BoardMove};
 
 pub struct UCILikeCLIEngine<G, AI>
 where
 	G: BoardGame + Send + 'static,
 	G::M: BoardMove<G> + Copy + Send + 'static,
-	AI: StrategyWithOptions<G, AIOptions> + Send + 'static,
+	AI: StrategyWithOptions<G> + Send + 'static,
 {
 	ai: Option<AI>,
 	current_search: Option<SearchHandle<AI>>,
@@ -29,7 +28,7 @@ impl<G, AI> UCILikeCLIEngine<G, AI>
 where
 	G: BoardGame + Send + 'static,
 	G::M: BoardMove<G> + Copy + Send + 'static,
-	AI: StrategyWithOptions<G, AIOptions> + Send + 'static,
+	AI: StrategyWithOptions<G> + Send + 'static,
 {
 	pub fn new(ai: AI) -> Self {
 		Self {
@@ -115,7 +114,7 @@ where
 					}
 					UciMessage::UciNewGame => {
 						pos = G::default();
-						self.stop_search().reset_with_options(opts.clone());
+						self.stop_search().set_options(&opts);
 					}
 					UciMessage::SetOption { name, value } => {
 						if debug {
@@ -131,7 +130,7 @@ where
 						match name.as_str() {
 							"Hash" => {
 								if let Some(value) = &value {
-									if let Ok(value) = value.parse() {
+									if let Ok(value) = value.parse::<u64>() {
 										if debug {
 											println!(
 												"{}",
@@ -140,14 +139,14 @@ where
 												)])
 											);
 										}
-										opts.table_megabyte_size = value;
+										opts.insert("Hash".into(), UciValue::Spin(value as i64 * 1024 * 1024, None, None));
 									}
 								}
 							}
 							"Mtdf" => {
 								if let Some(value) = &value {
 									if let Ok(value) = value.parse::<bool>() {
-										if let Some(v) = opts.uci.get_mut("Mtdf") {
+										if let Some(v) = opts.get_mut("Mtdf") {
 											v.set_bool(value);
 										}
 										if debug {
@@ -172,7 +171,8 @@ where
 											)])
 										);
 									}
-									opts.threads = nb_threads;
+									//opts.threads = nb_threads;
+									opts.insert("Thread".into(), UciValue::Spin(nb_threads.unwrap_or(0) as i64, None, None));
 								}
 							}
 							"Clear Hash" => {
@@ -183,7 +183,7 @@ where
 							}
 						}
 						if ok {
-							self.stop_search().reset_with_options(opts.clone());
+							self.stop_search().set_options(&opts);
 						}
 					}
 					UciMessage::Position {

@@ -3,10 +3,10 @@ use crate::rules::{Move, Neutron, Piece};
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::Color32;
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
-use kudchuet::new_move_searcher_vec;
 
 use super::game::NeutronDumbEval;
 
@@ -107,9 +107,12 @@ impl BoardGame for Neutron {
 }
 
 pub fn create_board() -> GenericBoardApp<Neutron> {
+	let engines: Vec<Box<dyn AIEngineProvider<Neutron>>> = vec![
+		Box::new(MoveSearcherBuilder::new("Dumb".into(), NeutronDumbEval::new(), 4)),
+	];
 	let board = GenericBoardApp::new(
 		Neutron::default(),
-		new_move_searcher_vec("Dumb".into(), NeutronDumbEval::new(), 5),
+		engines,
 	);
 	board
 }

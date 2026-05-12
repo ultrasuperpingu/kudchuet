@@ -1,16 +1,15 @@
-
-use bitboard::Bitboard;
-use eframe::egui;
-use egui::{Color32, Rect, Stroke, Vec2};
 use crate::bitboard::BitboardAbalone;
 use crate::game::AbaloneMaterialEval;
 use crate::rules::{Abalone, Cell, HEXES, Hex, Move, idx};
+use bitboard::Bitboard;
+use eframe::egui;
+use egui::{Color32, Rect, Stroke, Vec2};
+use kudchuet::Player;
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, PieceDrawer, SquareDrawer};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType};
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::{Player, new_move_searcher_vec};
-
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType};
 
 impl BoardMove<Abalone> for Move {
 	fn click_sequence(&self, _state: &Abalone) -> Vec<u16> {
@@ -19,24 +18,29 @@ impl BoardMove<Abalone> for Move {
 			Move::Simple { from, dir } => {
 				clicks.push(idx(*from).unwrap() as u16);
 				clicks.push(idx(from.add(Hex::DIRS[*dir as usize])).unwrap() as u16);
-			},
-			Move::Side { start, line_dir, side_dir, len } => {
+			}
+			Move::Side {
+				start,
+				line_dir,
+				side_dir,
+				len,
+			} => {
 				clicks.push(idx(*start).unwrap() as u16);
 				let mut extrimity = *start;
-				for _ in 0..*len-1 {
+				for _ in 0..*len - 1 {
 					extrimity = extrimity.add(Hex::DIRS[*line_dir as usize]);
 				}
 				clicks.push(idx(extrimity).unwrap() as u16);
 				clicks.push(idx(start.add(Hex::DIRS[*side_dir as usize])).unwrap() as u16);
-			},
+			}
 			Move::Push { start, dir, len } => {
 				clicks.push(idx(*start).unwrap() as u16);
 				let mut extrimity = *start;
 				for _ in 0..*len {
-					extrimity=extrimity.add(Hex::DIRS[*dir as usize]);
+					extrimity = extrimity.add(Hex::DIRS[*dir as usize]);
 				}
 				clicks.push(idx(extrimity).unwrap() as u16);
-			},
+			}
 		}
 		clicks
 	}
@@ -48,24 +52,27 @@ impl BoardMove<Abalone> for Move {
 impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
-			Cell::White => Shape::Circle{
+			Cell::White => Shape::Circle {
 				fill_color: Some(Color32::WHITE),
 				size: 0.7,
 				text: None,
-				stroke: Some(StrokeData { stroke: Stroke::new(3.0, Color32::BLACK), kind: egui::StrokeKind::Inside })
+				stroke: Some(StrokeData {
+					stroke: Stroke::new(3.0, Color32::BLACK),
+					kind: egui::StrokeKind::Inside,
+				}),
 			},
-			Cell::Black => Shape::Circle{
-				fill_color:Some(Color32::BLACK),
+			Cell::Black => Shape::Circle {
+				fill_color: Some(Color32::BLACK),
 				size: 0.7,
 				text: None,
-				stroke: None
+				stroke: None,
 			},
 			Cell::Empty => unreachable!(),
 		}
 	}
 }
 impl BoardGame for Abalone {
-	type PieceType=Cell;
+	type PieceType = Cell;
 	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
@@ -113,37 +120,46 @@ impl BoardGame for Abalone {
 	}
 	fn default_style() -> BoardStyle {
 		let mut style = BoardStyle::default();
-		style.checkerboard_mod=CheckerBoardMod::None;
-		style.uniform_color=Color32::from_rgb(40, 17, 51);
-		style.selected_highlights_shape=Shape::Circle {
+		style.checkerboard_mod = CheckerBoardMod::None;
+		style.uniform_color = Color32::from_rgb(40, 17, 51);
+		style.selected_highlights_shape = Shape::Circle {
 			fill_color: None,
 			size: 0.8,
-			stroke: Some(StrokeData {stroke: Stroke::new(5.0, Color32::from_rgb(240, 220, 80)), kind: egui::StrokeKind::Inside}),
-			text: None };
-		let board_color = Color32::from_rgb(0xaf, 0x69 ,0x49);
+			stroke: Some(StrokeData {
+				stroke: Stroke::new(5.0, Color32::from_rgb(240, 220, 80)),
+				kind: egui::StrokeKind::Inside,
+			}),
+			text: None,
+		};
+		let board_color = Color32::from_rgb(0xaf, 0x69, 0x49);
 		let outline_color = Color32::from_rgb(0x70, 0x20, 30);
-		style.empty_cell_shape=Some(
-			Shape::Circle {
-				fill_color: Some(board_color),
-				size: 0.95,
-				stroke: Some(StrokeData {stroke: egui::Stroke::new(3.0, outline_color), kind: egui::StrokeKind::Inside}),
-				text: None,
-			});
+		style.empty_cell_shape = Some(Shape::Circle {
+			fill_color: Some(board_color),
+			size: 0.95,
+			stroke: Some(StrokeData {
+				stroke: egui::Stroke::new(3.0, outline_color),
+				kind: egui::StrokeKind::Inside,
+			}),
+			text: None,
+		});
 		style
 	}
 }
 
 struct AbaloneBoardDrawer<G>(DefaultBoardDrawer<G>);
-impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
-{
-	fn draw_board(&self, ui: &mut egui::Ui, game: &Abalone, can_interact: bool) -> Option<(u8, u8)> {
+impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
+	fn draw_board(
+		&self,
+		ui: &mut egui::Ui,
+		game: &Abalone,
+		can_interact: bool,
+	) -> Option<(u8, u8)> {
 		let available = ui.available_rect_before_wrap();
 		let painter = ui.painter_at(available);
 
 		//let center = available.center();
-		let cell_radius = 22.0;   // taille des billes
-		let size = 28.0;          // taille de la cellule hex
-
+		let cell_radius = 22.0; // taille des billes
+		let size = 28.0; // taille de la cellule hex
 
 		//let board_color = Color32::from_rgb(0xaf, 0x69 ,0x49);
 		//let outline_color = Color32::from_rgb(0x70, 0x20, 30);
@@ -151,7 +167,6 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 
 		// click this frame
 		let mut clicked_hex: Option<Hex> = None;
-		
 
 		for (index, hex) in HEXES.iter().enumerate() {
 			let hex = *hex;
@@ -180,7 +195,11 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 			}
 			if let Some(sel) = self.get_selected() {
 				if Some(sel as usize) == idx(hex) {
-					self.get_style().selected_highlights_shape.draw(ui.painter(), pos, cell_radius*2.0);
+					self.get_style().selected_highlights_shape.draw(
+						ui.painter(),
+						pos,
+						cell_radius * 2.0,
+					);
 					/*painter.circle_stroke(
 						pos,
 						cell_radius * 0.9,
@@ -191,7 +210,8 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 			if can_interact {
 				// interaction
 				let rect = Rect::from_center_size(pos, Vec2::splat(cell_radius * 2.0));
-				let response = ui.interact(rect, ui.id().with((hex.q, hex.r)), egui::Sense::click());
+				let response =
+					ui.interact(rect, ui.id().with((hex.q, hex.r)), egui::Sense::click());
 				if response.clicked() {
 					clicked_hex = Some(hex);
 				}
@@ -202,8 +222,10 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 			let (tx, ty) = Abalone::coords_from_index(index);
 			let pos = self.coords_to_pixel(&available, size, tx, ty, game.height());
 			let square = egui::Rect::from_center_size(pos, egui::vec2(size, size));
-			
-			self.get_style().legal_highlights_shape.draw(ui.painter(), square.center(), size);
+
+			self.get_style()
+				.legal_highlights_shape
+				.draw(ui.painter(), square.center(), size);
 		}
 		if let Some(h) = clicked_hex {
 			idx(h).map(BitboardAbalone::coords_from_index)
@@ -211,10 +233,17 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 			None
 		}
 	}
-	fn coords_to_pixel(&self, board_rect: &egui::Rect, cell_size: f32, x_coord: u8, y_coord: u8, _h: u8) -> egui::Pos2 {
+	fn coords_to_pixel(
+		&self,
+		board_rect: &egui::Rect,
+		cell_size: f32,
+		x_coord: u8,
+		y_coord: u8,
+		_h: u8,
+	) -> egui::Pos2 {
 		let index = BitboardAbalone::index_from_coords(x_coord, y_coord);
 		if index > 60 {
-			return egui::Pos2{x:0.0,y:0.0};
+			return egui::Pos2 { x: 0.0, y: 0.0 };
 		}
 		let hex = HEXES[index];
 		let x = (hex.q as f32 * 1.732 * cell_size) + (hex.r as f32 * 0.866 * cell_size);
@@ -283,20 +312,23 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone>
 		self.0.set_played_highlights(played_highlights)
 	}
 
-	fn full_reset(&mut self)  {
+	fn full_reset(&mut self) {
 		self.0.full_reset()
 	}
 }
 pub fn create_board() -> GenericBoardApp<Abalone> {
-	let mut board=GenericBoardApp::new(Abalone::default(), new_move_searcher_vec("Material".into(), AbaloneMaterialEval::new(), 4));
+	let engines: Vec<Box<dyn AIEngineProvider<Abalone>>> = vec![Box::new(
+		MoveSearcherBuilder::new("Material".into(), AbaloneMaterialEval::new(), 4),
+	)];
+	let mut board = GenericBoardApp::new(Abalone::default(), engines);
 	board.board_drawer = Box::new(AbaloneBoardDrawer(DefaultBoardDrawer::new()));
-	*board.board_drawer.get_style_mut()=Abalone::default_style();
+	*board.board_drawer.get_style_mut() = Abalone::default_style();
 	board.max_depth = 6;
 	board.depth = 4;
 	board
 }
 
-	/*fn pixel_to_coords(
+/*fn pixel_to_coords(
 		&self,
 		board_rect: &egui::Rect,
 		cell_size: f32,
@@ -331,7 +363,7 @@ pub fn create_board() -> GenericBoardApp<Abalone> {
 			None
 		}
 	}
-	
+
 fn axial_round(q: f32, r: f32) -> super::rules::Hex {
 	// conversion axial -> cube
 	let x = q;

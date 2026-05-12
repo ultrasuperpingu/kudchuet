@@ -2,12 +2,10 @@ use eframe::egui;
 use egui::Color32;
 
 use kudchuet::Player;
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::shapes::Shape;
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType};
 use kudchuet::gui::{CheckerBoardMod, CoordMod};
-use kudchuet::{
-	gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType},
-	new_move_searcher_vec,
-};
 
 use super::game::ReversiEval;
 use crate::bitboard::Bitboard8x8;
@@ -89,9 +87,12 @@ impl BoardGame for Reversi {
 }
 
 pub fn create_board() -> GenericBoardApp<Reversi> {
+	let engines: Vec<Box<dyn AIEngineProvider<Reversi>>> = vec![
+		Box::new(MoveSearcherBuilder::new("Dumb".into(), ReversiEval::new(), 4)),
+	];
 	let board = GenericBoardApp::new(
 		Reversi::default(),
-		new_move_searcher_vec("Dumb".into(), ReversiEval::new(), 4),
+		engines,
 	);
 	board
 }

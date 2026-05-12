@@ -6,18 +6,17 @@ use std::{
 	time::Duration,
 };
 
+#[cfg(not(target_arch = "wasm32"))]
+use crate::ai::minimax::sync_util::timeout_signal;
 use crate::{
 	GameOutcome, Player, StrategyWithOptions,
-	ai::{
-		AIOptions,
-		minimax::{
-			Evaluation, Game, SearchStopSignal, Strategy,
-			gametree::{GameTree, Node, StateInfo},
-			sync_util::timeout_signal,
-			util::AppliedMove,
-		},
+	ai::minimax::{
+		Evaluation, Game, SearchStopSignal, Strategy,
+		gametree::{GameTree, Node, StateInfo},
+		util::AppliedMove,
 	},
 };
+
 pub struct MCTSOptions {
 	pub max_nb_iteration: u32,
 	pub exploration_factor: f32,
@@ -288,7 +287,8 @@ where
 			.children
 			.iter()
 			.filter(|c| {
-				!self.get_node_expanded_node(**c)
+				!self
+					.get_node_expanded_node(**c)
 					.unwrap()
 					.outcome
 					.is_lose_for(p)
@@ -368,7 +368,14 @@ where
 
 		self.stop_signal.store(false, Ordering::Relaxed);
 		let _cancel_when_dropped = if !self.opts.max_time.is_zero() {
-			timeout_signal(self.opts.max_time, &self.stop_signal)
+			#[cfg(not(target_arch = "wasm32"))]
+			{
+				timeout_signal(self.opts.max_time, &self.stop_signal)
+			}
+			#[cfg(target_arch = "wasm32")]
+			{
+				Arc::new(())
+			}
 		} else {
 			Arc::new(())
 		};
@@ -440,16 +447,16 @@ where
 		self.opts.max_time = max_time;
 	}
 }
-impl<G: Game> StrategyWithOptions<G, AIOptions> for MCTS<G>
+impl<G: Game> StrategyWithOptions<G> for MCTS<G>
 where
 	G::S: Clone,
 {
-	fn get_options(&self) -> AIOptions {
-		AIOptions::default()
+	fn get_options(&self) -> std::collections::HashMap<String, crate::ai::uci::UciValue> {
+		std::collections::HashMap::new()
 	}
 
-	fn reset_with_options(&mut self, _opts: AIOptions) {}
-
+	fn set_options(&mut self, _opts: &std::collections::HashMap<String, crate::ai::uci::UciValue>) {
+	}
 	fn stop_signal(&self) -> SearchStopSignal {
 		SearchStopSignal(self.stop_signal.clone())
 	}

@@ -1,7 +1,7 @@
 use eframe::egui;
 use egui::{Color32, Stroke};
 use egui_field_editor::EguiInspect;
-use kudchuet::ai::MoveSearcherBuilderDyn;
+use kudchuet::ai::MoveSearcherBuilder;
 use crate::bitboard::ChineseCheckerBoard;
 use crate::game::ChineseCheckersMaterialEval;
 use crate::rules::{ChineseCheckers, ChineseCheckersPlayer, Move};
@@ -185,7 +185,7 @@ impl SquareDrawer<ChineseCheckers> for ChineseCheckerSquareDrawer {
 	}
 }
 pub fn create_board() -> GenericBoardApp<ChineseCheckers> {
-	let ai_provider = MoveSearcherBuilderDyn::new("Material".into(), ChineseCheckersMaterialEval::default(), 4);
+	let ai_provider = MoveSearcherBuilder::new("Material".into(), ChineseCheckersMaterialEval::default(), 4);
 	let mut board = GenericBoardApp::new(ChineseCheckers::new(6), vec![Box::new(ai_provider)]);
 	board.board_drawer.set_square_drawer(Box::new(ChineseCheckerSquareDrawer{}));
 	board

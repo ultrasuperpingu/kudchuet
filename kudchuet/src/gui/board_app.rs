@@ -3,7 +3,7 @@ use egui::{Align, Layout, Ui};
 
 use crate::gui::{MultipleMoveSelectionResult, RightTab};
 use crate::gui::board_drawer::BoardDrawer;
-use crate::ai::{AIEngine, AIEngineProvider};
+use crate::ai::AIEngineProvider;
 use crate::ai::engine_manager::{EngineManager, ThinkingResult};
 use crate::utils::short_type_name;
 
@@ -106,7 +106,7 @@ impl<G: BoardGame + Clone +Sync+Send+ 'static> GenericBoardApp<G>
 where G::M: BoardMove<G>+Send
 {
 	//pub fn new(game: G, ai: Box<dyn AIEngine<G>>) -> Self {
-	pub fn new(game: G, internals_ai: Vec<Box<dyn AIEngineProvider<G, Engine = Box<dyn AIEngine<G>>>>>) -> Self {
+	pub fn new(game: G, internals_ai: Vec<Box<dyn AIEngineProvider<G>>>) -> Self {
 		Self {
 			name: short_type_name::<G>().to_owned(),
 			ai_engine_manager:  EngineManager::new_with_internals(internals_ai),

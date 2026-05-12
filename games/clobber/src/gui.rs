@@ -5,7 +5,7 @@ use egui::{Color32, Stroke, StrokeKind};
 
 use kudchuet::Player;
 use kudchuet::ai::minimax::MCTS;
-use kudchuet::ai::{AIBuilderDyn, AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
+use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
@@ -102,18 +102,18 @@ impl BoardGame for Clobber {
 }
 
 pub fn create_board() -> GenericBoardApp<Clobber> {
-	let engines: Vec<Box<dyn AIEngineProvider<Clobber, Engine = Box<dyn AIEngine<Clobber>>>>> = vec![
-		Box::new(MoveSearcherBuilderDyn::new(
+	let engines: Vec<Box<dyn AIEngineProvider<Clobber>>> = vec![
+		Box::new(MoveSearcherBuilder::new(
 			"Dumb".into(),
 			ClobberDumbEval {},
 			8,
 		)),
-		Box::new(MoveSearcherBuilderDyn::new(
+		Box::new(MoveSearcherBuilder::new(
 			"Simple".into(),
 			ClobberSimpleEval {},
 			8,
 		)),
-		Box::new(AIBuilderDyn::<Clobber, MCTS<Clobber>>::new("MCTS".into())),
+		Box::new(AIBuilder::<Clobber, MCTS<Clobber>>::new("MCTS".into())),
 	];
 	//let ai_provider = MoveSearcherBuilderDyn::new("Dumb".into(), ClobberDumbEval::default(), 8);
 	let board = GenericBoardApp::new(Clobber::default(), engines);

@@ -1,27 +1,34 @@
 use eframe::egui;
 
 use crate::game::AwaleMaterialEval;
-use kudchuet::{Player, PlayerType, ai::AIEngine, gui::{BoardGame, BoardMove, EGUIPieceType}, new_move_searcher};
+use kudchuet::{
+	Player, PlayerType,
+	ai::{AIEngine, AIEngineProvider, MoveSearcherBuilder},
+	gui::{BoardGame, BoardMove, EGUIPieceType},
+};
 
 use super::rules::Awale;
 
-
-
 pub struct AwaleApp {
 	game: Awale,
-	computer : Box<dyn AIEngine<Awale>>,
+	computer: Box<dyn AIEngine<Awale>>,
 	selected: Option<usize>,
-	pub players: [PlayerType;2],
+	pub players: [PlayerType; 2],
 }
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Place(pub u8);
 impl EGUIPieceType for Place {
 	fn shape(&self) -> kudchuet::gui::shapes::Shape {
-		kudchuet::gui::shapes::Shape::Circle { fill_color: None, size: 0.0, text: None, stroke: None }
+		kudchuet::gui::shapes::Shape::Circle {
+			fill_color: None,
+			size: 0.0,
+			text: None,
+			stroke: None,
+		}
 	}
 }
 impl BoardGame for Awale {
-	type PieceType=Place;
+	type PieceType = Place;
 	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
@@ -44,17 +51,16 @@ impl BoardGame for Awale {
 		todo!()
 	}
 }
-impl BoardMove<Awale> for usize {
-	
-}
+impl BoardMove<Awale> for usize {}
 impl Default for AwaleApp {
 	fn default() -> Self {
 		Self {
 			game: Awale::default(),
-			computer: new_move_searcher(AwaleMaterialEval::new(), 5),
-			selected:None,
+			//computer: new_move_searcher(AwaleMaterialEval::new(), 5),
+			computer: MoveSearcherBuilder::new("Material".into(), AwaleMaterialEval::new(), 5)
+				.build_engine(),
+			selected: None,
 			players: [PlayerType::default(), PlayerType::Computer],
-			
 		}
 	}
 }
@@ -78,10 +84,7 @@ impl eframe::App for AwaleApp {
 				ui.label(format!("Score Haut : {}", self.game.score_top));
 
 				if self.game.game_over {
-					ui.colored_label(
-						egui::Color32::RED,
-						"Partie terminée"
-					);
+					ui.colored_label(egui::Color32::RED, "Partie terminée");
 				}
 
 				if ui.button("Réinitialiser").clicked() {
@@ -118,7 +121,11 @@ impl eframe::App for AwaleApp {
 			);
 
 			painter.rect_filled(store_top_rect, 10.0, egui::Color32::from_rgb(180, 140, 90));
-			painter.rect_filled(store_bottom_rect, 10.0, egui::Color32::from_rgb(180, 140, 90));
+			painter.rect_filled(
+				store_bottom_rect,
+				10.0,
+				egui::Color32::from_rgb(180, 140, 90),
+			);
 
 			painter.text(
 				store_top_rect.center(),
@@ -138,7 +145,7 @@ impl eframe::App for AwaleApp {
 
 			for i in 0..12 {
 				let is_top = i >= 6;
-				let idx = if is_top { 12 - i-1 } else { i };
+				let idx = if is_top { 12 - i - 1 } else { i };
 
 				let x = rect.left() + pit_w * (idx as f32 + 1.0);
 				let y = if is_top {
@@ -189,8 +196,7 @@ impl eframe::App for AwaleApp {
 							);
 
 							if pit_rect.contains(pos) {
-
-								if !self.game.game_over && self.game.play(i){
+								if !self.game.game_over && self.game.play(i) {
 									self.selected = Some(i);
 								}
 							}

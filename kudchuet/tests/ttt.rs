@@ -54,7 +54,9 @@ fn test_ttt_perfect() {
 	assert_eq!(tree.get_root().depth_to_end(), 9);
 	TTTGame::apply(&mut game, ttt::Place { i: 0 });
 	TTTGame::apply(&mut game, ttt::Place { i: 1 });
-	let node = tree.get_state_expanded_node_id(TTTGame::get_hash(&game)).unwrap();
+	let node = tree
+		.get_state_expanded_node_id(TTTGame::get_hash(&game))
+		.unwrap();
 	assert_eq!(tree.get_node(node).unwrap().outcome(), GameOutcome::PLAYER1);
 	assert_eq!(tree.get_node(node).unwrap().depth_to_end(), 5);
 	tree.print(2);

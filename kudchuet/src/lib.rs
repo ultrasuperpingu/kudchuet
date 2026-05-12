@@ -4,6 +4,7 @@
 
 use ai::minimax::SearchStopSignal;
 use ai::minimax::Strategy;
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 use crate::ai::minimax::BEST_EVAL;
@@ -21,8 +22,8 @@ use crate::ai::minimax::ybw::ParallelSearch;
 use crate::ai::uci::UciValue;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::uci::UciValue;
-use crate::ai::{AIEngine, AIOptions, internal_engine::InternalEngine};
-use crate::ai::{AIEngineProvider, MoveSearcherBuilderDyn};
+use crate::ai::{AIEngine, internal_engine::InternalEngine};
+use crate::ai::{AIEngineProvider, MoveSearcherBuilder};
 use crate::gui::{BoardGame, BoardMove};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
@@ -154,12 +155,12 @@ impl TryFrom<GameOutcome> for Player {
 		}
 	}
 }
-pub trait StrategyWithOptions<G, Options>: Strategy<G>
+pub trait StrategyWithOptions<G>: Strategy<G>
 where
 	G: Game,
 {
-	fn get_options(&self) -> Options;
-	fn reset_with_options(&mut self, opts: Options);
+	fn get_options(&self) -> HashMap<String, UciValue>;
+	fn set_options(&mut self, opts: &HashMap<String, UciValue>);
 	fn stop_signal(&self) -> SearchStopSignal {
 		SearchStopSignal::new()
 	}
@@ -171,27 +172,34 @@ pub type MoveSearcher<T> = ai::minimax::IterativeSearch<T>;
 pub type MoveSearcher<T> = ParallelSearch<T>;
 
 #[cfg(not(target_arch = "wasm32"))]
-impl<G, E> StrategyWithOptions<G, AIOptions> for MoveSearcher<E>
+impl<G, E> StrategyWithOptions<G> for MoveSearcher<E>
 where
 	G: Game,
 	E: Evaluator<G = G> + Clone + Sync + Send + 'static + Default + Eq + Debug,
 	G::S: Clone + Send + Sync,
 	G::M: Eq + Send + Sync + Clone,
 {
-	fn get_options(&self) -> AIOptions {
-		let mut opts = AIOptions::from(*self.options());
-		opts.max_depth = self.get_max_depth();
-		opts.max_time = self.get_max_time().as_secs_f32();
-		opts.threads = self.parallel_options().num_threads;
-		opts.table_megabyte_size = self.options().table_byte_size / 1024 / 1024;
-		opts.uci
+	fn get_options(&self) -> HashMap<String, UciValue> {
+		//let mut opts = AIOptions::from(*self.options());
+		//opts.max_depth = self.get_max_depth();
+		//opts.max_time = self.get_max_time().as_secs_f32();
+		//opts.threads = self.parallel_options().num_threads;
+		//opts.table_megabyte_size = self.options().table_byte_size / 1024 / 1024;
+		let mut opts=HashMap::new();
+		opts
 			.insert("Mtdf".into(), UciValue::Bool(self.options().get_mtdf()));
+		opts.insert("Hash".into(), UciValue::Spin(self.options().table_byte_size as i64 / 1024 / 1024, Some(0), None));
+		opts.insert("Threads".into(), UciValue::Spin(self.parallel_options().num_threads.unwrap_or(0) as i64, Some(0), None));
+		opts
+			.insert("Timeout".into(), UciValue::Spin(self.get_max_time().as_millis() as i64, Some(0), None));
+		opts
+			.insert("Depth".into(), UciValue::Spin(self.get_max_depth() as i64, Some(0), None));
 		opts
 	}
 
-	fn reset_with_options(&mut self, opts: AIOptions) {
+	fn set_options(&mut self, opts: &HashMap<String, UciValue>) {
 		println!("reset_with_options {:?}", opts);
-		let mut iter =
+		/*let mut iter =
 			IterativeOptions::new().with_table_byte_size(opts.table_megabyte_size * 1024 * 1024);
 
 		if Some(&UciValue::Bool(true)) == opts.uci.get("Mdtf") {
@@ -208,7 +216,7 @@ where
 				opts.max_depth,
 				std::time::Duration::from_secs_f32(opts.max_time),
 			);
-		}
+		}*/
 		println!("ai {} {:?}", self.get_max_depth(), self.get_max_time());
 	}
 	//fn stop_search(&self) {
@@ -221,24 +229,33 @@ where
 }
 
 #[cfg(target_arch = "wasm32")]
-impl<G, E> StrategyWithOptions<G, AIOptions> for MoveSearcher<E>
+impl<G, E> StrategyWithOptions<G> for MoveSearcher<E>
 where
 	G: Game,
 	E: Evaluator<G = G> + Default,
 	<<E as Evaluator>::G as Game>::S: Clone,
 	<<E as Evaluator>::G as Game>::M: Eq + Clone,
 {
-	fn get_options(&self) -> AIOptions {
-		let mut opts = AIOptions::from(*self.options());
+	fn get_options(&self) -> HashMap<String, UciValue> {
+		/*let mut opts = AIOptions::from(*self.options());
 		opts.max_depth = self.get_max_depth();
 		opts.max_time = self.get_max_time().as_secs_f32();
 		opts.table_megabyte_size = self.options().table_byte_size / 1024 / 1024;
 		opts.uci
 			.insert("Mtdf".into(), UciValue::Bool(self.options().get_mtdf()));
+		opts*/
+		let mut opts=HashMap::new();
+		opts
+			.insert("Mtdf".into(), UciValue::Bool(self.options().get_mtdf()));
+		opts.insert("Hash".into(), UciValue::Spin(self.options().table_byte_size as i64 / 1024 / 1024, Some(0), None));
+		opts
+			.insert("Timeout".into(), UciValue::Spin(self.get_max_time().as_millis() as i64, Some(0), None));
+		opts
+			.insert("Depth".into(), UciValue::Spin(self.get_max_depth() as i64, Some(0), None));
 		opts
 	}
-	fn reset_with_options(&mut self, opts: AIOptions) {
-		let mut iter =
+	fn set_options(&mut self, opts: &HashMap<String, UciValue>) {
+		/*let mut iter =
 			IterativeOptions::new().with_table_byte_size(opts.table_megabyte_size * 1024 * 1024);
 
 		if Some(&UciValue::Bool(true)) == opts.uci.get("Mdtf") {
@@ -254,7 +271,7 @@ where
 				opts.max_depth,
 				std::time::Duration::from_secs_f32(opts.max_time),
 			);
-		}
+		}*/
 	}
 }
 #[cfg(target_arch = "wasm32")]
@@ -279,8 +296,8 @@ where
 	<<T as Evaluator>::G as Game>::S: Clone,
 {
 	IterativeSearch::new(T::default(), opts)
-}
-type DynProvider<G> = Box<dyn AIEngineProvider<G, Engine = Box<dyn AIEngine<G> + 'static>>>;
+}/*
+type DynProvider<G> = Box<dyn AIEngineProvider<G>>;
 pub fn new_move_searcher_vec<G, T>(
 	name: String,
 	evaluator: T,
@@ -291,28 +308,12 @@ where
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
 	T: Evaluator<G = G> + Default + Eq + Clone + Send + Sync + 'static + Debug,
 {
-	vec![Box::new(MoveSearcherBuilderDyn::<G, T>::new(
+	vec![Box::new(MoveSearcherBuilder::<G, T>::new(
 		name,
 		evaluator,
 		initial_depth,
 	))]
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn new_move_searcher<G, T>(evaluator: T, initial_depth: u8) -> Box<dyn AIEngine<G>>
-where
-	G: BoardGame + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	T: Evaluator<G = G> + Default + Eq + Clone + Send + Sync + 'static + Debug,
-{
-	let mut searcher = ParallelSearch::new(
-		evaluator,
-		IterativeOptions::new().with_table_byte_size(128 * 1024 * 1024),
-		ParallelOptions::new(),
-	);
-	searcher.set_max_depth(initial_depth);
-	Box::new(InternalEngine::new(searcher))
-}
+}*/
 #[cfg(not(target_arch = "wasm32"))]
 pub fn new_move_searcher_static<G, T>(evaluator: T, initial_depth: u8) -> MoveSearcher<T>
 where

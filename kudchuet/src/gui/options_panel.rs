@@ -1,4 +1,4 @@
-use egui::Id;
+
 use egui_field_editor::{EguiInspect, EguiInspector, add_button};
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -50,25 +50,25 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 									let mut opts_changed = None;
 									for engine_name in active_engines {
 										if let Ok(engine) = self.ai_engine_manager.ensure_engine(&engine_name) {
-											if let Some(mut opts)= engine.get_options() {
+											if let Some(opts)= engine.get_options_mut() {
 												let resp = opts.inspect(engine_name.as_str(), "", LABEL_RATIO, false, ui);
 												//let resp = ui.add(EguiInspector::new(&mut opts).id_salt(engine_name.as_str()));
 												if resp.changed() {
-													println!("Options changed for engine {} {:?}", engine_name, resp.id);
-													for (k,v) in  &opts.uci {
+													/*println!("Options changed for engine {} {:?}", engine_name, resp.id);
+													for (k,v) in opts {
 														println!("Label {} / id {:?}", k, Id::new(k));
 														if Id::new(k) == resp.id {
 															println!("Option {} changed to {:?}", k, v);
 														}
-													}
-													opts_changed = Some((engine_name, opts));
+													}*/
+													opts_changed = Some((engine_name, opts.clone()));
 												}
 											}
 										}
 									}
 									if let Some((engine_name, opts)) = opts_changed {
 										if let Some(engine) = self.ai_engine_manager.get_engine_mut(&engine_name) {
-											engine.reset_with_options(opts);
+											engine.set_options(opts.clone());
 											self.ai_engine_manager.save_all_engine_options(ui.ctx());
 										}
 									}

@@ -1,8 +1,9 @@
+use crate::ai::uci::UciValue;
 use crate::gui::{BoardGame, BoardMove};
 use crate::Player;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::external_engine::{ExternalEngine, ExternalEngineEntry};
-use crate::ai::{AIEngine, AIEngineProvider, AIOptions};
+use crate::ai::{AIEngine, AIEngineProvider};
 use crate::utils::short_type_name;
 use std::collections::HashMap;
 use std::pin::Pin;
@@ -21,10 +22,10 @@ where
 	G::M: BoardMove<G>,
 {
 	engines: HashMap<String, Box<dyn AIEngine<G>>>,
-	engine_options: HashMap<String, AIOptions>,
+	engine_options: HashMap<String, HashMap<String, UciValue>>,
 	#[cfg(not(target_arch = "wasm32"))]
 	external_providers: Vec<ExternalEngineEntry>,
-	internal_providers: Vec<Box<dyn AIEngineProvider<G, Engine = Box<dyn AIEngine<G>>>>>,
+	internal_providers: Vec<Box<dyn AIEngineProvider<G>>>,
 	player_engines: HashMap<Player, Option<String>>,
 	paused: bool,
 	ai_future: Option<Pin<Box<dyn Future<Output = Option<G::M>> + Send>>>,
@@ -53,7 +54,7 @@ where
 			ai_future: None
 		}
 	}
-	pub fn new_with_internals(internal_providers: Vec<Box<dyn AIEngineProvider<G, Engine = Box<dyn AIEngine<G>>>>>) -> Self {
+	pub fn new_with_internals(internal_providers: Vec<Box<dyn AIEngineProvider<G>>>) -> Self {
 		Self {
 			engines: HashMap::new(),
 			engine_options: HashMap::new(),
@@ -66,7 +67,7 @@ where
 		}
 	}
 
-	pub fn add_internal_provider(&mut self, provider: Box<dyn AIEngineProvider<G, Engine = Box<dyn AIEngine<G>>>>) {
+	pub fn add_internal_provider(&mut self, provider: Box<dyn AIEngineProvider<G>>) {
 		self.internal_providers.push(provider);
 	}
 	#[cfg(not(target_arch = "wasm32"))]
@@ -79,7 +80,7 @@ where
 	}
 
 	pub fn list_internal_provider_names(&self) -> Vec<String> {
-		self.internal_providers.iter().map(|p| p.get_name().clone()).collect()
+		self.internal_providers.iter().map(|p| p.get_name().to_owned().clone()).collect()
 	}
 
 	pub fn has_internal_provider(&self, name: &str) -> bool {
@@ -99,10 +100,10 @@ where
 			if let Some(provider) = self.internal_providers.iter().find(|p| p.get_name() == name) {
 				let mut engine = provider.build_engine();
 				if let Some(opts) = self.engine_options.get(name) {
-					engine.reset_with_options(opts.clone());
+					engine.set_options(opts.clone());
 				} else {
 					if let Some(opts) = AIEngine::<G>::get_options(&*engine) {
-						self.engine_options.insert(name.into(), opts);
+						self.engine_options.insert(name.into(), opts.clone());
 					}
 				}
 				self.engines.insert(name.to_string(), engine);
@@ -113,12 +114,12 @@ where
 					let mut engine = Box::new(ExternalEngine::new(&ext.path, &ext.args.clone())?);
 					if let Some(opts) = self.engine_options.get_mut(name) {
 						if let Some(engine_opts) = AIEngine::<G>::get_options(&*engine) {
-							opts.merge(&engine_opts);
-							AIEngine::<G>::reset_with_options(&mut *engine, opts.clone());
+							//opts.merge(&engine_opts);
+							AIEngine::<G>::set_options(&mut *engine, opts.clone());
 						}
 					} else {
 						if let Some(opts) = AIEngine::<G>::get_options(&*engine) {
-							self.engine_options.insert(name.into(), opts);
+							self.engine_options.insert(name.into(), opts.clone());
 						}
 					}
 					self.engines.insert(name.to_string(), engine);
@@ -232,10 +233,10 @@ where
 			}
 		}
 	}
-	pub fn get_engine_options(&self, engine: &String) -> Option<&AIOptions> {
+	pub fn get_engine_options(&self, engine: &String) -> Option<&HashMap<String, UciValue>> {
 		self.engine_options.get(engine)
 	}
-	pub fn get_engine_options_mut(&mut self, engine: &String) -> Option<&mut AIOptions> {
+	pub fn get_engine_options_mut(&mut self, engine: &String) -> Option<&mut HashMap<String, UciValue>> {
 		self.engine_options.get_mut(engine)
 	}
 	#[cfg(not(target_arch = "wasm32"))]
@@ -253,7 +254,7 @@ where
 		let mut names = Vec::new();
 
 		for internal in self.internal_providers.iter() {
-			names.push(internal.get_name().clone());
+			names.push(internal.get_name().to_owned());
 		}
 		#[cfg(not(target_arch = "wasm32"))]
 		for entry in self.external_providers.iter() {

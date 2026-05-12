@@ -1,19 +1,19 @@
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::Color32;
-use kudchuet::{Player, new_move_searcher_vec};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::Player;
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
 
-use kudchuet::gui::board_app::GenericBoardApp;
 use crate::bitboard::Bitboard7x7;
 use crate::rules::Action;
+use kudchuet::gui::board_app::GenericBoardApp;
 
 use super::game::DiaballikEvalMaterial;
 
-use super::rules::{Cell, Move, Diaballik};
+use super::rules::{Cell, Diaballik, Move};
 impl BoardMove<Diaballik> for Move {
-
 	fn click_sequence(&self, _state: &Diaballik) -> Vec<u16> {
 		let mut seq = Vec::new();
 		for action in self.0.iter().flatten() {
@@ -27,7 +27,9 @@ impl BoardMove<Diaballik> for Move {
 		seq
 	}
 	fn compute_intermediate_state(&self, state: &Diaballik, clicks: &[u16]) -> Option<Diaballik> {
-		if clicks.len() < 2 { return None; }
+		if clicks.len() < 2 {
+			return None;
+		}
 
 		let mut sim = state.clone();
 		let player = state.current_player();
@@ -35,16 +37,15 @@ impl BoardMove<Diaballik> for Move {
 
 		while i + 1 < clicks.len() {
 			let from = clicks[i] as u8;
-			let to = clicks[i+1] as u8;
+			let to = clicks[i + 1] as u8;
 
 			if player == Player::PLAYER1 {
 				if from == sim.ball_player1 {
 					sim.ball_player1 = to;
-				} 
-				else if sim.player1.get_at_index(from as usize) {
+				} else if sim.player1.get_at_index(from as usize) {
 					sim.player1.reset_at_index(from as usize);
 					sim.player1.set_at_index(to as usize);
-					
+
 					/*if from == sim.ball_player1 {
 						sim.ball_player1 = to;
 					}*/
@@ -55,7 +56,7 @@ impl BoardMove<Diaballik> for Move {
 				} else if sim.player2.get_at_index(from as usize) {
 					sim.player2.reset_at_index(from as usize);
 					sim.player2.set_at_index(to as usize);
-					
+
 					/*if from == sim.ball_player2 {
 						sim.ball_player2 = to;
 					}*/
@@ -71,8 +72,18 @@ impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
 			Cell::Empty => unreachable!(),
-			Cell::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
-			Cell::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
+			Cell::White => Shape::Circle {
+				fill_color: Some(Color32::WHITE),
+				size: 0.7,
+				text: None,
+				stroke: Some(StrokeData::default()),
+			},
+			Cell::Black => Shape::Circle {
+				fill_color: Some(Color32::BLACK),
+				size: 0.7,
+				text: None,
+				stroke: Some(StrokeData::default()),
+			},
 			Cell::WhiteWithBall => Shape::Circle {
 				fill_color: Some(Color32::WHITE),
 				size: 0.7,
@@ -81,7 +92,7 @@ impl EGUIPieceType for Cell {
 					color: Color32::BLACK,
 					size: 0.5,
 				}),
-				stroke: Some(StrokeData::default())
+				stroke: Some(StrokeData::default()),
 			},
 			Cell::BlackWithBall => Shape::Circle {
 				fill_color: Some(Color32::BLACK),
@@ -91,14 +102,14 @@ impl EGUIPieceType for Cell {
 					color: Color32::WHITE,
 					size: 0.5,
 				}),
-				stroke: Some(StrokeData::default())
-			}
+				stroke: Some(StrokeData::default()),
+			},
 		}
 	}
 }
 
 impl BoardGame for Diaballik {
-	type PieceType=Cell;
+	type PieceType = Cell;
 	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
@@ -134,7 +145,10 @@ impl BoardGame for Diaballik {
 }
 
 pub fn create_board() -> GenericBoardApp<Diaballik> {
-	let mut board=GenericBoardApp::new(Diaballik::default(), new_move_searcher_vec("Material".into(), DiaballikEvalMaterial::new(), 3));
+	let engines: Vec<Box<dyn AIEngineProvider<Diaballik>>> = vec![Box::new(
+		MoveSearcherBuilder::new("Material".into(), DiaballikEvalMaterial::new(), 3),
+	)];
+	let mut board = GenericBoardApp::new(Diaballik::default(), engines);
 	board.depth = 3;
 	board.max_depth = 4;
 	board

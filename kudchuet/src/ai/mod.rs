@@ -16,13 +16,14 @@ use crate::ai::internal_engine::InternalEngine;
 use crate::ai::minimax::perfect_solver::PerfectSolver;
 use crate::ai::uci::{UciOptionConfig, UciValue};
 use crate::gui::{BoardGame, BoardMove};
-use crate::{StrategyWithOptions, MoveSearcher, new_move_searcher_static};
+use crate::{MoveSearcher, StrategyWithOptions, new_move_searcher_static};
 pub trait AIEngine<G: BoardGame + Sync>: Send
 where
 	G::M: BoardMove<G> + Send,
 {
-	fn get_options(&self) -> Option<AIOptions>;
-	fn reset_with_options(&mut self, options: AIOptions);
+	fn get_options(&self) -> Option<&HashMap<String, UciValue>>;
+	fn get_options_mut(&mut self) -> Option<&mut HashMap<String, UciValue>>;
+	fn set_options(&mut self, options: HashMap<String, UciValue>);
 	fn set_position(&self, game: &G);
 
 	fn choose_move(&self, game: &G) -> Option<G::M>;
@@ -37,18 +38,21 @@ where
 	}
 	fn stop_thinking(&self);
 }
-
+/*
 impl<G> AIEngine<G> for Box<dyn AIEngine<G>>
 where
 	G: BoardGame + Sync,
 	G::M: BoardMove<G> + Send,
 {
-	fn get_options(&self) -> Option<AIOptions> {
+	fn get_options(&self) -> Option<&HashMap<String, UciValue>> {
 		(**self).get_options()
 	}
+	fn get_options_mut(&mut self) -> Option<&mut HashMap<String, UciValue>> {
+		(**self).get_options_mut()
+	}
 
-	fn reset_with_options(&mut self, options: AIOptions) {
-		(**self).reset_with_options(options)
+	fn set_options(&mut self, options: HashMap<String, UciValue>) {
+		(**self).set_options(options)
 	}
 
 	fn set_position(&self, game: &G) {
@@ -75,32 +79,40 @@ where
 	G::M: BoardMove<G> + Send,
 {
 	type Engine: AIEngine<G>;
-	fn get_name(&self) -> &String;
+	fn get_name(&self) -> &str;
 
 	fn build_engine(&self) -> Self::Engine;
+}
+*/
+pub trait AIEngineProvider<G>: Send + Sync
+where
+	G: BoardGame + Sync,
+	G::M: BoardMove<G> + Send,
+{
+	fn get_name(&self) -> &str;
+
+	fn build_engine(&self) -> Box<dyn AIEngine<G>>;
 }
 pub struct AIBuilder<G, AI>
 where
 	G: BoardGame + Sync,
 	G::M: BoardMove<G> + Send,
-	AI: StrategyWithOptions<G, AIOptions> + Default
+	AI: StrategyWithOptions<G> + Default,
 {
 	name: String,
-	phantom: std::marker::PhantomData<G>,
-	phantom2: std::marker::PhantomData<AI>,
+	phantom: std::marker::PhantomData<(G, AI)>,
 }
 
 impl<G, AI> AIBuilder<G, AI>
 where
 	G: BoardGame + Sync,
 	G::M: BoardMove<G> + Send,
-	AI: StrategyWithOptions<G, AIOptions> + Default
+	AI: StrategyWithOptions<G> + Default,
 {
 	pub fn new(name: String) -> Self {
 		Self {
 			name,
 			phantom: std::marker::PhantomData,
-			phantom2: std::marker::PhantomData,
 		}
 	}
 }
@@ -108,57 +120,17 @@ impl<G, AI> AIEngineProvider<G> for AIBuilder<G, AI>
 where
 	G: BoardGame + Send + Sync + 'static,
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	AI: StrategyWithOptions<G, AIOptions> + Default
+	AI: StrategyWithOptions<G> + Default + Send + Sync + 'static,
 {
-	type Engine = InternalEngine<G, PerfectSolver<G>>;
-	fn get_name(&self) -> &String {
+	//type Engine = Box<dyn AIEngine<G>>;
+	fn get_name(&self) -> &str {
 		&self.name
 	}
-	fn build_engine(&self) -> Self::Engine {
-		InternalEngine::new(PerfectSolver::default())
-	}
-}
-pub struct AIBuilderDyn<G, AI>
-where
-	G: BoardGame + Sync,
-	G::M: BoardMove<G> + Send,
-	AI: StrategyWithOptions<G, AIOptions> + Default
-{
-	name: String,
-	phantom: std::marker::PhantomData<G>,
-	phantom2: std::marker::PhantomData<AI>,
-}
-
-impl<G, AI> AIBuilderDyn<G, AI>
-where
-	G: BoardGame + Sync,
-	G::M: BoardMove<G> + Send,
-	AI: StrategyWithOptions<G, AIOptions> + Default
-{
-	pub fn new(name: String) -> Self {
-		Self {
-			name,
-			phantom: std::marker::PhantomData,
-			phantom2: std::marker::PhantomData,
-		}
-	}
-}
-impl<G, AI> AIEngineProvider<G> for AIBuilderDyn<G, AI>
-where
-	G: BoardGame + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	AI: StrategyWithOptions<G, AIOptions> + Default + Send + 'static,
-{
-	type Engine = Box<dyn AIEngine<G>>;
-	fn get_name(&self) -> &String {
-		&self.name
-	}
-	fn build_engine(&self) -> Self::Engine {
+	fn build_engine(&self) -> Box<dyn AIEngine<G>> {
 		let engine = InternalEngine::new(AI::default());
 		Box::new(engine)
 	}
 }
-
 pub struct MoveSearcherBuilder<G, E>
 where
 	G: BoardGame,
@@ -193,57 +165,11 @@ where
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
 	T: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static + Debug,
 {
-	type Engine = InternalEngine<G, MoveSearcher<T>>;
-	fn get_name(&self) -> &String {
+	//type Engine = Box<dyn AIEngine<G>>;
+	fn get_name(&self) -> &str {
 		&self.name
 	}
-	fn build_engine(&self) -> Self::Engine {
-		InternalEngine::new(new_move_searcher_static(
-			self.evaluator.clone(),
-			self.initial_depth,
-		))
-	}
-}
-
-pub struct MoveSearcherBuilderDyn<G, E>
-where
-	G: BoardGame,
-	G::M: BoardMove<G>,
-	E: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static,
-{
-	name: String,
-	evaluator: E,
-	initial_depth: u8,
-	phantom: std::marker::PhantomData<G>,
-}
-
-impl<G, T> MoveSearcherBuilderDyn<G, T>
-where
-	G: BoardGame,
-	G::M: BoardMove<G>,
-	T: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static,
-{
-	pub fn new(name: String, evaluator: T, initial_depth: u8) -> Self {
-		Self {
-			name,
-			evaluator,
-			initial_depth,
-			phantom: std::marker::PhantomData,
-		}
-	}
-}
-
-impl<G, T> AIEngineProvider<G> for MoveSearcherBuilderDyn<G, T>
-where
-	G: BoardGame + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	T: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static + Debug,
-{
-	type Engine = Box<dyn AIEngine<G>>;
-	fn get_name(&self) -> &String {
-		&self.name
-	}
-	fn build_engine(&self) -> Self::Engine {
+	fn build_engine(&self) -> Box<dyn AIEngine<G>> {
 		let engine = InternalEngine::new(new_move_searcher_static(
 			self.evaluator.clone(),
 			self.initial_depth,
@@ -251,7 +177,7 @@ where
 		Box::new(engine)
 	}
 }
-
+/*
 #[derive(EguiInspect, Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct AIOptions {
 	pub table_megabyte_size: usize,
@@ -393,7 +319,8 @@ impl AIOptions {
 			}
 		}
 	}
-}
+}*/
+
 pub fn eval_to_percent(cp: i16) -> f32 {
 	1.0 / (1.0 + -(cp as f32 / 200.0).exp())
 }

@@ -2,12 +2,10 @@ use bitboard::Bitboard;
 use eframe::egui;
 use egui::Color32;
 
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::input_handler::MoveResult;
 use kudchuet::gui::shapes::Shape;
-use kudchuet::{
-	gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType},
-	new_move_searcher_vec,
-};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
 
 use crate::{bitboard::Bitboard6x5, rules::YotePlayer};
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -206,9 +204,11 @@ impl BoardGame for Yote {
 }
 
 pub fn create_board() -> GenericBoardApp<Yote> {
-	let board = GenericBoardApp::new(
-		Yote::default(),
-		new_move_searcher_vec("Material".into(), YoteMaterialEval::new(), 5),
-	);
+	let engines: Vec<Box<dyn AIEngineProvider<Yote>>> = vec![Box::new(MoveSearcherBuilder::new(
+		"Material".into(),
+		YoteMaterialEval::new(),
+		5,
+	))];
+	let board = GenericBoardApp::new(Yote::default(), engines);
 	board
 }

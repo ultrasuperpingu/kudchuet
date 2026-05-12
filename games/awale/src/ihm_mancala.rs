@@ -2,9 +2,9 @@ use eframe::egui;
 
 use kudchuet::{
 	GameOutcome, Player, PlayerType,
-	ai::{AIEngine, minimax::Game},
+	ai::{AIEngine, AIEngineProvider, MoveSearcherBuilder, minimax::Game},
 	gui::{BoardGame, BoardMove},
-	new_move_searcher,
+	//new_move_searcher,
 };
 
 use crate::gui::Place;
@@ -58,7 +58,8 @@ impl Default for MancalaApp {
 	fn default() -> Self {
 		Self {
 			game: Mancala::default(),
-			computer: new_move_searcher(super::mancala::EvaluatorMancala::default(), 5),
+			//computer: new_move_searcher(super::mancala::EvaluatorMancala::default(), 5),
+			computer: MoveSearcherBuilder::new("Material".into(), super::mancala::EvaluatorMancala::default(), 5).build_engine(),
 			selected: None,
 			players: [PlayerType::default(), PlayerType::Computer],
 		}

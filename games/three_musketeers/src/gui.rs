@@ -1,6 +1,6 @@
 use eframe::egui;
 use egui::Color32;
-use kudchuet::ai::{AIBuilderDyn, AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
+use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::ai::minimax::{Game, MCTS};
 
 use crate::bitboard::Bitboard5x5;
@@ -236,9 +236,9 @@ impl BoardGame for ThreeMusketeers {
 }
 
 pub fn create_board() -> GenericBoardApp<ThreeMusketeers> {
-	let engines: Vec<Box<dyn AIEngineProvider<ThreeMusketeers, Engine=Box<dyn AIEngine<ThreeMusketeers>>>>> = vec![
-		Box::new(MoveSearcherBuilderDyn::new("Simple".into(), ThreeMusketeersEvalSimple::new(), 4)),
-		Box::new(AIBuilderDyn::<ThreeMusketeers, MCTS<ThreeMusketeers>>::new("MCTS".into())),
+	let engines: Vec<Box<dyn AIEngineProvider<ThreeMusketeers>>> = vec![
+		Box::new(MoveSearcherBuilder::new("Simple".into(), ThreeMusketeersEvalSimple::new(), 4)),
+		Box::new(AIBuilder::<ThreeMusketeers, MCTS<ThreeMusketeers>>::new("MCTS".into())),
 	];
 	let board = GenericBoardApp::new(
 		ThreeMusketeers::default(),

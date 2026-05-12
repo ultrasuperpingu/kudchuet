@@ -1,9 +1,6 @@
 use crate::{
 	StrategyWithOptions,
-	ai::{
-		AIOptions,
-		minimax::{Evaluation, Game, Strategy, gametree::GameTree},
-	},
+	ai::minimax::{Evaluation, Game, Strategy, gametree::GameTree},
 };
 
 #[derive(Clone)]
@@ -60,14 +57,18 @@ where
 	}
 }
 
-impl<G> StrategyWithOptions<G, AIOptions> for PerfectSolver<G>
+impl<G> StrategyWithOptions<G> for PerfectSolver<G>
 where
 	G: Game,
 	G::S: Clone,
 {
-	fn get_options(&self) -> AIOptions {
-		AIOptions::default()
+	fn get_options(&self) -> std::collections::HashMap<String, crate::ai::uci::UciValue> {
+		std::collections::HashMap::default()
 	}
 
-	fn reset_with_options(&mut self, _opts: AIOptions) {}
+	fn set_options(
+		&mut self,
+		_opts: &std::collections::HashMap<String, crate::ai::uci::UciValue>,
+	) {
+	}
 }

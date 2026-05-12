@@ -1,7 +1,7 @@
 use eframe::egui;
 use egui::Color32;
 use kudchuet::Player;
-use kudchuet::ai::{AIEngine, AIEngineProvider, MoveSearcherBuilderDyn};
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
 use kudchuet::gui::shapes::{Shape, TextData};
@@ -155,9 +155,9 @@ impl BoardGame for ChessBoard {
 }
 
 pub fn create_board() -> GenericBoardApp<ChessBoard> {
-	let engines: Vec<Box<dyn AIEngineProvider<ChessBoard, Engine=Box<dyn AIEngine<ChessBoard>>>>> = vec![
-		Box::new(MoveSearcherBuilderDyn::new("Material".into(), ChessMaterialEval::new(), 5)),
-		Box::new(MoveSearcherBuilderDyn::new("Simple".into(), ChessPosEval::new(), 5)),
+	let engines: Vec<Box<dyn AIEngineProvider<ChessBoard>>> = vec![
+		Box::new(MoveSearcherBuilder::new("Material".into(), ChessMaterialEval::new(), 5)),
+		Box::new(MoveSearcherBuilder::new("Simple".into(), ChessPosEval::new(), 5)),
 	];
 	GenericBoardApp::new(ChessBoard::default(), engines)
 }

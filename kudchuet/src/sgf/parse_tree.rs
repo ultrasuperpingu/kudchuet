@@ -16,24 +16,23 @@ impl SGFTreeNode {
 
 		}
 	}
-	fn attr_string(&self, name:&str) -> Option<String> {
-		let att=self.attributes.get(name)?;
-		let l=att.iter().next()?;
-		Some(l.get(0)?.clone())
-	}
-	fn attr_string_tuple(&self, name:&str) -> Option<Vec<String>> {
-		let att=self.attributes.get(name)?;
-		let l=att.iter().next()?;
-		Some(l.clone())
-	}
-	fn attr_string_set(&self, name:&str) -> Option<Vec<String>> {
-		let att=self.attributes.get(name)?;
-		let l=att.iter().map(|v| v.get(0).cloned()).collect();
-		l
-	}
-
 }
+fn unescape(s: &str) -> String {
+	let mut out = String::new();
+	let mut escaped = false;
 
+	for c in s.chars() {
+		if escaped {
+			out.push(c);
+			escaped = false;
+		} else if c == '\\' {
+			escaped = true;
+		} else {
+			out.push(c);
+		}
+	}
+	out
+}
 
 use super::scanner::{Token, TokenType};
 
@@ -393,7 +392,7 @@ impl IParseNode for ParseNode {
 		let mut tuple = vec![];
 		let mut i = 0;
 		while self.is_token_present(TokenType::CONTENT, i) {
-			tuple.push(self.get_terminal_value(TokenType::CONTENT, i));
+			tuple.push(unescape(self.get_terminal_value(TokenType::CONTENT, i).replace("\\\n", "").as_str()));
 			i += 1;
 		}
 		tuple
@@ -422,7 +421,4 @@ impl ParseNode {
 		}
 	}
 	
-	//TODO
-
-
 }
