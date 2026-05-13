@@ -274,46 +274,6 @@ where
 		}*/
 	}
 }
-#[cfg(target_arch = "wasm32")]
-pub fn new_move_searcher<G, T>(evaluator: T, initial_depth: u8) -> Box<dyn AIEngine<G>>
-where
-	G: BoardGame + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Eq + Send + 'static,
-	T: Evaluator<G = G> + Default + Eq + Clone + Send + 'static,
-{
-	let mut searcher = IterativeSearch::new(
-		evaluator,
-		IterativeOptions::new().with_table_byte_size(32 * 1024 * 1024),
-	);
-	searcher.set_max_depth(initial_depth);
-	Box::new(InternalEngine::new(searcher))
-}
-#[cfg(target_arch = "wasm32")]
-pub fn new_move_searcher_with_opts<T>(opts: IterativeOptions) -> MoveSearcher<T>
-where
-	T: Evaluator + Default,
-	<<T as Evaluator>::G as Game>::M: Eq,
-	<<T as Evaluator>::G as Game>::S: Clone,
-{
-	IterativeSearch::new(T::default(), opts)
-}/*
-type DynProvider<G> = Box<dyn AIEngineProvider<G>>;
-pub fn new_move_searcher_vec<G, T>(
-	name: String,
-	evaluator: T,
-	initial_depth: u8,
-) -> Vec<DynProvider<G>>
-where
-	G: BoardGame + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	T: Evaluator<G = G> + Default + Eq + Clone + Send + Sync + 'static + Debug,
-{
-	vec![Box::new(MoveSearcherBuilder::<G, T>::new(
-		name,
-		evaluator,
-		initial_depth,
-	))]
-}*/
 #[cfg(not(target_arch = "wasm32"))]
 pub fn new_move_searcher_static<G, T>(evaluator: T, initial_depth: u8) -> MoveSearcher<T>
 where

@@ -17,6 +17,7 @@ members = [
 	"games/footboard",
 	"games/gomoku",
 	"games/hare_and_hounds",
+	"games/hex_game",
 	"games/neutron",
 	"games/reversi",
 	"games/three_musketeers",
