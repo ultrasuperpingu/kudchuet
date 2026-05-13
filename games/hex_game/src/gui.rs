@@ -1,5 +1,3 @@
-
-
 use bitboard::Bitboard;
 use eframe::egui::{self, Pos2};
 use egui::{Color32, Stroke, StrokeKind};
@@ -206,7 +204,7 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 		let y_off = pos.y - board_rect.top();
 
 		let y_visual = (h - 1) - (y_off / cell_size / 0.75).floor() as u8;
-		let x_visual = (x_off / cell_size / SQRT_3 * 2.0 - y_visual as f32 / 2.0).floor() as u8 ;
+		let x_visual = (x_off / cell_size / SQRT_3 * 2.0 - y_visual as f32 / 2.0).floor() as u8;
 
 		let (x_coord, y_coord) = if self.get_style().mirrored {
 			(x_visual, h - 1 - y_visual)
@@ -219,6 +217,27 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 		} else {
 			None
 		}
+	}
+	/// Returns (cell size, board width, board height)
+	///
+	/// w: board width (in cell)
+	/// h: board height (in cell)
+	/// style: the board style
+	/// avail_w: available width
+	/// avail_h: available height
+	fn get_cell_and_board_size(
+		&self,
+		w: u8,
+		h: u8,
+		_style: &BoardStyle,
+		avail_w: f32,
+		avail_h: f32,
+	) -> (f32, f32, f32) {
+		let cell_size = (avail_w / w as f32).min(avail_h / h as f32);
+		let board_width = cell_size * (w as f32 + h as f32 / 2.0) * SQRT_3 / 2.0;
+		//let board_width  = cell_size * w as f32;
+		let board_height = cell_size as f32 / 0.75 * h as f32;
+		(cell_size, board_width, board_height)
 	}
 }
 pub fn create_board() -> GenericBoardApp<Hex> {

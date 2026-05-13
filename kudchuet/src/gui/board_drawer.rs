@@ -32,19 +32,7 @@ where
 			} else {
 				1.0
 			};
-		let cell_size = if style.row_offset_pattern == RowOffsetPattern::NoOffset {
-			(avail_w / w as f32).min(avail_h / h as f32)
-		} else {
-			(avail_w / (w as f32 + 0.5)).min(avail_h / h as f32)
-		};
-		let board_width = if style.row_offset_pattern == RowOffsetPattern::NoOffset {
-			cell_size * w as f32
-		} else {
-			cell_size * (w as f32 + 0.5)
-		};
-
-		//let board_width  = cell_size * w as f32;
-		let board_height = cell_size * h as f32;
+		let (cell_size, board_width, board_height) = self.get_cell_and_board_size(w, h, style, avail_w, avail_h);
 
 		let left_margin = if style.show_coordinates_mod.is_aside() {
 			cell_size * 0.6
@@ -299,6 +287,36 @@ where
 			None
 		}
 	}
+
+	/// Returns (cell size, board width, board height)
+	/// 
+	/// w: board width (in cell)
+	/// h: board height (in cell)
+	/// style: the board style
+	/// avail_w: available width
+	/// avail_h: available height
+	fn get_cell_and_board_size(&self,
+		w: u8,
+		h: u8,
+		style: &BoardStyle,
+		avail_w: f32,
+		avail_h: f32,
+	) -> (f32, f32, f32) {
+		let cell_size = if style.row_offset_pattern == RowOffsetPattern::NoOffset {
+			(avail_w / w as f32).min(avail_h / h as f32)
+		} else {
+			(avail_w / (w as f32 + 0.5)).min(avail_h / h as f32)
+		};
+		let board_width = if style.row_offset_pattern == RowOffsetPattern::NoOffset {
+			cell_size * w as f32
+		} else {
+			cell_size * (w as f32 + 0.5)
+		};
+
+		//let board_width  = cell_size * w as f32;
+		let board_height = cell_size * h as f32;
+		(cell_size, board_width, board_height)
+	}
 	fn get_square_drawer(&self) -> &dyn SquareDrawer<G>;
 	fn set_square_drawer(&mut self, sq_drawer: Box<dyn SquareDrawer<G>>);
 	fn get_piece_drawer(&self) -> &dyn PieceDrawer<G>;
@@ -333,6 +351,7 @@ where
 		});
 	}
 }
+
 pub struct DefaultBoardDrawer<G> {
 	style: BoardStyle,
 	square_drawer: Box<dyn SquareDrawer<G>>,
@@ -603,17 +622,15 @@ where
 		}
 
 		painter.add(egui::Shape::convex_polygon(
-			points,
+			points.clone(),
 			bg_color,
 			egui::Stroke::NONE,
 		));
 
 		if let Some(color) = style.square_stroke_color {
-			painter.rect_stroke(
-				*square,
-				0.0,
+			painter.line(
+				points,
 				egui::Stroke::new(1.0, color),
-				egui::StrokeKind::Middle,
 			);
 		}
 	}

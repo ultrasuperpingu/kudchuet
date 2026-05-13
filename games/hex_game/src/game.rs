@@ -68,7 +68,7 @@ mod tests {
 		let mut board = Hex::default();
 
 		let nodes = perft::<Hex>(&mut board, 6, true);
-		const NB_NODES: [u64; 7] = [1, 49, 2352, 110544, 5085024, 228826080, 10068347520];
+		const NB_NODES: [u64; 7] = [1, 49, 2401, 112896, 5195568, 233911104, 10297173600];
 		for (i, n) in nodes.iter().enumerate() {
 			assert_eq!(NB_NODES[i], *n, "Mismatch at depth {}", i);
 		}
