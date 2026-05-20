@@ -5,6 +5,7 @@ use crate::gui::{BoardGame, BoardMove};
 use std::collections::HashMap;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use crate::ai::minimax::SearchStopSignal;
 #[cfg(not(target_arch = "wasm32"))]
@@ -30,9 +31,10 @@ where
 	AI: StrategyWithOptions<G> + 'static,
 {
 	pub fn new(ai: AI) -> Self {
+		let opts = ai.get_options();
 		Self {
 			ai: Arc::new(Mutex::new(ai)),
-			opts: HashMap::new(),
+			opts,
 			stop_signal: None,
 			phantom: std::marker::PhantomData,
 		}
@@ -68,7 +70,19 @@ where
 	fn set_options(&mut self, opts: HashMap<String, UciValue>) {
 		//eprintln!("reset_with_options: {:?}", opts);
 		self.opts = opts;
-		self.ai.lock().unwrap().set_options(&self.opts);
+		let mut ai = self.ai.lock().unwrap();
+		ai.set_options(&self.opts);
+		let depth = if let UciValue::Spin(depth, _, _) = self.opts["Depth"] {
+			depth as u8
+		} else {
+			5
+		};
+		let timeout = if let UciValue::Spin(timeout, _, _) = self.opts["Timeout"] {
+			timeout as f32 / 1000.0
+		} else {
+			0.0
+		};
+		ai.set_depth_or_timeout(depth, Duration::from_secs_f32(timeout));
 	}
 
 	fn set_position(&self, _game: &G) {

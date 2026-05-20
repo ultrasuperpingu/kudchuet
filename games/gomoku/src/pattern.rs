@@ -54,10 +54,10 @@ impl Gomoku {
 		res
 	}
 	pub fn open_two(mine: &Goban, _other: &Goban, empty: &Goban) -> Goban {
-		Self::open_two_h(mine, &empty)
-			| Self::open_two_v(mine, &empty)
-			| Self::open_two_diag_dec(mine, &empty)
-			| Self::open_two_diag_inc(mine, &empty)
+		Self::open_two_h(mine, empty)
+			| Self::open_two_v(mine, empty)
+			| Self::open_two_diag_dec(mine, empty)
+			| Self::open_two_diag_inc(mine, empty)
 	}
 	pub fn open_two_h(mine: &Goban, empty: &Goban) -> Goban {
 		let mine_pattern = Goban::detect_pattern_h(mine, 0b0110);
@@ -88,10 +88,10 @@ impl Gomoku {
 		res
 	}
 	pub fn open_split_three(mine: &Goban, _other: &Goban, empty: &Goban) -> Goban {
-		let mut res = Self::open_split_three_h(mine, &empty);
-		res.or_assign_const(&Self::open_split_three_v(mine, &empty));
-		res.or_assign_const(&Self::open_split_three_diag_dec(mine, &empty));
-		res.or_assign_const(&Self::open_split_three_diag_inc(mine, &empty));
+		let mut res = Self::open_split_three_h(mine, empty);
+		res.or_assign_const(&Self::open_split_three_v(mine, empty));
+		res.or_assign_const(&Self::open_split_three_diag_dec(mine, empty));
+		res.or_assign_const(&Self::open_split_three_diag_inc(mine, empty));
 		res
 	}
 	pub fn open_split_three_h(mine: &Goban, empty: &Goban) -> Goban {
@@ -123,10 +123,10 @@ impl Gomoku {
 		res
 	}
 	pub fn open_three(mine: &Goban, _other: &Goban, empty: &Goban) -> Goban {
-		let mut res = Self::open_three_h(mine, &empty);
-		res.or_assign_const(&Self::open_three_v(mine, &empty));
-		res.or_assign_const(&Self::open_three_diag_dec(mine, &empty));
-		res.or_assign_const(&Self::open_three_diag_inc(mine, &empty));
+		let mut res = Self::open_three_h(mine, empty);
+		res.or_assign_const(&Self::open_three_v(mine, empty));
+		res.or_assign_const(&Self::open_three_diag_dec(mine, empty));
+		res.or_assign_const(&Self::open_three_diag_inc(mine, empty));
 		res
 	}
 	pub fn open_three_h(mine: &Goban, empty: &Goban) -> Goban {
@@ -158,10 +158,10 @@ impl Gomoku {
 		res
 	}
 	pub const fn open_four(mine: &Goban, _other: &Goban, empty: &Goban) -> Goban {
-		let mut res = Self::open_four_h(mine, &empty);
-		res.or_assign_const(&Self::open_four_v(mine, &empty));
-		res.or_assign_const(&Self::open_four_diag_inc(mine, &empty));
-		res.or_assign_const(&Self::open_four_diag_dec(mine, &empty));
+		let mut res = Self::open_four_h(mine, empty);
+		res.or_assign_const(&Self::open_four_v(mine, empty));
+		res.or_assign_const(&Self::open_four_diag_inc(mine, empty));
+		res.or_assign_const(&Self::open_four_diag_dec(mine, empty));
 		res
 	}
 
@@ -195,10 +195,10 @@ impl Gomoku {
 		res
 	}
 	pub const fn closed_four(mine: &Goban, other: &Goban, empty: &Goban) -> Goban {
-		let mut res = Self::closed_four_h(mine, &empty, other);
-		res.or_assign_const(&Self::closed_four_v(mine, &empty, other));
-		res.or_assign_const(&Self::closed_four_diag_inc(mine, &empty, other));
-		res.or_assign_const(&Self::closed_four_diag_dec(mine, &empty, other));
+		let mut res = Self::closed_four_h(mine, empty, other);
+		res.or_assign_const(&Self::closed_four_v(mine, empty, other));
+		res.or_assign_const(&Self::closed_four_diag_inc(mine, empty, other));
+		res.or_assign_const(&Self::closed_four_diag_dec(mine, empty, other));
 		res
 	}
 

@@ -28,7 +28,7 @@ const PLAYABLE: [[bool; 13]; 17] = [
 
 #[bitboard(width = 13, height = 17)]
 #[derive(Default)]
-#[derive(BitboardDebug, Copy)]
+#[derive(BitboardDebug)]
 pub struct ChineseCheckerBoard;
 
 impl ChineseCheckerBoard {

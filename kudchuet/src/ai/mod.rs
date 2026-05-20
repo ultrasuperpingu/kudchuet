@@ -5,18 +5,12 @@ pub mod internal_engine;
 pub mod minimax;
 pub mod uci;
 
-use egui_field_editor::EguiInspect;
-use minimax::IterativeOptions;
-#[cfg(not(target_arch = "wasm32"))]
-use minimax::ParallelOptions;
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fmt::Debug, mem::discriminant, pin::Pin, time::Duration};
+use std::{collections::HashMap, fmt::Debug, pin::Pin, time::Duration};
 
 use crate::ai::internal_engine::InternalEngine;
-use crate::ai::minimax::perfect_solver::PerfectSolver;
-use crate::ai::uci::{UciOptionConfig, UciValue};
+use crate::ai::uci::UciValue;
 use crate::gui::{BoardGame, BoardMove};
-use crate::{MoveSearcher, StrategyWithOptions, new_move_searcher_static};
+use crate::{StrategyWithOptions, new_move_searcher_static};
 pub trait AIEngine<G: BoardGame + Sync>: Send
 where
 	G::M: BoardMove<G> + Send,
@@ -65,9 +59,9 @@ where
 	G::M: BoardMove<G> + Send,
 	AI: StrategyWithOptions<G> + Default,
 {
-	pub fn new(name: String) -> Self {
+	pub fn new(name: impl Into<String>) -> Self {
 		Self {
-			name,
+			name: name.into(),
 			phantom: std::marker::PhantomData,
 		}
 	}
@@ -104,9 +98,9 @@ where
 	G::M: BoardMove<G>,
 	T: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static,
 {
-	pub fn new(name: String, evaluator: T, initial_depth: u8) -> Self {
+	pub fn new(name: impl Into<String>, evaluator: T, initial_depth: u8) -> Self {
 		Self {
-			name,
+			name: name.into(),
 			evaluator,
 			initial_depth,
 			phantom: std::marker::PhantomData,

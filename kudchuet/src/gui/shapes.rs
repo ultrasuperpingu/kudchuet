@@ -1,4 +1,3 @@
-
 use egui::{Color32, Pos2, Rect, Stroke, StrokeKind, Vec2};
 use egui_field_editor::EguiInspect;
 use serde::{Deserialize, Serialize};
@@ -10,19 +9,26 @@ pub struct StrokeData {
 }
 impl Default for StrokeData {
 	fn default() -> Self {
-		Self { stroke: Stroke::new(3.0, Color32::BLACK), kind: StrokeKind::Inside }
+		Self {
+			stroke: Stroke::new(3.0, Color32::BLACK),
+			kind: StrokeKind::Inside,
+		}
 	}
 }
 #[derive(Clone, Debug, EguiInspect, PartialEq, Serialize, Deserialize)]
 pub struct TextData {
-	pub text:String,
+	pub text: String,
 	pub color: Color32,
-	#[inspect(slider(min=0.0, max=1.0))]
+	#[inspect(slider(min = 0.0, max = 1.0))]
 	pub size: f32,
 }
 impl Default for TextData {
 	fn default() -> Self {
-		Self { text: String::new(), color: Color32::BLACK, size: 0.5 }
+		Self {
+			text: String::new(),
+			color: Color32::BLACK,
+			size: 0.5,
+		}
 	}
 }
 impl TextData {
@@ -38,43 +44,57 @@ impl TextData {
 #[derive(Clone, Debug, EguiInspect, PartialEq, Serialize, Deserialize)]
 pub struct StripData {
 	pub color: Color32,
-	#[inspect(slider(min=0.0, max=1.0))]
-	pub weight: f32
+	#[inspect(slider(min = 0.0, max = 1.0))]
+	pub weight: f32,
 }
 impl Default for StripData {
 	fn default() -> Self {
-		Self { color: Color32::from_rgb(255, 255, 255), weight: 1.0 }
+		Self {
+			color: Color32::from_rgb(255, 255, 255),
+			weight: 1.0,
+		}
 	}
 }
 #[derive(Clone, Debug, EguiInspect, PartialEq, Serialize, Deserialize)]
 pub enum Shape {
 	Circle {
 		fill_color: Option<Color32>,
-		#[inspect(slider(min=0.0, max=1.0))]
+		#[inspect(slider(min = 0.0, max = 1.0))]
 		size: f32,
-		text:Option<TextData>,
+		text: Option<TextData>,
 		stroke: Option<StrokeData>,
 	},
 	StrippedCircle {
 		strips: Vec<StripData>,
-		#[inspect(slider(min=0.0, max=1.0))]
+		#[inspect(slider(min = 0.0, max = 1.0))]
 		angle: f32,
-		#[inspect(slider(min=0.0, max=1.0))]
+		#[inspect(slider(min = 0.0, max = 1.0))]
 		size: f32,
-		text:Option<TextData>,
+		text: Option<TextData>,
 		stroke: Option<StrokeData>,
 	},
 	Rect {
 		fill_color: Option<Color32>,
-		#[inspect(slider(min=0.0, max=1.0))]
+		#[inspect(slider(min = 0.0, max = 1.0))]
 		size: f32,
 		text: Option<TextData>,
-		stroke: Option<StrokeData>
+		stroke: Option<StrokeData>,
+	},
+	RegularPolygon {
+		fill_color: Option<Color32>,
+		#[inspect(slider(min = 0.0, max = 1.0))]
+		size: f32,
+		#[inspect(slider(min = 3.0, max = 12.0))]
+		sides: u8,
+		text: Option<TextData>,
+		stroke: Option<StrokeData>,
+		#[inspect(slider(min = 0.0, max = 1.0))]
+		angle: f32, // 0..1
 	},
 	String {
-		text:TextData
+		text: TextData,
 	},
-	Composed(Vec<Shape>)
+	Composed(Vec<Shape>),
 }
 impl Default for Shape {
 	fn default() -> Self {
@@ -82,7 +102,7 @@ impl Default for Shape {
 			fill_color: Some(Color32::WHITE),
 			text: None,
 			size: 0.7,
-			stroke: None
+			stroke: None,
 		}
 	}
 }
@@ -90,9 +110,9 @@ fn draw_text(painter: &egui::Painter, center: Pos2, cell_size: f32, text: &TextD
 	painter.text(
 		center,
 		egui::Align2::CENTER_CENTER,
-			&text.text,
-			egui::FontId::proportional(cell_size * text.size),
-			text.color
+		&text.text,
+		egui::FontId::proportional(cell_size * text.size),
+		text.color,
 	);
 }
 fn draw_weighted_stripped_circle(
@@ -143,24 +163,70 @@ fn draw_weighted_stripped_circle(
 		offset += band_width;
 	}
 }
+fn draw_polygon(
+	painter: &egui::Painter,
+	center: egui::Pos2,
+	fill_color: Option<Color32>,
+	radius: f32,
+	stroke_color: Option<&StrokeData>,
+	sides: u8,
+	angle: f32, // 0..1
+) {
+	let mut points = Vec::with_capacity(sides as usize);
+
+	for i in 0..sides {
+		let theta = i as f32 / sides as f32 * std::f32::consts::TAU + angle * std::f32::consts::PI;
+		let p = center + egui::Vec2::new(theta.cos(), theta.sin()) * radius;
+		points.push(p);
+	}
+
+	if let Some(color) = fill_color {
+		painter.add(egui::Shape::convex_polygon(
+			points.clone(),
+			color,
+			egui::Stroke::NONE,
+		));
+	}
+	if let Some(stroke) = stroke_color {
+		painter.add(egui::epaint::PathShape::closed_line(
+			points,
+			egui::epaint::PathStroke {
+				width: stroke.stroke.width,
+				color: egui::epaint::ColorMode::Solid(stroke.stroke.color),
+				kind: stroke.kind,
+			},
+		));
+	}
+}
 impl Shape {
 	pub fn draw(&self, painter: &egui::Painter, center: Pos2, cell_size: f32) {
 		match self {
-			Shape::Circle { fill_color: color, size, text, stroke} => {
+			Shape::Circle {
+				fill_color: color,
+				size,
+				text,
+				stroke,
+			} => {
 				if let Some(color) = color {
-					painter.circle_filled(center, cell_size * size/2.0, *color);
+					painter.circle_filled(center, cell_size * size / 2.0, *color);
 				}
 				if let Some(c) = stroke.as_ref() {
-					painter.circle_stroke(center, cell_size * size/2.0, c.stroke);
+					painter.circle_stroke(center, cell_size * size / 2.0, c.stroke);
 				}
 				if let Some(text) = text {
 					draw_text(painter, center, cell_size, text);
 				}
-			},
-			Shape::StrippedCircle { strips, angle, size, text, stroke} => {
-				let mut colors=vec![Color32::default();strips.len()];
-				let mut weights=vec![0.0;strips.len()];
-				let mut sum=0.0;
+			}
+			Shape::StrippedCircle {
+				strips,
+				angle,
+				size,
+				text,
+				stroke,
+			} => {
+				let mut colors = vec![Color32::default(); strips.len()];
+				let mut weights = vec![0.0; strips.len()];
+				let mut sum = 0.0;
 				for (i, s) in strips.iter().enumerate() {
 					colors[i] = s.color;
 					weights[i] = s.weight;
@@ -173,19 +239,31 @@ impl Shape {
 						*w = 1.0 / (strips.len() as f32);
 					}
 				}
-				draw_weighted_stripped_circle(painter, center, cell_size * size/2.0, &colors, &weights, *angle);
-				
+				draw_weighted_stripped_circle(
+					painter,
+					center,
+					cell_size * size / 2.0,
+					&colors,
+					&weights,
+					*angle,
+				);
+
 				if let Some(c) = stroke.as_ref() {
-					painter.circle_stroke(center, cell_size * size/2.0, c.stroke);
+					painter.circle_stroke(center, cell_size * size / 2.0, c.stroke);
 				}
 				if let Some(text) = text {
 					draw_text(painter, center, cell_size, text);
 				}
-			},
+			}
 			Shape::String { text } => {
 				draw_text(painter, center, cell_size, text);
-			},
-			Shape::Rect { fill_color: color, size, text, stroke } => {
+			}
+			Shape::Rect {
+				fill_color: color,
+				size,
+				text,
+				stroke,
+			} => {
 				let size_vec = Vec2::new(cell_size * size, cell_size * size);
 				let rect = Rect::from_center_size(center, size_vec);
 				if let Some(color) = color {
@@ -197,7 +275,28 @@ impl Shape {
 				if let Some(text) = text {
 					draw_text(painter, center, cell_size, text);
 				}
-			},
+			}
+			Shape::RegularPolygon {
+				fill_color,
+				size,
+				sides,
+				text,
+				stroke,
+				angle,
+			} => {
+				draw_polygon(
+					painter,
+					center,
+					*fill_color,
+					cell_size * *size / 2.0,
+					stroke.as_ref(),
+					*sides,
+					*angle,
+				);
+				if let Some(text) = text {
+					draw_text(painter, center, cell_size, text);
+				}
+			}
 			Shape::Composed(shapes) => {
 				for s in shapes {
 					Self::draw(s, painter, center, cell_size);

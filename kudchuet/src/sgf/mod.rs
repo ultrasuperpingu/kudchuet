@@ -20,7 +20,7 @@ pub fn filerank_to_coords(values: &str) -> Option<(u8, u8)> {
 	let mut x: u16 = 0;
 
 	for b in letters.bytes() {
-		if !(b'a'..=b'z').contains(&b) {
+		if !b.is_ascii_lowercase() {
 			return None;
 		}
 		x = x * 26 + (b - b'a') as u16;
@@ -61,8 +61,8 @@ pub fn letters_to_coords(values: &str) -> Option<(u8, u8)> {
 
 	match bytes.len() {
 		2 => {
-			let x = (bytes[0].to_ascii_lowercase() - b'a') as u8;
-			let y = (bytes[1].to_ascii_lowercase() - b'a') as u8;
+			let x = bytes[0].to_ascii_lowercase() - b'a';
+			let y = bytes[1].to_ascii_lowercase() - b'a';
 			if x < 26 && y < 26 { Some((x, y)) } else { None }
 		}
 		3 | 4 => {
@@ -80,7 +80,7 @@ pub fn letters_to_coords(values: &str) -> Option<(u8, u8)> {
 
 			let (file, rank) = values.split_at(split);
 
-			if file.len() == 0 || rank.len() == 0 || file.len() > 2 || rank.len() > 2 {
+			if file.is_empty() || rank.is_empty() || file.len() > 2 || rank.len() > 2 {
 				return None;
 			}
 
@@ -161,15 +161,15 @@ impl SGFReaderWriter {
 		let mut sgf = String::from("(;");
 
 		// Size
-		let width = G::width(&game);
-		let height = G::height(&game);
+		let width = G::width(game);
+		let height = G::height(game);
 		if width == height {
 			sgf.push_str(format!("SZ[{}]", width).as_str());
 		} else {
 			sgf.push_str(format!("SZ[{}:{}]", width, height).as_str());
 		}
 		for t in G::mnemo_add_pieces() {
-			let p = G::get_pieces_coords(&game, &t);
+			let p = G::get_pieces_coords(game, t);
 			if !p.is_empty() {
 				sgf.push_str(t);
 				for coord in p {
@@ -182,12 +182,12 @@ impl SGFReaderWriter {
 		sgf.push_str(&format!(
 			"{}[{}]",
 			G::mnemo_player_turn(),
-			match G::get_current_player(&game) {
+			match G::get_current_player(game) {
 				Player(i) => G::mnemo_players()[i as usize],
 			}
 		));
 
-		sgf.push_str(")");
+		sgf.push(')');
 		sgf
 	}
 	pub fn serialize_game_tree<G>(game_tree: &GameTree<G>) -> String
@@ -206,7 +206,7 @@ impl SGFReaderWriter {
 			sgf.push_str(format!("SZ[{}:{}]", width, height).as_str());
 		}
 		for t in G::mnemo_add_pieces() {
-			let p = G::get_pieces_coords(&game, &t);
+			let p = G::get_pieces_coords(game, t);
 			if !p.is_empty() {
 				sgf.push_str(t);
 				for coord in p {
@@ -218,7 +218,7 @@ impl SGFReaderWriter {
 		// Player on turn
 		sgf.push_str(&format!(
 			"PL[{}]",
-			match G::get_current_player(&game) {
+			match G::get_current_player(game) {
 				Player::PLAYER1 => "B",
 				Player::PLAYER2 => "W",
 				_ => unreachable!(),
@@ -226,7 +226,7 @@ impl SGFReaderWriter {
 		));
 		//TODO: serialize children (ex: ;W[a1][a5];B[g7][g5]
 
-		sgf.push_str(")");
+		sgf.push(')');
 		sgf
 	}
 	/// Parse a game state. Root will be parsed using AW/AB or equivalent
@@ -274,7 +274,7 @@ impl SGFReaderWriter {
 		let mut pieces = vec![];
 		for piece_name in G::mnemo_add_pieces() {
 			let mut pieces_coords = vec![];
-			while let Some(coords) = node.attributes.get(&piece_name.to_owned()) {
+			while let Some(coords) = node.attributes.get(piece_name) {
 				for coord in coords {
 					assert_eq!(coord.len(), 1);
 					let coord = G::string_to_coord(&coord[0]).unwrap();
@@ -288,7 +288,7 @@ impl SGFReaderWriter {
 		let node_id = game_tree.nodes.len();
 		for pl in G::mnemo_players() {
 			let mut moves_coords = vec![];
-			while let Some(coords) = node.attributes.get(&pl.to_owned()) {
+			while let Some(coords) = node.attributes.get(pl) {
 				for coord in coords {
 					assert_eq!(coord.len(), 1);
 					let coord = G::string_to_coord(&coord[0]).unwrap();

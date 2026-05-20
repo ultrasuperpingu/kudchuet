@@ -13,7 +13,7 @@ pub struct Move {
 	pub(crate) neutron: Option<u8>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Neutron {
 	pub white: Bitboard5x5,
 	pub black: Bitboard5x5,
@@ -25,7 +25,7 @@ pub struct Neutron {
 
 impl Display for Neutron {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-		writeln!(f, "Tour : {:?}", self.turn)?;
+		writeln!(f, "Turn : {:?}", self.turn)?;
 
 		for y in 0..5 {
 			for x in 0..5 {

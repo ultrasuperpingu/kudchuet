@@ -179,7 +179,7 @@ impl ChessBoard {
 		}
 
 		// check or checkmate
-		let mut next_board = self.clone();
+		let mut next_board = *self;
 		next_board.play(mv);
 		let status = next_board.status();
 		if status.player1_wins() || status.player2_wins() {

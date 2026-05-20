@@ -198,8 +198,8 @@ impl<G> SquareDrawer<G> for HareAndHoundsSquareDrawer
 }
 pub fn create_board() -> GenericBoardApp<HareAndHounds> {
 	let engines: Vec<Box<dyn AIEngineProvider<HareAndHounds>>> = vec![
-		Box::new(MoveSearcherBuilder::new("Simple".into(), HareAndHoundsEval::new(), 4)),
-		Box::new(AIBuilder::<HareAndHounds, PerfectSolver<HareAndHounds>>::new("Perfect".into())),
+		Box::new(MoveSearcherBuilder::new("Simple", HareAndHoundsEval::new(), 4)),
+		Box::new(AIBuilder::<HareAndHounds, PerfectSolver<HareAndHounds>>::new("Perfect")),
 	];
 	let mut board=GenericBoardApp::new(HareAndHounds::default(), engines);
 	board.board_drawer.set_square_drawer(Box::new(HareAndHoundsSquareDrawer{}));

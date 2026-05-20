@@ -1,7 +1,7 @@
 
 use std::fmt;
 
-use ::bitboard::BitIter;
+use bitboard::BitIterRef;
 
 use crate::bitboard::ChineseCheckerBoard;
 
@@ -178,9 +178,9 @@ impl ChineseCheckers {
 	fn jumps_from(&self, from: usize, empty: &ChineseCheckerBoard, visited: &mut ChineseCheckerBoard) {
 		visited.set_at_index(from);
 
-		let jumps_board = JUMPS[from];
+		let jumps_board = JUMPS[from].clone();
 
-		for to_bit in jumps_board.iter_bits() {
+		for to_bit in jumps_board.iter_bits_ref() {
 			let to_idx = to_bit as usize;
 			let mid_idx = MIDDLE_TABLE[from][to_idx] as usize;
 			//let mid_idx = ChineseCheckerBoard::compute_middle(from.0, from.1, tx, ty, to_idx, from) as usize;
@@ -200,10 +200,10 @@ impl ChineseCheckers {
 		// for home reenter restriction
 		let home = ChineseCheckerBoard::initial_zone(player);
 		let empty = !self.all();
-		for bit in board.iter_bits() {
+		for bit in board.iter_bits_ref() {
 			// Simple Moves
-			let neighbours = ChineseCheckerBoard::NEIGHBOURS[bit as usize] & !unowned;
-			for n_bit in neighbours.iter_bits() {
+			let neighbours = ChineseCheckerBoard::NEIGHBOURS[bit as usize].and_const(&unowned.not_const());
+			for n_bit in neighbours.iter_bits_ref() {
 				if empty.get_at_index(n_bit as usize) &&
 					(home.get_at_index(bit as usize) || !home.get_at_index(n_bit as usize)) {
 					moves.push(Move{from:bit as u8, to:n_bit as u8});
@@ -213,7 +213,7 @@ impl ChineseCheckers {
 			// Jump moves
 			let mut visited = ChineseCheckerBoard::EMPTY;
 			self.jumps_from(bit as usize, &empty, &mut visited);
-			for jump_to in visited.iter_bits() {
+			for jump_to in visited.iter_bits_ref() {
 				if !unowned.get_at_index(jump_to as usize) && bit != jump_to &&
 					(home.get_at_index(bit as usize) || !home.get_at_index(jump_to as usize)) {
 					moves.push(Move{from:bit as u8, to:jump_to as u8});
@@ -395,12 +395,12 @@ impl ChineseCheckers {
 	pub const ZOBRIST_KEYS: Zobrist = Zobrist::new(0xA19F784);
 	fn compute_zobrist(&self) -> u64 {
 		let mut h = 0u64;
-		for i in self.red.iter_bits() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][0]; }
-		for i in self.blue.iter_bits() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][1]; }
-		for i in self.green.iter_bits() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][2]; }
-		for i in self.yellow.iter_bits() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][3]; }
-		for i in self.black.iter_bits() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][4]; }
-		for i in self.white.iter_bits() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][5]; }
+		for i in self.red.iter_bits_ref() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][0]; }
+		for i in self.blue.iter_bits_ref() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][1]; }
+		for i in self.green.iter_bits_ref() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][2]; }
+		for i in self.yellow.iter_bits_ref() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][3]; }
+		for i in self.black.iter_bits_ref() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][4]; }
+		for i in self.white.iter_bits_ref() { h ^= Self::ZOBRIST_KEYS.pieces[i as usize][5]; }
 		h ^= Self::ZOBRIST_KEYS.turn[self.turn.idx() as usize];
 		h
 	}

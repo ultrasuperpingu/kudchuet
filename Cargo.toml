@@ -20,15 +20,20 @@ members = [
 	"games/hex_game",
 	"games/neutron",
 	"games/reversi",
+	"games/teeko",
 	"games/three_musketeers",
 	"games/yote",
 ]
 edition = "2024"
 resolver = "3"
 
+[workspace.lints.clippy]
+collapsible_if = "allow"
+field_reassign_with_default = "allow"
+#nonminimal_bool = "allow"
+
 [profile.dev]
 target-cpu = "native"
-
 
 [profile.release]
 opt-level = 3

@@ -13,10 +13,6 @@ impl Bitboard7x7Col {
 		let mask = Self::col_mask(col);
 		let empty = mask & !*self;
 		let idx = empty.storage().trailing_zeros() as usize;
-		if idx > 49 {
-			println!("{} {}",self, col);
-			assert!(false, "Ahhhh");
-		}
 		self.set_at_index(idx);
 	}
 

@@ -3,13 +3,13 @@ use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
 use kudchuet::gui::shapes::{Shape, TextData};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
 
 use crate::bitboard::Bitboard8x8;
-use crate::mychess::{ChessPosEval, ChessMaterialEval};
-use crate::rules::{Color, Move, Piece, Square};
 use crate::mychess::ChessBoard;
+use crate::mychess::{ChessMaterialEval, ChessPosEval};
+use crate::rules::{Color, Move, Piece, Square};
 
 impl BoardMove<ChessBoard> for Move {
 	fn from(&self) -> Option<u16> {
@@ -29,18 +29,144 @@ impl BoardMove<ChessBoard> for Move {
 impl EGUIPieceType for ChessPiece {
 	fn shape(&self) -> Shape {
 		match self {
-			ChessPiece::WhitePawn =>   Shape::Composed(vec![Shape::String { text: TextData { text: "♟".into(), color: Color32::WHITE, size: 1.0 } }, Shape::String { text: TextData { text: "♙".into(), color: Color32::BLACK, size: 1.0 } }]),
-			ChessPiece::WhiteRook =>   Shape::Composed(vec![Shape::String { text: TextData { text: "♜".into(), color: Color32::WHITE, size: 1.0 } }, Shape::String { text: TextData { text: "♖".into(), color: Color32::BLACK, size: 1.0 } }]),
-			ChessPiece::WhiteKnight => Shape::Composed(vec![Shape::String { text: TextData { text: "♞".into(), color: Color32::WHITE, size: 1.0 } }, Shape::String { text: TextData { text: "♘".into(), color: Color32::BLACK, size: 1.0 } }]),
-			ChessPiece::WhiteBishop => Shape::Composed(vec![Shape::String { text: TextData { text: "♝".into(), color: Color32::WHITE, size: 1.0 } }, Shape::String { text: TextData { text: "♗".into(), color: Color32::BLACK, size: 1.0 } }]),
-			ChessPiece::WhiteQueen =>  Shape::Composed(vec![Shape::String { text: TextData { text: "♛".into(), color: Color32::WHITE, size: 1.0 } }, Shape::String { text: TextData { text: "♕".into(), color: Color32::BLACK, size: 1.0 } }]),
-			ChessPiece::WhiteKing =>   Shape::Composed(vec![Shape::String { text: TextData { text: "♚".into(), color: Color32::WHITE, size: 1.0 } }, Shape::String { text: TextData { text: "♔".into(), color: Color32::BLACK, size: 1.0 } }]),
-			ChessPiece::BlackPawn =>   Shape::String { text: TextData { text: "♟".into(), color: Color32::BLACK, size: 1.0 } },
-			ChessPiece::BlackRook =>   Shape::String { text: TextData { text: "♜".into(), color: Color32::BLACK, size: 1.0 } },
-			ChessPiece::BlackKnight => Shape::String { text: TextData { text: "♞".into(), color: Color32::BLACK, size: 1.0 } },
-			ChessPiece::BlackBishop => Shape::String { text: TextData { text: "♝".into(), color: Color32::BLACK, size: 1.0 } },
-			ChessPiece::BlackQueen =>  Shape::String { text: TextData { text: "♛".into(), color: Color32::BLACK, size: 1.0 } },
-			ChessPiece::BlackKing =>   Shape::String { text: TextData { text: "♚".into(), color: Color32::BLACK, size: 1.0 } },
+			ChessPiece::WhitePawn => Shape::Composed(vec![
+				Shape::String {
+					text: TextData {
+						text: "♟".into(),
+						color: Color32::WHITE,
+						size: 1.0,
+					},
+				},
+				Shape::String {
+					text: TextData {
+						text: "♙".into(),
+						color: Color32::BLACK,
+						size: 1.0,
+					},
+				},
+			]),
+			ChessPiece::WhiteRook => Shape::Composed(vec![
+				Shape::String {
+					text: TextData {
+						text: "♜".into(),
+						color: Color32::WHITE,
+						size: 1.0,
+					},
+				},
+				Shape::String {
+					text: TextData {
+						text: "♖".into(),
+						color: Color32::BLACK,
+						size: 1.0,
+					},
+				},
+			]),
+			ChessPiece::WhiteKnight => Shape::Composed(vec![
+				Shape::String {
+					text: TextData {
+						text: "♞".into(),
+						color: Color32::WHITE,
+						size: 1.0,
+					},
+				},
+				Shape::String {
+					text: TextData {
+						text: "♘".into(),
+						color: Color32::BLACK,
+						size: 1.0,
+					},
+				},
+			]),
+			ChessPiece::WhiteBishop => Shape::Composed(vec![
+				Shape::String {
+					text: TextData {
+						text: "♝".into(),
+						color: Color32::WHITE,
+						size: 1.0,
+					},
+				},
+				Shape::String {
+					text: TextData {
+						text: "♗".into(),
+						color: Color32::BLACK,
+						size: 1.0,
+					},
+				},
+			]),
+			ChessPiece::WhiteQueen => Shape::Composed(vec![
+				Shape::String {
+					text: TextData {
+						text: "♛".into(),
+						color: Color32::WHITE,
+						size: 1.0,
+					},
+				},
+				Shape::String {
+					text: TextData {
+						text: "♕".into(),
+						color: Color32::BLACK,
+						size: 1.0,
+					},
+				},
+			]),
+			ChessPiece::WhiteKing => Shape::Composed(vec![
+				Shape::String {
+					text: TextData {
+						text: "♚".into(),
+						color: Color32::WHITE,
+						size: 1.0,
+					},
+				},
+				Shape::String {
+					text: TextData {
+						text: "♔".into(),
+						color: Color32::BLACK,
+						size: 1.0,
+					},
+				},
+			]),
+			ChessPiece::BlackPawn => Shape::String {
+				text: TextData {
+					text: "♟".into(),
+					color: Color32::BLACK,
+					size: 1.0,
+				},
+			},
+			ChessPiece::BlackRook => Shape::String {
+				text: TextData {
+					text: "♜".into(),
+					color: Color32::BLACK,
+					size: 1.0,
+				},
+			},
+			ChessPiece::BlackKnight => Shape::String {
+				text: TextData {
+					text: "♞".into(),
+					color: Color32::BLACK,
+					size: 1.0,
+				},
+			},
+			ChessPiece::BlackBishop => Shape::String {
+				text: TextData {
+					text: "♝".into(),
+					color: Color32::BLACK,
+					size: 1.0,
+				},
+			},
+			ChessPiece::BlackQueen => Shape::String {
+				text: TextData {
+					text: "♛".into(),
+					color: Color32::BLACK,
+					size: 1.0,
+				},
+			},
+			ChessPiece::BlackKing => Shape::String {
+				text: TextData {
+					text: "♚".into(),
+					color: Color32::BLACK,
+					size: 1.0,
+				},
+			},
 		}
 	}
 }
@@ -57,11 +183,10 @@ pub enum ChessPiece {
 	BlackKnight,
 	BlackBishop,
 	BlackQueen,
-	BlackKing
+	BlackKing,
 }
 impl BoardGame for ChessBoard {
-
-	type PieceType=ChessPiece;
+	type PieceType = ChessPiece;
 	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
@@ -79,7 +204,7 @@ impl BoardGame for ChessBoard {
 		}
 	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
-		let sq = Square::from_coords(x as usize,y as usize);
+		let sq = Square::from_coords(x as usize, y as usize);
 		let color = self.color_at(sq)?;
 		if color == Color::White {
 			match self.piece_at(sq)? {
@@ -115,10 +240,10 @@ impl BoardGame for ChessBoard {
 		self.move_to_san(mv).ok()
 	}
 	fn game_to_string(&self, mvs: &[Self::M]) -> Option<String> {
-		let mut game= "".to_owned();
+		let mut game = "".to_owned();
 		for (i, m) in mvs.iter().enumerate() {
-			let m_str=self.move_to_san(m).ok()?;
-			game += ((i+1).to_string()+"." + m_str.as_str()+" ").as_str();
+			let m_str = self.move_to_san(m).ok()?;
+			game += ((i + 1).to_string() + "." + m_str.as_str() + " ").as_str();
 		}
 		Some(game)
 	}
@@ -126,10 +251,12 @@ impl BoardGame for ChessBoard {
 		Self::from_fen(pos_str)
 	}
 	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
-		let res= self.san_to_move(m_str);
+		let res = self.san_to_move(m_str);
 		if res.is_err() {
 			let mv = Move::from_uci(m_str);
-			if let Some(m) = mv && self.legal_moves().contains(&m) {
+			if let Some(m) = mv
+				&& self.legal_moves().contains(&m)
+			{
 				return Ok(m);
 			}
 		}
@@ -147,7 +274,7 @@ impl BoardGame for ChessBoard {
 				fill_color: Some(Color32::from_rgba_unmultiplied(120, 120, 120, 128)),
 				size: 1.0,
 				text: None,
-				stroke: None
+				stroke: None,
 			},
 			..Default::default()
 		}
@@ -156,8 +283,8 @@ impl BoardGame for ChessBoard {
 
 pub fn create_board() -> GenericBoardApp<ChessBoard> {
 	let engines: Vec<Box<dyn AIEngineProvider<ChessBoard>>> = vec![
-		Box::new(MoveSearcherBuilder::new("Material".into(), ChessMaterialEval::new(), 5)),
-		Box::new(MoveSearcherBuilder::new("Simple".into(), ChessPosEval::new(), 5)),
+		Box::new(MoveSearcherBuilder::new("Material", ChessMaterialEval, 5)),
+		Box::new(MoveSearcherBuilder::new("Simple", ChessPosEval, 5)),
 	];
 	GenericBoardApp::new(ChessBoard::default(), engines)
 }

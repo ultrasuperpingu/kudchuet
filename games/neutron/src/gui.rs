@@ -108,11 +108,10 @@ impl BoardGame for Neutron {
 
 pub fn create_board() -> GenericBoardApp<Neutron> {
 	let engines: Vec<Box<dyn AIEngineProvider<Neutron>>> = vec![
-		Box::new(MoveSearcherBuilder::new("Dumb".into(), NeutronDumbEval::new(), 4)),
+		Box::new(MoveSearcherBuilder::new("Dumb", NeutronDumbEval::new(), 4)),
 	];
-	let board = GenericBoardApp::new(
+	GenericBoardApp::new(
 		Neutron::default(),
 		engines,
-	);
-	board
+	)
 }

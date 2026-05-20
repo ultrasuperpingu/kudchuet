@@ -370,7 +370,7 @@ impl Backgammon {
 				let mut next_dice = dice.clone();
 				next_dice.remove(i);
 
-				let mut next_moves = current.clone();
+				let mut next_moves = *current;
 				next_moves.push(m);
 
 				self.gen_moves_recursive(&next_game, &next_dice, &next_moves, results);
@@ -421,7 +421,7 @@ impl Backgammon {
 	}
 
 	fn is_legal_target(&self, to: i32) -> Option<bool> {
-		if to < 0 || to >= 24 {
+		if !(0..24).contains(&to) {
 			return if self.can_bear_off() {
 				Some(false)
 			} else {

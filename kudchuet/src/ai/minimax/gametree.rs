@@ -4,7 +4,10 @@ use crate::{
 	utils::NHHashMap,
 };
 
-use std::fmt::{self, Debug, Display, Formatter};
+use std::{
+	collections::hash_map::Entry,
+	fmt::{self, Debug, Display, Formatter},
+};
 
 #[derive(Debug, Clone)]
 pub struct Node<M> {
@@ -121,7 +124,7 @@ where
 		s.states.insert(
 			hash,
 			StateInfo {
-				state: state,
+				state,
 				expanded_node: 0,
 			},
 		);
@@ -302,14 +305,11 @@ where
 
 				self.nodes[node_id].children.push(child_id);
 
-				if !self.states.contains_key(&new_state_hash) {
-					self.states.insert(
-						new_state_hash,
-						StateInfo {
-							state: new_state,
-							expanded_node: child_id,
-						},
-					);
+				if let Entry::Vacant(e) = self.states.entry(new_state_hash) {
+					e.insert(StateInfo {
+						state: new_state,
+						expanded_node: child_id,
+					});
 					stack.push(child_id);
 				}
 			} else {
@@ -467,9 +467,9 @@ where
 		let m = if G::is_random_move(state) {
 			let mut sum_proba = 0.0;
 			let rand = fastrand::f32();
-			let mut ch_mv = moves_pool.get(0).unwrap();
+			let mut ch_mv = moves_pool.first().unwrap();
 			for mv in moves_pool.iter() {
-				sum_proba += G::get_probability(&state, *mv);
+				sum_proba += G::get_probability(state, *mv);
 				if sum_proba > rand {
 					ch_mv = mv;
 					break;
@@ -524,7 +524,7 @@ where
 		}
 		for node in &mut self.nodes {
 			if let Some(p) = node.parent {
-				node.parent = ids.get(&p).map(|i| *i);
+				node.parent = ids.get(&p).copied();
 			}
 			// safety: children have been collected
 			node.children = node.children.iter().map(|c| ids[c]).collect();
@@ -549,8 +549,8 @@ where
 		ids.insert(root, root);
 		let exp = self.get_node_state_info(root);
 		if let Some(exp) = exp {
-			if !ids.contains_key(&exp.expanded_node) {
-				ids.insert(exp.expanded_node, exp.expanded_node);
+			if let Entry::Vacant(e) = ids.entry(exp.expanded_node) {
+				e.insert(exp.expanded_node);
 				for i in &self.get_node(exp.expanded_node).unwrap().children {
 					self.collect_ids(*i, ids);
 				}
@@ -573,7 +573,9 @@ where
 		Some(*self.states.get(&hash).map(|s| &s.expanded_node)?)
 	}
 	pub fn get_node_state(&self, id: usize) -> Option<&G::S> {
-		self.states.get(&self.nodes[id].state_hash).map(|s| &s.state)
+		self.states
+			.get(&self.nodes[id].state_hash)
+			.map(|s| &s.state)
 	}
 	pub fn get_node_state_mut(&mut self, id: usize) -> Option<&mut G::S> {
 		self.states

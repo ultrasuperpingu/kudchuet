@@ -3,7 +3,7 @@ use bitboard::bitboard_table;
 
 
 #[bitboard(width=8,height=8,col_major=false)]
-#[derive(Default, BitboardDebug, BitboardDisplay, Hash)]
+#[derive(Default, BitboardDebug, BitboardDisplay)]
 pub struct Bitboard8x8;
 
 bitboard_table!(RAY_N, ray_n, ray_n_mask, Bitboard8x8, Bitboard8x8::generate_ray_n_table());

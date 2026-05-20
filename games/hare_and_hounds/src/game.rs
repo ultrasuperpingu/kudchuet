@@ -33,7 +33,7 @@ impl Game for HareAndHounds {
 		Some(s)
 	}
 	fn get_outcome(state: &Self::S) -> GameOutcome {
-		state.result().into()
+		state.result()
 	}
 	fn get_hash(state: &Self::S) -> u64 {
 		state.compute_hash()

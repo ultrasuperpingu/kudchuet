@@ -181,7 +181,7 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	/// This is a convinient method. Default implementation call Game::get_winner(self) and convert it to GameResult.
 	/// This does not need to be reimplemented.
 	fn result(&self) -> GameOutcome {
-		Self::get_outcome(self).into()
+		Self::get_outcome(self)
 	}
 	/// Get the player which have to play
 	/// 
@@ -201,7 +201,7 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	}
 	/// Returns the piece at a particular square on the board
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType>;
-	/// 
+	
 	fn index_from_coords(x: u8, y: u8) -> u16;
 	fn coords_from_index(index: u16) -> (u8, u8);
 	fn position_to_string(&self) -> Option<String> {

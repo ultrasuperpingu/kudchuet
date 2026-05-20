@@ -50,9 +50,7 @@ impl Game for EinsteinWurfeltNicht {
 	}
 }
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
-pub struct EinsteinWurfeltNichtDumbEval {
-	turn: Player,
-}
+pub struct EinsteinWurfeltNichtDumbEval;
 
 impl Evaluator for EinsteinWurfeltNichtDumbEval {
 	type G = EinsteinWurfeltNicht;

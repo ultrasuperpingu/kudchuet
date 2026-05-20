@@ -228,7 +228,7 @@ impl Scanner {
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug, Copy, PartialOrd)]
 #[allow(clippy::upper_case_acronyms, non_camel_case_types)]
-#[repr(usize)]
+#[repr(u32)]
 pub enum TokenType
 {
 
@@ -258,7 +258,7 @@ pub enum TokenType
 
 
 	//End
-	_END_ = usize::MAX
+	_END_ = u32::MAX
 }
 
 #[derive(Debug, Clone)]

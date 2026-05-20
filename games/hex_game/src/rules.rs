@@ -107,16 +107,15 @@ impl Hex {
 				_ => unreachable!(),
 			},
 			Move::Swap => {
-				core::mem::swap(&mut self.red, &mut self.blue);
+				self.red = self.blue.mirrored_diag();
+				self.blue = HexBoard::EMPTY;
+
 				self.hash = self.compute_hash();
 			}
 		}
 		self.update_turn_hash();
 		self.switch_player();
 	}
-	//pub fn undo_unchecked(&mut self, mv: Move) {
-	//	self.switch_player();
-	//}
 
 	pub fn switch_player(&mut self) {
 		self.current_player = self.current_player.opponent();
@@ -145,7 +144,7 @@ impl Hex {
 		let mut stack = Vec::<usize>::new();
 
 		match player {
-			// Bleu : gauche -> droite
+			// Blue : Left -> Right
 			Player::PLAYER1 => {
 				let mut y = 0;
 
@@ -180,7 +179,7 @@ impl Hex {
 				}
 			}
 
-			// Rouge : haut -> bas
+			// Red : Bottom -> Top
 			Player::PLAYER2 => {
 				let mut x = 0;
 
@@ -225,15 +224,13 @@ impl core::fmt::Display for Hex {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		writeln!(f, "Current player: {:?}", self.current_player)?;
 
-		// Colonnes
 		write!(f, "   ")?;
 		for x in 0..HexBoard::WIDTH {
-			write!(f, "{} ", (b'A' + x as u8) as char)?;
+			write!(f, "{} ", (b'A' + x) as char)?;
 		}
 		writeln!(f)?;
 
 		for y in 0..HexBoard::HEIGHT {
-			// Indentation hex
 			write!(f, "{:2} ", y + 1)?;
 
 			for _ in 0..y {
@@ -264,7 +261,7 @@ impl core::fmt::Display for Hex {
 mod tests {
 	use kudchuet::{gui::BoardGame, utils::Rng, GameOutcome};
 
-	use crate::{bitboard::NEIGHBORS, rules::Hex};
+	use crate::rules::Hex;
 
 	#[test]
 	fn test_play() {
@@ -277,14 +274,5 @@ mod tests {
 			println!("{}", hex);
 		}
 		println!("Winner: {:?}", hex.result())
-	}
-	#[test]
-	fn test_neighbors() {
-		
-		println!("A1: {}", NEIGHBORS[0]);
-		println!("B1: {}", NEIGHBORS[1]);
-		println!("C1: {}", NEIGHBORS[2]);
-		println!("A2: {}", NEIGHBORS[7]);
-		println!("C4: {}", NEIGHBORS[23]);
 	}
 }

@@ -83,13 +83,11 @@ impl Bitboard9x13 {
 	}
 	pub const fn compute_black_tackle_position_mask(sq:u8) -> Self {
 		let index = sq as usize;
-		let mask = Self::NEIGHBORS_8[index].and_const(&Self::all_lines_at_south(sq).not_const());
-		mask
+		Self::NEIGHBORS_8[index].and_const(&Self::all_lines_at_south(sq).not_const())
 	}
 	pub const fn compute_white_tackle_position_mask(sq:u8) -> Self {
 		let index = sq as usize;
-		let mask = Self::NEIGHBORS_8[index].and_const(&Self::all_lines_at_north(sq).not_const());
-		mask
+		Self::NEIGHBORS_8[index].and_const(&Self::all_lines_at_north(sq).not_const())
 	}
 	pub const fn generate_black_tackle_position_table() -> [Self; Self::NB_SQUARES] {
 		let mut arr = [Self(0); Self::NB_SQUARES];

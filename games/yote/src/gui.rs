@@ -205,10 +205,9 @@ impl BoardGame for Yote {
 
 pub fn create_board() -> GenericBoardApp<Yote> {
 	let engines: Vec<Box<dyn AIEngineProvider<Yote>>> = vec![Box::new(MoveSearcherBuilder::new(
-		"Material".into(),
+		"Material",
 		YoteMaterialEval::new(),
 		5,
 	))];
-	let board = GenericBoardApp::new(Yote::default(), engines);
-	board
+	GenericBoardApp::new(Yote::default(), engines)
 }

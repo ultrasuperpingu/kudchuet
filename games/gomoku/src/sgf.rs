@@ -5,8 +5,8 @@ use kudchuet::Player;
 
 pub fn serialize_sgf(game: &Gomoku) -> String {
 	fn coord_to_sgf(x: u8, y: u8) -> String {
-		let cx = (b'a' + x as u8) as char;
-		let cy = (b'a' + y as u8) as char;
+		let cx = (b'a' + x) as char;
+		let cy = (b'a' + y) as char;
 		format!("{}{}", cx, cy)
 	}
 
@@ -43,7 +43,7 @@ pub fn serialize_sgf(game: &Gomoku) -> String {
 		}
 	));
 
-	sgf.push_str(")");
+	sgf.push(')');
 	sgf
 }
 pub fn parse_sgf(input: &str) -> Result<Gomoku, String> {
@@ -66,15 +66,15 @@ pub fn parse_sgf(input: &str) -> Result<Gomoku, String> {
 		match prop {
 			"AB" => {
 				for v in re_val.captures_iter(values) {
-					let x = (v[1].as_bytes()[0] - b'a') as u8;
-					let y = (v[2].as_bytes()[0] - b'a') as u8;
+					let x = v[1].as_bytes()[0] - b'a';
+					let y = v[2].as_bytes()[0] - b'a';
 					black.set(x, y);
 				}
 			}
 			"AW" => {
 				for v in re_val.captures_iter(values) {
-					let x = (v[1].as_bytes()[0] - b'a') as u8;
-					let y = (v[2].as_bytes()[0] - b'a') as u8;
+					let x = v[1].as_bytes()[0] - b'a';
+					let y = v[2].as_bytes()[0] - b'a';
 					white.set(x, y);
 				}
 			}

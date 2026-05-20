@@ -42,7 +42,7 @@ impl Action {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct Move (pub [Option<Action>;ACTION_PER_MOVE]);
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct FootBoard {
 	pub(crate) player1: Bitboard9x13,
 	pub(crate) player2: Bitboard9x13,
@@ -170,6 +170,7 @@ impl FootBoard {
 		let empty = all.flipped();
 		self.generate_possible_actions(mine, self.ball, all, empty,theirs, moves, 0, moves[0]);
 	}
+	#[allow(clippy::too_many_arguments)]
 	fn generate_possible_actions(&self,
 			player_mask: Bitboard9x13,
 			ball: u8,
@@ -192,7 +193,7 @@ impl FootBoard {
 			}
 			for to in (Bitboard9x13::NEIGHBORS_8[p as usize] & empty & !Bitboard9x13::BEHIND_GOALS).iter_bits() {
 				let a=Action::Move { from: p as u8, to: to as u8 };
-				let mut mv = last_move.clone();
+				let mut mv = last_move;
 				mv.0[current_action_idx as usize] = Some(a);
 				
 				moves.push(mv);
@@ -242,6 +243,7 @@ impl FootBoard {
 		
 	}
 	
+	#[allow(clippy::too_many_arguments)]
 	fn generate_shoots(&self, player_mask: Bitboard9x13, ball: u8, all: Bitboard9x13, empty: Bitboard9x13, opponent_mask: Bitboard9x13, moves: &mut Vec<Move>, current_action_idx: u8, last_move: Move, ball_mask: Bitboard9x13) {
 		if (player_mask & ball_mask).any() {
 			for to in (Bitboard9x13::SHOOT_MASK[ball as usize]).iter_bits() {

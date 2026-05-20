@@ -168,11 +168,10 @@ impl BoardGame for Checkers10 {
 
 pub fn create_board() -> GenericBoardApp<Checkers10> {
 	let engines: Vec<Box<dyn AIEngineProvider<Checkers10>>> = vec![Box::new(
-		MoveSearcherBuilder::new("Material".into(), CheckersEval::new(), 5),
+		MoveSearcherBuilder::new("Material", CheckersEval, 5),
 	)];
-	let board = GenericBoardApp::new(
+	GenericBoardApp::new(
 		Checkers10::default(),
 		engines,
-	);
-	board
+	)
 }

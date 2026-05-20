@@ -1,10 +1,10 @@
+use crate::bitboard::Bitboard7x7Col;
 use eframe::egui;
 use egui::Color32;
 use kudchuet::Player;
- use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
+use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
+use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
- use kudchuet::gui::shapes::{Shape, StrokeData};
- use crate::bitboard::Bitboard7x7Col;
 
 use super::game::ConnectFourEval;
 
@@ -13,7 +13,6 @@ use kudchuet::gui::board_app::GenericBoardApp;
 use super::rules::{Cell, Column, ConnectFour};
 
 impl BoardMove<ConnectFour> for Column {
-
 	fn to(&self) -> u16 {
 		Bitboard7x7Col::index_from_coords(self.0, 0) as u16
 	}
@@ -22,14 +21,24 @@ impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
 			Cell::Empty => unreachable!(),
-			Cell::PlayerOne => Shape::Circle { fill_color: Some(Color32::YELLOW), size: 0.7, text: None, stroke: Some(StrokeData::default()) },
-			Cell::PlayerTwo => Shape::Circle { fill_color: Some(Color32::RED), size: 0.7, text: None, stroke: Some(StrokeData::default()) }
+			Cell::PlayerOne => Shape::Circle {
+				fill_color: Some(Color32::YELLOW),
+				size: 0.7,
+				text: None,
+				stroke: Some(StrokeData::default()),
+			},
+			Cell::PlayerTwo => Shape::Circle {
+				fill_color: Some(Color32::RED),
+				size: 0.7,
+				text: None,
+				stroke: Some(StrokeData::default()),
+			},
 		}
 	}
 }
 
 impl BoardGame for ConnectFour {
-	type PieceType=Cell;
+	type PieceType = Cell;
 	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
@@ -66,7 +75,12 @@ impl BoardGame for ConnectFour {
 		BoardStyle {
 			dark_color: Color32::from_rgb(0, 0, 150),
 			light_color: Color32::from_rgb(0, 0, 150),
-			empty_cell_shape: Some(Shape::Circle { fill_color: Some(Color32::from_rgb(20, 20, 80)), size: 0.7, text: None, stroke: Some(StrokeData::default()) }),
+			empty_cell_shape: Some(Shape::Circle {
+				fill_color: Some(Color32::from_rgb(20, 20, 80)),
+				size: 0.7,
+				text: None,
+				stroke: Some(StrokeData::default()),
+			}),
 			show_coordinates_mod: CoordMod::NumbersAside,
 			..Default::default()
 		}
@@ -75,8 +89,7 @@ impl BoardGame for ConnectFour {
 
 pub fn create_board() -> GenericBoardApp<ConnectFour> {
 	let engines: Vec<Box<dyn AIEngineProvider<ConnectFour>>> = vec![Box::new(
-		MoveSearcherBuilder::new("Simple".into(), ConnectFourEval::new(), 9),
+		MoveSearcherBuilder::new("Simple", ConnectFourEval::new(), 9),
 	)];
-	let board=GenericBoardApp::new(ConnectFour::new(), engines);
-	board
+	GenericBoardApp::new(ConnectFour::new(), engines)
 }

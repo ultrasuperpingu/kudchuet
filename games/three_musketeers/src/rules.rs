@@ -9,7 +9,7 @@ pub struct Move {
 	pub from: u8,
 	pub to: u8,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ThreeMusketeers {
 	pub musketeers: Bitboard5x5,
 	pub guards: Bitboard5x5,
@@ -66,8 +66,12 @@ impl ThreeMusketeers {
 		}
 	}
 	#[inline(always)]
-	fn occupied(&self) -> Bitboard5x5 {
+	pub fn occupied(&self) -> Bitboard5x5 {
 		self.musketeers | self.guards
+	}
+	#[inline(always)]
+	pub fn free(&self) -> Bitboard5x5 {
+		self.occupied().flipped()
 	}
 }
 impl ThreeMusketeers {
@@ -104,6 +108,7 @@ impl ThreeMusketeers {
 	}
 	#[inline(always)]
 	fn legal_moves_guards_inplace(&self, out: &mut Vec<Move>) {
+		//!self.occupied() is safe because we look at target_mask.neighbors_ortho so no unused bit will be used
 		self.moves_from_mask(self.guards, !self.occupied(), out)
 	}
 	#[inline]
@@ -135,8 +140,8 @@ impl ThreeMusketeers {
 	}
 	#[inline]
 	fn has_legal_move_guards(&self) -> bool {
-		let mut free = self.occupied();
-		free.flip();
+		//!self.occupied() is safe because we look at free.neighbors_ortho so no unused bit will be used
+		let free = !self.occupied();
 		for from in self.guards.iter_bits() {
 			let mask = free.neighbors_ortho(from as usize);
 			if mask.any() {
@@ -299,7 +304,9 @@ impl ThreeMusketeers {
 				}
 			}
 		}
-
+		if game.musketeers.count() != 3 {
+			return Err("Position must contain exactly 3 musketeers".into());
+		}
 		game.turn = match player_part {
 			"m" => 0,
 			"g" => 1,

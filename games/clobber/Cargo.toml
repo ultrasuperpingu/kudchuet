@@ -14,5 +14,9 @@ bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 #bitboard = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
 #bitboard_proc_macro = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
 
+[lints]
+workspace = true
+
+
 [lib]
 name="clobber"

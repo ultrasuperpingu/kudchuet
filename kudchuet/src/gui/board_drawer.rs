@@ -117,8 +117,7 @@ where
 						game,
 						piece,
 						&square,
-						x_coord,
-						y_coord,
+						(x_coord, y_coord),
 					);
 				} else if let Some(shape) = style.empty_cell_shape.as_ref() {
 					// check unplayable square
@@ -578,63 +577,6 @@ where
 {
 }
 
-#[derive(Default)]
-pub struct HexSquareDrawer {}
-impl<G> SquareDrawer<G> for HexSquareDrawer
-where
-	G: BoardGame,
-	G::M: BoardMove<G>,
-{
-	fn draw(
-		&self,
-		painter: &Painter,
-		style: &BoardStyle,
-		_game: &G,
-		square: &Rect,
-		x_coord: u8,
-		y_coord: u8,
-	) {
-		let (bg_color, _txt_color) = match style.checkerboard_mod {
-			super::CheckerBoardMod::None => (style.uniform_color, Color32::BLACK),
-			super::CheckerBoardMod::EvenDark => {
-				if (x_coord + y_coord) % 2 == 1 {
-					(style.light_color, Color32::BLACK)
-				} else {
-					(style.dark_color, Color32::WHITE)
-				}
-			}
-			super::CheckerBoardMod::OddDark => {
-				if (x_coord + y_coord).is_multiple_of(2) {
-					(style.light_color, Color32::BLACK)
-				} else {
-					(style.dark_color, Color32::WHITE)
-				}
-			}
-		};
-		let mut points = Vec::new();
-		let center = square.center();
-		let radius = square.width() / 2.0;
-
-		for i in 0..=6 {
-			let theta = i as f32 / 6 as f32 * std::f32::consts::TAU + std::f32::consts::FRAC_PI_6;
-			let p = center + egui::Vec2::new(theta.cos(), theta.sin()) * radius;
-			points.push(p);
-		}
-
-		painter.add(egui::Shape::convex_polygon(
-			points.clone(),
-			bg_color,
-			egui::Stroke::NONE,
-		));
-
-		if let Some(color) = style.square_stroke_color {
-			painter.line(
-				points,
-				egui::Stroke::new(1.0, color),
-			);
-		}
-	}
-}
 pub trait PieceDrawer<G>: EguiInspect
 where
 	G: BoardGame,
@@ -647,8 +589,7 @@ where
 		_game: &G,
 		piece: G::PieceType,
 		square: &Rect,
-		_x_coord: u8,
-		_y_coord: u8,
+		_coords: (u8, u8),
 	) {
 		piece.shape().draw(painter, square.center(), square.width());
 	}
@@ -675,7 +616,7 @@ where
 	G::M: BoardMove<G>,
 {
 	pub fn new() -> Self {
-		Self(Self::get_defaults(), PhantomData::default())
+		Self(Self::get_defaults(), PhantomData)
 	}
 }
 

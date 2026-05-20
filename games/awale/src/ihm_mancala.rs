@@ -59,7 +59,7 @@ impl Default for MancalaApp {
 		Self {
 			game: Mancala::default(),
 			//computer: new_move_searcher(super::mancala::EvaluatorMancala::default(), 5),
-			computer: MoveSearcherBuilder::new("Material".into(), super::mancala::EvaluatorMancala::default(), 5).build_engine(),
+			computer: MoveSearcherBuilder::new("Material", super::mancala::EvaluatorMancala, 5).build_engine(),
 			selected: None,
 			players: [PlayerType::default(), PlayerType::Computer],
 		}

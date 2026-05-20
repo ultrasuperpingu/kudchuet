@@ -25,6 +25,10 @@ bitboard = {path="../../bitboards/bitboard"}
 bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 num-traits = "0.2"
 
+[lints]
+workspace = true
+
+
 [lib]
 name = "chess"
 

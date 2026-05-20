@@ -6,6 +6,8 @@ use ai::minimax::SearchStopSignal;
 use ai::minimax::Strategy;
 use std::collections::HashMap;
 use std::fmt::Debug;
+#[cfg(not(target_arch = "wasm32"))]
+use std::time::Duration;
 
 use crate::ai::minimax::BEST_EVAL;
 use crate::ai::minimax::IterativeOptions;
@@ -22,8 +24,6 @@ use crate::ai::minimax::ybw::ParallelSearch;
 use crate::ai::uci::UciValue;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::uci::UciValue;
-use crate::ai::{AIEngine, internal_engine::InternalEngine};
-use crate::ai::{AIEngineProvider, MoveSearcherBuilder};
 use crate::gui::{BoardGame, BoardMove};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
@@ -71,13 +71,8 @@ pub enum GameOutcome {
 	Draw,
 	OnGoing,
 }
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Default)]
 pub struct Player(pub u8);
-impl Default for Player {
-	fn default() -> Self {
-		Player(0)
-	}
-}
 impl Player {
 	pub const PLAYER1: Self = Self(0);
 	pub const PLAYER2: Self = Self(1);
@@ -92,7 +87,7 @@ impl Player {
 		self.0 as usize
 	}
 	pub fn next<G: Game>(&self, state: &G::S) -> Self {
-		G::get_next_player(&state)
+		G::get_next_player(state)
 	}
 }
 impl From<Player> for GameOutcome {
@@ -199,24 +194,37 @@ where
 
 	fn set_options(&mut self, opts: &HashMap<String, UciValue>) {
 		println!("reset_with_options {:?}", opts);
-		/*let mut iter =
-			IterativeOptions::new().with_table_byte_size(opts.table_megabyte_size * 1024 * 1024);
+		let mut hash_size = 128;
+		if let Some(&UciValue::Spin(hash,_,_)) = opts.get("Hash") {
+			hash_size = hash;
+		}
+		let mut iter =
+			IterativeOptions::new().with_table_byte_size(hash_size as usize * 1024 * 1024);
 
-		if Some(&UciValue::Bool(true)) == opts.uci.get("Mdtf") {
+		if Some(&UciValue::Bool(true)) == opts.get("Mdtf") {
 			iter = iter.with_mtdf();
 		}
 		let mut par = ParallelOptions::new();
-		par.num_threads = opts.threads;
-
+		par.num_threads = None;
+		if let Some(&UciValue::Spin(threads,_,_)) = opts.get("Threads") {
+			par.num_threads = Some(threads as usize)
+		}
+		
 		*self = ParallelSearch::new(E::default(), iter, par);
-		if opts.max_time <= 0.0 {
-			self.set_max_depth(opts.max_depth);
+		let mut timeout = 0;
+		let mut depth = 5;
+		if let Some(&UciValue::Spin(itimeout,_,_)) = opts.get("Timeout") {
+			timeout = itimeout as u64;
+		}
+		if let Some(&UciValue::Spin(idepth,_,_)) = opts.get("Depth") {
+			depth = idepth as u64;
+		}
+		if timeout == 0 {
+			self.set_max_depth(depth as u8);
 		} else {
-			self.set_depth_or_timeout(
-				opts.max_depth,
-				std::time::Duration::from_secs_f32(opts.max_time),
-			);
-		}*/
+			self.set_depth_or_timeout(depth as u8, Duration::from_millis(timeout));
+		}
+		self.set_timeout(Duration::from_millis(timeout));
 		println!("ai {} {:?}", self.get_max_depth(), self.get_max_time());
 	}
 	//fn stop_search(&self) {

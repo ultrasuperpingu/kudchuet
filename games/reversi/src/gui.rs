@@ -88,11 +88,10 @@ impl BoardGame for Reversi {
 
 pub fn create_board() -> GenericBoardApp<Reversi> {
 	let engines: Vec<Box<dyn AIEngineProvider<Reversi>>> = vec![
-		Box::new(MoveSearcherBuilder::new("Dumb".into(), ReversiEval::new(), 4)),
+		Box::new(MoveSearcherBuilder::new("Dumb", ReversiEval::new(), 4)),
 	];
-	let board = GenericBoardApp::new(
+	GenericBoardApp::new(
 		Reversi::default(),
 		engines,
-	);
-	board
+	)
 }

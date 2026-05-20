@@ -54,11 +54,6 @@ impl Game for BaghChal {
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
 pub struct BaghChalMaterialEval;
 
-impl BaghChalMaterialEval {
-	pub fn new() -> Self {
-		Self {}
-	}
-}
 impl Evaluator for BaghChalMaterialEval {
 	type G = BaghChal;
 	fn evaluate_for(&self, state: &BaghChal, p: Player) -> Evaluation {

@@ -26,10 +26,10 @@ pub trait Evaluator {
 	/// move next.
 	///
 	/// The caller will first determine whether the game is at an end state.
-	/*fn evaluate(&self, s: &<Self::G as Game>::S) -> Evaluation {
-		let p = <Self::G as Game>::current_player(s);
+	fn evaluate(&self, s: &<Self::G as Game>::S) -> Evaluation {
+		let p = <Self::G as Game>::get_current_player(s);
 		self.evaluate_for(s, p)
-	}*/
+	}
 
 	/// Evaluate for the player specfied in argument
 	fn evaluate_for(&self, s: &<Self::G as Game>::S, p: Player) -> Evaluation;

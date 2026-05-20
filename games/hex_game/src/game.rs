@@ -36,9 +36,7 @@ impl Game for Hex {
 	}
 }
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
-pub struct HexMaterialEval {
-	turn:Player
-}
+pub struct HexMaterialEval;
 
 impl Evaluator for HexMaterialEval {
 	type G = Hex;

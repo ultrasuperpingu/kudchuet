@@ -15,7 +15,7 @@ impl std::fmt::Display for BitboardAbalone {
 
 			for q in -4..=4 {
 				let s = -q - r;
-				if s < -4 || s > 4 {
+				if !(-4..=4).contains(&s) {
 					continue;
 				}
 

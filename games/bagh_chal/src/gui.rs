@@ -203,7 +203,7 @@ where
 }
 pub fn create_board() -> GenericBoardApp<BaghChal> {
 	let engines: Vec<Box<dyn AIEngineProvider<BaghChal>>> = vec![Box::new(
-		MoveSearcherBuilder::new("Material".into(), BaghChalMaterialEval::new(), 8),
+		MoveSearcherBuilder::new("Material", BaghChalMaterialEval, 8),
 	)];
 	let mut board = GenericBoardApp::new(BaghChal::default(), engines);
 	//board.board_drawer.get_style_mut().dark_color=egui::Color32::from_rgb(181, 136, 99);

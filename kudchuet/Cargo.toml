@@ -57,3 +57,5 @@ panic = "abort"
 incremental = false
 debug = false
 
+[lints]
+workspace = true

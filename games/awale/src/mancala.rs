@@ -3,7 +3,7 @@ use std::fmt;
 use crate::gui::Place;
 
 use kudchuet::{GameOutcome, Player, ai::minimax::{Evaluation, Evaluator, Game}};
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Mancala {
 	// First index by player.
 	// Next index by pit, counting down from 6 to 1 for the pits in play.

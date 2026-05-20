@@ -62,7 +62,7 @@ impl Display for Reversi {
 		writeln!(f)
 	}
 }
-#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Reversi
 {
 	last_stones: Bitboard8x8,
@@ -380,7 +380,7 @@ impl Reversi {
 		}
 
 		// Simuler un "pass" pour regarder les coups de l’adversaire
-		let mut tmp = *self;
+		let mut tmp = self.clone();
 		tmp.pass(); // change de joueur
 
 		tmp.legal_moves_mask().is_empty()

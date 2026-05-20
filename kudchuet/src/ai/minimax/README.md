@@ -2,9 +2,9 @@ This part of the crate is a fork of the minimax crate:
 https://github.com/edre/minimax-rs
 It is published under the MIT license (see the LICENSE file), except the game_tree.rs and mcts.rs which are LGPL.
 
-= Why a fork?
+# Why a fork?
 
-== Negamax vs Minimax
+## Negamax vs Minimax
 
 The original minimax crate uses the elegant Negamax formulation.
 Negamax is compact and works beautifully for strictly two‑player, alternating, zero‑sum games such as chess, checkers, or Go.

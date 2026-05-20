@@ -159,7 +159,22 @@ where
 		let new_state_hash = G::get_hash(&new_state);
 		let tt_state = self.states.get(&new_state_hash);
 		let child_id = self.nodes.len();
-		if tt_state.is_none() {
+		if let Some(si) = tt_state {
+			let expanded_node = &self.nodes[si.expanded_node];
+			self.nodes.push(Node {
+				state_hash: new_state_hash,
+				parent: Some(parent_id),
+				children: vec![],
+				visits: 0,
+				wins: 0,
+				draws: 0,
+				untried_moves: vec![],
+				player_to_move: expanded_node.player_to_move,
+				outcome: expanded_node.outcome,
+				depth_to_end: expanded_node.depth_to_end,
+				incoming_move: Some(m),
+			});
+		} else {
 			self.states.insert(
 				new_state_hash,
 				StateInfo {
@@ -180,22 +195,6 @@ where
 				player_to_move: G::get_current_player(&new_state),
 				outcome,
 				depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
-				incoming_move: Some(m),
-			});
-		} else {
-			let si = tt_state.unwrap();
-			let expanded_node = &self.nodes[si.expanded_node];
-			self.nodes.push(Node {
-				state_hash: new_state_hash,
-				parent: Some(parent_id),
-				children: vec![],
-				visits: 0,
-				wins: 0,
-				draws: 0,
-				untried_moves: vec![],
-				player_to_move: expanded_node.player_to_move,
-				outcome: expanded_node.outcome,
-				depth_to_end: expanded_node.depth_to_end,
 				incoming_move: Some(m),
 			});
 		}
@@ -248,7 +247,7 @@ where
 		while !result.is_ended() {
 			let mut moves = vec![];
 			result =
-				G::generate_and_filter_moves(&self.get_node_state(node_id).unwrap(), &mut moves);
+				G::generate_and_filter_moves(self.get_node_state(node_id).unwrap(), &mut moves);
 			if result == GameOutcome::OnGoing {
 				let m = fastrand::choice(moves).unwrap();
 				node_id = self.create_child_node(node_id, m);
@@ -342,7 +341,7 @@ where
 				tree = GameTree::default();
 			}
 			let mut moves = vec![];
-			G::generate_and_filter_moves(&root_state, &mut moves);
+			G::generate_and_filter_moves(root_state, &mut moves);
 			tree.root_id = tree.nodes.len();
 			tree.nodes.push(Node {
 				state_hash: root_state_hash,
@@ -352,7 +351,7 @@ where
 				wins: 0,
 				draws: 0,
 				untried_moves: moves,
-				player_to_move: G::get_current_player(&root_state),
+				player_to_move: G::get_current_player(root_state),
 				outcome: GameOutcome::OnGoing,
 				depth_to_end: u16::MAX,
 				incoming_move: None,
@@ -413,7 +412,7 @@ where
 	G::S: Clone,
 {
 	fn choose_move(&mut self, state: &<G as Game>::S) -> Option<<G as Game>::M> {
-		self.mcts(&state, self.opts.max_nb_iteration)
+		self.mcts(state, self.opts.max_nb_iteration)
 	}
 	fn root_value(&self) -> Evaluation {
 		if let Some(t) = &self.tree {

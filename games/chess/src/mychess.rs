@@ -1,4 +1,3 @@
-use std::hash::Hash;
 
 use crate::bitboard::Bitboard8x8;
 use bitboard::{BitIter, Bitboard};
@@ -12,7 +11,7 @@ use super::pext_tables;
 use kudchuet::GameOutcome;
 //use super::magic_tables::{MagicEntry, ROOK_MOVES, ROOK_MAGICS};
 
-#[derive(Copy, Clone, Debug, Hash)]
+#[derive(Copy, Clone, Debug)]
 pub struct ChessBoard {
 	pub(crate) whites: Bitboard8x8,
 	pub(crate) blacks: Bitboard8x8,
@@ -321,6 +320,7 @@ impl ChessBoard {
 
 		direction_index(dx, dy) == dir || direction_index(-dx, -dy) == dir
 	}
+	#[allow(clippy::too_many_arguments)]
 	#[inline]
 	fn scan_ray(
 		king_idx: usize,

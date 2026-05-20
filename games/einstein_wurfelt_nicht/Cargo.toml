@@ -10,5 +10,9 @@ wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 fastrand = "2.4"
 
+[lints]
+workspace = true
+
+
 [lib]
 name="einstein_wurfelt_nicht"

@@ -10,7 +10,7 @@ use bitboard::common_bitboards::Goban;
 pub struct Move {
 	pub to: u16,
 }
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Gomoku {
 	pub white: Goban,
 	pub black: Goban,

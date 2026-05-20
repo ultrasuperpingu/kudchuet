@@ -57,7 +57,7 @@ impl Default for AwaleApp {
 		Self {
 			game: Awale::default(),
 			//computer: new_move_searcher(AwaleMaterialEval::new(), 5),
-			computer: MoveSearcherBuilder::new("Material".into(), AwaleMaterialEval::new(), 5)
+			computer: MoveSearcherBuilder::new("Material", AwaleMaterialEval, 5)
 				.build_engine(),
 			selected: None,
 			players: [PlayerType::default(), PlayerType::Computer],

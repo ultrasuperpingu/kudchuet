@@ -48,11 +48,6 @@ impl Game for Awale {
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
 pub struct AwaleMaterialEval;
 
-impl AwaleMaterialEval {
-	pub fn new() -> Self {
-		Self {}
-	}
-}
 impl Evaluator for AwaleMaterialEval {
 	type G = Awale;
 	fn evaluate_for(&self, state: &Awale, p: Player) -> Evaluation {

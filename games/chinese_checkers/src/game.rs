@@ -1,4 +1,4 @@
-use bitboard::BitIter;
+use bitboard::BitIterRef;
 
 use super::rules::{ChineseCheckers, Move};
 use crate::bitboard::ChineseCheckerBoard;
@@ -44,7 +44,7 @@ impl Game for ChineseCheckers {
 	}
 	fn get_outcome(state: &Self::S) -> GameOutcome {
 		match state.winner() {
-			Some(w) => GameOutcome::Player(Player(w.idx() as u8)),
+			Some(w) => GameOutcome::Player(Player(w.idx())),
 			None => GameOutcome::OnGoing,
 		}
 	}
@@ -70,7 +70,7 @@ impl Evaluator for ChineseCheckersMaterialEval {
 
 			let mut dist = 0;
 
-			for i in b.iter_bits() {
+			for i in b.iter_bits_ref() {
 				let (x, y) = ChineseCheckerBoard::coords_from_index(i as usize);
 
 				let dx = target.0.abs_diff(x);

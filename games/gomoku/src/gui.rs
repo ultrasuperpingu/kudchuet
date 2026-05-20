@@ -1,13 +1,13 @@
 use eframe::egui;
 use egui::{Color32, Stroke};
 
-use bitboard::common_bitboards::Goban;
 use crate::game::GomokuEvalDumb;
 use crate::sgf::{parse_sgf, serialize_sgf};
 use crate::{
 	game::GomokuEvalSimple,
 	rules::{Cell, Gomoku, Move},
 };
+use bitboard::common_bitboards::Goban;
 use kudchuet::Player;
 use kudchuet::ai::AIBuilder;
 use kudchuet::ai::AIEngineProvider;
@@ -161,6 +161,7 @@ impl SquareDrawer<Gomoku> for GobanSquareDrawer {
 			painter.line(lines, stroke);
 			let lines = vec![square.right_center(), square.left_center()];
 			painter.line(lines, stroke);
+			#[allow(clippy::nonminimal_bool)]
 			if x_coord == 9 && y_coord == 9
 				|| x_coord == 3 && y_coord == 9
 				|| x_coord == 9 && y_coord == 3
@@ -178,17 +179,9 @@ impl SquareDrawer<Gomoku> for GobanSquareDrawer {
 }
 pub fn create_board() -> GenericBoardApp<Gomoku> {
 	let engines: Vec<Box<dyn AIEngineProvider<Gomoku>>> = vec![
-		Box::new(MoveSearcherBuilder::new(
-			"Dumb".into(),
-			GomokuEvalDumb::new(),
-			4,
-		)),
-		Box::new(MoveSearcherBuilder::new(
-			"Simple".into(),
-			GomokuEvalSimple::new(),
-			4,
-		)),
-		Box::new(AIBuilder::<Gomoku, MCTS<Gomoku>>::new("MCTS".into())),
+		Box::new(MoveSearcherBuilder::new("Dumb", GomokuEvalDumb, 4)),
+		Box::new(MoveSearcherBuilder::new("Simple", GomokuEvalSimple, 4)),
+		Box::new(AIBuilder::<Gomoku, MCTS<Gomoku>>::new("MCTS")),
 	];
 	let mut board = GenericBoardApp::new(Gomoku::default(), engines);
 	board

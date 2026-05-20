@@ -1,7 +1,7 @@
 use bitboard_proc_macro::bitboard;
 use bitboard_proc_macro::BitboardDebug;
 
-#[bitboard(width = 7, height = 7)]
+#[bitboard(width = 11, height = 11)]
 #[derive(BitboardDebug, Default)]
 pub struct HexBoard;
 
@@ -14,32 +14,17 @@ const fn neighbors(index: usize) -> HexBoard {
 	if x > 0 {
 		board.set_at_index(HexBoard::index_from_coords(x - 1, y));
 	}
-	if y % 2 == 0 {
-		if y < HexBoard::HEIGHT - 1 {
-			if x > 0 {
-				board.set_at_index(HexBoard::index_from_coords(x - 1, y + 1));
-			}
-			board.set_at_index(HexBoard::index_from_coords(x, y + 1));
+	if y < HexBoard::HEIGHT - 1 {
+		if x > 0 {
+			board.set_at_index(HexBoard::index_from_coords(x - 1, y + 1));
 		}
-		if y > 0 {
-			if x < HexBoard::WIDTH - 1 {
-				board.set_at_index(HexBoard::index_from_coords(x + 1, y - 1));
-			}
-			board.set_at_index(HexBoard::index_from_coords(x, y - 1));
+		board.set_at_index(HexBoard::index_from_coords(x, y + 1));
+	}
+	if y > 0 {
+		if x < HexBoard::WIDTH - 1 {
+			board.set_at_index(HexBoard::index_from_coords(x + 1, y - 1));
 		}
-	} else {
-		if y < HexBoard::HEIGHT - 1 {
-			if x > 0 {
-				board.set_at_index(HexBoard::index_from_coords(x - 1, y + 1));
-			}
-			board.set_at_index(HexBoard::index_from_coords(x, y + 1));
-		}
-		if y > 0 {
-			if x < HexBoard::WIDTH - 1 {
-				board.set_at_index(HexBoard::index_from_coords(x + 1, y - 1));
-			}
-			board.set_at_index(HexBoard::index_from_coords(x, y - 1));
-		}
+		board.set_at_index(HexBoard::index_from_coords(x, y - 1));
 	}
 	board
 }
@@ -58,7 +43,7 @@ impl core::fmt::Display for HexBoard {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		write!(f, "   ")?;
 		for x in 0..HexBoard::WIDTH {
-			write!(f, "{} ", (b'A' + x as u8) as char)?;
+			write!(f, "{} ", (b'A' + x) as char)?;
 		}
 		writeln!(f)?;
 
@@ -72,11 +57,7 @@ impl core::fmt::Display for HexBoard {
 			for x in 0..HexBoard::WIDTH {
 				let idx = HexBoard::index_from_coords(x, y);
 
-				let c = if self.get_at_index(idx) {
-					'●'
-				} else {
-					'.'
-				};
+				let c = if self.get_at_index(idx) { '●' } else { '.' };
 
 				write!(f, "{} ", c)?;
 			}
@@ -85,5 +66,17 @@ impl core::fmt::Display for HexBoard {
 		}
 
 		Ok(())
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::bitboard::NEIGHBORS;
+
+	#[test]
+	fn test_neighbors() {
+		for (i, n) in NEIGHBORS.iter().enumerate() {
+			println!("{}:\n{}", i, n);
+		}
 	}
 }

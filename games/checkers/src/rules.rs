@@ -146,7 +146,7 @@ impl Rules {
 		}
 	}
 }
-#[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
 pub struct Checkers10 {
 	pub(super) current_player: Player,
 	pub(super) white_pawns: Bitboard5x10Checkers10,
@@ -531,9 +531,10 @@ impl Checkers10 {
 			return;
 		}
 
-		for i in 0..take_count {
-			let m = local_takes[i];
-			let mut next_taken = already_taken.clone();
+		//for i in 0..take_count {
+		for m in local_takes.iter().take(take_count) {
+			//let m = local_takes[i];
+			let mut next_taken = already_taken;
 
 			next_taken |= m.pawn_takes | m.queen_takes;
 			let before_count = moves.len();
@@ -549,7 +550,7 @@ impl Checkers10 {
 			);
 
 			if moves.len() == before_count {
-				moves.push(m);
+				moves.push(*m);
 			} else {
 				for j in before_count..moves.len() {
 					moves[j] = m.merge(&moves[j]);

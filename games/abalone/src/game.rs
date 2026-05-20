@@ -58,11 +58,6 @@ impl Game for Abalone {
 #[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
 pub struct AbaloneMaterialEval;
 
-impl AbaloneMaterialEval {
-	pub fn new() -> Self {
-		Self {}
-	}
-}
 impl Evaluator for AbaloneMaterialEval {
 	type G = Abalone;
 	fn evaluate_for(&self, state: &Abalone, p: Player) -> Evaluation {

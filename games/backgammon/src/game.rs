@@ -54,9 +54,7 @@ impl Game for Backgammon {
 	}
 }
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
-pub struct BackgammonMaterialEval {
-	turn:Player
-}
+pub struct BackgammonMaterialEval;
 
 impl Evaluator for BackgammonMaterialEval {
 	type G = Backgammon;

@@ -109,9 +109,8 @@ impl BoardGame for EinsteinWurfeltNicht {
 			}
 		}
 		if let Some(d) = self.dice {
-			if x == 0 && y == 5 && self.is_red {
-				return Some(Piece::Dice(d));
-			} else if x == 4 && y == 5 && !self.is_red {
+			#[allow(clippy::nonminimal_bool)]
+			if x == 0 && y == 5 && self.is_red || x == 4 && y == 5 && !self.is_red {
 				return Some(Piece::Dice(d));
 			}
 		}
@@ -190,14 +189,11 @@ impl SquareDrawer<EinsteinWurfeltNicht> for MySquareDrawer {
 pub fn create_board() -> GenericBoardApp<EinsteinWurfeltNicht> {
 	let engines: Vec<Box<dyn AIEngineProvider<EinsteinWurfeltNicht>>> = vec![
 		Box::new(MoveSearcherBuilder::new(
-			"Dumb".into(),
-			EinsteinWurfeltNichtDumbEval::default(),
+			"Dumb",
+			EinsteinWurfeltNichtDumbEval,
 			20,
 		)),
-		Box::new(AIBuilder::<
-			EinsteinWurfeltNicht,
-			MCTS<EinsteinWurfeltNicht>,
-		>::new("MCTS".into())),
+		Box::new(AIBuilder::<EinsteinWurfeltNicht, MCTS<EinsteinWurfeltNicht>>::new("MCTS")),
 	];
 	//let ai_provider =
 	//	MoveSearcherBuilderDyn::new("Dumb".into(), EinsteinWurfeltNichtDumbEval::default(), 20);

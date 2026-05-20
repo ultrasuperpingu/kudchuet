@@ -146,7 +146,7 @@ impl BoardGame for Diaballik {
 
 pub fn create_board() -> GenericBoardApp<Diaballik> {
 	let engines: Vec<Box<dyn AIEngineProvider<Diaballik>>> = vec![Box::new(
-		MoveSearcherBuilder::new("Material".into(), DiaballikEvalMaterial::new(), 3),
+		MoveSearcherBuilder::new("Material", DiaballikEvalMaterial, 3),
 	)];
 	let mut board = GenericBoardApp::new(Diaballik::default(), engines);
 	board.depth = 3;

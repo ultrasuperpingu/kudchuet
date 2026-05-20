@@ -318,7 +318,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 }
 pub fn create_board() -> GenericBoardApp<Abalone> {
 	let engines: Vec<Box<dyn AIEngineProvider<Abalone>>> = vec![Box::new(
-		MoveSearcherBuilder::new("Material".into(), AbaloneMaterialEval::new(), 4),
+		MoveSearcherBuilder::new("Material", AbaloneMaterialEval, 4),
 	)];
 	let mut board = GenericBoardApp::new(Abalone::default(), engines);
 	board.board_drawer = Box::new(AbaloneBoardDrawer(DefaultBoardDrawer::new()));

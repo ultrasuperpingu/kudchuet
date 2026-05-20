@@ -31,7 +31,7 @@ impl Checkers10 {
 				let num_str = if is_queen { &piece_code[1..] } else { piece_code };
 				
 				match num_str.parse::<u8>() {
-					Ok(num) if num >= 1 && num <= 50 => {
+					Ok(num) if (1..=50).contains(&num) => {
 						let idx = (num - 1) as usize;
 						match color_char {
 							'W' | 'w' => {

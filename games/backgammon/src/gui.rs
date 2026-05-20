@@ -2,14 +2,14 @@ use eframe::egui;
 use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke, StrokeKind};
 
 use kudchuet::ai::MoveSearcherBuilder;
+use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
+use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
 use kudchuet::Player;
-use kudchuet::gui::board_app::GenericBoardApp;
-use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 
-use crate::rules::{P1_BAR, P1_OUT, P2_BAR, P2_OUT};
 use crate::game::{BackgammonMaterialEval, BackgammonSimpleEval};
+use crate::rules::{P1_BAR, P1_OUT, P2_BAR, P2_OUT};
 
 use super::rules::{Backgammon, Move};
 
@@ -24,13 +24,32 @@ impl EGUIPieceType for Piece {
 		match self {
 			Piece::Player1(nb) => Shape::Circle {
 				fill_color: Some(Color32::RED),
-				text: if *nb > 1 { Some(TextData {text: nb.to_string(), size: 0.5, color: Color32::BLACK }) } else { None },
+				text: if *nb > 1 {
+					Some(TextData {
+						text: nb.to_string(),
+						size: 0.5,
+						color: Color32::BLACK,
+					})
+				} else {
+					None
+				},
 				size: 0.98,
-				stroke: Some(StrokeData { stroke: Stroke::new(3.0, Color32::BLACK), kind: StrokeKind::Inside }),
+				stroke: Some(StrokeData {
+					stroke: Stroke::new(3.0, Color32::BLACK),
+					kind: StrokeKind::Inside,
+				}),
 			},
 			Piece::Player2(nb) => Shape::Circle {
 				fill_color: Some(Color32::BLACK),
-				text: if *nb > 1 { Some(TextData {text: nb.to_string(), size: 0.5, color: Color32::WHITE }) } else { None },
+				text: if *nb > 1 {
+					Some(TextData {
+						text: nb.to_string(),
+						size: 0.5,
+						color: Color32::WHITE,
+					})
+				} else {
+					None
+				},
 				size: 0.98,
 				stroke: None,
 			},
@@ -52,14 +71,16 @@ impl BoardMove<Backgammon> for Move {
 		seq
 	}
 	fn compute_intermediate_state(&self, state: &Backgammon, clicks: &[u16]) -> Option<Backgammon> {
-		if clicks.len() < 2 { return None; }
+		if clicks.len() < 2 {
+			return None;
+		}
 
 		let mut sim = state.clone();
 		let mut i = 0;
 
 		while i + 1 < clicks.len() {
 			let from = clicks[i] as u8;
-			let to = clicks[i+1] as u8;
+			let to = clicks[i + 1] as u8;
 			sim.apply_single_move(from, to);
 			i += 2;
 		}
@@ -71,22 +92,49 @@ impl BoardMove<Backgammon> for Move {
 impl Backgammon {
 	fn bar_piece(&self, y: u8) -> Option<Piece> {
 		match y {
-			4 => if self.on_bar[0] > 0 { Some(Piece::Player1(self.on_bar[0]))} else {None},
-			5 => if self.on_bar[1] > 0 { Some(Piece::Player2(self.on_bar[1]))} else {None},
-			_ => None
+			4 => {
+				if self.on_bar[0] > 0 {
+					Some(Piece::Player1(self.on_bar[0]))
+				} else {
+					None
+				}
+			}
+			5 => {
+				if self.on_bar[1] > 0 {
+					Some(Piece::Player2(self.on_bar[1]))
+				} else {
+					None
+				}
+			}
+			_ => None,
 		}
 	}
 	fn out_piece(&self, y: u8) -> Option<Piece> {
 		match y {
-			4 => if self.outside[0] > 0 { Some(Piece::Player1(self.outside[0]))} else {None},
-			5 => if self.outside[1] > 0 { Some(Piece::Player2(self.outside[1]))} else {None},
-			_ => None
+			4 => {
+				if self.outside[0] > 0 {
+					Some(Piece::Player1(self.outside[0]))
+				} else {
+					None
+				}
+			}
+			5 => {
+				if self.outside[1] > 0 {
+					Some(Piece::Player2(self.outside[1]))
+				} else {
+					None
+				}
+			}
+			_ => None,
 		}
 	}
-
 }
 fn col(x: u8) -> u8 {
-	if x > 6 { x - 1 } else { x }
+	if x > 6 {
+		x - 1
+	} else {
+		x
+	}
 }
 impl BoardGame for Backgammon {
 	type PieceType = Piece;
@@ -114,14 +162,14 @@ impl BoardGame for Backgammon {
 				} else {
 					12 + col(x)
 				}
-			},
+			}
 			0..=4 => {
 				if x == 6 {
 					u8::MAX
 				} else {
 					11 - col(x)
 				}
-			},
+			}
 			_ => return None,
 		} as usize;
 		if index == u8::MAX as usize {
@@ -152,7 +200,7 @@ impl BoardGame for Backgammon {
 				} else {
 					Some(Piece::Player1(1))
 				}
-			} else if y < 5 && y < content as u8 || y >= 5 && 9 - y < content as u8{
+			} else if y < 5 && y < content as u8 || y >= 5 && 9 - y < content as u8 {
 				Some(Piece::Player1(1))
 			} else {
 				None
@@ -189,9 +237,9 @@ impl BoardGame for Backgammon {
 			} else {
 				P1_OUT as u16
 			}
-		} else if (x,y) == (6, 4) {
+		} else if (x, y) == (6, 4) {
 			P1_BAR as u16
-		} else if (x,y) == (6, 5) {
+		} else if (x, y) == (6, 5) {
 			P2_BAR as u16
 		} else {
 			u8::MAX as u16
@@ -213,12 +261,16 @@ impl BoardGame for Backgammon {
 		}
 		let line = index as u8 / 12;
 		let mut col = index as u8 % 12;
-		
+
 		if line == 0 {
-			if col > 5 { col+=1; }
-			(12-col, 0)
+			if col > 5 {
+				col += 1;
+			}
+			(12 - col, 0)
 		} else {
-			if col > 5 { col+=1; }
+			if col > 5 {
+				col += 1;
+			}
 			(col, 9)
 		}
 	}
@@ -251,30 +303,52 @@ fn dice_string(dice: u8) -> String {
 		4 => "🎲4".into(), //⚃
 		5 => "🎲5".into(), //⚄
 		6 => "🎲6".into(), //⚅
-		_ => dice.to_string()
+		_ => dice.to_string(),
 	}
 }
 
 struct BackgammonSquareDrawer;
-impl SquareDrawer<Backgammon> for BackgammonSquareDrawer
-{
-	fn draw(&self, _painter: &egui::Painter, _style: &BoardStyle, _game: &Backgammon, _square: &Rect, _x_coord:u8, _y_coord:u8) {
+impl SquareDrawer<Backgammon> for BackgammonSquareDrawer {
+	fn draw(
+		&self,
+		_painter: &egui::Painter,
+		_style: &BoardStyle,
+		_game: &Backgammon,
+		_square: &Rect,
+		_x_coord: u8,
+		_y_coord: u8,
+	) {
 	}
-	fn draw_overlay(&self, painter: &egui::Painter, style: &BoardStyle, game: &Backgammon, board_rect: &Rect, cell_size: f32) {
+	fn draw_overlay(
+		&self,
+		painter: &egui::Painter,
+		style: &BoardStyle,
+		game: &Backgammon,
+		board_rect: &Rect,
+		cell_size: f32,
+	) {
 		painter.rect_filled(*board_rect, 0, style.uniform_color);
 		let center = board_rect.center();
 		let left_bottom = board_rect.left_bottom();
 		let left_top = board_rect.left_top();
 		for i in 0..6 {
 			let colors = if style.checkerboard_mod == CheckerBoardMod::EvenDark {
-				if i % 2 == 0 { (style.dark_color, style.light_color) } else {(style.light_color, style.dark_color)}
+				if i % 2 == 0 {
+					(style.dark_color, style.light_color)
+				} else {
+					(style.light_color, style.dark_color)
+				}
 			} else {
-				if i % 2 == 1 { (style.dark_color, style.light_color) } else {(style.light_color, style.dark_color)}
+				if i % 2 == 1 {
+					(style.dark_color, style.light_color)
+				} else {
+					(style.light_color, style.dark_color)
+				}
 			};
 			let points = vec![
 				Pos2::new(left_bottom.x + i as f32 * cell_size, left_bottom.y),
 				Pos2::new(left_bottom.x + (i as f32 + 0.5) * cell_size, center.y),
-				Pos2::new(left_bottom.x + (i+1) as f32 * cell_size, left_bottom.y),
+				Pos2::new(left_bottom.x + (i + 1) as f32 * cell_size, left_bottom.y),
 			];
 			painter.add(egui::Shape::convex_polygon(
 				points,
@@ -284,7 +358,7 @@ impl SquareDrawer<Backgammon> for BackgammonSquareDrawer
 			let points = vec![
 				Pos2::new(left_top.x + i as f32 * cell_size, left_top.y),
 				Pos2::new(left_top.x + (i as f32 + 0.5) * cell_size, center.y),
-				Pos2::new(left_top.x + (i+1) as f32 * cell_size, left_top.y),
+				Pos2::new(left_top.x + (i + 1) as f32 * cell_size, left_top.y),
 			];
 			painter.add(egui::Shape::convex_polygon(
 				points,
@@ -292,9 +366,9 @@ impl SquareDrawer<Backgammon> for BackgammonSquareDrawer
 				Stroke::new(0.0, Color32::BLACK),
 			));
 			let points = vec![
-				Pos2::new(left_bottom.x + (i+7) as f32 * cell_size, left_bottom.y),
-				Pos2::new(left_bottom.x + ((i+7) as f32 + 0.5) * cell_size, center.y),
-				Pos2::new(left_bottom.x + (i+8) as f32 * cell_size, left_bottom.y),
+				Pos2::new(left_bottom.x + (i + 7) as f32 * cell_size, left_bottom.y),
+				Pos2::new(left_bottom.x + ((i + 7) as f32 + 0.5) * cell_size, center.y),
+				Pos2::new(left_bottom.x + (i + 8) as f32 * cell_size, left_bottom.y),
 			];
 			painter.add(egui::Shape::convex_polygon(
 				points,
@@ -302,9 +376,9 @@ impl SquareDrawer<Backgammon> for BackgammonSquareDrawer
 				Stroke::new(0.0, Color32::BLACK),
 			));
 			let points = vec![
-				Pos2::new(left_top.x + (i+7) as f32 * cell_size, left_top.y),
-				Pos2::new(left_top.x + ((i+7) as f32 + 0.5) * cell_size, center.y),
-				Pos2::new(left_top.x + (i+8) as f32 * cell_size, left_top.y),
+				Pos2::new(left_top.x + (i + 7) as f32 * cell_size, left_top.y),
+				Pos2::new(left_top.x + ((i + 7) as f32 + 0.5) * cell_size, center.y),
+				Pos2::new(left_top.x + (i + 8) as f32 * cell_size, left_top.y),
 			];
 			painter.add(egui::Shape::convex_polygon(
 				points,
@@ -314,42 +388,68 @@ impl SquareDrawer<Backgammon> for BackgammonSquareDrawer
 		}
 		painter.rect_filled(
 			Rect {
-				min: Pos2 { x: center.x - cell_size, y: board_rect.top() },
-				max: Pos2 { x: center.x, y: board_rect.bottom() },
+				min: Pos2 {
+					x: center.x - cell_size,
+					y: board_rect.top(),
+				},
+				max: Pos2 {
+					x: center.x,
+					y: board_rect.bottom(),
+				},
 			},
 			0.0,
-			style.dark_color
+			style.dark_color,
 		);
 		painter.rect_filled(
 			Rect {
-				min: Pos2 { x: board_rect.right() - cell_size, y: board_rect.top() },
-				max: Pos2 { x: board_rect.right(), y: board_rect.bottom() },
+				min: Pos2 {
+					x: board_rect.right() - cell_size,
+					y: board_rect.top(),
+				},
+				max: Pos2 {
+					x: board_rect.right(),
+					y: board_rect.bottom(),
+				},
 			},
 			0.0,
-			style.dark_color
+			style.dark_color,
 		);
 		painter.line_segment(
 			[
-				Pos2{x:board_rect.center_top().x - cell_size*0.5, y: board_rect.center_top().y},
-			 	Pos2{x:board_rect.center_bottom().x - cell_size*0.5, y: board_rect.center_bottom().y},
+				Pos2 {
+					x: board_rect.center_top().x - cell_size * 0.5,
+					y: board_rect.center_top().y,
+				},
+				Pos2 {
+					x: board_rect.center_bottom().x - cell_size * 0.5,
+					y: board_rect.center_bottom().y,
+				},
 			],
-			Stroke::new(3.0, Color32::BLACK)
+			Stroke::new(3.0, Color32::BLACK),
 		);
 		if game.dice.len() >= 2 {
 			painter.text(
-				Pos2{x:center.x - 0.5 * cell_size, y: board_rect.top()},
+				Pos2 {
+					x: center.x - 0.5 * cell_size,
+					y: board_rect.top(),
+				},
 				Align2::CENTER_TOP,
-				dice_string(game.dice[0])+"\n"+dice_string(game.dice[1]).as_str(),
-				FontId::monospace(cell_size*0.5),
-				Color32::WHITE
+				dice_string(game.dice[0]) + "\n" + dice_string(game.dice[1]).as_str(),
+				FontId::monospace(cell_size * 0.5),
+				Color32::WHITE,
 			);
 		}
 	}
 }
 pub fn create_board() -> GenericBoardApp<Backgammon> {
-	let ai_provider = MoveSearcherBuilder::new("Material".into(), BackgammonMaterialEval::default(), 4);
-	let ai_provider2 = MoveSearcherBuilder::new("Simple".into(), BackgammonSimpleEval::default(), 4);
-	let mut board = GenericBoardApp::new(Backgammon::new(), vec![Box::new(ai_provider), Box::new(ai_provider2)]);
-	board.board_drawer.set_square_drawer(Box::new(BackgammonSquareDrawer{}));
+	let ai_provider = MoveSearcherBuilder::new("Material", BackgammonMaterialEval, 4);
+	let ai_provider2 = MoveSearcherBuilder::new("Simple", BackgammonSimpleEval, 4);
+	let mut board = GenericBoardApp::new(
+		Backgammon::new(),
+		vec![Box::new(ai_provider), Box::new(ai_provider2)],
+	);
+	board
+		.board_drawer
+		.set_square_drawer(Box::new(BackgammonSquareDrawer {}));
 	board
 }

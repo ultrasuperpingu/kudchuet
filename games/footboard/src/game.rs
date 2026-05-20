@@ -23,12 +23,12 @@ impl Game for FootBoard {
 	}
 
 	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
-		let mut s=*state;
+		let mut s=state.clone();
 		s.play_unchecked(&m);
 		Some(s)
 	}
 	fn get_outcome(state: &Self::S) -> GameOutcome {
-		state.result().into()
+		state.result()
 	}
 
 	fn get_hash(state: &Self::S) -> u64 {

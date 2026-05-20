@@ -89,17 +89,7 @@ pub struct Move {
 impl EinsteinWurfeltNicht {
 	pub fn legal_moves(&self) -> Vec<MovePlay> {
 		let mut moves = vec![];
-		if self.dice.is_none() {
-			moves = vec![
-				MovePlay::Dice(1),
-				MovePlay::Dice(2),
-				MovePlay::Dice(3),
-				MovePlay::Dice(4),
-				MovePlay::Dice(5),
-				MovePlay::Dice(6),
-			];
-		} else {
-			let d = self.dice.unwrap();
+		if let Some(d) = self.dice {
 			let array = if self.is_red { &self.red } else { &self.blue };
 			let neighbors = if self.is_red {
 				&NEIGHBORS_RED
@@ -138,6 +128,15 @@ impl EinsteinWurfeltNicht {
 					}
 				}
 			}
+		} else {
+			moves = vec![
+				MovePlay::Dice(1),
+				MovePlay::Dice(2),
+				MovePlay::Dice(3),
+				MovePlay::Dice(4),
+				MovePlay::Dice(5),
+				MovePlay::Dice(6),
+			];
 		}
 		moves
 	}

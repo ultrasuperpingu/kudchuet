@@ -24,7 +24,7 @@ pub enum Action {
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default, Hash)]
 pub struct Move (pub(crate) [Option<Action>;3]);
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Diaballik {
 	pub(crate) player1: Bitboard7x7,
 	pub(crate) player2: Bitboard7x7,
@@ -112,6 +112,7 @@ impl Diaballik {
 		let empty = all.flipped();
 		Self::generate_possible_actions(mine, ball, all, empty,theirs, moves, 0, moves[0], false);
 	}
+	#[allow(clippy::too_many_arguments)]
 	fn generate_possible_actions(
 			player_mask: Bitboard7x7,
 			ball: u8,
@@ -135,7 +136,7 @@ impl Diaballik {
 						continue;
 					}
 					let a=Action::Move { from: p as u8, to: to as u8 };
-					let mut mv = last_move.clone();
+					let mut mv = last_move;
 					mv.0[current_action_idx as usize] = Some(a);
 					moves.push(mv);
 					let mut player_mask_after=player_mask;

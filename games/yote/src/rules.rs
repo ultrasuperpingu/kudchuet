@@ -61,7 +61,7 @@ impl YoteRules {
 	
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Yote {
 	pub white: Bitboard6x5,
 	pub black: Bitboard6x5,

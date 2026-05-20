@@ -1,10 +1,11 @@
 use bitboard::Bitboard;
-use eframe::egui::{self, Pos2};
+use eframe::egui::{self, Painter, Pos2, Rect, Vec2};
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
+use kudchuet::ai::minimax::MCTS;
+use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
-use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, HexSquareDrawer};
+use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
 
@@ -22,23 +23,27 @@ pub enum Piece {
 impl EGUIPieceType for Piece {
 	fn shape(&self) -> Shape {
 		match self {
-			Piece::Player1 => Shape::Circle {
+			Piece::Player1 => Shape::RegularPolygon {
 				fill_color: Some(Color32::BLUE),
 				text: None,
-				size: 0.8,
+				size: 1.0,
 				stroke: Some(StrokeData {
 					stroke: Stroke::new(3.0, Color32::BLACK),
 					kind: StrokeKind::Inside,
 				}),
+				sides: 6,
+				angle: 1.0 / 6.0,
 			},
-			Piece::Player2 => Shape::Circle {
+			Piece::Player2 => Shape::RegularPolygon {
 				fill_color: Some(Color32::RED),
 				text: None,
-				size: 0.8,
+				size: 1.0,
 				stroke: Some(StrokeData {
 					stroke: Stroke::new(3.0, Color32::BLACK),
 					kind: StrokeKind::Inside,
 				}),
+				sides: 6,
+				angle: 1.0 / 6.0,
 			},
 		}
 	}
@@ -57,11 +62,11 @@ impl BoardGame for Hex {
 	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
-		7
+		HexBoard::WIDTH
 	}
 
 	fn height(&self) -> u8 {
-		7
+		HexBoard::HEIGHT
 	}
 
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
@@ -84,17 +89,173 @@ impl BoardGame for Hex {
 
 	fn default_style() -> BoardStyle {
 		BoardStyle {
-			checkerboard_mod: CheckerBoardMod::OddDark,
-			uniform_color: Color32::from_rgb(40, 70, 125),
+			checkerboard_mod: CheckerBoardMod::None,
+			uniform_color: Color32::from_rgb(230, 200, 205),
 			dark_color: Color32::from_rgb(60, 45, 30),
 			light_color: Color32::from_rgb(200, 175, 140),
 			show_coordinates_mod: CoordMod::None,
-			square_stroke_color: None,
+			square_stroke_color: Some(Color32::BLACK),
+			empty_cell_shape: Some(Shape::RegularPolygon {
+				fill_color: Some(Color32::from_rgb(200, 200, 210)),
+				size: 1.0,
+				sides: 6,
+				text: None,
+				stroke: Some(StrokeData {
+					stroke: Stroke {
+						width: 1.0,
+						color: Color32::BLACK,
+					},
+					kind: StrokeKind::Inside,
+				}),
+				angle: 1.0 / 6.0,
+			}),
 			..Default::default()
 		}
 	}
 }
 
+#[derive(Default)]
+pub struct HexSquareDrawer {}
+impl<G> SquareDrawer<G> for HexSquareDrawer
+where
+	G: BoardGame,
+	G::M: BoardMove<G>,
+{
+	fn draw(
+		&self,
+		painter: &Painter,
+		style: &BoardStyle,
+		_game: &G,
+		square: &Rect,
+		x_coord: u8,
+		y_coord: u8,
+	) {
+		let (bg_color, _txt_color) = match style.checkerboard_mod {
+			CheckerBoardMod::None => (style.uniform_color, Color32::BLACK),
+			CheckerBoardMod::EvenDark => {
+				if (x_coord + y_coord) % 2 == 1 {
+					(style.light_color, Color32::BLACK)
+				} else {
+					(style.dark_color, Color32::WHITE)
+				}
+			}
+			CheckerBoardMod::OddDark => {
+				if (x_coord + y_coord).is_multiple_of(2) {
+					(style.light_color, Color32::BLACK)
+				} else {
+					(style.dark_color, Color32::WHITE)
+				}
+			}
+		};
+		let mut points = Vec::with_capacity(6);
+		let center = square.center();
+		let radius = square.width() / 2.0;
+
+		for i in 0..6 {
+			let theta = i as f32 / 6.0 * std::f32::consts::TAU + std::f32::consts::FRAC_PI_6;
+			let p = center + egui::Vec2::new(theta.cos(), theta.sin()) * radius;
+			points.push(p);
+		}
+		painter.add(egui::Shape::convex_polygon(
+			points.clone(),
+			bg_color,
+			egui::Stroke::NONE,
+		));
+
+		if let Some(color) = style.square_stroke_color {
+			painter.line(points, egui::Stroke::new(1.0, color));
+		}
+	}
+	fn draw_overlay(
+		&self,
+		painter: &egui::Painter,
+		_style: &BoardStyle,
+		_game: &G,
+		board_rect: &Rect,
+		_cell_size: f32,
+	) {
+		let mut points = Vec::with_capacity(4);
+		points.push(board_rect.left_top());
+		points.push(
+			board_rect.left_top()
+				+ Vec2 {
+					x: 0.0,
+					y: (_game.height() + 1) as f32 * _cell_size * 0.75,
+				},
+		);
+		points.push(
+			board_rect.right_top()
+				+ Vec2 {
+					x: 0.0,
+					y: (_game.height() + 1) as f32 * _cell_size * 0.75,
+				},
+		);
+		points.push(board_rect.right_top());
+		painter.add(egui::Shape::convex_polygon(
+			points.clone(),
+			Color32::RED,
+			egui::Stroke::NONE,
+		));
+
+		points.clear();
+		points.push(board_rect.left_top());
+		points.push(
+			board_rect.left_top()
+				+ Vec2 {
+					x: 0.0,
+					y: _game.height() as f32 * _cell_size * 0.75,
+				},
+		);
+		points.push(
+			board_rect.left_top()
+				+ Vec2 {
+					x: _cell_size,
+					y: _game.height() as f32 * _cell_size * 0.75 - _cell_size,
+				},
+		);
+		points.push(
+			board_rect.left_top()
+				+ Vec2 {
+					x: _game.width() as f32 * _cell_size * SQRT_3 / 4.0,
+					y: 0.0,
+				},
+		);
+		painter.add(egui::Shape::convex_polygon(
+			points.clone(),
+			Color32::BLUE,
+			egui::Stroke::NONE,
+		));
+
+		points.clear();
+		points.push(board_rect.right_top());
+		points.push(
+			board_rect.right_top()
+				+ Vec2 {
+					x: -_cell_size * 0.75,
+					y: 0.0,
+				},
+		);
+		points.push(
+			board_rect.right_top()
+				+ Vec2 {
+					x: -(_game.width() as f32 * _cell_size * SQRT_3 / 4.0) - _cell_size * 0.75,
+					y: (_game.height() + 1) as f32 * _cell_size * 0.75 - _cell_size,
+				},
+		);
+		points.push(
+			board_rect.right_top()
+				+ Vec2 {
+					x: 0.0,
+					y: (_game.height() + 1) as f32 * _cell_size * 0.75,
+				},
+		);
+		painter.add(egui::Shape::convex_polygon(
+			points.clone(),
+			Color32::BLUE,
+			egui::Stroke::NONE,
+		));
+	}
+}
 const SQRT_3: f32 = 1.7320508;
 
 #[derive(Default)]
@@ -196,10 +357,6 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 		w: u8,
 		h: u8,
 	) -> Option<(u8, u8)> {
-		//if !board_rect.contains(pos) {
-		//	return None;
-		//}
-
 		let x_off = pos.x - board_rect.left();
 		let y_off = pos.y - board_rect.top();
 
@@ -236,14 +393,15 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 		let cell_size = (avail_w / w as f32).min(avail_h / h as f32);
 		let board_width = cell_size * (w as f32 + h as f32 / 2.0) * SQRT_3 / 2.0;
 		//let board_width  = cell_size * w as f32;
-		let board_height = cell_size as f32 / 0.75 * h as f32;
+		let board_height = cell_size / 0.75 * h as f32;
 		(cell_size, board_width, board_height)
 	}
 }
 pub fn create_board() -> GenericBoardApp<Hex> {
-	let ai_provider: Vec<Box<dyn AIEngineProvider<Hex>>> = vec![Box::new(
-		MoveSearcherBuilder::new("Material".into(), HexMaterialEval::default(), 4),
-	)];
+	let ai_provider: Vec<Box<dyn AIEngineProvider<Hex>>> = vec![
+		Box::new(MoveSearcherBuilder::new("Material", HexMaterialEval, 4)),
+		Box::new(AIBuilder::<Hex, MCTS<Hex>>::new("MCTS")),
+	];
 	let mut board = GenericBoardApp::new(Hex::new(), ai_provider);
 	board.board_drawer = Box::new(HexBoardDrawer::default());
 	board
