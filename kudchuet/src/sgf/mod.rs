@@ -1,6 +1,6 @@
 use crate::{
 	Player,
-	ai::minimax::{
+	ai::move_search::{
 		Game,
 		gametree::{GameTree, Node, StateInfo},
 	},

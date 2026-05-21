@@ -2,7 +2,7 @@
 #![allow(dead_code)]
 
 use kudchuet::{GameOutcome, Player};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
@@ -374,7 +374,7 @@ const HASHES: [u64; 100] = [
 ];
 #[cfg(test)]
 mod tests {
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 use super::Board;
 

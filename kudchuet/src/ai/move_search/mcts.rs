@@ -7,10 +7,10 @@ use std::{
 };
 
 #[cfg(not(target_arch = "wasm32"))]
-use crate::ai::minimax::sync_util::timeout_signal;
+use crate::ai::move_search::sync_util::timeout_signal;
 use crate::{
 	GameOutcome, Player, StrategyWithOptions,
-	ai::minimax::{
+	ai::move_search::{
 		Evaluation, Game, SearchStopSignal, Strategy,
 		gametree::{GameTree, Node, StateInfo},
 		util::AppliedMove,

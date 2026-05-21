@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use crate::ai::minimax::{Game, Strategy};
+use crate::ai::move_search::{Game, Strategy};
 
 pub struct Random<G: Game> {
 	game_type: PhantomData<G>,

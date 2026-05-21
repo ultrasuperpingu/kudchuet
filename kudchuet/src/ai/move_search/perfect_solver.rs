@@ -1,6 +1,6 @@
 use crate::{
 	StrategyWithOptions,
-	ai::minimax::{Evaluation, Game, Strategy, gametree::GameTree},
+	ai::move_search::{Evaluation, Game, Strategy, gametree::GameTree},
 };
 
 #[derive(Clone)]
@@ -24,7 +24,7 @@ where
 	fn choose_move(&mut self, state: &G::S) -> Option<G::M> {
 		if self.0.is_none() {
 			let mut tree = GameTree::<G>::from(state.clone());
-			let _res = tree.expand_all(tree.root_id, false);
+			let _res = tree.expand_all_recursive(tree.root_id, false);
 			self.0 = Some(tree);
 		} else {
 			let tree = self.0.as_mut().unwrap();
@@ -34,7 +34,7 @@ where
 				//tree.cleanup();
 			} else {
 				let mut tree = GameTree::<G>::from(state.clone());
-				tree.expand_all(tree.root_id, false);
+				tree.expand_all_recursive(tree.root_id, false);
 				self.0 = Some(tree);
 			}
 		}

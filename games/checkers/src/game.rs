@@ -4,7 +4,7 @@ use std::hash::Hasher;
 use kudchuet::{GameOutcome, Player};
 use super::rules::{Checkers10, Move};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 impl Game for Checkers10 {
 	type S =  Checkers10;
@@ -66,7 +66,7 @@ impl Evaluator for CheckersEval {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 use super::Checkers10;
 	//https://damforum.nl/viewtopic.php?t=2308

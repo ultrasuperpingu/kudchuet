@@ -1,6 +1,6 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 
 use kudchuet::{GameOutcome, Player};
@@ -71,9 +71,9 @@ impl Evaluator for FootboardEvalDumb {
 #[cfg(test)]
 mod tests {
 	
-	use kudchuet::ai::minimax::util::perft_tt;
+	use kudchuet::ai::move_search::util::perft_tt;
 #[cfg(not(target_arch = "wasm32"))]
-	use kudchuet::ai::minimax::{Game, IterativeOptions, ParallelOptions, ybw::ParallelSearch, Strategy};
+	use kudchuet::ai::move_search::{Game, IterativeOptions, ParallelOptions, ybw::ParallelSearch, Strategy};
 	#[cfg(not(target_arch = "wasm32"))]
 	use super::FootboardEvalDumb;
 

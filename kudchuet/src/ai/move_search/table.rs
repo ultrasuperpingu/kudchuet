@@ -1,4 +1,4 @@
-use crate::ai::minimax::Replacement;
+use crate::ai::move_search::Replacement;
 
 use super::common::{move_to_front, unclamp_value};
 use super::interface::*;

@@ -3,7 +3,7 @@ use shakmaty::{Chess, Color, EnPassantMode, Move, Position, zobrist::Zobrist64};
 use super::evaluation::evaluate_materials;
 
 use kudchuet::{GameOutcome, Player};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 #[derive(Clone, Debug)]
 pub struct ChessGame;
@@ -92,7 +92,7 @@ impl Evaluator for ChessPosEval {
 }
 #[cfg(test)]
 mod tests {
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 	use shakmaty::Chess;
 	use super::super::chess::ChessGame;
 	// cargo test --release -p chess@0.1 chess::tests::perft_test -- --nocapture

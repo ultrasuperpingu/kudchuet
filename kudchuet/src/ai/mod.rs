@@ -2,7 +2,7 @@ pub mod cli_engine;
 pub mod engine_manager;
 pub mod external_engine;
 pub mod internal_engine;
-pub mod minimax;
+pub mod move_search;
 pub mod uci;
 
 use std::{collections::HashMap, fmt::Debug, pin::Pin, time::Duration};
@@ -84,7 +84,7 @@ pub struct MoveSearcherBuilder<G, E>
 where
 	G: BoardGame,
 	G::M: BoardMove<G>,
-	E: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static,
+	E: move_search::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static,
 {
 	name: String,
 	evaluator: E,
@@ -96,7 +96,7 @@ impl<G, T> MoveSearcherBuilder<G, T>
 where
 	G: BoardGame,
 	G::M: BoardMove<G>,
-	T: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static,
+	T: move_search::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static,
 {
 	pub fn new(name: impl Into<String>, evaluator: T, initial_depth: u8) -> Self {
 		Self {
@@ -112,7 +112,7 @@ impl<G, T> AIEngineProvider<G> for MoveSearcherBuilder<G, T>
 where
 	G: BoardGame + Send + Sync + 'static,
 	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
-	T: minimax::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static + Debug,
+	T: move_search::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static + Debug,
 {
 	fn get_name(&self) -> &str {
 		&self.name

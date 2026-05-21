@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::gui::Place;
 
-use kudchuet::{GameOutcome, Player, ai::minimax::{Evaluation, Evaluator, Game}};
+use kudchuet::{GameOutcome, Player, ai::move_search::{Evaluation, Evaluator, Game}};
 #[derive(Clone, Debug)]
 pub struct Mancala {
 	// First index by player.
@@ -190,7 +190,7 @@ const HASHES: [u64; 14] = [
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::{IterativeOptions, iterative::IterativeSearch, util::perft, Strategy, Game};
+	use kudchuet::ai::move_search::{IterativeOptions, iterative::IterativeSearch, util::perft, Strategy, Game};
 
 use super::super::mancala::{Mancala, EvaluatorMancala};
 	// cargo test --release awale::mancala::tests::perft_test -- --nocapture

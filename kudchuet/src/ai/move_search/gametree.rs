@@ -1,6 +1,6 @@
 use crate::{
 	GameOutcome, Player,
-	ai::minimax::{Evaluation, Game, util::AppliedMove},
+	ai::move_search::{Evaluation, Game, util::AppliedMove},
 	utils::NHHashMap,
 };
 
@@ -75,6 +75,10 @@ impl<M> Node<M> {
 	pub fn incoming_move(&self) -> Option<&M> {
 		self.incoming_move.as_ref()
 	}
+}
+enum StackEntry {
+	Enter(usize),
+	Exit(usize),
 }
 #[derive(Debug, Clone)]
 pub struct GameTree<G: Game>
@@ -200,7 +204,7 @@ where
 		self.nodes[id].outcome
 	}
 
-	pub fn expand_all(&mut self, node_id: usize, use_pruning: bool) -> GameOutcome
+	pub fn expand_all_recursive(&mut self, node_id: usize, use_pruning: bool) -> GameOutcome
 	where
 		G::S: Clone,
 	{
@@ -241,7 +245,7 @@ where
 					},
 				);
 
-				let result = self.expand_all(child_id, use_pruning);
+				let result = self.expand_all_recursive(child_id, use_pruning);
 				// pruning
 				if use_pruning && result.is_win_for(self.nodes[node_id].player_to_move) {
 					//TODO: o.is_win_for(G::get_next_player(state))
@@ -254,7 +258,12 @@ where
 		self.get_outcome(node_id)
 		//GameOutcome::OnGoing
 	}
-	pub fn expand_all_iterative(&mut self, root_id: usize, use_pruning: bool) -> GameOutcome
+
+	pub fn expand_all_iterative(
+		&mut self,
+		root_id: usize,
+		use_pruning: bool, /*, max_depth: usize*/
+	) -> GameOutcome
 	where
 		G::S: Clone,
 	{
@@ -320,6 +329,110 @@ where
 
 		self.get_outcome(root_id)
 	}
+	pub fn expand_all_iterative2(&mut self, root_id: usize, use_pruning: bool) -> GameOutcome
+	where
+		G::S: Clone,
+	{
+		let mut stack = Vec::new();
+
+		stack.push(StackEntry::Enter(root_id));
+
+		while let Some(entry) = stack.pop() {
+			match entry {
+				StackEntry::Enter(node_id) => {
+					if self.nodes[node_id].outcome.is_ended() {
+						continue;
+					}
+
+					if self.nodes[node_id].untried_moves.is_empty() {
+						stack.push(StackEntry::Exit(node_id));
+						continue;
+					}
+
+					stack.push(StackEntry::Exit(node_id));
+
+					let mut moves = vec![];
+					std::mem::swap(&mut self.nodes[node_id].untried_moves, &mut moves);
+
+					for m in moves {
+						let state = self.get_node_state_mut(node_id).unwrap();
+
+						let new_state = AppliedMove::<G>::applied_clone(state, m);
+
+						let new_hash = G::get_hash(&new_state);
+
+						if let Some(_e) = self.states.get(&new_hash) {
+							let child_id = self.nodes.len();
+							self.nodes.push(Node {
+								state_hash: new_hash,
+								parent: Some(node_id),
+								children: vec![],
+								visits: 0,
+								wins: 0,
+								draws: 0,
+								untried_moves: vec![],
+								player_to_move: G::get_current_player(&new_state),
+								outcome: GameOutcome::OnGoing,
+								depth_to_end: u16::MAX,
+								incoming_move: Some(m),
+							});
+							self.nodes[node_id].children.push(child_id);
+
+							continue;
+						}
+
+						let mut child_moves = vec![];
+
+						let outcome = G::generate_moves(&new_state, &mut child_moves);
+
+						let child_id = self.nodes.len();
+
+						self.nodes.push(Node {
+							state_hash: new_hash,
+							parent: Some(node_id),
+							children: vec![],
+							visits: 0,
+							wins: 0,
+							draws: 0,
+							untried_moves: child_moves,
+							player_to_move: G::get_current_player(&new_state),
+							outcome,
+							depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
+							incoming_move: Some(m),
+						});
+
+						self.nodes[node_id].children.push(child_id);
+
+						self.states.insert(
+							new_hash,
+							StateInfo {
+								state: new_state,
+								expanded_node: child_id,
+							},
+						);
+
+						stack.push(StackEntry::Enter(child_id));
+					}
+				}
+
+				StackEntry::Exit(node_id) => {
+					let result = self.get_outcome(node_id);
+
+					// pruning
+					if use_pruning && result.is_win_for(self.nodes[node_id].player_to_move) {
+						self.nodes[node_id].outcome = result;
+					}
+				}
+			}
+		}
+
+		self.get_outcome(root_id)
+	}
+}
+impl<G: Game> GameTree<G>
+where
+	G::S: Clone,
+{
 	pub fn find_best_proved_move(&self) -> Option<<G as Game>::M> {
 		if self.nodes[self.root_id]
 			.children
@@ -380,6 +493,12 @@ where
 
 		None
 	}
+}
+// Simulation
+impl<G: Game> GameTree<G>
+where
+	G::S: Clone,
+{
 	pub fn simulate(&self, node_id: usize) -> GameOutcome
 	where
 		G::S: Clone,
@@ -430,81 +549,12 @@ where
 
 		result
 	}
-
-	pub fn simulate2(&mut self, node_id: usize) -> GameOutcome
-	where
-		G::S: Clone,
-	{
-		Self::simulate_from_state(self.get_node_state_mut(node_id).unwrap())
-	}
-	pub fn simulate_from_state(state: &mut G::S) -> GameOutcome
-	where
-		G::S: Clone,
-	{
-		let mut moves = Vec::with_capacity(64);
-		Self::simulate_from_state_with_pool(state, &mut moves)
-	}
-	pub fn simulate_from_state_with_pool(
-		state: &mut G::S,
-		moves_pool: &mut Vec<G::M>,
-	) -> GameOutcome
-	where
-		G::S: Clone,
-	{
-		//let outcome = G::get_outcome(&*state);
-		//if outcome.is_ended() {
-		//	return outcome;
-		//}
-
-		let result = G::generate_and_filter_moves(&*state, moves_pool);
-		if result.is_ended() {
-			return result;
-		}
-		if moves_pool.is_empty() {
-			panic!("Unfinished game returns no moves");
-		}
-
-		let m = if G::is_random_move(state) {
-			let mut sum_proba = 0.0;
-			let rand = fastrand::f32();
-			let mut ch_mv = moves_pool.first().unwrap();
-			for mv in moves_pool.iter() {
-				sum_proba += G::get_probability(state, *mv);
-				if sum_proba > rand {
-					ch_mv = mv;
-					break;
-				}
-			}
-			ch_mv
-		} else {
-			fastrand::choice(moves_pool.iter()).unwrap()
-		};
-
-		let mut next = AppliedMove::<G>::new(&mut *state, *m);
-
-		moves_pool.clear();
-		Self::simulate_from_state_with_pool(&mut next, moves_pool)
-	}
-
-	pub fn get_root(&self) -> &Node<G::M> {
-		&self.nodes[self.root_id]
-	}
-	pub fn get_root_id(&self) -> usize {
-		self.root_id
-	}
-	pub fn nb_nodes(&self) -> usize {
-		self.nodes.len()
-	}
-	pub fn set_root_id(&mut self, id: usize) -> bool {
-		if id < self.nodes.len() {
-			self.root_id = id;
-			//self.nodes[id].parent = None;
-			true
-		} else {
-			false
-		}
-	}
-
+}
+// Cleanup
+impl<G: Game> GameTree<G>
+where
+	G::S: Clone,
+{
 	pub fn cleanup(&mut self) -> NHHashMap<usize, usize> {
 		let mut ids = NHHashMap::default();
 		self.collect_ids(self.root_id, &mut ids);
@@ -560,61 +610,12 @@ where
 			self.collect_ids(*i, ids);
 		}
 	}
-	pub fn get_root_state(&self) -> &G::S {
-		&self.states[&self.nodes[self.root_id].state_hash].state
-	}
-	pub fn get_state(&self, hash: u64) -> Option<&G::S> {
-		self.states.get(&hash).map(|s| &s.state)
-	}
-	pub fn get_state_mut(&mut self, hash: u64) -> Option<&mut G::S> {
-		self.states.get_mut(&hash).map(|s| &mut s.state)
-	}
-	pub fn get_state_expanded_node_id(&self, hash: u64) -> Option<usize> {
-		Some(*self.states.get(&hash).map(|s| &s.expanded_node)?)
-	}
-	pub fn get_node_state(&self, id: usize) -> Option<&G::S> {
-		self.states
-			.get(&self.nodes[id].state_hash)
-			.map(|s| &s.state)
-	}
-	pub fn get_node_state_mut(&mut self, id: usize) -> Option<&mut G::S> {
-		self.states
-			.get_mut(&self.nodes[id].state_hash)
-			.map(|s| &mut s.state)
-	}
-	pub fn get_node_state_info(&self, id: usize) -> Option<&StateInfo<G::S>> {
-		self.states.get(&self.nodes[id].state_hash)
-	}
-	pub fn get_node_state_info_mut(&mut self, id: usize) -> Option<&mut StateInfo<G::S>> {
-		self.states.get_mut(&self.nodes[id].state_hash)
-	}
-	pub fn get_node(&self, id: usize) -> Option<&Node<G::M>> {
-		self.nodes.get(id)
-	}
-	pub fn get_node_mut(&mut self, id: usize) -> Option<&mut Node<G::M>> {
-		self.nodes.get_mut(id)
-	}
-	pub fn get_expanded_node(&self, state_hash: u64) -> Option<&Node<G::M>> {
-		self.nodes.get(self.states.get(&state_hash)?.expanded_node)
-	}
-	pub fn get_expanded_node_mut(&mut self, state_hash: u64) -> Option<&mut Node<G::M>> {
-		self.nodes
-			.get_mut(self.states.get(&state_hash)?.expanded_node)
-	}
-	pub fn get_node_expanded_node(&self, id: usize) -> Option<&Node<G::M>> {
-		let n = self.get_node(id)?;
-		let si = self.states.get(&n.state_hash)?;
-		let expanded = self.nodes.get(si.expanded_node);
-		if let Some(exp) = expanded {
-			return Some(exp);
-		}
-		Some(n)
-	}
-	pub fn get_node_expanded_node_mut(&mut self, id: usize) -> Option<&mut Node<G::M>> {
-		let n = self.get_node(id)?;
-		let si = self.states.get(&n.state_hash)?;
-		self.nodes.get_mut(si.expanded_node)
-	}
+}
+// Print routine
+impl<G: Game> GameTree<G>
+where
+	G::S: Clone,
+{
 	fn dfs_print<W: std::io::Write>(
 		tree: &Vec<Node<G::M>>,
 		id: usize,
@@ -675,7 +676,85 @@ where
 		);
 	}
 }
-
+// Accessors
+impl<G: Game> GameTree<G>
+where
+	G::S: Clone,
+{
+	pub fn get_root(&self) -> &Node<G::M> {
+		&self.nodes[self.root_id]
+	}
+	pub fn get_root_id(&self) -> usize {
+		self.root_id
+	}
+	pub fn nb_nodes(&self) -> usize {
+		self.nodes.len()
+	}
+	pub fn set_root_id(&mut self, id: usize) -> bool {
+		if id < self.nodes.len() {
+			self.root_id = id;
+			//self.nodes[id].parent = None;
+			true
+		} else {
+			false
+		}
+	}
+	pub fn get_root_state(&self) -> &G::S {
+		&self.states[&self.nodes[self.root_id].state_hash].state
+	}
+	pub fn get_state(&self, hash: u64) -> Option<&G::S> {
+		self.states.get(&hash).map(|s| &s.state)
+	}
+	pub fn get_state_mut(&mut self, hash: u64) -> Option<&mut G::S> {
+		self.states.get_mut(&hash).map(|s| &mut s.state)
+	}
+	pub fn get_state_expanded_node_id(&self, hash: u64) -> Option<usize> {
+		Some(*self.states.get(&hash).map(|s| &s.expanded_node)?)
+	}
+	pub fn get_node_state(&self, id: usize) -> Option<&G::S> {
+		self.states
+			.get(&self.nodes[id].state_hash)
+			.map(|s| &s.state)
+	}
+	pub fn get_node_state_mut(&mut self, id: usize) -> Option<&mut G::S> {
+		self.states
+			.get_mut(&self.nodes[id].state_hash)
+			.map(|s| &mut s.state)
+	}
+	pub fn get_node_state_info(&self, id: usize) -> Option<&StateInfo<G::S>> {
+		self.states.get(&self.nodes[id].state_hash)
+	}
+	pub fn get_node_state_info_mut(&mut self, id: usize) -> Option<&mut StateInfo<G::S>> {
+		self.states.get_mut(&self.nodes[id].state_hash)
+	}
+	pub fn get_node(&self, id: usize) -> Option<&Node<G::M>> {
+		self.nodes.get(id)
+	}
+	pub fn get_node_mut(&mut self, id: usize) -> Option<&mut Node<G::M>> {
+		self.nodes.get_mut(id)
+	}
+	pub fn get_expanded_node(&self, state_hash: u64) -> Option<&Node<G::M>> {
+		self.nodes.get(self.states.get(&state_hash)?.expanded_node)
+	}
+	pub fn get_expanded_node_mut(&mut self, state_hash: u64) -> Option<&mut Node<G::M>> {
+		self.nodes
+			.get_mut(self.states.get(&state_hash)?.expanded_node)
+	}
+	pub fn get_node_expanded_node(&self, id: usize) -> Option<&Node<G::M>> {
+		let n = self.get_node(id)?;
+		let si = self.states.get(&n.state_hash)?;
+		let expanded = self.nodes.get(si.expanded_node);
+		if let Some(exp) = expanded {
+			return Some(exp);
+		}
+		Some(n)
+	}
+	pub fn get_node_expanded_node_mut(&mut self, id: usize) -> Option<&mut Node<G::M>> {
+		let n = self.get_node(id)?;
+		let si = self.states.get(&n.state_hash)?;
+		self.nodes.get_mut(si.expanded_node)
+	}
+}
 impl<G: Game> Display for GameTree<G>
 where
 	G::S: Clone,

@@ -4,7 +4,7 @@ use std::hash::{DefaultHasher, Hash};
 use kudchuet::{GameOutcome, Player};
 
 use super::rules::Awale;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 impl Game for Awale {
 	type S = Awale;
@@ -61,7 +61,7 @@ impl Evaluator for AwaleMaterialEval {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use super::super::rules::Awale;
 

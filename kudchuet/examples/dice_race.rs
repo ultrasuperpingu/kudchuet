@@ -9,7 +9,7 @@ extern crate kudchuet;
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 
-use kudchuet::ai::minimax::*;
+use kudchuet::ai::move_search::*;
 use kudchuet::utils::splitmix64;
 use kudchuet::{GameOutcome, Player};
 

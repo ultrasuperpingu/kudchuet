@@ -1,6 +1,6 @@
 use kudchuet::{
 	GameOutcome, Player,
-	ai::minimax::{Evaluation, Evaluator, Game},
+	ai::move_search::{Evaluation, Evaluator, Game},
 };
 
 use super::rules::{Move, Yote};
@@ -101,7 +101,7 @@ impl Evaluator for YoteMaterialEval {
 #[cfg(test)]
 mod tests {
 	use crate::rules::Yote;
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	#[test]
 	fn simple_perft_test() {

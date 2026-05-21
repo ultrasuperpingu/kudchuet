@@ -5,11 +5,11 @@ extern crate kudchuet;
 mod dice_race;
 
 use bencher::Bencher;
-use kudchuet::ai::minimax::{
+use kudchuet::ai::move_search::{
 	ExpectiMinimax, IterativeOptions, IterativeSearch, Strategy,
 };
 #[cfg(not(target_arch = "wasm32"))]
-use kudchuet::ai::minimax::{ParallelOptions, ParallelSearch};
+use kudchuet::ai::move_search::{ParallelOptions, ParallelSearch};
 
 fn bench_expectiminimax(b: &mut Bencher) {
 	let board = dice_race::Board::default();

@@ -1,7 +1,7 @@
 extern crate kudchuet;
 
 use kudchuet::{
-	GameOutcome, Player, ai::minimax::{
+	GameOutcome, Player, ai::move_search::{
 		Evaluation, Evaluator, Game, IterativeOptions, IterativeSearch, Strategy,
 	}
 };

@@ -2,7 +2,7 @@
 
 use kudchuet::{GameOutcome, Player};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use super::rules::{Backgammon, Move};
 
@@ -140,7 +140,7 @@ fn apply_consecutive_bonus(scorep1: &mut i16, scorep2: &mut i16, consecutive: i1
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use super::Backgammon;
 	//cargo test -p backgammon --release game::tests::perft_test -- --nocapture

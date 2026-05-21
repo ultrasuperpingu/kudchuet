@@ -4,8 +4,8 @@ extern crate kudchuet;
 mod nim;
 #[path = "../examples/ttt.rs"]
 mod ttt;
-use kudchuet::ai::minimax::{Game, Strategy};
-use kudchuet::ai::minimax::mcts::MCTS;
+use kudchuet::ai::move_search::{Game, Strategy};
+use kudchuet::ai::move_search::mcts::MCTS;
 
 use crate::nim::NimGame;
 use crate::ttt::TTTGame;

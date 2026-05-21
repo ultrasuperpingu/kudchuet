@@ -2,7 +2,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use kudchuet::{GameOutcome, Player};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use super::rules::{EinsteinWurfeltNicht, MovePlay};
 
@@ -63,7 +63,7 @@ impl Evaluator for EinsteinWurfeltNichtDumbEval {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use super::EinsteinWurfeltNicht;
 	//cargo test -p einstein_wurfelt_nicht --release game::tests::perft_test -- --nocapture

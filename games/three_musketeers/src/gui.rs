@@ -1,6 +1,6 @@
 use eframe::egui;
 use egui::Color32;
-use kudchuet::ai::minimax::{Game, MCTS};
+use kudchuet::ai::move_search::{Game, MCTS};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 
 use crate::bitboard::Bitboard5x5;

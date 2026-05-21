@@ -4,7 +4,7 @@ use super::rules::{ChineseCheckers, Move};
 use crate::bitboard::ChineseCheckerBoard;
 use crate::rules::ChineseCheckersPlayer;
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 use kudchuet::{GameOutcome, Player};
 
 impl Game for ChineseCheckers {
@@ -97,7 +97,7 @@ impl Evaluator for ChineseCheckersMaterialEval {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use super::ChineseCheckers;
 	//cargo test -p chinese_checkers --release game::tests::perft_test -- --nocapture

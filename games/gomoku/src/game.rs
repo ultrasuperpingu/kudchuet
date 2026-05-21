@@ -3,7 +3,7 @@ use kudchuet::{GameOutcome, Player};
 use bitboard::common_bitboards::Goban;
 
 use super::rules::{Gomoku, Move};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 impl Game for Gomoku {
 	type S = Gomoku;
@@ -105,7 +105,7 @@ impl Evaluator for GomokuEvalSimple {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use crate::rules::Gomoku;
 	#[test]

@@ -2,7 +2,7 @@ use std::hash::{DefaultHasher, Hash};
 use std::hash::Hasher;
 
 use kudchuet::{GameOutcome, Player};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use crate::rules::{Cell, Reversi};
 
@@ -77,7 +77,7 @@ impl Evaluator for ReversiEval {
 }
 #[cfg(test)]
 mod tests {
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 	use crate::rules::Reversi;
 
 	// cargo test --release -p reversi game::tests::perft_test -- --nocapture

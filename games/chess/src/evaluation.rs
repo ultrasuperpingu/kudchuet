@@ -1,4 +1,4 @@
-use kudchuet::ai::minimax::{BEST_EVAL, Evaluation, WORST_EVAL};
+use kudchuet::ai::move_search::{BEST_EVAL, Evaluation, WORST_EVAL};
 use shakmaty::{KnownOutcome, Position};
 
 

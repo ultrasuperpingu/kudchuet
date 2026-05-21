@@ -2,7 +2,7 @@
 use bitboard::BitIter;
 use kudchuet::{GameOutcome, Player};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 
 use crate::rules::{Board, NEIGHBORS_HARE};
@@ -92,7 +92,7 @@ impl Evaluator for HareAndHoundsEval {
 #[cfg(test)]
 mod tests {
 	
-	use kudchuet::ai::minimax::{IterativeOptions, Strategy, gametree::GameTree, iterative::IterativeSearch, util::perft};
+	use kudchuet::ai::move_search::{IterativeOptions, Strategy, gametree::GameTree, iterative::IterativeSearch, util::perft};
 	use crate::game::HareAndHoundsEval;
 
 	use super::HareAndHounds;

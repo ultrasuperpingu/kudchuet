@@ -1,7 +1,7 @@
 use eframe::egui;
 use egui::{Color32, Rect};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::ai::minimax::perfect_solver::PerfectSolver;
+use kudchuet::ai::move_search::perfect_solver::PerfectSolver;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::{GameOutcome, Player};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};

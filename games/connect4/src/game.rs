@@ -1,7 +1,7 @@
 use crate::rules::Cell;
 
 use super::rules::{Column, ConnectFour};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 use kudchuet::{GameOutcome, Player};
 
 impl Game for ConnectFour {
@@ -70,11 +70,11 @@ impl Evaluator for ConnectFourEval {
 #[cfg(test)]
 mod tests {
 	use super::ConnectFour;
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	#[test]
 	fn test_solve() {
-		let mut tree = kudchuet::ai::minimax::gametree::GameTree::<ConnectFour>::from(ConnectFour::default());
+		let mut tree = kudchuet::ai::move_search::gametree::GameTree::<ConnectFour>::from(ConnectFour::default());
 		let winner = tree.expand_all_iterative(0, true);
 		println!("Winner: {:?}", winner);
 		println!("nb states: {:?}", tree.states.len());

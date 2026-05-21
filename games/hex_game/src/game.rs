@@ -2,7 +2,7 @@
 
 use kudchuet::{GameOutcome, Player};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use super::rules::{Hex, Move};
 
@@ -49,7 +49,7 @@ impl Evaluator for HexMaterialEval {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use super::Hex;
 	//cargo test -p hex_game --release game::tests::perft_test -- --nocapture

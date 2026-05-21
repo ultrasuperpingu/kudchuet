@@ -12,7 +12,7 @@ use kudchuet::Player;
 use kudchuet::ai::AIBuilder;
 use kudchuet::ai::AIEngineProvider;
 use kudchuet::ai::MoveSearcherBuilder;
-use kudchuet::ai::minimax::mcts::MCTS;
+use kudchuet::ai::move_search::mcts::MCTS;
 use kudchuet::gui::shapes::Shape;
 use kudchuet::gui::{
 	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType,

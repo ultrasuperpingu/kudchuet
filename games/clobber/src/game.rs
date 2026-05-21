@@ -3,7 +3,7 @@
 use bitboard::{BitIter, Bitboard};
 use kudchuet::{GameOutcome, Player};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use crate::rules::{self, Bitboard5x6};
 
@@ -180,7 +180,7 @@ fn flood_fill(bb: Bitboard5x6, start: u8, out: &mut Bitboard5x6) {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use super::Clobber;
 	//cargo test -p clobber --release game::tests::perft_test -- --nocapture

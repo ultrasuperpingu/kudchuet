@@ -3,7 +3,7 @@
 use kudchuet::{GameOutcome, Player};
 
 use crate::rules::{BaghChal, Move};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 impl Game for BaghChal {
 	type S = BaghChal;
@@ -79,7 +79,7 @@ impl Evaluator for BaghChalMaterialEval {
 //    9     85724933628       21.1s   4070769.6
 #[cfg(test)]
 mod tests {
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 	use super::super::game::BaghChal;
 
 	#[test]

@@ -4,7 +4,7 @@ use std::hash::Hasher;
 
 use kudchuet::{GameOutcome, Player};
 
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 use super::rules::{Abalone,Move};
 
 
@@ -71,7 +71,7 @@ impl Evaluator for AbaloneMaterialEval {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use super::super::rules::Abalone;
 

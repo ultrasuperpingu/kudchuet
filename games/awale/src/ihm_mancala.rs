@@ -2,7 +2,7 @@ use eframe::egui;
 
 use kudchuet::{
 	GameOutcome, Player, PlayerType,
-	ai::{AIEngine, AIEngineProvider, MoveSearcherBuilder, minimax::Game},
+	ai::{AIEngine, AIEngineProvider, MoveSearcherBuilder, move_search::Game},
 	gui::{BoardGame, BoardMove},
 	//new_move_searcher,
 };

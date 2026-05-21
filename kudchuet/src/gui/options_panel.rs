@@ -3,7 +3,7 @@ use egui_field_editor::{EguiInspect, EguiInspector, add_button};
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::external_engine::ExternalEngineEntry;
-use crate::ai::minimax::interface::Game;
+use crate::ai::move_search::interface::Game;
 use crate::gui::board_app::GenericBoardApp;
 use crate::gui::{BoardGame, BoardMove};
 

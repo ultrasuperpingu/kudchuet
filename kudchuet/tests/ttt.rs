@@ -5,7 +5,7 @@ mod ttt;
 
 use kudchuet::{
 	GameOutcome,
-	ai::minimax::{ExpectiMinimax, Game, PerfectSolver, Random, mcts::MCTS, util::battle_royale},
+	ai::move_search::{ExpectiMinimax, Game, PerfectSolver, Random, mcts::MCTS, util::battle_royale},
 };
 
 use crate::ttt::TTTGame;
@@ -44,11 +44,51 @@ fn test_ttt_mcts_vs_mcts_always_draws() {
 
 // Test TTT Perfect Solver
 #[test]
-fn test_ttt_perfect() {
+fn test_ttt_recursive() {
 	let mut game = ttt::Board::default();
-	let mut tree: kudchuet::ai::minimax::gametree::GameTree<TTTGame> =
-		kudchuet::ai::minimax::gametree::GameTree::from(game.clone());
+	let mut tree: kudchuet::ai::move_search::gametree::GameTree<TTTGame> =
+		kudchuet::ai::move_search::gametree::GameTree::from(game.clone());
+	assert_eq!(tree.expand_all_recursive(0, false), GameOutcome::Draw);
+	assert_eq!(tree.get_outcome(0), GameOutcome::Draw);
+	tree.print(2);
+	assert_eq!(tree.get_root().depth_to_end(), 9);
+	TTTGame::apply(&mut game, ttt::Place { i: 0 });
+	TTTGame::apply(&mut game, ttt::Place { i: 1 });
+	let node = tree
+		.get_state_expanded_node_id(TTTGame::get_hash(&game))
+		.unwrap();
+	assert_eq!(tree.get_node(node).unwrap().outcome(), GameOutcome::PLAYER1);
+	assert_eq!(tree.get_node(node).unwrap().depth_to_end(), 5);
+	tree.print(2);
+}
+
+// Test TTT Perfect Solver
+#[test]
+fn test_ttt_iterative() {
+	let mut game = ttt::Board::default();
+	let mut tree: kudchuet::ai::move_search::gametree::GameTree<TTTGame> =
+		kudchuet::ai::move_search::gametree::GameTree::from(game.clone());
 	assert_eq!(tree.expand_all_iterative(0, false), GameOutcome::Draw);
+	assert_eq!(tree.get_outcome(0), GameOutcome::Draw);
+	tree.print(2);
+	assert_eq!(tree.get_root().depth_to_end(), 9);
+	TTTGame::apply(&mut game, ttt::Place { i: 0 });
+	TTTGame::apply(&mut game, ttt::Place { i: 1 });
+	let node = tree
+		.get_state_expanded_node_id(TTTGame::get_hash(&game))
+		.unwrap();
+	assert_eq!(tree.get_node(node).unwrap().outcome(), GameOutcome::PLAYER1);
+	assert_eq!(tree.get_node(node).unwrap().depth_to_end(), 5);
+	tree.print(2);
+}
+
+// Test TTT Perfect Solver
+#[test]
+fn test_ttt_perfect_iterative2() {
+	let mut game = ttt::Board::default();
+	let mut tree: kudchuet::ai::move_search::gametree::GameTree<TTTGame> =
+		kudchuet::ai::move_search::gametree::GameTree::from(game.clone());
+	assert_eq!(tree.expand_all_iterative2(0, false), GameOutcome::Draw);
 	assert_eq!(tree.get_outcome(0), GameOutcome::Draw);
 	tree.print(2);
 	assert_eq!(tree.get_root().depth_to_end(), 9);

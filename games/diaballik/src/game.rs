@@ -1,7 +1,7 @@
 
 use bitboard::BitIter;
 use kudchuet::{GameOutcome, Player};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use super::rules::{Move, Diaballik};
 
@@ -88,12 +88,12 @@ impl Evaluator for DiaballikEvalMaterial {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft_tt;
-	use kudchuet::ai::minimax::{Game, IterativeOptions, Strategy};
+	use kudchuet::ai::move_search::util::perft_tt;
+	use kudchuet::ai::move_search::{Game, IterativeOptions, Strategy};
 	#[cfg(target_arch = "wasm32")]
-	use kudchuet::ai::minimax::IterativeSearch;
+	use kudchuet::ai::move_search::IterativeSearch;
 	#[cfg(not(target_arch = "wasm32"))]
-	use kudchuet::ai::minimax::{ParallelSearch, ParallelOptions};
+	use kudchuet::ai::move_search::{ParallelSearch, ParallelOptions};
 	use super::Diaballik;
 	use super::DiaballikEvalMaterial;
 	//use super::DiaballikEvalDumb;

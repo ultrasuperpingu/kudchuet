@@ -3,7 +3,7 @@
 
 
 use kudchuet::{GameOutcome, Player};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use crate::{bitboard::Bitboard5x5, rules::{Move, Neutron}};
 
@@ -99,7 +99,7 @@ impl Evaluator for NeutronMaterialEval {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use super::super::{game::Neutron};
 	#[test]

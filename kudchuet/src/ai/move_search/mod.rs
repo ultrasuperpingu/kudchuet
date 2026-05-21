@@ -5,14 +5,14 @@ use std::sync::{
 	atomic::{AtomicBool, Ordering},
 };
 
-pub use crate::ai::minimax::interface::*;
-pub use crate::ai::minimax::iterative::IterativeSearch;
-pub use crate::ai::minimax::minimax::ExpectiMinimax;
-pub use crate::ai::minimax::random::Random;
+pub use crate::ai::move_search::interface::*;
+pub use crate::ai::move_search::iterative::IterativeSearch;
+pub use crate::ai::move_search::minimax::ExpectiMinimax;
+pub use crate::ai::move_search::random::Random;
 #[cfg(not(target_arch = "wasm32"))]
-pub use crate::ai::minimax::ybw::ParallelSearch;
-pub use crate::ai::minimax::mcts::{MCTS, MCTSOptions};
-pub use crate::ai::minimax::perfect_solver::PerfectSolver;
+pub use crate::ai::move_search::ybw::ParallelSearch;
+pub use crate::ai::move_search::mcts::{MCTS, MCTSOptions};
+pub use crate::ai::move_search::perfect_solver::PerfectSolver;
 
 pub mod iterative;
 pub mod minimax;

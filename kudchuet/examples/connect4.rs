@@ -7,8 +7,8 @@ use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 
 use kudchuet::{GameOutcome, Player};
-use kudchuet::ai::minimax::util::perft;
-use kudchuet::ai::minimax::*;
+use kudchuet::ai::move_search::util::perft;
+use kudchuet::ai::move_search::*;
 
 #[derive(Clone, Debug)]
 pub struct Board {
@@ -275,7 +275,7 @@ impl Evaluator for BasicEvaluator {
 }
 
 fn main() {
-	use kudchuet::ai::minimax::*;
+	use kudchuet::ai::move_search::*;
 
 	let mut b = Board::default();
 

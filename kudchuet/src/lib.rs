@@ -2,24 +2,24 @@
 #![allow(clippy::collapsible_else_if)]
 #![allow(clippy::clone_on_copy)]
 
-use ai::minimax::SearchStopSignal;
-use ai::minimax::Strategy;
+use ai::move_search::SearchStopSignal;
+use ai::move_search::Strategy;
 use std::collections::HashMap;
 use std::fmt::Debug;
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Duration;
 
-use crate::ai::minimax::BEST_EVAL;
-use crate::ai::minimax::IterativeOptions;
+use crate::ai::move_search::BEST_EVAL;
+use crate::ai::move_search::IterativeOptions;
 #[cfg(target_arch = "wasm32")]
-use crate::ai::minimax::IterativeSearch;
+use crate::ai::move_search::IterativeSearch;
 #[cfg(not(target_arch = "wasm32"))]
-use crate::ai::minimax::ParallelOptions;
-use crate::ai::minimax::WORST_EVAL;
-use crate::ai::minimax::interface::Evaluator;
-use crate::ai::minimax::interface::{Evaluation, Game};
+use crate::ai::move_search::ParallelOptions;
+use crate::ai::move_search::WORST_EVAL;
+use crate::ai::move_search::interface::Evaluator;
+use crate::ai::move_search::interface::{Evaluation, Game};
 #[cfg(not(target_arch = "wasm32"))]
-use crate::ai::minimax::ybw::ParallelSearch;
+use crate::ai::move_search::ybw::ParallelSearch;
 #[cfg(target_arch = "wasm32")]
 use crate::ai::uci::UciValue;
 #[cfg(not(target_arch = "wasm32"))]

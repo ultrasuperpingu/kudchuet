@@ -12,8 +12,8 @@ use std::fmt::{Display, Formatter, Result};
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use kudchuet::{GameOutcome, Player};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, ExpectiMinimax};
-use kudchuet::ai::minimax::{Game, Strategy};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, ExpectiMinimax};
+use kudchuet::ai::move_search::{Game, Strategy};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 #[repr(u8)]

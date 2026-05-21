@@ -7,7 +7,7 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use crate::ai::minimax::SearchStopSignal;
+use crate::ai::move_search::SearchStopSignal;
 #[cfg(not(target_arch = "wasm32"))]
 use futures::channel::oneshot;
 use std::future::Future;

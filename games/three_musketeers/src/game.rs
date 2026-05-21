@@ -1,7 +1,7 @@
 use bitboard::BitIter;
 
 use kudchuet::{
-	GameOutcome, Player, ai::minimax::{Evaluation, Evaluator, Game}
+	GameOutcome, Player, ai::move_search::{Evaluation, Evaluator, Game}
 };
 
 use crate::{
@@ -173,7 +173,7 @@ impl Evaluator for ThreeMusketeersEvalAdvanced {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 	use crate::rules::ThreeMusketeers;
 
 

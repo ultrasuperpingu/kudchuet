@@ -2,7 +2,7 @@ use bitboard::Bitboard;
 use eframe::egui::{self, Painter, Pos2, Rect, Vec2};
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::minimax::MCTS;
+use kudchuet::ai::move_search::MCTS;
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, SquareDrawer};

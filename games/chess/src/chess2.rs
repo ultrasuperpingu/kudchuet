@@ -3,7 +3,7 @@
 extern crate chess_lib;
 
 use kudchuet::{GameOutcome, Player};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use chess_lib::{Board, BoardStatus, ChessMove, Color, MoveGen};
 
@@ -129,7 +129,7 @@ mod tests {
 	// 7      3195901860        3.4s    931380.4
 	// 8     84998978956       96.8s    878211.9
 	use chess_lib::Board;
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 	use super::Chess;
 	#[test]
 	fn perft_test() {

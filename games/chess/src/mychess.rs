@@ -5,7 +5,7 @@ use bitboard::{BitIter, Bitboard};
 use super::rules::{CastlingRights, Color, Move, Piece, Square};
 
 use kudchuet::Player;
-use kudchuet::ai::minimax::{Evaluation, Evaluator, Game};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
 
 use super::pext_tables;
 use kudchuet::GameOutcome;
@@ -1684,7 +1684,7 @@ impl Evaluator for ChessPosEval {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	use crate::bitboard::Bitboard8x8;
 

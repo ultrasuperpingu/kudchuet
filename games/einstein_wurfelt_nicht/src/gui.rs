@@ -1,7 +1,7 @@
 use eframe::egui::{self, Rect};
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::minimax::MCTS;
+use kudchuet::ai::move_search::MCTS;
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};

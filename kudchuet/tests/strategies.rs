@@ -10,7 +10,7 @@ extern crate kudchuet;
 mod connect4;
 
 use kudchuet::{GameOutcome, Player};
-use kudchuet::ai::minimax::*;
+use kudchuet::ai::move_search::*;
 
 use std::cmp::{max, min};
 use std::collections::hash_map::DefaultHasher;

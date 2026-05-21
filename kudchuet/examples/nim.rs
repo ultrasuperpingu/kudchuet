@@ -10,10 +10,10 @@ extern crate kudchuet;
 use std::default::Default;
 use std::fmt::{Display, Formatter, Result};
 
-use kudchuet::ai::minimax::gametree::GameTree;
+use kudchuet::ai::move_search::gametree::GameTree;
 use kudchuet::{GameOutcome, Player, utils};
-use kudchuet::ai::minimax::{Evaluation, Evaluator, ExpectiMinimax};
-use kudchuet::ai::minimax::{Game, Strategy};
+use kudchuet::ai::move_search::{Evaluation, Evaluator, ExpectiMinimax};
+use kudchuet::ai::move_search::{Game, Strategy};
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Board {
@@ -143,11 +143,32 @@ fn main() {
 
 	let b = Board::new(nb_sticks);
 	let mut tree = GameTree::<NimGame>::from(b);
-	let outcome2 = tree.expand_all(0, false);
+	let outcome2 = tree.expand_all_recursive(0, false);
 	println!("{:?}", outcome2);
-	println!("{}", tree);
+	tree.print(1);
 	tree.set_root_id(38);
 	tree.cleanup();
-	println!("{}", tree);
+	tree.print(1);
+	assert_eq!(outcome, outcome2);
+
+
+	let b = Board::new(nb_sticks);
+	let mut tree = GameTree::<NimGame>::from(b);
+	let outcome2 = tree.expand_all_iterative(0, false);
+	println!("{:?}", outcome2);
+	tree.print(1);
+	tree.set_root_id(38);
+	tree.cleanup();
+	tree.print(1);
+	assert_eq!(outcome, outcome2);
+
+	let b = Board::new(nb_sticks);
+	let mut tree = GameTree::<NimGame>::from(b);
+	let outcome2 = tree.expand_all_iterative2(0, false);
+	println!("{:?}", outcome2);
+	tree.print(1);
+	tree.set_root_id(38);
+	tree.cleanup();
+	tree.print(1);
 	assert_eq!(outcome, outcome2);
 }

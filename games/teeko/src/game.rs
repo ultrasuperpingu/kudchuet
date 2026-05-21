@@ -1,7 +1,7 @@
 
 use kudchuet::{
 	GameOutcome, Player,
-	ai::minimax::{Evaluation, Evaluator, Game},
+	ai::move_search::{Evaluation, Evaluator, Game},
 };
 
 use crate::{
@@ -95,7 +95,7 @@ impl Evaluator for TeekoEvalDumb {
 mod tests {
 
 	use crate::rules::Teeko;
-	use kudchuet::ai::minimax::util::perft;
+	use kudchuet::ai::move_search::util::perft;
 
 	#[test]
 	fn perft_test() {

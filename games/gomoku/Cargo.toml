@@ -25,11 +25,6 @@ web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElemen
 [lints]
 workspace = true
 
-
-[[bench]]
-name = "game_tree"
-harness = false
-
 [lib]
 name = "gomoku"
 
