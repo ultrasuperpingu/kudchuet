@@ -74,11 +74,10 @@ mod tests {
 
 	#[test]
 	fn test_solve() {
-		let mut tree = kudchuet::ai::move_search::gametree::GameTree::<ConnectFour>::from(ConnectFour::default());
-		let winner = tree.expand_all_iterative(0, true);
+		let mut tree = kudchuet::ai::move_search::gametree::GameTree::<ConnectFour, ()>::from(ConnectFour::default());
+		let winner = tree.expand_all(0);
 		println!("Winner: {:?}", winner);
-		println!("nb states: {:?}", tree.states.len());
-		println!("nb nodes: {:?}", tree.nb_nodes());
+		println!("nb nodes: {:?}", tree.len());
 		println!(
 			"outcome: {:?} ({})",
 			tree.get_root().outcome(),

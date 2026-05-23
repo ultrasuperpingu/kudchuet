@@ -1,6 +1,6 @@
 use crate::{
 	GameOutcome, Player,
-	ai::move_search::{Evaluation, Game, util::AppliedMove},
+	ai::move_search::{Game, util::AppliedMove},
 	utils::NHHashMap,
 };
 
@@ -10,59 +10,19 @@ use std::{
 };
 
 #[derive(Debug, Clone)]
-pub struct Node<M> {
-	pub(crate) state_hash: u64,
+pub struct Node<G: Game, Data> {
+	pub(crate) state: G::S,
 	pub(crate) parent: Option<usize>,
-	pub(crate) children: Vec<usize>,
+	pub(crate) children: Vec<Edge<G::M>>,
 
-	pub(crate) visits: u32,
-	pub(crate) wins: i32,
-	pub(crate) draws: u32,
+	pub(crate) data: Data,
 
-	pub(crate) untried_moves: Vec<M>,
+	pub(crate) untried_moves: Vec<G::M>,
 	pub(crate) player_to_move: Player,
 	pub(crate) outcome: GameOutcome,
 	pub(crate) depth_to_end: u16,
-	pub(crate) incoming_move: Option<M>,
 }
-#[derive(Debug, Clone)]
-pub struct StateInfo<S>
-//where S: Send
-{
-	pub(crate) state: S,
-	pub(crate) expanded_node: usize,
-}
-impl<M> Node<M> {
-	pub fn winrate(&self) -> f32 {
-		if self.visits == 0 {
-			0.0
-		} else {
-			self.wins as f32 / self.visits as f32
-		}
-	}
-	pub fn drawrate(&self) -> f32 {
-		if self.visits == 0 {
-			0.0
-		} else {
-			self.draws as f32 / self.visits as f32
-		}
-	}
-	pub fn lossrate(&self) -> f32 {
-		if self.visits == 0 {
-			0.0
-		} else {
-			(self.visits as f32 - self.draws as f32 - self.wins as f32) / self.visits as f32
-		}
-	}
-	pub fn score(&self) -> Evaluation {
-		if self.outcome.is_ended() {
-			self.outcome.evaluate(self.player_to_move)
-		} else {
-			let winrate = self.winrate();
-			let drawrate = self.drawrate();
-			(8000.0 * (winrate + 0.5 * drawrate - 0.5)) as Evaluation
-		}
-	}
+impl<G: Game, Data> Node<G, Data> {
 	pub fn player_to_move(&self) -> Player {
 		self.player_to_move
 	}
@@ -72,24 +32,22 @@ impl<M> Node<M> {
 	pub fn outcome(&self) -> GameOutcome {
 		self.outcome
 	}
-	pub fn incoming_move(&self) -> Option<&M> {
-		self.incoming_move.as_ref()
-	}
-}
-enum StackEntry {
-	Enter(usize),
-	Exit(usize),
 }
 #[derive(Debug, Clone)]
-pub struct GameTree<G: Game>
+pub struct Edge<M> {
+	pub mv: M,
+	pub child: usize,
+}
+#[derive(Debug, Clone)]
+pub struct GameTree<G: Game, Data>
 where
 	G::S: Clone,
 {
 	pub(crate) root_id: usize,
-	pub(crate) nodes: Vec<Node<G::M>>,
-	pub states: NHHashMap<u64, StateInfo<G::S>>,
+	pub(crate) nodes: Vec<Node<G, Data>>,
+	pub(crate) state_to_node: NHHashMap<u64, usize>,
 }
-impl<G: Game> Default for GameTree<G>
+impl<G: Game, Data> Default for GameTree<G, Data>
 where
 	G::S: Clone,
 {
@@ -97,11 +55,11 @@ where
 		Self {
 			root_id: usize::MAX,
 			nodes: Default::default(),
-			states: NHHashMap::default(),
+			state_to_node: NHHashMap::default(),
 		}
 	}
 }
-impl<G: Game> GameTree<G>
+impl<G: Game, Data: Default> GameTree<G, Data>
 where
 	G::S: Clone,
 {
@@ -110,56 +68,59 @@ where
 		let mut moves = vec![];
 		G::generate_moves(&state, &mut moves);
 		let hash = G::get_hash(&state);
+		let player = G::get_current_player(&state);
 		s.root_id = s.nodes.len();
 		s.nodes.push(Node {
-			state_hash: hash,
+			state,
 			parent: None,
 			children: vec![],
-			visits: 0,
-			wins: 0,
-			draws: 0,
+			data: Data::default(),
 			untried_moves: moves,
-			player_to_move: G::get_current_player(&state),
+			player_to_move: player,
 			outcome: GameOutcome::OnGoing,
 			depth_to_end: u16::MAX,
-			incoming_move: None,
 		});
-		let hash = G::get_hash(&state);
-		s.states.insert(
-			hash,
-			StateInfo {
-				state,
-				expanded_node: 0,
-			},
-		);
+		s.state_to_node.insert(hash, 0);
 		s
 	}
 }
-impl<G: Game> GameTree<G>
+impl<G: Game, Data: Default> GameTree<G, Data>
 where
 	G::S: Clone,
 {
 	pub fn get_outcome(&mut self, id: usize) -> GameOutcome {
-		let state_info = self.states.get(&self.nodes[id].state_hash).unwrap();
-		if state_info.expanded_node != id {
-			return self.nodes[state_info.expanded_node].outcome;
+		let mut visited = Vec::new();
+		self.get_outcome_recursive(id, &mut visited)
+	}
+	fn get_outcome_recursive(&mut self, id: usize, visited: &mut Vec<usize>) -> GameOutcome {
+		if visited.contains(&id) {
+			return GameOutcome::InCycle;
 		}
+		visited.push(id);
+		//let state_info = self.states.get(&self.nodes[id].state_hash).unwrap();
+		//if state_info.node != id {
+		//	return self.nodes[state_info.node].outcome;
+		//}
 		if self.nodes[id].outcome != GameOutcome::OnGoing {
+			let mine = visited.pop();
+			debug_assert_eq!(mine, Some(id));
 			return self.nodes[id].outcome;
 		}
 		if !self.nodes[id].untried_moves.is_empty() {
+			let mine = visited.pop();
+			debug_assert_eq!(mine, Some(id));
 			return GameOutcome::OnGoing;
 		}
 
 		let player = self.nodes[id].player_to_move;
-		let children = self.nodes[id].children.clone();
 
-		let outcomes: Vec<_> = children
+		let child_ids: Vec<_> = self.nodes[id].children.iter().map(|e| e.child).collect();
+		let outcomes: Vec<_> = child_ids
 			.iter()
 			.map(|c| {
 				(
-					self.get_outcome(*c),
-					self.get_node_expanded_node(*c).unwrap().depth_to_end,
+					self.get_outcome_recursive(*c, visited),
+					self.get_node(*c).unwrap().depth_to_end,
 				)
 			})
 			.collect();
@@ -174,6 +135,9 @@ where
 				.unwrap();
 			(player.into(), depth + 1)
 		} else if outcomes.iter().any(|(o, _d)| !o.is_ended()) {
+			(GameOutcome::OnGoing, u16::MAX)
+		} else if outcomes.iter().all(|(o, _d)| *o == GameOutcome::InCycle) {
+			println!("Ahhhhhhhh");
 			(GameOutcome::OnGoing, u16::MAX)
 		} else if outcomes
 			.iter()
@@ -200,236 +164,145 @@ where
 
 		self.nodes[id].outcome = result;
 		self.nodes[id].depth_to_end = depth_to_end;
-
+		let mine = visited.pop();
+		debug_assert_eq!(mine, Some(id));
 		self.nodes[id].outcome
 	}
 
-	pub fn expand_all_recursive(&mut self, node_id: usize, use_pruning: bool) -> GameOutcome
+	pub fn expand_all(&mut self, node_id: usize) -> GameOutcome
 	where
 		G::S: Clone,
 	{
-		let mut untried = vec![];
-		std::mem::swap(&mut self.nodes[node_id].untried_moves, &mut untried);
-
-		for m in &untried {
-			let state = self.get_node_state_mut(node_id).unwrap();
-			let new_state = AppliedMove::<G>::applied_clone(state, *m);
-			let new_state_hash = G::get_hash(&new_state);
-
-			let mut moves = vec![];
-			let outcome = G::generate_moves(&new_state, &mut moves);
-			let child_id = self.nodes.len();
-			self.nodes.push(Node {
-				state_hash: new_state_hash,
-				parent: Some(node_id),
-				children: vec![],
-				visits: 0,
-				wins: 0,
-				draws: 0,
-				untried_moves: moves,
-				player_to_move: G::get_current_player(&new_state),
-				outcome,
-				depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
-				incoming_move: Some(*m),
-			});
-			let new_state_entry = self.states.get(&new_state_hash);
-			if let Some(_entry) = new_state_entry {
-				self.nodes[node_id].children.push(child_id);
-			} else {
-				self.nodes[node_id].children.push(child_id);
-				self.states.insert(
-					new_state_hash,
-					StateInfo {
-						state: new_state,
-						expanded_node: child_id,
-					},
-				);
-
-				let result = self.expand_all_recursive(child_id, use_pruning);
-				// pruning
-				if use_pruning && result.is_win_for(self.nodes[node_id].player_to_move) {
-					//TODO: o.is_win_for(G::get_next_player(state))
-					self.nodes[node_id].outcome = result;
-					self.nodes[node_id].depth_to_end = self.nodes[child_id].depth_to_end + 1;
-					return result;
-				}
+		self.expand_to_depth(node_id, u16::MAX)
+	}
+	pub fn expand_to_depth(&mut self, node_id: usize, max_depth: u16) -> GameOutcome
+	where
+		G::S: Clone,
+	{
+		self.expand_to_depth_recursive(node_id, max_depth, 0)
+	}
+	pub fn iterative_deepening_solve(&mut self, node_id: usize, max_depth: u16) -> GameOutcome
+	where
+		G::S: Clone,
+	{
+		let mut res = GameOutcome::OnGoing;
+		for i in 1..=max_depth {
+			res = self.expand_to_depth_recursive(node_id, i, 0);
+			if res.is_ended() {
+				break;
 			}
 		}
-		self.get_outcome(node_id)
-		//GameOutcome::OnGoing
+		res
 	}
-
-	pub fn expand_all_iterative(
+	fn expand_to_depth_recursive(
 		&mut self,
-		root_id: usize,
-		use_pruning: bool, /*, max_depth: usize*/
+		node_id: usize,
+		max_depth: u16,
+		depth: u16,
 	) -> GameOutcome
 	where
 		G::S: Clone,
 	{
-		let mut stack = vec![];
-
-		stack.push(root_id);
-
-		while let Some(node_id) = stack.pop() {
-			if use_pruning
-				&& self.get_node_expanded_node(node_id).unwrap().outcome != GameOutcome::OnGoing
-			{
-				self.get_outcome(node_id);
-				continue;
+		// TODO: check this is really correct...
+		if self.nodes[node_id].outcome.is_ended()
+			&& (depth + self.nodes[node_id].depth_to_end) <= max_depth
+		{
+			return self.nodes[node_id].outcome;
+		}
+		if max_depth <= depth {
+			return GameOutcome::OnGoing;
+		}
+		while let Some(m) = self.nodes[node_id].untried_moves.pop() {
+			let (child_id, res) = self.expand_single_child(node_id, m);
+			if res.is_win_for(self.nodes[node_id].player_to_move) {
+				self.nodes[node_id].outcome = res;
+				self.nodes[node_id].depth_to_end = u16::min(self.nodes[node_id].depth_to_end, self.nodes[child_id].depth_to_end + 1);
 			}
-			let m = {
-				let moves = &mut self.nodes[node_id].untried_moves;
-				if moves.is_empty() {
-					None
-				} else {
-					Some(moves.pop().unwrap())
-				}
-			};
-			if let Some(m) = m {
-				stack.push(node_id);
+		}
+		let children: Vec<_> = self.nodes[node_id]
+			.children
+			.iter()
+			.map(|e| e.child)
+			.collect();
+		let mut is_lose = true;
+		let mut is_draw = false;
+		let mut has_unknown = false;
+		let mut loose_depth = 0;
+		let mut draw_depth = u16::MAX;
+		for child_id in children {
+			let res = self.expand_to_depth_recursive(child_id, max_depth, depth + 1);
+			if res.is_win_for(self.nodes[node_id].player_to_move) {
+				self.nodes[node_id].outcome = res;
+				self.nodes[node_id].depth_to_end = u16::min(self.nodes[node_id].depth_to_end, self.nodes[child_id].depth_to_end + 1);
+				is_lose = false;
+			} else if res.is_draw() {
+				is_draw = true;
+				draw_depth = u16::min(draw_depth, self.nodes[child_id].depth_to_end + 1);
+				is_lose = false;
+			}  else if !res.is_ended() {
+				has_unknown = true;
+				is_lose = false;
+			} else if is_lose { //lose
+				debug_assert!(res.is_lose_for(self.nodes[node_id].player_to_move));
+				loose_depth = u16::max(loose_depth, self.nodes[child_id].depth_to_end + 1);
+			} else {
+				//println!("res: {:?}", res);
+				debug_assert!(res.is_lose_for(self.nodes[node_id].player_to_move));
+			}
+		}
+		if is_lose {
+			//TODO: real player win (for multiplayer)
+			self.nodes[node_id].outcome = self.nodes[node_id].player_to_move.opponent().into();
+			self.nodes[node_id].depth_to_end = loose_depth;
+				
+		} else if self.nodes[node_id].outcome == GameOutcome::OnGoing && !has_unknown && is_draw {
+			self.nodes[node_id].outcome = GameOutcome::Draw;
+			self.nodes[node_id].depth_to_end = draw_depth;
+		}
+		self.nodes[node_id].outcome
+		//self.get_outcome(node_id)
+		//GameOutcome::OnGoing
+	}
 
-				let state = self.get_node_state_mut(node_id).unwrap();
-				let new_state = AppliedMove::<G>::applied_clone(state, m);
-				let new_state_hash = G::get_hash(&new_state);
+	pub(crate) fn expand_single_child(&mut self, node_id: usize, m: G::M) -> (usize, GameOutcome) {
+		let state = self.get_node_state_mut(node_id).unwrap();
+		let new_state = AppliedMove::<G>::applied_clone(state, m);
+		let new_state_hash = G::get_hash(&new_state);
 
-				let mut child_moves = vec![];
-				let outcome = G::generate_moves(&new_state, &mut child_moves);
-
+		match self.state_to_node.entry(new_state_hash) {
+			Entry::Occupied(entry) => {
+				self.nodes[node_id].children.push(Edge {
+					mv: m,
+					child: *entry.get(),
+				});
+				(*entry.get(), self.nodes[*entry.get()].outcome)
+			}
+			Entry::Vacant(new_state_entry) => {
+				let mut moves = vec![];
+				let outcome = G::generate_moves(&new_state, &mut moves);
 				let child_id = self.nodes.len();
-
+				let player = G::get_current_player(&new_state);
 				self.nodes.push(Node {
-					state_hash: new_state_hash,
+					state: new_state,
 					parent: Some(node_id),
 					children: vec![],
-					visits: 0,
-					wins: 0,
-					draws: 0,
-					untried_moves: child_moves,
-					player_to_move: G::get_current_player(&new_state),
+					data: Data::default(),
+					untried_moves: moves,
+					player_to_move: player,
 					outcome,
 					depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
-					incoming_move: Some(m),
 				});
-
-				self.nodes[node_id].children.push(child_id);
-
-				if let Entry::Vacant(e) = self.states.entry(new_state_hash) {
-					e.insert(StateInfo {
-						state: new_state,
-						expanded_node: child_id,
-					});
-					stack.push(child_id);
-				}
-			} else {
-				// All moves done
-				let _result = self.get_outcome(node_id);
+				self.nodes[node_id].children.push(Edge {
+					mv: m,
+					child: child_id,
+				});
+				new_state_entry.insert(child_id);
+				(child_id, outcome)
 			}
 		}
-
-		self.get_outcome(root_id)
-	}
-	pub fn expand_all_iterative2(&mut self, root_id: usize, use_pruning: bool) -> GameOutcome
-	where
-		G::S: Clone,
-	{
-		let mut stack = Vec::new();
-
-		stack.push(StackEntry::Enter(root_id));
-
-		while let Some(entry) = stack.pop() {
-			match entry {
-				StackEntry::Enter(node_id) => {
-					if self.nodes[node_id].outcome.is_ended() {
-						continue;
-					}
-
-					if self.nodes[node_id].untried_moves.is_empty() {
-						stack.push(StackEntry::Exit(node_id));
-						continue;
-					}
-
-					stack.push(StackEntry::Exit(node_id));
-
-					let mut moves = vec![];
-					std::mem::swap(&mut self.nodes[node_id].untried_moves, &mut moves);
-
-					for m in moves {
-						let state = self.get_node_state_mut(node_id).unwrap();
-
-						let new_state = AppliedMove::<G>::applied_clone(state, m);
-
-						let new_hash = G::get_hash(&new_state);
-
-						if let Some(_e) = self.states.get(&new_hash) {
-							let child_id = self.nodes.len();
-							self.nodes.push(Node {
-								state_hash: new_hash,
-								parent: Some(node_id),
-								children: vec![],
-								visits: 0,
-								wins: 0,
-								draws: 0,
-								untried_moves: vec![],
-								player_to_move: G::get_current_player(&new_state),
-								outcome: GameOutcome::OnGoing,
-								depth_to_end: u16::MAX,
-								incoming_move: Some(m),
-							});
-							self.nodes[node_id].children.push(child_id);
-
-							continue;
-						}
-
-						let mut child_moves = vec![];
-
-						let outcome = G::generate_moves(&new_state, &mut child_moves);
-
-						let child_id = self.nodes.len();
-
-						self.nodes.push(Node {
-							state_hash: new_hash,
-							parent: Some(node_id),
-							children: vec![],
-							visits: 0,
-							wins: 0,
-							draws: 0,
-							untried_moves: child_moves,
-							player_to_move: G::get_current_player(&new_state),
-							outcome,
-							depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
-							incoming_move: Some(m),
-						});
-
-						self.nodes[node_id].children.push(child_id);
-
-						self.states.insert(
-							new_hash,
-							StateInfo {
-								state: new_state,
-								expanded_node: child_id,
-							},
-						);
-
-						stack.push(StackEntry::Enter(child_id));
-					}
-				}
-
-				StackEntry::Exit(node_id) => {
-					let result = self.get_outcome(node_id);
-
-					// pruning
-					if use_pruning && result.is_win_for(self.nodes[node_id].player_to_move) {
-						self.nodes[node_id].outcome = result;
-					}
-				}
-			}
-		}
-
-		self.get_outcome(root_id)
 	}
 }
-impl<G: Game> GameTree<G>
+impl<G: Game, Data> GameTree<G, Data>
 where
 	G::S: Clone,
 {
@@ -437,7 +310,7 @@ where
 		if self.nodes[self.root_id]
 			.children
 			.iter()
-			.any(|id| !self.get_node_expanded_node(*id).unwrap().outcome.is_ended())
+			.any(|c| !self.get_node(c.child).unwrap().outcome.is_ended())
 		{
 			return None;
 		}
@@ -445,8 +318,8 @@ where
 		let mut filtered: Vec<_> = self.nodes[self.root_id]
 			.children
 			.iter()
-			.filter(|id| {
-				self.get_node_expanded_node(**id)
+			.filter(|c| {
+				self.get_node(c.child)
 					.unwrap()
 					.outcome
 					.is_win_for(self.nodes[self.root_id].player_to_move)
@@ -456,7 +329,7 @@ where
 			filtered = self.nodes[self.root_id]
 				.children
 				.iter()
-				.filter(|id| self.get_node_expanded_node(**id).unwrap().outcome.is_draw())
+				.filter(|c| self.get_node(c.child).unwrap().outcome.is_draw())
 				.collect();
 		}
 		if filtered.is_empty() {
@@ -464,8 +337,8 @@ where
 			filtered = self.nodes[self.root_id]
 				.children
 				.iter()
-				.filter(|id| {
-					self.get_node_expanded_node(**id)
+				.filter(|c| {
+					self.get_node(c.child)
 						.unwrap()
 						.outcome
 						.is_lose_for(self.nodes[self.root_id].player_to_move)
@@ -476,17 +349,14 @@ where
 			let best_child = if !maximize_depth {
 				filtered
 					.iter()
-					.min_by_key(|&&id| self.get_node_expanded_node(*id).unwrap().depth_to_end)
+					.min_by_key(|c| self.get_node(c.child).unwrap().depth_to_end)
 			} else {
 				filtered
 					.iter()
-					.max_by_key(|&&id| self.get_node_expanded_node(*id).unwrap().depth_to_end)
+					.max_by_key(|c| self.get_node(c.child).unwrap().depth_to_end)
 			};
 			if let Some(best_child) = best_child {
-				let best_move = self.nodes[**best_child]
-					.incoming_move
-					.clone()
-					.expect("root child must have a move");
+				let best_move = best_child.mv;
 				return Some(best_move);
 			}
 		}
@@ -495,7 +365,7 @@ where
 	}
 }
 // Simulation
-impl<G: Game> GameTree<G>
+impl<G: Game, Data> GameTree<G, Data>
 where
 	G::S: Clone,
 {
@@ -505,7 +375,7 @@ where
 	{
 		let mut sim_state = self.get_node_state(node_id).unwrap().clone();
 		let mut hash = G::get_hash(&sim_state);
-		if let Some(n) = self.get_expanded_node(hash) {
+		if let Some(n) = self.get_state_node(hash) {
 			if n.outcome.is_ended() {
 				return n.outcome;
 			}
@@ -538,7 +408,7 @@ where
 					sim_state = state;
 				}
 				hash = G::get_hash(&sim_state);
-				if let Some(n) = self.get_expanded_node(hash) {
+				if let Some(n) = self.get_state_node(hash) {
 					if n.outcome.is_ended() {
 						return n.outcome;
 					}
@@ -551,7 +421,7 @@ where
 	}
 }
 // Cleanup
-impl<G: Game> GameTree<G>
+impl<G: Game, Data> GameTree<G, Data>
 where
 	G::S: Clone,
 {
@@ -576,119 +446,58 @@ where
 			if let Some(p) = node.parent {
 				node.parent = ids.get(&p).copied();
 			}
-			// safety: children have been collected
-			node.children = node.children.iter().map(|c| ids[c]).collect();
+			node.children = node
+				.children
+				.iter()
+				.map(|e| Edge {
+					child: ids[&e.child],
+					mv: e.mv,
+				})
+				.collect();
 		}
 
 		self.root_id = ids[&self.root_id];
 		let mut to_remove = vec![];
-		for (hash, info) in self.states.iter_mut() {
-			let id = ids.get(&info.expanded_node);
+		for (hash, info) in self.state_to_node.iter_mut() {
+			let id = ids.get(info);
 			if let Some(id) = id {
-				info.expanded_node = *id;
+				*info = *id;
 			} else {
 				to_remove.push(*hash);
 			}
 		}
 		for hash in to_remove {
-			self.states.remove(&hash);
+			self.state_to_node.remove(&hash);
 		}
 		ids
 	}
 	fn collect_ids(&self, root: usize, ids: &mut NHHashMap<usize, usize>) {
 		ids.insert(root, root);
-		let exp = self.get_node_state_info(root);
-		if let Some(exp) = exp {
-			if let Entry::Vacant(e) = ids.entry(exp.expanded_node) {
-				e.insert(exp.expanded_node);
-				for i in &self.get_node(exp.expanded_node).unwrap().children {
-					self.collect_ids(*i, ids);
-				}
-			}
-		}
 		for i in &self.get_node(root).unwrap().children {
-			self.collect_ids(*i, ids);
+			self.collect_ids(i.child, ids);
 		}
-	}
-}
-// Print routine
-impl<G: Game> GameTree<G>
-where
-	G::S: Clone,
-{
-	fn dfs_print<W: std::io::Write>(
-		tree: &Vec<Node<G::M>>,
-		id: usize,
-		depth: usize,
-		max_depth: usize,
-		states: &NHHashMap<u64, StateInfo<G::S>>,
-		is_link: bool,
-		f: &mut W,
-	) -> fmt::Result {
-		if max_depth < depth {
-			return Ok(());
-		}
-		let node = &tree[id];
-		let indent = "  ".repeat(depth);
-		let info = states.get(&node.state_hash).unwrap();
-		let outcome = if info.expanded_node != id {
-			tree[info.expanded_node].outcome
-		} else {
-			node.outcome
-		};
-		if !is_link {
-			let _ = writeln!(
-				f,
-				"{}Node {} | to_move: {:?} | move: {:?} | visits: {} | winrate: {:.2} | outcome: {:?} ({})",
-				indent,
-				id,
-				node.player_to_move,
-				node.incoming_move,
-				node.visits as usize,
-				node.winrate(),
-				outcome,
-				node.depth_to_end,
-			);
-		}
-		if info.expanded_node != id {
-			Self::dfs_print(tree, info.expanded_node, depth, max_depth, states, true, f)?;
-			return Ok(());
-		}
-		let mut children = node.children.clone();
-
-		children.sort_by(|&a, &b| tree[b].visits.partial_cmp(&tree[a].visits).unwrap());
-
-		for child in children {
-			Self::dfs_print(tree, child, depth + 1, max_depth, states, false, f)?;
-		}
-
-		Ok(())
-	}
-	pub fn print(&self, max_depth: usize) {
-		let _ = Self::dfs_print(
-			&self.nodes,
-			self.root_id,
-			0,
-			max_depth,
-			&self.states,
-			false,
-			&mut std::io::stdout(),
-		);
 	}
 }
 // Accessors
-impl<G: Game> GameTree<G>
+impl<G: Game, Data> GameTree<G, Data>
 where
 	G::S: Clone,
 {
-	pub fn get_root(&self) -> &Node<G::M> {
+	//TODO: Option
+	pub fn get_root(&self) -> &Node<G, Data> {
 		&self.nodes[self.root_id]
+	}
+	pub fn get_depth_to_end(&self) -> u16 {
+		self.nodes[self.root_id].depth_to_end
 	}
 	pub fn get_root_id(&self) -> usize {
 		self.root_id
 	}
-	pub fn nb_nodes(&self) -> usize {
+	pub fn len(&self) -> usize {
 		self.nodes.len()
+	}
+	pub fn nb_states(&self) -> usize {
+		self.state_to_node.len()
 	}
 	pub fn set_root_id(&mut self, id: usize) -> bool {
 		if id < self.nodes.len() {
@@ -699,63 +508,92 @@ where
 			false
 		}
 	}
+	//TODO: Option
 	pub fn get_root_state(&self) -> &G::S {
-		&self.states[&self.nodes[self.root_id].state_hash].state
+		&self.nodes[self.root_id].state
 	}
 	pub fn get_state(&self, hash: u64) -> Option<&G::S> {
-		self.states.get(&hash).map(|s| &s.state)
+		self.state_to_node.get(&hash).map(|s| &self.nodes[*s].state)
 	}
 	pub fn get_state_mut(&mut self, hash: u64) -> Option<&mut G::S> {
-		self.states.get_mut(&hash).map(|s| &mut s.state)
+		self.state_to_node.get(&hash).map(|s| &mut self.nodes[*s].state)
 	}
-	pub fn get_state_expanded_node_id(&self, hash: u64) -> Option<usize> {
-		Some(*self.states.get(&hash).map(|s| &s.expanded_node)?)
+	pub fn get_state_node_id(&self, hash: u64) -> Option<usize> {
+		self.state_to_node.get(&hash).copied()
+	}
+	pub fn get_state_node(&self, hash: u64) -> Option<&Node<G, Data>> {
+		self.state_to_node.get(&hash).map(|s| &self.nodes[*s])
+	}
+	pub fn get_state_node_mut(&mut self, hash: u64) -> Option<&mut Node<G, Data>> {
+		self.state_to_node.get(&hash).map(|s| &mut self.nodes[*s])
 	}
 	pub fn get_node_state(&self, id: usize) -> Option<&G::S> {
-		self.states
-			.get(&self.nodes[id].state_hash)
-			.map(|s| &s.state)
+		self.nodes.get(id).map(|n| &n.state)
 	}
 	pub fn get_node_state_mut(&mut self, id: usize) -> Option<&mut G::S> {
-		self.states
-			.get_mut(&self.nodes[id].state_hash)
-			.map(|s| &mut s.state)
+		self.nodes.get_mut(id).map(|n| &mut n.state)
 	}
-	pub fn get_node_state_info(&self, id: usize) -> Option<&StateInfo<G::S>> {
-		self.states.get(&self.nodes[id].state_hash)
-	}
-	pub fn get_node_state_info_mut(&mut self, id: usize) -> Option<&mut StateInfo<G::S>> {
-		self.states.get_mut(&self.nodes[id].state_hash)
-	}
-	pub fn get_node(&self, id: usize) -> Option<&Node<G::M>> {
+	pub fn get_node(&self, id: usize) -> Option<&Node<G, Data>> {
 		self.nodes.get(id)
 	}
-	pub fn get_node_mut(&mut self, id: usize) -> Option<&mut Node<G::M>> {
+	pub fn get_node_mut(&mut self, id: usize) -> Option<&mut Node<G, Data>> {
 		self.nodes.get_mut(id)
 	}
-	pub fn get_expanded_node(&self, state_hash: u64) -> Option<&Node<G::M>> {
-		self.nodes.get(self.states.get(&state_hash)?.expanded_node)
-	}
-	pub fn get_expanded_node_mut(&mut self, state_hash: u64) -> Option<&mut Node<G::M>> {
-		self.nodes
-			.get_mut(self.states.get(&state_hash)?.expanded_node)
-	}
-	pub fn get_node_expanded_node(&self, id: usize) -> Option<&Node<G::M>> {
-		let n = self.get_node(id)?;
-		let si = self.states.get(&n.state_hash)?;
-		let expanded = self.nodes.get(si.expanded_node);
-		if let Some(exp) = expanded {
-			return Some(exp);
+}
+// Print routine
+impl<G: Game, Data> GameTree<G, Data>
+where
+	G::S: Clone,
+{
+	fn dfs_print<W: std::io::Write>(
+		tree: &Vec<Node<G, Data>>,
+		id: usize,
+		depth: usize,
+		max_depth: usize,
+		incoming_move: Option<G::M>,
+		states: &NHHashMap<u64, usize>,
+		f: &mut W,
+	) -> fmt::Result {
+		if max_depth < depth {
+			return Ok(());
 		}
-		Some(n)
+		let node = &tree[id];
+		let indent = "  ".repeat(depth);
+		let (outcome, depth_to_end) = { (node.outcome, node.depth_to_end) };
+
+		let _ = writeln!(
+			f,
+			//"{}Node {} | to_move: {:?} | move: {:?} | visits: {} | winrate: {:.2} | outcome: {:?} ({})",
+			"{}Node {} | to_move: {:?} | move: {:?} | outcome: {:?} ({})",
+			indent,
+			id,
+			node.player_to_move,
+			incoming_move,
+			//node.visits as usize,
+			//node.winrate(),
+			outcome,
+			depth_to_end,
+		);
+
+		for e in &node.children {
+			Self::dfs_print(tree, e.child, depth + 1, max_depth, Some(e.mv), states, f)?;
+		}
+
+		Ok(())
 	}
-	pub fn get_node_expanded_node_mut(&mut self, id: usize) -> Option<&mut Node<G::M>> {
-		let n = self.get_node(id)?;
-		let si = self.states.get(&n.state_hash)?;
-		self.nodes.get_mut(si.expanded_node)
+	pub fn print(&self, max_depth: usize) {
+		let _ = Self::dfs_print(
+			&self.nodes,
+			self.root_id,
+			0,
+			max_depth,
+			None,
+			&self.state_to_node,
+			&mut std::io::stdout(),
+		);
 	}
 }
-impl<G: Game> Display for GameTree<G>
+impl<G: Game, Data> Display for GameTree<G, Data>
 where
 	G::S: Clone,
 	G::S: std::fmt::Debug,
@@ -784,8 +622,8 @@ where
 			self.root_id,
 			0,
 			usize::MAX,
-			&self.states,
-			false,
+			None,
+			&self.state_to_node,
 			&mut fw,
 		)
 	}

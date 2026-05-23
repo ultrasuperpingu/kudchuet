@@ -4,7 +4,7 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct PerfectSolver<G: Game>(Option<GameTree<G>>)
+pub struct PerfectSolver<G: Game>(Option<GameTree<G, ()>>)
 where
 	G::S: Clone;
 
@@ -12,7 +12,7 @@ impl<G: Game> PerfectSolver<G>
 where
 	G::S: Clone,
 {
-	pub fn get_tree(&self) -> Option<&GameTree<G>> {
+	pub fn get_tree(&self) -> Option<&GameTree<G, ()>> {
 		self.0.as_ref()
 	}
 }
@@ -23,18 +23,18 @@ where
 {
 	fn choose_move(&mut self, state: &G::S) -> Option<G::M> {
 		if self.0.is_none() {
-			let mut tree = GameTree::<G>::from(state.clone());
-			let _res = tree.expand_all_recursive(tree.root_id, false);
+			let mut tree = GameTree::<G, ()>::from(state.clone());
+			let _res = tree.expand_all(tree.root_id);
 			self.0 = Some(tree);
 		} else {
 			let tree = self.0.as_mut().unwrap();
 			let hash = G::get_hash(state);
-			if let Some(si) = tree.states.get(&hash) {
-				tree.set_root_id(si.expanded_node);
+			if let Some(si) = tree.state_to_node.get(&hash) {
+				tree.set_root_id(*si);
 				//tree.cleanup();
 			} else {
-				let mut tree = GameTree::<G>::from(state.clone());
-				tree.expand_all_recursive(tree.root_id, false);
+				let mut tree = GameTree::<G, ()>::from(state.clone());
+				tree.expand_all(tree.root_id);
 				self.0 = Some(tree);
 			}
 		}
@@ -42,7 +42,7 @@ where
 	}
 	fn root_value(&self) -> Evaluation {
 		if let Some(t) = &self.0 {
-			t.get_root().score()
+			t.get_root().outcome.evaluate_for(t.get_root().player_to_move)
 		} else {
 			0
 		}

@@ -104,15 +104,15 @@ impl Display for Move {
 	}
 }
 
-pub struct TTTEvaluator;
+pub struct NimEvaluator;
 
-impl Default for TTTEvaluator {
+impl Default for NimEvaluator {
 	fn default() -> Self {
 		Self {}
 	}
 }
 
-impl Evaluator for TTTEvaluator {
+impl Evaluator for NimEvaluator {
 	type G = NimGame;
 	fn evaluate_for(&self, _b: &Board, _p: Player) -> Evaluation {
 		0
@@ -120,11 +120,11 @@ impl Evaluator for TTTEvaluator {
 }
 
 fn main() {
-	let nb_sticks = 10;
+	let nb_sticks = 12;
 	let mut b = Board::new(nb_sticks);
 	let mut strategies = vec![
-		ExpectiMinimax::new(TTTEvaluator::default(), 10, true),
-		ExpectiMinimax::new(TTTEvaluator::default(), 10, true),
+		ExpectiMinimax::new(NimEvaluator::default(), 10, true),
+		ExpectiMinimax::new(NimEvaluator::default(), 10, true),
 	];
 	let mut s = 0;
 	while !NimGame::get_outcome(&b).is_ended() {
@@ -142,33 +142,21 @@ fn main() {
 
 
 	let b = Board::new(nb_sticks);
-	let mut tree = GameTree::<NimGame>::from(b);
-	let outcome2 = tree.expand_all_recursive(0, false);
-	println!("{:?}", outcome2);
-	tree.print(1);
-	tree.set_root_id(38);
-	tree.cleanup();
-	tree.print(1);
+	let mut tree = GameTree::<NimGame, ()>::from(b);
+	let outcome2 = tree.expand_all(0);
+	println!("recursive: {:?}", outcome2);
+	tree.print(5);
+	//tree.set_root_id(38);
+	//tree.cleanup();
+	//tree.print(1);
 	assert_eq!(outcome, outcome2);
 
-
+/*
 	let b = Board::new(nb_sticks);
-	let mut tree = GameTree::<NimGame>::from(b);
+	let mut tree = GameTree::<NimGame, ()>::from(b);
 	let outcome2 = tree.expand_all_iterative(0, false);
-	println!("{:?}", outcome2);
-	tree.print(1);
-	tree.set_root_id(38);
-	tree.cleanup();
+	println!("iterative: {:?}", outcome2);
 	tree.print(1);
 	assert_eq!(outcome, outcome2);
-
-	let b = Board::new(nb_sticks);
-	let mut tree = GameTree::<NimGame>::from(b);
-	let outcome2 = tree.expand_all_iterative2(0, false);
-	println!("{:?}", outcome2);
-	tree.print(1);
-	tree.set_root_id(38);
-	tree.cleanup();
-	tree.print(1);
-	assert_eq!(outcome, outcome2);
+*/
 }

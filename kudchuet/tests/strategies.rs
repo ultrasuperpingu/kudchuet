@@ -40,7 +40,7 @@ impl<E: Evaluator> PlainMinimax<E> {
 	{
 		let res = E::G::get_outcome(s);
 		if res.is_ended() {
-			return res.evaluate(player_to_move);
+			return res.evaluate_for(player_to_move);
 		}
 		if depth == 0 {
 			return self.eval.evaluate_for(s, player_to_move);

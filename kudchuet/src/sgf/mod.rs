@@ -2,7 +2,7 @@ use crate::{
 	Player,
 	ai::move_search::{
 		Game,
-		gametree::{GameTree, Node, StateInfo},
+		gametree::{GameTree, Node},
 	},
 	gui::{BoardGame, BoardMove},
 	sgf::parse_tree::SGFTreeNode,
@@ -190,7 +190,7 @@ impl SGFReaderWriter {
 		sgf.push(')');
 		sgf
 	}
-	pub fn serialize_game_tree<G>(game_tree: &GameTree<G>) -> String
+	pub fn serialize_game_tree<G, Data: Default>(game_tree: &GameTree<G, Data>) -> String
 	where
 		G: GFSSerializableGame,
 		G::M: BoardMove<G>,
@@ -233,23 +233,20 @@ impl SGFReaderWriter {
 	/// and principal sequence of move will be applied from root.
 	/// The resulting state will be returned.
 	/// Variations are ignored.
-	pub fn parse_game_state<G>(input: &str) -> Result<G, String>
+	pub fn parse_game_state<G, Data: Default>(input: &str) -> Result<G, String>
 	where
 		G: GFSSerializableGame,
 		G::M: BoardMove<G>,
 	{
-		let tree: GameTree<G> = Self::parse_game_tree(input)?;
+		let tree: GameTree<G, Data> = Self::parse_game_tree(input)?;
 		let mut node = tree.get_root();
 		while !node.children.is_empty() {
-			node = &tree.nodes[node.children[0]];
+			node = &tree.nodes[node.children[0].child];
 		}
-		tree.states
-			.get(&node.state_hash)
-			.map(|si| si.state.clone())
-			.ok_or("err".into())
+		Ok(node.state.clone())
 	}
 	/// Parse a hole game tree
-	pub fn parse_game_tree<G>(input: &str) -> Result<GameTree<G>, String>
+	pub fn parse_game_tree<G, Data: Default>(input: &str) -> Result<GameTree<G, Data>, String>
 	where
 		G: GFSSerializableGame,
 		G::M: BoardMove<G>,
@@ -266,8 +263,11 @@ impl SGFReaderWriter {
 		Self::parse_node(&mut game_tree, &tree, None);
 		Ok(game_tree)
 	}
-	fn parse_node<G>(game_tree: &mut GameTree<G>, node: &SGFTreeNode, parent: Option<usize>)
-	where
+	fn parse_node<G, Data: Default>(
+		game_tree: &mut GameTree<G, Data>,
+		node: &SGFTreeNode,
+		parent: Option<usize>,
+	) where
 		G: GFSSerializableGame,
 		G::M: BoardMove<G>,
 	{
@@ -297,26 +297,18 @@ impl SGFReaderWriter {
 			}
 			//TODO: apply move
 		}
-		game_tree.nodes.push(Node::<G::M> {
-			state_hash: hash,
+		let player = G::get_current_player(&state);
+		game_tree.nodes.push(Node::<G, Data> {
+			state,
 			parent,
 			children: vec![],
-			visits: 0,
-			wins: 0,
-			draws: 0,
+			data: Data::default(),
 			untried_moves: vec![],
-			player_to_move: G::get_current_player(&state),
+			player_to_move: player,
 			outcome: crate::GameOutcome::OnGoing,
 			depth_to_end: u16::MAX,
-			incoming_move: None,
 		});
-		game_tree.states.insert(
-			hash,
-			StateInfo {
-				state,
-				expanded_node: node_id,
-			},
-		);
+		game_tree.state_to_node.insert(hash, node_id);
 		for c in &node.children {
 			Self::parse_node(game_tree, c, Some(node_id));
 		}

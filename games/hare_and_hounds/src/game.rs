@@ -123,11 +123,11 @@ mod tests {
 
 	#[test]
 	fn test_solve() {
-		let mut tree=GameTree::<HareAndHounds>::from(HareAndHounds::default());
-		let winner = tree.expand_all_iterative(0, true);
+		let mut tree=GameTree::<HareAndHounds, ()>::from(HareAndHounds::default());
+		let winner = tree.expand_all(0);
 		println!("Winner: {:?}", winner);
-		println!("nb states: {:?}", tree.states.len());
-		println!("nb nodes: {:?}", tree.nb_nodes());
+		println!("nb states: {:?}", tree.nb_states());
+		println!("nb nodes: {:?}", tree.len());
 		println!("outcome: {:?} ({})", tree.get_root().outcome(), tree.get_root().depth_to_end());
 	}
 

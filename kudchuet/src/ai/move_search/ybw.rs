@@ -120,7 +120,7 @@ where
 		}
 		let res = E::G::get_outcome(s);
 		if res.is_ended() {
-			return Some(res.evaluate(player_to_move));
+			return Some(res.evaluate_for(player_to_move));
 		}
 		if depth == 0 {
 			return Some(self.eval.evaluate_for(s, player_to_move));
@@ -196,7 +196,7 @@ where
 		let res = E::G::generate_and_filter_moves(s, &mut moves);
 		if res.is_ended() {
 			self.move_pool.local_do(|pool| pool.free(moves));
-			return Some(res.evaluate(player_to_move));
+			return Some(res.evaluate_for(player_to_move));
 		}
 		if moves.is_empty() {
 			self.move_pool.local_do(|pool| pool.free(moves));

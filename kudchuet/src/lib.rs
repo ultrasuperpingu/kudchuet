@@ -70,6 +70,7 @@ pub enum GameOutcome {
 	Player(Player),
 	Draw,
 	OnGoing,
+	InCycle,
 }
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Default)]
 pub struct Player(pub u8);
@@ -126,10 +127,10 @@ impl GameOutcome {
 			_ => false,
 		}
 	}
-	pub fn evaluate(&self, to_eval: Player) -> Evaluation {
+	pub fn evaluate_for(&self, player: Player) -> Evaluation {
 		match *self {
 			GameOutcome::Player(p) => {
-				if p == to_eval {
+				if p == player {
 					BEST_EVAL
 				} else {
 					WORST_EVAL
@@ -147,6 +148,7 @@ impl TryFrom<GameOutcome> for Player {
 			GameOutcome::Player(p) => Ok(p),
 			GameOutcome::Draw => Err("Draw can not be converted to Player".into()),
 			GameOutcome::OnGoing => Err("OnGoing can not be converted to Player".into()),
+			GameOutcome::InCycle => Err("InCycle can not be converted to Player".into()),
 		}
 	}
 }

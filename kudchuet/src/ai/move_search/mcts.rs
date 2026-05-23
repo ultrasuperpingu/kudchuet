@@ -12,11 +12,40 @@ use crate::{
 	GameOutcome, Player, StrategyWithOptions,
 	ai::move_search::{
 		Evaluation, Game, SearchStopSignal, Strategy,
-		gametree::{GameTree, Node, StateInfo},
-		util::AppliedMove,
+		gametree::{GameTree, Node},
 	},
 };
+#[derive(Clone, Default)]
+pub struct VisitStats {
+	pub(crate) visits: u32,
+	pub(crate) wins: i32,
+	pub(crate) draws: u32,
+}
 
+impl<G: Game> Node<G, VisitStats> {
+	pub fn winrate(&self) -> f32 {
+		if self.data.visits == 0 {
+			0.0
+		} else {
+			self.data.wins as f32 / self.data.visits as f32
+		}
+	}
+	pub fn drawrate(&self) -> f32 {
+		if self.data.visits == 0 {
+			0.0
+		} else {
+			self.data.draws as f32 / self.data.visits as f32
+		}
+	}
+	pub fn lossrate(&self) -> f32 {
+		if self.data.visits == 0 {
+			0.0
+		} else {
+			(self.data.visits as f32 - self.data.draws as f32 - self.data.wins as f32)
+				/ self.data.visits as f32
+		}
+	}
+}
 pub struct MCTSOptions {
 	pub max_nb_iteration: u32,
 	pub exploration_factor: f32,
@@ -48,7 +77,7 @@ pub struct MCTS<G: Game>
 where
 	G::S: Clone,
 {
-	tree: Option<GameTree<G>>,
+	tree: Option<GameTree<G, VisitStats>>,
 	pub opts: MCTSOptions,
 	stop_signal: Arc<AtomicBool>,
 }
@@ -64,21 +93,30 @@ where
 		}
 	}
 }
-impl<M> Node<M> {
+impl<G: Game> Node<G, VisitStats> {
 	pub fn uct_score(&self, exploration_factor: f32, parent_visits: u32, is_min: bool) -> f32 {
-		if self.visits == 0 {
+		if self.data.visits == 0 {
 			return i32::MAX as f32;
 		}
 		let exploitation = if is_min {
-			-(self.wins as f32) / self.visits as f32
+			-(self.data.wins as f32) / self.data.visits as f32
 		} else {
-			self.wins as f32 / self.visits as f32
+			self.data.wins as f32 / self.data.visits as f32
 		};
-		let exploration = ((parent_visits as f32).ln() / self.visits as f32).sqrt();
+		let exploration = ((parent_visits as f32).ln() / self.data.visits as f32).sqrt();
 		exploitation + exploration_factor * exploration
 	}
+	pub fn score(&self) -> Evaluation {
+		if self.outcome.is_ended() {
+			self.outcome.evaluate_for(self.player_to_move)
+		} else {
+			let winrate = self.winrate();
+			let drawrate = self.drawrate();
+			(8000.0 * (winrate + 0.5 * drawrate - 0.5)) as Evaluation
+		}
+	}
 }
-impl<G: Game> GameTree<G>
+impl<G: Game> GameTree<G, VisitStats>
 where
 	G::S: Clone,
 {
@@ -88,18 +126,17 @@ where
 		while self.nodes[node_id].untried_moves.is_empty()
 			&& !self.nodes[node_id].children.is_empty()
 		{
-			let parent_visits = self.get_node(node_id).unwrap().visits;
-			let node = self.get_node_expanded_node(node_id).unwrap();
-			let selected = if G::is_random_move(self.get_state(node.state_hash).unwrap()) {
+			let parent_visits = self.get_node(node_id).unwrap().data.visits;
+			let node = self.get_node(node_id).unwrap();
+			let selected = if G::is_random_move(&node.state) {
 				let mut sum_proba = 0.0;
 				let rand = fastrand::f32();
 				let mut ch_node = None;
-				for child_id in node.children.iter() {
-					let child_node = &self.nodes[*child_id];
-					let mv = child_node.incoming_move.unwrap();
-					sum_proba += G::get_probability(self.get_state(node.state_hash).unwrap(), mv);
+				for e in node.children.iter() {
+					let mv = e.mv;
+					sum_proba += G::get_probability(&node.state, mv);
 					if sum_proba > rand {
-						ch_node = Some(child_id);
+						ch_node = Some(e);
 						break;
 					}
 				}
@@ -114,10 +151,10 @@ where
 					//		.outcome
 					//		.is_ended()
 					//})
-					.max_by(|&&a, &&b| {
-						let ca = self.get_node(a).unwrap();
-						let cb = self.get_node(b).unwrap();
-						let player = self.get_node(a).unwrap().player_to_move;
+					.max_by(|&a, &b| {
+						let ca = self.get_node(a.child).unwrap();
+						let cb = self.get_node(b.child).unwrap();
+						let player = self.get_node(a.child).unwrap().player_to_move;
 						let is_root_player = player == root_player;
 
 						// minimize if next move is root player
@@ -128,7 +165,7 @@ where
 			};
 
 			if let Some(id) = selected {
-				node_id = *id;
+				node_id = id.child;
 			} else {
 				// nothing to select
 				already_proved = true;
@@ -142,67 +179,13 @@ where
 	where
 		G::S: Clone,
 	{
-		if !self.nodes[node_id].untried_moves.is_empty() {
-			let m = self.nodes[node_id].untried_moves.pop().unwrap();
-			let child_id = self.create_child_node(node_id, m);
+		if let Some(m) = self.nodes[node_id].untried_moves.pop() {
+			//let child_id = self.create_child_node(node_id, m);
+			let (child_id, _res) = self.expand_single_child(node_id, m);
 			node_id = child_id;
 		}
 		node_id
 	}
-
-	fn create_child_node(&mut self, parent_id: usize, m: <G as Game>::M) -> usize
-	where
-		G::S: Clone,
-	{
-		let state = self.get_node_state_mut(parent_id).unwrap();
-		let new_state = AppliedMove::<G>::applied_clone(state, m);
-		let new_state_hash = G::get_hash(&new_state);
-		let tt_state = self.states.get(&new_state_hash);
-		let child_id = self.nodes.len();
-		if let Some(si) = tt_state {
-			let expanded_node = &self.nodes[si.expanded_node];
-			self.nodes.push(Node {
-				state_hash: new_state_hash,
-				parent: Some(parent_id),
-				children: vec![],
-				visits: 0,
-				wins: 0,
-				draws: 0,
-				untried_moves: vec![],
-				player_to_move: expanded_node.player_to_move,
-				outcome: expanded_node.outcome,
-				depth_to_end: expanded_node.depth_to_end,
-				incoming_move: Some(m),
-			});
-		} else {
-			self.states.insert(
-				new_state_hash,
-				StateInfo {
-					state: new_state.clone(),
-					expanded_node: child_id,
-				},
-			);
-			let mut moves = vec![];
-			let outcome = G::generate_and_filter_moves(&new_state, &mut moves);
-			self.nodes.push(Node {
-				state_hash: new_state_hash,
-				parent: Some(parent_id),
-				children: vec![],
-				visits: 0,
-				wins: 0,
-				draws: 0,
-				untried_moves: moves,
-				player_to_move: G::get_current_player(&new_state),
-				outcome,
-				depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
-				incoming_move: Some(m),
-			});
-		}
-
-		self.nodes[parent_id].children.push(child_id);
-		child_id
-	}
-
 	pub(crate) fn backpropagate(
 		&mut self,
 		root_player: Player,
@@ -212,24 +195,19 @@ where
 	) {
 		let mut current = Some(node_id);
 		while let Some(id) = current {
-			let cid = self
-				.get_node_state_info(id)
-				.map(|n| n.expanded_node)
-				.unwrap_or(id);
-
 			let node = &mut self.nodes[id];
-			node.visits += 1;
+			node.data.visits += 1;
 
 			if result.is_win_for(root_player) {
-				node.wins += 1;
+				node.data.wins += 1;
 			} else if result.is_draw() {
-				node.draws += 1;
+				node.data.draws += 1;
 			} else if result.is_lose_for(root_player) {
-				node.wins -= 1;
+				node.data.wins -= 1;
 			}
 
 			if use_min_max {
-				self.get_outcome(cid);
+				self.get_outcome(id);
 			}
 			if id == self.root_id {
 				break;
@@ -238,24 +216,6 @@ where
 		}
 	}
 
-	fn _simulate_expand(&mut self, mut node_id: usize) -> GameOutcome
-	where
-		G::S: Clone,
-	{
-		//println!("{:?}", self.get_node_state(node_id).unwrap());
-		let mut result = G::get_outcome(self.get_node_state(node_id).unwrap());
-		while !result.is_ended() {
-			let mut moves = vec![];
-			result =
-				G::generate_and_filter_moves(self.get_node_state(node_id).unwrap(), &mut moves);
-			if result == GameOutcome::OnGoing {
-				let m = fastrand::choice(moves).unwrap();
-				node_id = self.create_child_node(node_id, m);
-				//println!("{:?}", self.get_node_state(node_id).unwrap());
-			}
-		}
-		result
-	}
 	pub fn iterate(
 		&mut self,
 		root_player: Player,
@@ -285,23 +245,14 @@ where
 			.get_root()
 			.children
 			.iter()
-			.filter(|c| {
-				!self
-					.get_node_expanded_node(**c)
-					.unwrap()
-					.outcome
-					.is_lose_for(p)
-			})
+			.filter(|c| !self.get_node(c.child).unwrap().outcome.is_lose_for(p))
 			.max_by(|&a, &b| {
-				let na = self.get_node_expanded_node(*a).unwrap();
-				let nb = self.get_node_expanded_node(*b).unwrap();
-				na.visits.partial_cmp(&nb.visits).unwrap()
+				let na = self.get_node(a.child).unwrap();
+				let nb = self.get_node(b.child).unwrap();
+				na.data.visits.partial_cmp(&nb.data.visits).unwrap()
 			});
 		if let Some(best_child) = best_child {
-			let best_move = self.nodes[*best_child]
-				.incoming_move
-				.clone()
-				.expect("root child must have a move");
+			let best_move = best_child.mv;
 			//println!(
 			//	"to_move: {}\n{}",
 			//	self.get_root().player_to_move, self
@@ -322,12 +273,12 @@ where
 	{
 		let root_state_hash = G::get_hash(root_state);
 		let mut tree = self.tree.take().unwrap_or_default();
-		if let Some(si) = tree.states.get(&root_state_hash) {
-			tree.set_root_id(si.expanded_node);
+		if let Some(si) = tree.state_to_node.get(&root_state_hash) {
+			tree.set_root_id(*si);
 			println!(
 				"Reusing tree: {}/{} v.",
 				tree.get_root().winrate(),
-				tree.get_root().visits
+				tree.get_root().data.visits
 			);
 			//TODO: clean only when tree is too large??...
 			//tree.cleanup();
@@ -344,25 +295,17 @@ where
 			G::generate_and_filter_moves(root_state, &mut moves);
 			tree.root_id = tree.nodes.len();
 			tree.nodes.push(Node {
-				state_hash: root_state_hash,
+				//TODO: check clone
+				state: root_state.clone(),
 				parent: None,
 				children: vec![],
-				visits: 0,
-				wins: 0,
-				draws: 0,
+				data: VisitStats::default(),
 				untried_moves: moves,
 				player_to_move: G::get_current_player(root_state),
 				outcome: GameOutcome::OnGoing,
 				depth_to_end: u16::MAX,
-				incoming_move: None,
 			});
-			tree.states.insert(
-				root_state_hash,
-				StateInfo {
-					state: root_state.clone(),
-					expanded_node: 0,
-				},
-			);
+			tree.state_to_node.insert(root_state_hash, 0);
 		}
 
 		self.stop_signal.store(false, Ordering::Relaxed);
@@ -402,7 +345,7 @@ where
 		self.tree = Some(tree);
 		res
 	}
-	pub fn get_tree(&self) -> Option<&GameTree<G>> {
+	pub fn get_tree(&self) -> Option<&GameTree<G, VisitStats>> {
 		self.tree.as_ref()
 	}
 }
@@ -419,7 +362,7 @@ where
 			let root = t.get_root();
 
 			if root.outcome.is_ended() {
-				root.outcome.evaluate(root.player_to_move)
+				root.outcome.evaluate_for(root.player_to_move)
 			} else {
 				let winrate = root.winrate();
 				let drawrate = root.drawrate();

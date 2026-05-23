@@ -5,29 +5,30 @@ use std::sync::{
 	atomic::{AtomicBool, Ordering},
 };
 
+use crate::GameOutcome;
 pub use crate::ai::move_search::interface::*;
 pub use crate::ai::move_search::iterative::IterativeSearch;
+pub use crate::ai::move_search::mcts::{MCTS, MCTSOptions};
 pub use crate::ai::move_search::minimax::ExpectiMinimax;
+pub use crate::ai::move_search::perfect_solver::PerfectSolver;
 pub use crate::ai::move_search::random::Random;
 #[cfg(not(target_arch = "wasm32"))]
 pub use crate::ai::move_search::ybw::ParallelSearch;
-pub use crate::ai::move_search::mcts::{MCTS, MCTSOptions};
-pub use crate::ai::move_search::perfect_solver::PerfectSolver;
 
-pub mod iterative;
-pub mod minimax;
-pub mod random;
-#[cfg(not(target_arch = "wasm32"))]
-pub mod ybw;
-pub mod mcts;
-pub mod gametree;
 mod common;
+pub mod gametree;
 pub mod interface;
+pub mod iterative;
+pub mod mcts;
+pub mod minimax;
+pub mod perfect_solver;
+pub mod random;
 #[cfg(not(target_arch = "wasm32"))]
 mod sync_util;
 pub mod table;
-pub mod perfect_solver;
 pub mod util;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod ybw;
 
 /// A shared signal used to request the termination of an ongoing search.
 //#[cfg(not(target_arch = "wasm32"))]
@@ -313,8 +314,47 @@ impl ParallelOptions {
 
 	pub fn num_threads(self) -> usize {
 		#[cfg(not(target_arch = "wasm32"))]
-		{self.num_threads.unwrap_or_else(num_cpus::get)}
+		{
+			self.num_threads.unwrap_or_else(num_cpus::get)
+		}
 		#[cfg(target_arch = "wasm32")]
-		{1}
+		{
+			1
+		}
 	}
+}
+pub fn simulate<G: Game>(sim_state: &G::S) -> GameOutcome
+where
+	G::S: Clone,
+{
+	let mut sim_state = sim_state.clone();
+	let mut result = G::get_outcome(&sim_state);
+	let mut moves = vec![];
+
+	while !result.is_ended() {
+		result = G::generate_and_filter_moves(&sim_state, &mut moves);
+		if result == GameOutcome::OnGoing {
+			let m = if G::is_random_move(&sim_state) {
+				let mut sum_proba = 0.0;
+				let rand = fastrand::f32();
+				let mut ch_mv = &moves[0];
+				for mv in &moves {
+					sum_proba += G::get_probability(&sim_state, *mv);
+					if sum_proba > rand {
+						ch_mv = mv;
+						break;
+					}
+				}
+				ch_mv
+			} else {
+				fastrand::choice(&moves).unwrap()
+			};
+			if let Some(state) = G::apply(&mut sim_state, *m) {
+				sim_state = state;
+			}
+		}
+		moves.clear();
+	}
+
+	result
 }
