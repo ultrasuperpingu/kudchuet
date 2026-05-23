@@ -2,7 +2,7 @@ use bitboard::Bitboard;
 use eframe::egui;
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::move_search::MCTS;
+use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData};
@@ -105,7 +105,7 @@ pub fn create_board() -> GenericBoardApp<Clobber> {
 	let engines: Vec<Box<dyn AIEngineProvider<Clobber>>> = vec![
 		Box::new(MoveSearcherBuilder::new("Dumb", ClobberDumbEval, 8)),
 		Box::new(MoveSearcherBuilder::new("Simple", ClobberSimpleEval, 8)),
-		Box::new(AIBuilder::<Clobber, MCTS<Clobber>>::new("MCTS")),
+		Box::new(AIBuilder::<Clobber, MCTS<Clobber, UniformRolloutPolicy<Clobber>>>::new("MCTS")),
 	];
 	//let ai_provider = MoveSearcherBuilderDyn::new("Dumb".into(), ClobberDumbEval::default(), 8);
 	GenericBoardApp::new(Clobber::default(), engines)

@@ -1,6 +1,6 @@
 use eframe::egui;
 use egui::Color32;
-use kudchuet::ai::move_search::MCTS;
+use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 
 use crate::bitboard::Bitboard5x5;
@@ -143,7 +143,7 @@ impl BoardGame for Teeko {
 pub fn create_board() -> GenericBoardApp<Teeko> {
 	let engines: Vec<Box<dyn AIEngineProvider<Teeko>>> = vec![
 		Box::new(MoveSearcherBuilder::new("Dumb", TeekoEvalDumb::new(), 4)),
-		Box::new(AIBuilder::<Teeko, MCTS<Teeko>>::new("MCTS")),
+		Box::new(AIBuilder::<Teeko, MCTS<Teeko, UniformRolloutPolicy<Teeko>>>::new("MCTS")),
 	];
 	GenericBoardApp::new(Teeko::default(), engines)
 }

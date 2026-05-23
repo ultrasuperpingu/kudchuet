@@ -4,8 +4,7 @@ extern crate kudchuet;
 mod ttt;
 
 use kudchuet::{
-	GameOutcome,
-	ai::move_search::{ExpectiMinimax, Game, PerfectSolver, Random, mcts::MCTS, util::battle_royale},
+	GameOutcome, Player, ai::move_search::{ExpectiMinimax, Game, PerfectSolver, Random, UniformRolloutPolicy, gametree::ProofOutcome, mcts::MCTS, util::battle_royale}
 };
 
 use crate::ttt::TTTGame;
@@ -36,8 +35,8 @@ fn test_ttt_minimax_vs_random_always_wins_or_draws() {
 #[test]
 fn test_ttt_mcts_vs_mcts_always_draws() {
 	for _ in 0..100 {
-		let mut s1 = MCTS::<TTTGame>::default();
-		let mut s2 = MCTS::<TTTGame>::default();
+		let mut s1 = MCTS::<TTTGame, UniformRolloutPolicy<TTTGame>>::default();
+		let mut s2 = MCTS::<TTTGame, UniformRolloutPolicy<TTTGame>>::default();
 		assert_eq!(battle_royale(&mut s1, &mut s2), None);
 	}
 }
@@ -48,10 +47,8 @@ fn test_ttt_recursive() {
 	let mut game = ttt::Board::default();
 	let mut tree: kudchuet::ai::move_search::gametree::GameTree<TTTGame, ()> =
 		kudchuet::ai::move_search::gametree::GameTree::from(game.clone());
-	assert_eq!(tree.expand_all(0), GameOutcome::Draw);
-	assert_eq!(tree.get_outcome(0), GameOutcome::Draw);
+	assert_eq!(tree.expand_all(0), ProofOutcome::Draw(9));
 	tree.print(2);
-	assert_eq!(tree.get_root().depth_to_end(), 9);
 	TTTGame::apply(&mut game, ttt::Place { i: 0 });
 	TTTGame::apply(&mut game, ttt::Place { i: 1 });
 	let node = tree
@@ -59,8 +56,8 @@ fn test_ttt_recursive() {
 		.unwrap();
 	tree.set_root_id(node);
 	tree.print(2);
-	assert_eq!(tree.get_root().outcome(), GameOutcome::PLAYER1);
-	assert_eq!(tree.get_root().depth_to_end(), 5);
+	assert_eq!(tree.get_root().outcome(), ProofOutcome::Player(Player::PLAYER1, 5));
+	//assert_eq!(tree.get_root().depth_to_end(), 5);
 }
 /*
 // Test TTT Perfect Solver
@@ -100,7 +97,7 @@ fn test_ttt_perfect_always_draws() {
 #[test]
 fn test_ttt_mcts_vs_random_always_wins_or_draws() {
 	for _ in 0..100 {
-		let mut s1 = MCTS::<TTTGame>::default();
+		let mut s1 = MCTS::<TTTGame, UniformRolloutPolicy<TTTGame>>::default();
 		let mut s2 = Random::new();
 		assert_ne!(battle_royale(&mut s1, &mut s2), Some(1));
 	}

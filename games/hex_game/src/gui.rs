@@ -2,7 +2,7 @@ use bitboard::Bitboard;
 use eframe::egui::{self, Painter, Pos2, Rect, Vec2};
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::move_search::MCTS;
+use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, SquareDrawer};
@@ -400,7 +400,7 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 pub fn create_board() -> GenericBoardApp<Hex> {
 	let ai_provider: Vec<Box<dyn AIEngineProvider<Hex>>> = vec![
 		Box::new(MoveSearcherBuilder::new("Material", HexMaterialEval, 4)),
-		Box::new(AIBuilder::<Hex, MCTS<Hex>>::new("MCTS")),
+		Box::new(AIBuilder::<Hex, MCTS<Hex, UniformRolloutPolicy<Hex>>>::new("MCTS")),
 	];
 	let mut board = GenericBoardApp::new(Hex::new(), ai_provider);
 	board.board_drawer = Box::new(HexBoardDrawer::default());

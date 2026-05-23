@@ -1,6 +1,6 @@
 use eframe::egui;
 use egui::Color32;
-use kudchuet::ai::move_search::{Game, MCTS};
+use kudchuet::ai::move_search::{Game, MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 
 use crate::bitboard::Bitboard5x5;
@@ -242,7 +242,7 @@ pub fn create_board() -> GenericBoardApp<ThreeMusketeers> {
 			ThreeMusketeersEvalSimple::new(),
 			4,
 		)),
-		Box::new(AIBuilder::<ThreeMusketeers, MCTS<ThreeMusketeers>>::new(
+		Box::new(AIBuilder::<ThreeMusketeers, MCTS<ThreeMusketeers, UniformRolloutPolicy<ThreeMusketeers>>>::new(
 			"MCTS",
 		)),
 	];

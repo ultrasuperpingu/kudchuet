@@ -11,8 +11,7 @@ use crate::ai::move_search::sync_util::timeout_signal;
 use crate::{
 	GameOutcome, Player, StrategyWithOptions,
 	ai::move_search::{
-		Evaluation, Game, SearchStopSignal, Strategy,
-		gametree::{GameTree, Node},
+		Evaluation, Game, RolloutPolicy, SearchStopSignal, Strategy, gametree::{GameTree, Node, ProofOutcome}, simulate
 	},
 };
 #[derive(Clone, Default)]
@@ -73,15 +72,16 @@ impl MCTSOptions {
 	}
 }
 
-pub struct MCTS<G: Game>
+pub struct MCTS<G: Game, Policy: RolloutPolicy<G>>
 where
 	G::S: Clone,
 {
 	tree: Option<GameTree<G, VisitStats>>,
 	pub opts: MCTSOptions,
 	stop_signal: Arc<AtomicBool>,
+	rollout_policy: Policy,
 }
-impl<G: Game> Default for MCTS<G>
+impl<G: Game, Policy: RolloutPolicy<G>> Default for MCTS<G, Policy>
 where
 	G::S: Clone,
 {
@@ -90,6 +90,7 @@ where
 			tree: Default::default(),
 			opts: Default::default(),
 			stop_signal: Arc::new(AtomicBool::new(false)),
+			rollout_policy: Policy::default(),
 		}
 	}
 }
@@ -108,7 +109,7 @@ impl<G: Game> Node<G, VisitStats> {
 	}
 	pub fn score(&self) -> Evaluation {
 		if self.outcome.is_ended() {
-			self.outcome.evaluate_for(self.player_to_move)
+			GameOutcome::from(self.outcome).evaluate_for(self.player_to_move)
 		} else {
 			let winrate = self.winrate();
 			let drawrate = self.drawrate();
@@ -191,7 +192,7 @@ where
 		root_player: Player,
 		node_id: usize,
 		result: GameOutcome,
-		use_min_max: bool,
+		//use_min_max: bool,
 	) {
 		let mut current = Some(node_id);
 		while let Some(id) = current {
@@ -206,9 +207,9 @@ where
 				node.data.wins -= 1;
 			}
 
-			if use_min_max {
+			/*if use_min_max {
 				self.get_outcome(id);
-			}
+			}*/
 			if id == self.root_id {
 				break;
 			}
@@ -216,25 +217,6 @@ where
 		}
 	}
 
-	pub fn iterate(
-		&mut self,
-		root_player: Player,
-		node_id: usize,
-		exploration_factor: f32,
-		use_min_max: bool,
-	) where
-		G::S: Clone,
-	{
-		let (id, already_proved) = self.select(exploration_factor, node_id);
-		if already_proved {
-			println!("ahhhhh!!!");
-			return;
-		}
-		let new_id = self.expand(id);
-		let result = self.simulate(new_id);
-		//println!("{:?}", result);
-		self.backpropagate(root_player, new_id, result, use_min_max);
-	}
 
 	pub fn find_best_move(&self) -> Option<<G as Game>::M> {
 		if let Some(best) = self.find_best_proved_move() {
@@ -263,7 +245,7 @@ where
 		}
 	}
 }
-impl<G: Game> MCTS<G>
+impl<G: Game, Policy: RolloutPolicy<G>> MCTS<G, Policy>
 where
 	G::S: Clone,
 {
@@ -302,7 +284,7 @@ where
 				data: VisitStats::default(),
 				untried_moves: moves,
 				player_to_move: G::get_current_player(root_state),
-				outcome: GameOutcome::OnGoing,
+				outcome: ProofOutcome::Unproved,
 				depth_to_end: u16::MAX,
 			});
 			tree.state_to_node.insert(root_state_hash, 0);
@@ -324,12 +306,14 @@ where
 
 		let root_player = tree.get_root().player_to_move;
 		let mut i = 0;
+		let root_id = tree.root_id;
 		while i < iterations {
-			tree.iterate(
+			self.iterate(
+				&mut tree,
 				root_player,
-				tree.root_id,
+				root_id,
 				self.opts.exploration_factor,
-				self.opts.use_min_max,
+				//self.opts.use_min_max,
 			);
 			if self.stop_signal.load(Ordering::Relaxed) {
 				println!("stop_signal received");
@@ -345,12 +329,34 @@ where
 		self.tree = Some(tree);
 		res
 	}
+	pub fn iterate(
+		&mut self,
+		tree: &mut GameTree<G, VisitStats>,
+		root_player: Player,
+		node_id: usize,
+		exploration_factor: f32,
+		//use_min_max: bool,
+	) where
+		G::S: Clone,
+	{
+		//let tree = self.tree.as_mut().unwrap();
+		let (id, already_proved) = tree.select(exploration_factor, node_id);
+		if already_proved {
+			println!("ahhhhh!!!");
+			return;
+		}
+		let new_id = tree.expand(id);
+		let result = simulate(tree.get_node_state(new_id).unwrap(), self.rollout_policy);
+		//println!("{:?}", result);
+		//self.backpropagate(root_player, new_id, result, use_min_max);
+		tree.backpropagate(root_player, new_id, result);
+	}
 	pub fn get_tree(&self) -> Option<&GameTree<G, VisitStats>> {
 		self.tree.as_ref()
 	}
 }
 
-impl<G: Game> Strategy<G> for MCTS<G>
+impl<G: Game, Policy: RolloutPolicy<G>> Strategy<G> for MCTS<G, Policy>
 where
 	G::S: Clone,
 {
@@ -362,7 +368,7 @@ where
 			let root = t.get_root();
 
 			if root.outcome.is_ended() {
-				root.outcome.evaluate_for(root.player_to_move)
+				GameOutcome::from(root.outcome).evaluate_for(root.player_to_move)
 			} else {
 				let winrate = root.winrate();
 				let drawrate = root.drawrate();
@@ -389,7 +395,7 @@ where
 		self.opts.max_time = max_time;
 	}
 }
-impl<G: Game> StrategyWithOptions<G> for MCTS<G>
+impl<G: Game, Policy: RolloutPolicy<G>> StrategyWithOptions<G> for MCTS<G, Policy>
 where
 	G::S: Clone,
 {

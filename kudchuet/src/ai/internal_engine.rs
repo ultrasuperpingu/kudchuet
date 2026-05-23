@@ -72,13 +72,13 @@ where
 		self.opts = opts;
 		let mut ai = self.ai.lock().unwrap();
 		ai.set_options(&self.opts);
-		let depth = if let UciValue::Spin(depth, _, _) = self.opts["Depth"] {
-			depth as u8
+		let depth = if let UciValue::Spin(depth, _, _) = self.opts.get("Depth").unwrap_or(&UciValue::Bool(false)) {
+			*depth as u8
 		} else {
 			5
 		};
-		let timeout = if let UciValue::Spin(timeout, _, _) = self.opts["Timeout"] {
-			timeout as f32 / 1000.0
+		let timeout = if let UciValue::Spin(timeout, _, _) = self.opts.get("Timeout").unwrap_or(&UciValue::Bool(false)) {
+			*timeout as f32 / 1000.0
 		} else {
 			0.0
 		};

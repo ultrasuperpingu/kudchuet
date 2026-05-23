@@ -8,7 +8,142 @@ use std::{
 	collections::hash_map::Entry,
 	fmt::{self, Debug, Display, Formatter},
 };
+/*
+pub struct PlayerSet(u16);
+impl PlayerSet {
+	pub fn players(&self) -> [Option<Player>; 16] {
+		let mut res: [Option<Player>; 16] = [None; 16];
+		for i in 0..16 {
+			if (self.0 & (1 << i)) != 0 {
+				res[i] = Some(Player(i as u8));
+			}
+		}
+		res
+	}
+	pub fn contains(&self, p: Player) -> bool {
+		(self.0 & 1 << p.0) != 0
+	}
+}*/
+#[derive(Clone,Copy, Debug, PartialEq, Eq)]
+pub enum ProofOutcome {
+	Unproved,
+	Draw(u16),
+	Player(Player, u16),
+	//PossibleWinners(PlayerSet, u16),
+}
+impl ProofOutcome {
+	pub fn depth(&self) -> Option<u16> {
+		match self {
+			ProofOutcome::Unproved => None,
+			ProofOutcome::Draw(d) => Some(*d),
+			ProofOutcome::Player(_, d) => Some(*d),
+			//ProvedOutcome::PossibleWinners(_, d) => Some(*d),
+		}
+	}
 
+	pub fn is_proved(&self) -> bool {
+		!matches!(self, ProofOutcome::Unproved)
+	}
+	pub fn is_draw(&self) -> bool {
+		matches!(self, Self::Draw(_))
+	}
+
+	pub fn is_ended(&self) -> bool {
+		!matches!(self, Self::Unproved)
+	}
+
+	pub fn is_win_for(&self, p: Player) -> bool {
+		matches!(self, Self::Player(w, _) if *w == p)
+	}
+
+	pub fn is_lose_for(&self, p: Player) -> bool {
+		match self {
+			Self::Player(w, _) => *w != p,
+			_ => false,
+		}
+	}
+
+	pub fn winner(&self) -> Option<Player> {
+		match self {
+			Self::Player(p, _) => Some(*p),
+			_ => None,
+		}
+	}
+
+	pub fn increment_depth(self) -> Self {
+		match self {
+			Self::Unproved => Self::Unproved,
+			Self::Draw(d) => Self::Draw(d + 1),
+			Self::Player(p, d) => Self::Player(p, d + 1),
+		}
+	}
+}impl ProofOutcome {
+	pub fn merge(&mut self, other: Self, is_max: bool) -> &mut Self {
+		use ProofOutcome::*;
+
+		match (&mut *self, other) {
+			(Unproved, x) => {
+				*self = x;
+			}
+
+			(_, Unproved) => {}
+
+			(Draw(a), Draw(b)) => {
+				if is_max {
+					*a = (*a).max(b);
+				} else {
+					*a = (*a).min(b);
+				}
+			}
+
+			(Player(pa, da), Player(pb, db)) => {
+				if *pa == pb {
+					if is_max {
+						*da = (*da).max(db);
+					} else {
+						*da = (*da).min(db);
+					}
+				} else {
+					panic!("Contradictory proved outcomes");
+				}
+			}
+
+			(Player(_, _), Draw(_))
+			| (Draw(_), Player(_, _)) => {
+				panic!("Contradictory proved outcomes");
+			}
+		}
+
+		self
+	}
+}
+impl From<GameOutcome> for ProofOutcome {
+	fn from(value: GameOutcome) -> Self {
+		match value {
+			GameOutcome::Player(p) => ProofOutcome::Player(p, 0),
+			GameOutcome::Draw => ProofOutcome::Draw(0),
+			GameOutcome::OnGoing | GameOutcome::InCycle => {
+				ProofOutcome::Unproved
+			}
+		}
+	}
+}
+
+impl From<ProofOutcome> for GameOutcome {
+	fn from(value: ProofOutcome) -> Self {
+		match value {
+			ProofOutcome::Player(p, _) => GameOutcome::Player(p),
+			ProofOutcome::Draw(_) => GameOutcome::Draw,
+			ProofOutcome::Unproved => GameOutcome::OnGoing,
+		}
+	}
+}
+
+impl From<Player> for ProofOutcome {
+	fn from(value: Player) -> Self {
+		ProofOutcome::Player(value, 0)
+	}
+}
 #[derive(Debug, Clone)]
 pub struct Node<G: Game, Data> {
 	pub(crate) state: G::S,
@@ -19,7 +154,7 @@ pub struct Node<G: Game, Data> {
 
 	pub(crate) untried_moves: Vec<G::M>,
 	pub(crate) player_to_move: Player,
-	pub(crate) outcome: GameOutcome,
+	pub(crate) outcome: ProofOutcome,
 	pub(crate) depth_to_end: u16,
 }
 impl<G: Game, Data> Node<G, Data> {
@@ -29,7 +164,7 @@ impl<G: Game, Data> Node<G, Data> {
 	pub fn depth_to_end(&self) -> u16 {
 		self.depth_to_end
 	}
-	pub fn outcome(&self) -> GameOutcome {
+	pub fn outcome(&self) -> ProofOutcome {
 		self.outcome
 	}
 }
@@ -77,7 +212,7 @@ where
 			data: Data::default(),
 			untried_moves: moves,
 			player_to_move: player,
-			outcome: GameOutcome::OnGoing,
+			outcome: ProofOutcome::Unproved,
 			depth_to_end: u16::MAX,
 		});
 		s.state_to_node.insert(hash, 0);
@@ -88,7 +223,7 @@ impl<G: Game, Data: Default> GameTree<G, Data>
 where
 	G::S: Clone,
 {
-	pub fn get_outcome(&mut self, id: usize) -> GameOutcome {
+	/*pub fn get_outcome(&mut self, id: usize) -> GameOutcome {
 		let mut visited = Vec::new();
 		self.get_outcome_recursive(id, &mut visited)
 	}
@@ -97,10 +232,6 @@ where
 			return GameOutcome::InCycle;
 		}
 		visited.push(id);
-		//let state_info = self.states.get(&self.nodes[id].state_hash).unwrap();
-		//if state_info.node != id {
-		//	return self.nodes[state_info.node].outcome;
-		//}
 		if self.nodes[id].outcome != GameOutcome::OnGoing {
 			let mine = visited.pop();
 			debug_assert_eq!(mine, Some(id));
@@ -167,25 +298,25 @@ where
 		let mine = visited.pop();
 		debug_assert_eq!(mine, Some(id));
 		self.nodes[id].outcome
-	}
+	}*/
 
-	pub fn expand_all(&mut self, node_id: usize) -> GameOutcome
+	pub fn expand_all(&mut self, node_id: usize) -> ProofOutcome
 	where
 		G::S: Clone,
 	{
 		self.expand_to_depth(node_id, u16::MAX)
 	}
-	pub fn expand_to_depth(&mut self, node_id: usize, max_depth: u16) -> GameOutcome
+	pub fn expand_to_depth(&mut self, node_id: usize, max_depth: u16) -> ProofOutcome
 	where
 		G::S: Clone,
 	{
 		self.expand_to_depth_recursive(node_id, max_depth, 0)
 	}
-	pub fn iterative_deepening_solve(&mut self, node_id: usize, max_depth: u16) -> GameOutcome
+	pub fn iterative_deepening_solve(&mut self, node_id: usize, max_depth: u16) -> ProofOutcome
 	where
 		G::S: Clone,
 	{
-		let mut res = GameOutcome::OnGoing;
+		let mut res = ProofOutcome::Unproved;
 		for i in 1..=max_depth {
 			res = self.expand_to_depth_recursive(node_id, i, 0);
 			if res.is_ended() {
@@ -199,24 +330,28 @@ where
 		node_id: usize,
 		max_depth: u16,
 		depth: u16,
-	) -> GameOutcome
+	) -> ProofOutcome
 	where
 		G::S: Clone,
 	{
 		// TODO: check this is really correct...
 		if self.nodes[node_id].outcome.is_ended()
-			&& (depth + self.nodes[node_id].depth_to_end) <= max_depth
+			&& (depth + self.nodes[node_id].outcome.depth().unwrap()) <= max_depth
 		{
 			return self.nodes[node_id].outcome;
 		}
 		if max_depth <= depth {
-			return GameOutcome::OnGoing;
+			return ProofOutcome::Unproved;
 		}
 		while let Some(m) = self.nodes[node_id].untried_moves.pop() {
-			let (child_id, res) = self.expand_single_child(node_id, m);
+			let (_child_id, res) = self.expand_single_child(node_id, m);
 			if res.is_win_for(self.nodes[node_id].player_to_move) {
-				self.nodes[node_id].outcome = res;
-				self.nodes[node_id].depth_to_end = u16::min(self.nodes[node_id].depth_to_end, self.nodes[child_id].depth_to_end + 1);
+				self.nodes[node_id].outcome.merge(res.increment_depth(), false);
+				//self.nodes[node_id].outcome = res;
+				//self.nodes[node_id].depth_to_end = u16::min(
+				//	self.nodes[node_id].depth_to_end,
+				//	self.nodes[child_id].depth_to_end + 1,
+				//);
 			}
 		}
 		let children: Vec<_> = self.nodes[node_id]
@@ -232,19 +367,28 @@ where
 		for child_id in children {
 			let res = self.expand_to_depth_recursive(child_id, max_depth, depth + 1);
 			if res.is_win_for(self.nodes[node_id].player_to_move) {
-				self.nodes[node_id].outcome = res;
-				self.nodes[node_id].depth_to_end = u16::min(self.nodes[node_id].depth_to_end, self.nodes[child_id].depth_to_end + 1);
+				//println!("res: {:?}, outcome:{:?}", res, self.nodes[node_id].outcome);
+				self.nodes[node_id].outcome.merge(res.increment_depth(), false);
+				//println!("merged outcome:{:?}", self.nodes[node_id].outcome);
+				//self.nodes[node_id].outcome = res;
+				//self.nodes[node_id].depth_to_end = u16::min(
+				//	self.nodes[node_id].depth_to_end,
+				//	self.nodes[child_id].depth_to_end + 1,
+				//);
 				is_lose = false;
 			} else if res.is_draw() {
 				is_draw = true;
-				draw_depth = u16::min(draw_depth, self.nodes[child_id].depth_to_end + 1);
+				//draw_depth = u16::min(draw_depth, self.nodes[child_id].depth_to_end + 1);
+				draw_depth = res.depth().unwrap() + 1;
 				is_lose = false;
-			}  else if !res.is_ended() {
+			} else if !res.is_ended() {
 				has_unknown = true;
 				is_lose = false;
-			} else if is_lose { //lose
+			} else if is_lose {
+				//lose
 				debug_assert!(res.is_lose_for(self.nodes[node_id].player_to_move));
-				loose_depth = u16::max(loose_depth, self.nodes[child_id].depth_to_end + 1);
+				//loose_depth = u16::max(loose_depth, self.nodes[child_id].depth_to_end + 1);
+				loose_depth = u16::max(loose_depth, res.depth().unwrap() + 1);
 			} else {
 				//println!("res: {:?}", res);
 				debug_assert!(res.is_lose_for(self.nodes[node_id].player_to_move));
@@ -252,19 +396,18 @@ where
 		}
 		if is_lose {
 			//TODO: real player win (for multiplayer)
-			self.nodes[node_id].outcome = self.nodes[node_id].player_to_move.opponent().into();
-			self.nodes[node_id].depth_to_end = loose_depth;
-				
-		} else if self.nodes[node_id].outcome == GameOutcome::OnGoing && !has_unknown && is_draw {
-			self.nodes[node_id].outcome = GameOutcome::Draw;
-			self.nodes[node_id].depth_to_end = draw_depth;
+			self.nodes[node_id].outcome = ProofOutcome::Player(self.nodes[node_id].player_to_move.opponent(), loose_depth);
+			//self.nodes[node_id].depth_to_end = loose_depth;
+		} else if self.nodes[node_id].outcome == ProofOutcome::Unproved && !has_unknown && is_draw {
+			self.nodes[node_id].outcome = ProofOutcome::Draw(draw_depth);
+			//self.nodes[node_id].depth_to_end = draw_depth;
 		}
 		self.nodes[node_id].outcome
 		//self.get_outcome(node_id)
 		//GameOutcome::OnGoing
 	}
 
-	pub(crate) fn expand_single_child(&mut self, node_id: usize, m: G::M) -> (usize, GameOutcome) {
+	pub(crate) fn expand_single_child(&mut self, node_id: usize, m: G::M) -> (usize, ProofOutcome) {
 		let state = self.get_node_state_mut(node_id).unwrap();
 		let new_state = AppliedMove::<G>::applied_clone(state, m);
 		let new_state_hash = G::get_hash(&new_state);
@@ -289,7 +432,7 @@ where
 					data: Data::default(),
 					untried_moves: moves,
 					player_to_move: player,
-					outcome,
+					outcome: outcome.into(),
 					depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
 				});
 				self.nodes[node_id].children.push(Edge {
@@ -297,7 +440,7 @@ where
 					child: child_id,
 				});
 				new_state_entry.insert(child_id);
-				(child_id, outcome)
+				(child_id, outcome.into())
 			}
 		}
 	}
@@ -362,62 +505,6 @@ where
 		}
 
 		None
-	}
-}
-// Simulation
-impl<G: Game, Data> GameTree<G, Data>
-where
-	G::S: Clone,
-{
-	pub fn simulate(&self, node_id: usize) -> GameOutcome
-	where
-		G::S: Clone,
-	{
-		let mut sim_state = self.get_node_state(node_id).unwrap().clone();
-		let mut hash = G::get_hash(&sim_state);
-		if let Some(n) = self.get_state_node(hash) {
-			if n.outcome.is_ended() {
-				return n.outcome;
-			}
-		}
-		let mut result = G::get_outcome(&sim_state);
-		let mut moves = vec![];
-
-		while !result.is_ended() {
-			result = G::generate_and_filter_moves(&sim_state, &mut moves);
-			if result == GameOutcome::OnGoing {
-				let m = if G::is_random_move(&sim_state) {
-					let mut sum_proba = 0.0;
-					let rand = fastrand::f32();
-					let mut ch_mv = &moves[0];
-					for mv in &moves {
-						sum_proba += G::get_probability(&sim_state, *mv);
-						if sum_proba > rand {
-							ch_mv = mv;
-							break;
-						}
-					}
-					ch_mv
-				} else {
-					if moves.is_empty() {
-						println!("{hash}: {sim_state:?}");
-					}
-					fastrand::choice(&moves).unwrap()
-				};
-				if let Some(state) = G::apply(&mut sim_state, *m) {
-					sim_state = state;
-				}
-				hash = G::get_hash(&sim_state);
-				if let Some(n) = self.get_state_node(hash) {
-					if n.outcome.is_ended() {
-						return n.outcome;
-					}
-				}
-			}
-			moves.clear();
-		}
-
-		result
 	}
 }
 // Cleanup
@@ -508,16 +595,6 @@ where
 			false
 		}
 	}
-	//TODO: Option
-	pub fn get_root_state(&self) -> &G::S {
-		&self.nodes[self.root_id].state
-	}
-	pub fn get_state(&self, hash: u64) -> Option<&G::S> {
-		self.state_to_node.get(&hash).map(|s| &self.nodes[*s].state)
-	}
-	pub fn get_state_mut(&mut self, hash: u64) -> Option<&mut G::S> {
-		self.state_to_node.get(&hash).map(|s| &mut self.nodes[*s].state)
-	}
 	pub fn get_state_node_id(&self, hash: u64) -> Option<usize> {
 		self.state_to_node.get(&hash).copied()
 	}
@@ -563,8 +640,8 @@ where
 
 		let _ = writeln!(
 			f,
-			//"{}Node {} | to_move: {:?} | move: {:?} | visits: {} | winrate: {:.2} | outcome: {:?} ({})",
-			"{}Node {} | to_move: {:?} | move: {:?} | outcome: {:?} ({})",
+			//"{}Node {} | player: {:?} | move: {:?} | visits: {} | winrate: {:.2} | outcome: {:?} ({})",
+			"{}Node {} | player: {:?} | move: {:?} | outcome: {:?} ({})",
 			indent,
 			id,
 			node.player_to_move,

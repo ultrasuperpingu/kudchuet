@@ -1,7 +1,7 @@
 use eframe::egui::{self, Rect};
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::move_search::MCTS;
+use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
@@ -193,7 +193,7 @@ pub fn create_board() -> GenericBoardApp<EinsteinWurfeltNicht> {
 			EinsteinWurfeltNichtDumbEval,
 			20,
 		)),
-		Box::new(AIBuilder::<EinsteinWurfeltNicht, MCTS<EinsteinWurfeltNicht>>::new("MCTS")),
+		Box::new(AIBuilder::<EinsteinWurfeltNicht, MCTS<EinsteinWurfeltNicht, UniformRolloutPolicy<EinsteinWurfeltNicht>>>::new("MCTS")),
 	];
 	//let ai_provider =
 	//	MoveSearcherBuilderDyn::new("Dumb".into(), EinsteinWurfeltNichtDumbEval::default(), 20);

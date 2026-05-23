@@ -149,7 +149,7 @@ fn main() {
 	//tree.set_root_id(38);
 	//tree.cleanup();
 	//tree.print(1);
-	assert_eq!(outcome, outcome2);
+	assert_eq!(outcome, outcome2.into());
 
 /*
 	let b = Board::new(nb_sticks);

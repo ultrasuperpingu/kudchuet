@@ -1,6 +1,5 @@
 use crate::{
-	StrategyWithOptions,
-	ai::move_search::{Evaluation, Game, Strategy, gametree::GameTree},
+	GameOutcome, StrategyWithOptions, ai::move_search::{Evaluation, Game, Strategy, gametree::GameTree}
 };
 
 #[derive(Clone)]
@@ -42,7 +41,7 @@ where
 	}
 	fn root_value(&self) -> Evaluation {
 		if let Some(t) = &self.0 {
-			t.get_root().outcome.evaluate_for(t.get_root().player_to_move)
+			GameOutcome::from(t.get_root().outcome).evaluate_for(t.get_root().player_to_move)
 		} else {
 			0
 		}
