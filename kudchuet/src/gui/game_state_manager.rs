@@ -1,7 +1,7 @@
-use crate::gui::{BoardGame, BoardMove};
+use crate::gui::GUIGame;
 
-pub struct GameStateManager<G: BoardGame>
-	where G::M: BoardMove<G>
+pub struct GameStateManager<G: GUIGame>
+	//where G::M: BoardMove<G>
 {
 	current_game: G,
 	settings: G::Settings,
@@ -10,8 +10,8 @@ pub struct GameStateManager<G: BoardGame>
 	legal_moves: Vec<G::M>,
 }
 
-impl<G: BoardGame> GameStateManager<G> 
-where G::M: BoardMove<G>
+impl<G: GUIGame> GameStateManager<G> 
+//where G::M: BoardMove<G>
 {
 	pub fn new(initial_game: G) -> Self {
 		let legals = initial_game.legal_moves();

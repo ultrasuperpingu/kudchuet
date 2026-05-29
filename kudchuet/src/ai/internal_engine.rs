@@ -1,7 +1,7 @@
 use crate::StrategyWithOptions;
 use crate::ai::AIEngine;
 use crate::ai::uci::UciValue;
-use crate::gui::{BoardGame, BoardMove};
+use crate::gui::GUIGame;
 use std::collections::HashMap;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
@@ -14,8 +14,8 @@ use std::future::Future;
 
 pub struct InternalEngine<G, AI>
 where
-	G: BoardGame,
-	G::M: BoardMove<G> + Copy + 'static,
+	G: GUIGame,
+	//G::M: BoardMove<G> + Copy + 'static,
 	AI: StrategyWithOptions<G> + 'static,
 {
 	ai: Arc<Mutex<AI>>,
@@ -26,8 +26,8 @@ where
 
 impl<G, AI> InternalEngine<G, AI>
 where
-	G: BoardGame,
-	G::M: BoardMove<G> + Copy + 'static,
+	G: GUIGame,
+	//G::M: BoardMove<G> + Copy + 'static,
 	AI: StrategyWithOptions<G> + 'static,
 {
 	pub fn new(ai: AI) -> Self {
@@ -48,20 +48,21 @@ where
 
 impl<G, AI> AIEngine<G> for InternalEngine<G, AI>
 where
-	G: BoardGame + Clone + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Send + 'static,
+	G: GUIGame + Clone + Send + Sync + 'static,
+	//G::M: BoardMove<G> + Copy + Send + 'static,
+	G::M: Copy + Send + 'static,
 	AI: StrategyWithOptions<G> + Send + 'static,
 {
 	fn get_options(&self) -> Option<&HashMap<String, UciValue>> {
 		//if let Ok(l) = self.ai.try_lock() {
-			Some(&self.opts)
+		Some(&self.opts)
 		//} else {
 		//	None
 		//}
 	}
 	fn get_options_mut(&mut self) -> Option<&mut HashMap<String, UciValue>> {
 		//if let Ok(l) = self.ai.try_lock() {
-			Some(&mut self.opts)
+		Some(&mut self.opts)
 		//} else {
 		//	None
 		//}
@@ -72,12 +73,16 @@ where
 		self.opts = opts;
 		let mut ai = self.ai.lock().unwrap();
 		ai.set_options(&self.opts);
-		let depth = if let UciValue::Spin(depth, _, _) = self.opts.get("Depth").unwrap_or(&UciValue::Bool(false)) {
+		let depth = if let UciValue::Spin(depth, _, _) =
+			self.opts.get("Depth").unwrap_or(&UciValue::Bool(false))
+		{
 			*depth as u8
 		} else {
 			5
 		};
-		let timeout = if let UciValue::Spin(timeout, _, _) = self.opts.get("Timeout").unwrap_or(&UciValue::Bool(false)) {
+		let timeout = if let UciValue::Spin(timeout, _, _) =
+			self.opts.get("Timeout").unwrap_or(&UciValue::Bool(false))
+		{
 			*timeout as f32 / 1000.0
 		} else {
 			0.0
@@ -99,7 +104,8 @@ where
 		mv
 	}
 	#[cfg(not(target_arch = "wasm32"))]
-	fn choose_move_async(&mut self, game: G) -> Pin<Box<dyn Future<Output = Option<G::M>> + Send>> {
+	fn choose_move_async(&mut self, game: G) -> Pin<Box<dyn Future<Output = Option<G::M>> + Send>>
+	{
 		let (tx, rx) = oneshot::channel();
 		self.stop_signal = Some(self.ai.lock().unwrap().stop_signal());
 		let ai = self.ai.clone(); // Arc<Mutex<AI>>

@@ -3,14 +3,53 @@ use std::{collections::HashMap, marker::PhantomData};
 use egui::{Color32, Painter, Pos2, Rect};
 use egui_field_editor::EguiInspect;
 
+
 use crate::{
 	gui::{
-		BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern, shapes::Shape,
+		BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, RowOffsetPattern,
+		shapes::Shape,
 	},
 	utils::short_type_name,
 };
+pub trait GameDrawer<G: GUIGame> {
+	type Click;
+	fn draw(
+		&mut self,
+		ui: &mut egui::Ui,
+		game: &G,
+		//input: &Box<dyn InputHandler<G>>,
+		can_interact: bool,
+	) -> Option<Self::Click>;
 
-pub trait BoardDrawer<G: BoardGame>
+	fn full_reset(&mut self);
+
+	fn load_style(&mut self, ctx: &egui::Context) {
+		if let Some(json) = ctx.data_mut(|d| {
+			d.get_persisted::<String>((short_type_name::<G>().to_owned() + "_theme").into())
+		}) {
+			eprintln!("loading theme: {}", json);
+
+			if let Ok(settings) = serde_json::from_str(&json) {
+				*self.get_style_mut() = settings;
+			}
+		}
+	}
+
+	fn save_style(&mut self, ctx: &egui::Context) {
+		let json = serde_json::to_string(self.get_style()).unwrap();
+
+		eprintln!("saving theme: {}", json);
+
+		ctx.data_mut(|d| {
+			d.insert_persisted((short_type_name::<G>().to_owned() + "_theme").into(), json)
+		});
+	}
+
+	fn get_style(&self) -> &G::Style;
+	fn get_style_mut(&mut self) -> &mut G::Style;
+	fn set_style(&mut self, style: G::Style);
+}
+pub trait BoardDrawer<G: BoardGame>: GameDrawer<G>
 where
 	G::M: BoardMove<G>,
 {
@@ -32,7 +71,8 @@ where
 			} else {
 				1.0
 			};
-		let (cell_size, board_width, board_height) = self.get_cell_and_board_size(w, h, style, avail_w, avail_h);
+		let (cell_size, board_width, board_height) =
+			self.get_cell_and_board_size(w, h, style, avail_w, avail_h);
 
 		let left_margin = if style.show_coordinates_mod.is_aside() {
 			cell_size * 0.6
@@ -288,13 +328,14 @@ where
 	}
 
 	/// Returns (cell size, board width, board height)
-	/// 
+	///
 	/// w: board width (in cell)
 	/// h: board height (in cell)
 	/// style: the board style
 	/// avail_w: available width
 	/// avail_h: available height
-	fn get_cell_and_board_size(&self,
+	fn get_cell_and_board_size(
+		&self,
 		w: u8,
 		h: u8,
 		style: &BoardStyle,
@@ -321,9 +362,9 @@ where
 	fn get_piece_drawer(&self) -> &dyn PieceDrawer<G>;
 	fn get_piece_drawer_mut(&mut self) -> &mut dyn PieceDrawer<G>;
 	fn set_piece_drawer(&mut self, sq_drawer: Box<dyn PieceDrawer<G>>);
-	fn get_style(&self) -> &BoardStyle;
-	fn get_style_mut(&mut self) -> &mut BoardStyle;
-	fn set_style(&mut self, style: BoardStyle);
+	//fn get_style(&self) -> &Self::BoardStyle;
+	//fn get_style_mut(&mut self) -> &mut BoardStyle;
+	//fn set_style(&mut self, style: BoardStyle);
 	fn get_selected(&self) -> Option<u16>;
 	fn set_selected(&mut self, selected: Option<u16>);
 	fn clear_selection(&mut self);
@@ -331,7 +372,7 @@ where
 	fn set_legal_highlights(&mut self, legal_highlights: Vec<u16>);
 	fn get_played_highlights(&self) -> &Vec<u16>;
 	fn set_played_highlights(&mut self, played_highlights: Vec<u16>);
-	fn full_reset(&mut self);
+	/*	fn full_reset(&mut self);
 	fn load_style(&mut self, ctx: &egui::Context) {
 		if let Some(json) = ctx.data_mut(|d| {
 			d.get_persisted::<String>((short_type_name::<G>().to_owned() + "_theme").into())
@@ -349,10 +390,14 @@ where
 			d.insert_persisted((short_type_name::<G>().to_owned() + "_theme").into(), json)
 		});
 	}
+	*/
 }
 
-pub struct DefaultBoardDrawer<G> {
-	style: BoardStyle,
+pub struct DefaultBoardDrawer<G: BoardGame>
+where
+	G::M: BoardMove<G>,
+{
+	style: G::Style,
 	square_drawer: Box<dyn SquareDrawer<G>>,
 	piece_drawer: Box<dyn PieceDrawer<G>>,
 
@@ -366,7 +411,7 @@ where
 {
 	fn default() -> Self {
 		Self {
-			style: G::default_style(),
+			style: G::Style::default(),
 			square_drawer: Box::new(DefaultSquareDrawer::new()),
 			piece_drawer: Box::new(DefaultPieceDrawer::new()),
 			selected: None,
@@ -381,13 +426,47 @@ where
 {
 	pub fn new() -> Self {
 		Self {
-			style: G::default_style(),
+			style: G::Style::default(),
 			square_drawer: Box::new(DefaultSquareDrawer::new()),
 			piece_drawer: Box::new(DefaultPieceDrawer::new()),
 			selected: None,
 			legal_highlights: vec![],
 			played_highlights: vec![],
 		}
+	}
+}
+
+impl<G: BoardGame> GameDrawer<G> for DefaultBoardDrawer<G>
+where
+	G::M : BoardMove<G>
+{
+	type Click = (u8,u8);
+
+	fn get_style(&self) -> &G::Style {
+		&self.style
+	}
+
+	fn get_style_mut(&mut self) -> &mut G::Style {
+		&mut self.style
+	}
+
+	fn set_style(&mut self, style: G::Style) {
+		self.style = style;
+	}
+
+	fn draw(
+		&mut self,
+		ui: &mut egui::Ui,
+		game: &G,
+		//_input: &Box<dyn InputHandler<G>>,
+		can_interact: bool,
+	) -> Option<(u8,u8)> {
+		self.draw_board(ui, game, can_interact)
+	}
+
+	fn full_reset(&mut self) {
+		//self.clear_selection();
+		self.played_highlights.clear();
 	}
 }
 impl<G: BoardGame> BoardDrawer<G> for DefaultBoardDrawer<G>
@@ -410,18 +489,6 @@ where
 
 	fn set_piece_drawer(&mut self, sq_drawer: Box<dyn PieceDrawer<G>>) {
 		self.piece_drawer = sq_drawer;
-	}
-
-	fn get_style(&self) -> &BoardStyle {
-		&self.style
-	}
-
-	fn get_style_mut(&mut self) -> &mut BoardStyle {
-		&mut self.style
-	}
-
-	fn set_style(&mut self, style: BoardStyle) {
-		self.style = style;
 	}
 
 	fn get_selected(&self) -> Option<u16> {
@@ -451,11 +518,6 @@ where
 		self.selected = None;
 		self.legal_highlights.clear();
 		//self.intermediate_state = None;
-	}
-
-	fn full_reset(&mut self) {
-		self.clear_selection();
-		self.played_highlights.clear();
 	}
 }
 

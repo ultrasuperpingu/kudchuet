@@ -306,7 +306,7 @@ impl SGFReaderWriter {
 			untried_moves: vec![],
 			player_to_move: player,
 			outcome: crate::ai::move_search::gametree::ProofOutcome::Unproved,
-			depth_to_end: u16::MAX,
+			//depth_to_end: u16::MAX,
 		});
 		game_tree.state_to_node.insert(hash, node_id);
 		for c in &node.children {

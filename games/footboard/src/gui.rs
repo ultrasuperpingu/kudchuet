@@ -5,7 +5,9 @@ use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StripData, StrokeData, TextData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::gui::{
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame,
+};
 
 use crate::rules::Action;
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -230,9 +232,23 @@ impl EGUIPieceType for Cell {
 	}
 }
 
+impl GUIGame for FootBoard {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			checkerboard_mod: CheckerBoardMod::None,
+			uniform_color: Color32::DARK_GREEN,
+			dark_color: Color32::BLACK,
+			light_color: Color32::WHITE,
+			square_stroke_color: Some(Color32::BLACK),
+			show_coordinates_mod: CoordMod::FileRankAside,
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for FootBoard {
 	type PieceType = Cell;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		9
@@ -255,35 +271,7 @@ impl BoardGame for FootBoard {
 	fn coords_from_index(i: u16) -> (u8, u8) {
 		Bitboard9x13::coords_from_index(i as usize)
 	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			checkerboard_mod: CheckerBoardMod::None,
-			uniform_color: Color32::DARK_GREEN,
-			dark_color: Color32::BLACK,
-			light_color: Color32::WHITE,
-			square_stroke_color: Some(Color32::BLACK),
-			show_coordinates_mod: CoordMod::FileRankAside,
-			..Default::default()
-		}
-	}
 
-	fn nb_players(&self) -> u8 {
-		2
-	}
-
-	fn get_name(&self, p: Player) -> String {
-		p.to_string()
-	}
-
-	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
-		Self::M::from_uci(m_str)
-	}
-
-	fn move_to_string(&self, m: &Self::M) -> Option<String> {
-		Self::M::to_uci(m)
-	}
-
-	fn play_random(&mut self) {}
 }
 
 struct FootboardSquareDrawer {
@@ -578,7 +566,7 @@ pub fn create_board() -> GenericBoardApp<FootBoard> {
 	board.depth = 3;
 	board.max_depth = 6;
 	board
-		.board_drawer
+		.game_drawer
 		.set_square_drawer(Box::new(FootboardSquareDrawer::new()));
 	//board.board_drawer.set_piece_drawer(Box::new(FootboardPieceDrawer::new()));
 	board

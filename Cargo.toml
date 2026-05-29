@@ -7,6 +7,7 @@ members = [
 	"games/awale",
 	"games/backgammon",
 	"games/bagh_chal",
+	"games/cards",
 	"games/checkers",
 	"games/chess",
 	"games/chinese_checkers",

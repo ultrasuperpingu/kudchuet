@@ -6,7 +6,7 @@ use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame};
 use kudchuet::Player;
 
 use crate::game::{ClobberDumbEval, ClobberSimpleEval};
@@ -50,9 +50,31 @@ impl BoardMove<Clobber> for Move {
 	}
 }
 
+impl GUIGame for Clobber {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "White",
+			Player::PLAYER2 => "Black",
+			_ => unreachable!(),
+		}
+		.into()
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			checkerboard_mod: CheckerBoardMod::OddDark,
+			uniform_color: Color32::from_rgb(40, 70, 125),
+			dark_color: Color32::from_rgb(60, 45, 30),
+			light_color: Color32::from_rgb(200, 175, 140),
+			show_coordinates_mod: CoordMod::FileRankOnSquare,
+			square_stroke_color: None,
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for Clobber {
 	type PieceType = Piece;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		5
@@ -79,26 +101,7 @@ impl BoardGame for Clobber {
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		Bitboard5x6::coords_from_index(index as usize)
 	}
-	fn get_name(&self, p: Player) -> String {
-		match p {
-			Player::PLAYER1 => "White",
-			Player::PLAYER2 => "Black",
-			_ => unreachable!(),
-		}
-		.into()
-	}
 
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			checkerboard_mod: CheckerBoardMod::OddDark,
-			uniform_color: Color32::from_rgb(40, 70, 125),
-			dark_color: Color32::from_rgb(60, 45, 30),
-			light_color: Color32::from_rgb(200, 175, 140),
-			show_coordinates_mod: CoordMod::FileRankOnSquare,
-			square_stroke_color: None,
-			..Default::default()
-		}
-	}
 }
 
 pub fn create_board() -> GenericBoardApp<Clobber> {

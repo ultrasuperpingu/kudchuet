@@ -4,7 +4,7 @@ use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::shapes::Shape;
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, GUIGame};
 use kudchuet::gui::{CheckerBoardMod, CoordMod};
 
 use super::game::ReversiEval;
@@ -42,9 +42,28 @@ impl EGUIPieceType for Cell {
 	}
 }
 
+impl GUIGame for Reversi {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "Black".into(),
+			Player::PLAYER2 => "White".into(),
+			_ => unreachable!(),
+		}
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			checkerboard_mod: CheckerBoardMod::None,
+			uniform_color: Color32::from_rgb(0, 120, 0),
+			show_coordinates_mod: CoordMod::FileRankOnSquare,
+			square_stroke_color: Some(egui::Color32::BLACK),
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for Reversi {
 	type PieceType = Cell;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		8
@@ -54,13 +73,6 @@ impl BoardGame for Reversi {
 		8
 	}
 
-	fn get_name(&self, p: Player) -> String {
-		match p {
-			Player::PLAYER1 => "Black".into(),
-			Player::PLAYER2 => "White".into(),
-			_ => unreachable!(),
-		}
-	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		match self.cell_from_coords(x, y) {
 			Cell::Empty => None,
@@ -75,15 +87,7 @@ impl BoardGame for Reversi {
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		Bitboard8x8::coords_from_index(index as usize)
 	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			checkerboard_mod: CheckerBoardMod::None,
-			uniform_color: Color32::from_rgb(0, 120, 0),
-			show_coordinates_mod: CoordMod::FileRankOnSquare,
-			square_stroke_color: Some(egui::Color32::BLACK),
-			..Default::default()
-		}
-	}
+	
 }
 
 pub fn create_board() -> GenericBoardApp<Reversi> {

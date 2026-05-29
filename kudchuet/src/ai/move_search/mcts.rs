@@ -20,7 +20,6 @@ pub struct VisitStats {
 	pub(crate) wins: i32,
 	pub(crate) draws: u32,
 }
-
 impl<G: Game> Node<G, VisitStats> {
 	pub fn winrate(&self) -> f32 {
 		if self.data.visits == 0 {
@@ -285,7 +284,7 @@ where
 				untried_moves: moves,
 				player_to_move: G::get_current_player(root_state),
 				outcome: ProofOutcome::Unproved,
-				depth_to_end: u16::MAX,
+				//depth_to_end: u16::MAX,
 			});
 			tree.state_to_node.insert(root_state_hash, 0);
 		}

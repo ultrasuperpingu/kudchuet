@@ -1,12 +1,14 @@
 use eframe::egui::{self, Rect};
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
+use kudchuet::ai::move_search::{UniformRolloutPolicy, MCTS};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::gui::{
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame,
+};
 use kudchuet::Player;
 
 use crate::game::EinsteinWurfeltNichtDumbEval;
@@ -83,9 +85,34 @@ impl BoardMove<EinsteinWurfeltNicht> for MovePlay {
 	}
 }
 
+impl GUIGame for EinsteinWurfeltNicht {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+	fn play_random(&mut self) {
+		self.roll_dice();
+	}
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "Blue",
+			Player::PLAYER2 => "Red",
+			_ => unreachable!(),
+		}
+		.into()
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			checkerboard_mod: CheckerBoardMod::OddDark,
+			uniform_color: Color32::from_rgb(40, 40, 55),
+			dark_color: Color32::from_rgb(73, 97, 38),
+			light_color: Color32::from_rgb(110, 150, 100),
+			show_coordinates_mod: CoordMod::None,
+			square_stroke_color: None,
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for EinsteinWurfeltNicht {
 	type PieceType = Piece;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		5
@@ -123,28 +150,6 @@ impl BoardGame for EinsteinWurfeltNicht {
 
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		(index as u8 % 5, index as u8 / 5)
-	}
-	fn play_random(&mut self) {
-		self.roll_dice();
-	}
-	fn get_name(&self, p: Player) -> String {
-		match p {
-			Player::PLAYER1 => "Blue",
-			Player::PLAYER2 => "Red",
-			_ => unreachable!(),
-		}
-		.into()
-	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			checkerboard_mod: CheckerBoardMod::OddDark,
-			uniform_color: Color32::from_rgb(40, 40, 55),
-			dark_color: Color32::from_rgb(73, 97, 38),
-			light_color: Color32::from_rgb(110, 150, 100),
-			show_coordinates_mod: CoordMod::None,
-			square_stroke_color: None,
-			..Default::default()
-		}
 	}
 }
 fn dice_string(dice: u8) -> String {
@@ -193,13 +198,16 @@ pub fn create_board() -> GenericBoardApp<EinsteinWurfeltNicht> {
 			EinsteinWurfeltNichtDumbEval,
 			20,
 		)),
-		Box::new(AIBuilder::<EinsteinWurfeltNicht, MCTS<EinsteinWurfeltNicht, UniformRolloutPolicy<EinsteinWurfeltNicht>>>::new("MCTS")),
+		Box::new(AIBuilder::<
+			EinsteinWurfeltNicht,
+			MCTS<EinsteinWurfeltNicht, UniformRolloutPolicy<EinsteinWurfeltNicht>>,
+		>::new("MCTS")),
 	];
 	//let ai_provider =
 	//	MoveSearcherBuilderDyn::new("Dumb".into(), EinsteinWurfeltNichtDumbEval::default(), 20);
 	let mut board = GenericBoardApp::new(EinsteinWurfeltNicht::default(), engines);
 	board
-		.board_drawer
+		.game_drawer
 		.set_square_drawer(Box::new(MySquareDrawer::new()));
 	board
 }

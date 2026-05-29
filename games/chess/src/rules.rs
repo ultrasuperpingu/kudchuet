@@ -261,7 +261,7 @@ impl CastlingRights {
 }
 #[cfg(test)]
 mod tests {
-	use kudchuet::gui::BoardGame;
+	use kudchuet::gui::GUIGame;
 
 	#[test]
 	fn test_promotion() {

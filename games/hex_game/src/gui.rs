@@ -2,12 +2,15 @@ use bitboard::Bitboard;
 use eframe::egui::{self, Painter, Pos2, Rect, Vec2};
 use egui::{Color32, Stroke, StrokeKind};
 
-use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
+use kudchuet::ai::move_search::{UniformRolloutPolicy, MCTS};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
-use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, SquareDrawer};
+use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, GameDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::gui::{
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame,
+};
+use kudchuet::Player;
 
 use crate::bitboard::HexBoard;
 use crate::game::HexMaterialEval;
@@ -57,9 +60,44 @@ impl BoardMove<Hex> for Move {
 	}
 }
 
+impl GUIGame for Hex {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "Black".into(),
+			Player::PLAYER2 => "White".into(),
+			_ => unreachable!(),
+		}
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			checkerboard_mod: CheckerBoardMod::None,
+			uniform_color: Color32::from_rgb(230, 200, 205),
+			dark_color: Color32::from_rgb(60, 45, 30),
+			light_color: Color32::from_rgb(200, 175, 140),
+			show_coordinates_mod: CoordMod::None,
+			square_stroke_color: Some(Color32::BLACK),
+			empty_cell_shape: Some(Shape::RegularPolygon {
+				fill_color: Some(Color32::from_rgb(200, 200, 210)),
+				size: 1.0,
+				sides: 6,
+				text: None,
+				stroke: Some(StrokeData {
+					stroke: Stroke {
+						width: 1.0,
+						color: Color32::BLACK,
+					},
+					kind: StrokeKind::Inside,
+				}),
+				angle: 1.0 / 6.0,
+			}),
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for Hex {
 	type PieceType = Piece;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		HexBoard::WIDTH
@@ -85,32 +123,6 @@ impl BoardGame for Hex {
 
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		HexBoard::coords_from_index(index as usize)
-	}
-
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			checkerboard_mod: CheckerBoardMod::None,
-			uniform_color: Color32::from_rgb(230, 200, 205),
-			dark_color: Color32::from_rgb(60, 45, 30),
-			light_color: Color32::from_rgb(200, 175, 140),
-			show_coordinates_mod: CoordMod::None,
-			square_stroke_color: Some(Color32::BLACK),
-			empty_cell_shape: Some(Shape::RegularPolygon {
-				fill_color: Some(Color32::from_rgb(200, 200, 210)),
-				size: 1.0,
-				sides: 6,
-				text: None,
-				stroke: Some(StrokeData {
-					stroke: Stroke {
-						width: 1.0,
-						color: Color32::BLACK,
-					},
-					kind: StrokeKind::Inside,
-				}),
-				angle: 1.0 / 6.0,
-			}),
-			..Default::default()
-		}
 	}
 }
 
@@ -260,6 +272,34 @@ const SQRT_3: f32 = 1.7320508;
 
 #[derive(Default)]
 struct HexBoardDrawer(DefaultBoardDrawer<Hex>);
+impl GameDrawer<Hex> for HexBoardDrawer {
+	type Click = (u8, u8);
+
+	fn get_style(&self) -> &BoardStyle {
+		self.0.get_style()
+	}
+
+	fn get_style_mut(&mut self) -> &mut BoardStyle {
+		self.0.get_style_mut()
+	}
+
+	fn set_style(&mut self, style: BoardStyle) {
+		self.0.set_style(style);
+	}
+	fn full_reset(&mut self) {
+		self.0.full_reset();
+	}
+
+	fn draw(
+		&mut self,
+		ui: &mut egui::Ui,
+		game: &Hex,
+		//input: &Box<dyn InputHandler<G>>,
+		can_interact: bool,
+	) -> Option<Self::Click> {
+		self.draw_board(ui, game, can_interact)
+	}
+}
 impl BoardDrawer<Hex> for HexBoardDrawer {
 	fn get_square_drawer(&self) -> &dyn kudchuet::gui::board_drawer::SquareDrawer<Hex> {
 		self.0.get_square_drawer()
@@ -285,18 +325,6 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 		sq_drawer: Box<dyn kudchuet::gui::board_drawer::PieceDrawer<Hex>>,
 	) {
 		self.0.set_piece_drawer(sq_drawer);
-	}
-
-	fn get_style(&self) -> &BoardStyle {
-		self.0.get_style()
-	}
-
-	fn get_style_mut(&mut self) -> &mut BoardStyle {
-		self.0.get_style_mut()
-	}
-
-	fn set_style(&mut self, style: BoardStyle) {
-		self.0.set_style(style);
 	}
 
 	fn get_selected(&self) -> Option<u16> {
@@ -327,9 +355,6 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 		self.0.set_played_highlights(played_highlights);
 	}
 
-	fn full_reset(&mut self) {
-		self.0.full_reset();
-	}
 	fn coords_to_pixel(
 		&self,
 		board_rect: &egui::Rect,
@@ -400,12 +425,14 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 pub fn create_board() -> GenericBoardApp<Hex> {
 	let ai_provider: Vec<Box<dyn AIEngineProvider<Hex>>> = vec![
 		Box::new(MoveSearcherBuilder::new("Material", HexMaterialEval, 4)),
-		Box::new(AIBuilder::<Hex, MCTS<Hex, UniformRolloutPolicy<Hex>>>::new("MCTS")),
+		Box::new(AIBuilder::<Hex, MCTS<Hex, UniformRolloutPolicy<Hex>>>::new(
+			"MCTS",
+		)),
 	];
 	let mut board = GenericBoardApp::new(Hex::new(), ai_provider);
-	board.board_drawer = Box::new(HexBoardDrawer::default());
+	board.game_drawer = Box::new(HexBoardDrawer::default());
 	board
-		.board_drawer
+		.game_drawer
 		.set_square_drawer(Box::new(HexSquareDrawer::default()));
 	board
 }

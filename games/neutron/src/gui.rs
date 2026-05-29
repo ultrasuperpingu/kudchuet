@@ -3,10 +3,11 @@ use crate::rules::{Move, Neutron, Piece};
 use bitboard::Bitboard;
 use eframe::egui;
 use egui::Color32;
+use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame};
 
 use super::game::NeutronDumbEval;
 
@@ -68,9 +69,33 @@ impl EGUIPieceType for Piece {
 		}
 	}
 }
+impl GUIGame for Neutron {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "Black".into(),
+			Player::PLAYER2 => "White".into(),
+			_ => unreachable!(),
+		}
+	}
+	fn position_to_string(&self) -> Option<String> {
+		Some(self.to_fen())
+	}
+	fn get_position_from_string(&self, pos_str: &str) -> Result<Self, String> {
+		Self::from_fen(pos_str)
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			dark_color: egui::Color32::from_rgb(181, 136, 99),
+			light_color: Color32::from_rgb(240, 217, 181),
+			show_coordinates_mod: CoordMod::FileRankOnSquare,
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for Neutron {
 	type PieceType = Piece;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		5
@@ -90,28 +115,11 @@ impl BoardGame for Neutron {
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		Bitboard5x5::coords_from_index(index as usize)
 	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			dark_color: egui::Color32::from_rgb(181, 136, 99),
-			light_color: Color32::from_rgb(240, 217, 181),
-			show_coordinates_mod: CoordMod::FileRankOnSquare,
-			..Default::default()
-		}
-	}
-	fn position_to_string(&self) -> Option<String> {
-		Some(self.to_fen())
-	}
-	fn get_position_from_string(&self, pos_str: &str) -> Result<Self, String> {
-		Self::from_fen(pos_str)
-	}
 }
 
 pub fn create_board() -> GenericBoardApp<Neutron> {
-	let engines: Vec<Box<dyn AIEngineProvider<Neutron>>> = vec![
-		Box::new(MoveSearcherBuilder::new("Dumb", NeutronDumbEval::new(), 4)),
-	];
-	GenericBoardApp::new(
-		Neutron::default(),
-		engines,
-	)
+	let engines: Vec<Box<dyn AIEngineProvider<Neutron>>> = vec![Box::new(
+		MoveSearcherBuilder::new("Dumb", NeutronDumbEval::new(), 4),
+	)];
+	GenericBoardApp::new(Neutron::default(), engines)
 }

@@ -5,7 +5,9 @@ use kudchuet::ai::MoveSearcherBuilder;
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::gui::{
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame,
+};
 use kudchuet::Player;
 
 use crate::game::{BackgammonMaterialEval, BackgammonSimpleEval};
@@ -136,9 +138,33 @@ fn col(x: u8) -> u8 {
 		x
 	}
 }
+impl GUIGame for Backgammon {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+
+	fn play_random(&mut self) {
+		self.roll_dice();
+	}
+	fn get_position_from_string(&self, _pos_str: &str) -> Result<Self, String> {
+		Backgammon::from_position_notation(_pos_str)
+	}
+	fn position_to_string(&self) -> Option<String> {
+		Some(self.to_position_notation())
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			checkerboard_mod: CheckerBoardMod::OddDark,
+			uniform_color: Color32::from_rgb(40, 70, 125),
+			dark_color: Color32::from_rgb(60, 45, 30),
+			light_color: Color32::from_rgb(200, 175, 140),
+			show_coordinates_mod: CoordMod::None,
+			square_stroke_color: None,
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for Backgammon {
 	type PieceType = Piece;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		14
@@ -274,26 +300,7 @@ impl BoardGame for Backgammon {
 			(col, 9)
 		}
 	}
-	fn play_random(&mut self) {
-		self.roll_dice();
-	}
-	fn get_position_from_string(&self, _pos_str: &str) -> Result<Self, String> {
-		Backgammon::from_position_notation(_pos_str)
-	}
-	fn position_to_string(&self) -> Option<String> {
-		Some(self.to_position_notation())
-	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			checkerboard_mod: CheckerBoardMod::OddDark,
-			uniform_color: Color32::from_rgb(40, 70, 125),
-			dark_color: Color32::from_rgb(60, 45, 30),
-			light_color: Color32::from_rgb(200, 175, 140),
-			show_coordinates_mod: CoordMod::None,
-			square_stroke_color: None,
-			..Default::default()
-		}
-	}
+	
 }
 fn dice_string(dice: u8) -> String {
 	match dice {
@@ -449,7 +456,7 @@ pub fn create_board() -> GenericBoardApp<Backgammon> {
 		vec![Box::new(ai_provider), Box::new(ai_provider2)],
 	);
 	board
-		.board_drawer
+		.game_drawer
 		.set_square_drawer(Box::new(BackgammonSquareDrawer {}));
 	board
 }

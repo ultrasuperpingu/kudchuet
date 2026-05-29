@@ -2,6 +2,7 @@ use eframe::egui;
 use egui::Color32;
 use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
+use kudchuet::gui::GUIGame;
 
 use crate::bitboard::Bitboard5x5;
 use crate::game::TeekoEvalDumb;
@@ -60,18 +61,9 @@ impl EGUIPieceType for TeekoPiece {
 	}
 }
 
-impl BoardGame for Teeko {
-	type PieceType = TeekoPiece;
+impl GUIGame for Teeko {
 	type Settings = kudchuet::gui::DefaultSettings;
-
-	fn width(&self) -> u8 {
-		5
-	}
-
-	fn height(&self) -> u8 {
-		5
-	}
-
+	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {
 		match p {
 			Player::PLAYER1 => "Black".into(),
@@ -79,19 +71,28 @@ impl BoardGame for Teeko {
 			_ => unreachable!(),
 		}
 	}
-	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
-		match self.get_cell(x, y) {
-			Some(Player::PLAYER1) => Some(TeekoPiece::Black),
-			Some(Player::PLAYER2) => Some(TeekoPiece::Red),
-			_ => None,
-		}
+	
+	fn position_to_string(&self) -> Option<String> {
+		Some(self.to_fen())
+	}
+	fn get_position_from_string(&self, pos_str: &str) -> Result<Self, String> {
+		Self::from_fen(pos_str)
 	}
 
-	fn index_from_coords(x: u8, y: u8) -> u16 {
-		Bitboard5x5::index_from_coords(x, y) as u16
+	fn game_to_string(&self, _mvs: &[Self::M]) -> Option<String> {
+		None
 	}
-	fn coords_from_index(index: u16) -> (u8, u8) {
-		Bitboard5x5::coords_from_index(index as usize)
+
+	fn game_from_string(&self, _game_str: &str) -> Result<Vec<Self::M>, String> {
+		Err("Not Supported".into())
+	}
+
+	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
+		Self::M::from_uci(m_str)
+	}
+
+	fn move_to_string(&self, m: &Self::M) -> Option<String> {
+		Self::M::to_uci(m)
 	}
 	fn default_style() -> BoardStyle {
 		BoardStyle {
@@ -110,34 +111,33 @@ impl BoardGame for Teeko {
 			..Default::default()
 		}
 	}
-	fn position_to_string(&self) -> Option<String> {
-		Some(self.to_fen())
-	}
-	fn get_position_from_string(&self, pos_str: &str) -> Result<Self, String> {
-		Self::from_fen(pos_str)
+}
+impl BoardGame for Teeko {
+	type PieceType = TeekoPiece;
+
+	fn width(&self) -> u8 {
+		5
 	}
 
-	fn nb_players(&self) -> u8 {
-		2
+	fn height(&self) -> u8 {
+		5
 	}
 
-	fn game_to_string(&self, _mvs: &[Self::M]) -> Option<String> {
-		None
+	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
+		match self.get_cell(x, y) {
+			Some(Player::PLAYER1) => Some(TeekoPiece::Black),
+			Some(Player::PLAYER2) => Some(TeekoPiece::Red),
+			_ => None,
+		}
 	}
 
-	fn game_from_string(&self, _game_str: &str) -> Result<Vec<Self::M>, String> {
-		Err("Not Supported".into())
+	fn index_from_coords(x: u8, y: u8) -> u16 {
+		Bitboard5x5::index_from_coords(x, y) as u16
 	}
-
-	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
-		Self::M::from_uci(m_str)
+	fn coords_from_index(index: u16) -> (u8, u8) {
+		Bitboard5x5::coords_from_index(index as usize)
 	}
-
-	fn move_to_string(&self, m: &Self::M) -> Option<String> {
-		Self::M::to_uci(m)
-	}
-
-	fn play_random(&mut self) {}
+	
 }
 
 pub fn create_board() -> GenericBoardApp<Teeko> {

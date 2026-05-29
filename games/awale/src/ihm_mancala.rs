@@ -1,9 +1,11 @@
 use eframe::egui;
 
 use kudchuet::{
-	GameOutcome, Player, PlayerType,
+	GameOutcome,
+	Player,
+	PlayerType,
 	ai::{AIEngine, AIEngineProvider, MoveSearcherBuilder, move_search::Game},
-	gui::{BoardGame, BoardMove},
+	gui::{BoardGame, BoardMove, GUIGame},
 	//new_move_searcher,
 };
 
@@ -18,17 +20,9 @@ pub struct MancalaApp {
 	pub players: [PlayerType; 2],
 }
 
-impl BoardGame for Mancala {
-	type PieceType = Move;
+impl GUIGame for Mancala {
 	type Settings = kudchuet::gui::DefaultSettings;
-
-	fn width(&self) -> u8 {
-		todo!()
-	}
-
-	fn height(&self) -> u8 {
-		todo!()
-	}
+	type Style = kudchuet::gui::BoardStyle;
 
 	fn current_player(&self) -> Player {
 		if self.to_move {
@@ -36,6 +30,24 @@ impl BoardGame for Mancala {
 		} else {
 			Player::PLAYER1
 		}
+	}
+
+	fn default_style() -> Self::Style {
+		Self::Style::default()
+	}
+	fn result(&self) -> GameOutcome {
+		<Self as Game>::get_outcome(self)
+	}
+}
+impl BoardGame for Mancala {
+	type PieceType = Move;
+
+	fn width(&self) -> u8 {
+		todo!()
+	}
+
+	fn height(&self) -> u8 {
+		todo!()
 	}
 
 	fn piece_at(&self, _x: u8, _y: u8) -> Option<Self::PieceType> {
@@ -49,9 +61,6 @@ impl BoardGame for Mancala {
 	fn coords_from_index(_index: u16) -> (u8, u8) {
 		todo!()
 	}
-	fn result(&self) -> GameOutcome {
-		<Self as Game>::get_outcome(self)
-	}
 }
 impl BoardMove<Mancala> for Move {}
 impl Default for MancalaApp {
@@ -59,7 +68,8 @@ impl Default for MancalaApp {
 		Self {
 			game: Mancala::default(),
 			//computer: new_move_searcher(super::mancala::EvaluatorMancala::default(), 5),
-			computer: MoveSearcherBuilder::new("Material", super::mancala::EvaluatorMancala, 5).build_engine(),
+			computer: MoveSearcherBuilder::new("Material", super::mancala::EvaluatorMancala, 5)
+				.build_engine(),
 			selected: None,
 			players: [PlayerType::default(), PlayerType::Computer],
 		}

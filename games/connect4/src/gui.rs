@@ -4,7 +4,7 @@ use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame};
 
 use super::game::ConnectFourEval;
 
@@ -37,9 +37,33 @@ impl EGUIPieceType for Cell {
 	}
 }
 
+impl GUIGame for ConnectFour {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "Yellow".into(),
+			Player::PLAYER2 => "Red".into(),
+			_ => unreachable!(),
+		}
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			dark_color: Color32::from_rgb(0, 0, 150),
+			light_color: Color32::from_rgb(0, 0, 150),
+			empty_cell_shape: Some(Shape::Circle {
+				fill_color: Some(Color32::from_rgb(20, 20, 80)),
+				size: 0.7,
+				text: None,
+				stroke: Some(StrokeData::default()),
+			}),
+			show_coordinates_mod: CoordMod::NumbersAside,
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for ConnectFour {
 	type PieceType = Cell;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		7
@@ -47,14 +71,6 @@ impl BoardGame for ConnectFour {
 
 	fn height(&self) -> u8 {
 		6
-	}
-
-	fn get_name(&self, p: Player) -> String {
-		match p {
-			Player::PLAYER1 => "Yellow".into(),
-			Player::PLAYER2 => "Red".into(),
-			_ => unreachable!(),
-		}
 	}
 
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
@@ -71,20 +87,7 @@ impl BoardGame for ConnectFour {
 	fn coords_from_index(i: u16) -> (u8, u8) {
 		Bitboard7x7Col::coords_from_index(i as usize)
 	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			dark_color: Color32::from_rgb(0, 0, 150),
-			light_color: Color32::from_rgb(0, 0, 150),
-			empty_cell_shape: Some(Shape::Circle {
-				fill_color: Some(Color32::from_rgb(20, 20, 80)),
-				size: 0.7,
-				text: None,
-				stroke: Some(StrokeData::default()),
-			}),
-			show_coordinates_mod: CoordMod::NumbersAside,
-			..Default::default()
-		}
-	}
+	
 }
 
 pub fn create_board() -> GenericBoardApp<ConnectFour> {

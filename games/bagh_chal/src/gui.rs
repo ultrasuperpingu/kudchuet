@@ -8,7 +8,7 @@ use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame};
 
 use crate::rules::{BaghChal, Move};
 
@@ -57,9 +57,28 @@ impl EGUIPieceType for BaghChalPiece {
 		}
 	}
 }
+impl GUIGame for BaghChal {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "Goats".into(),
+			Player::PLAYER2 => "Tigers".into(),
+			_ => unreachable!(),
+		}
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			dark_color: egui::Color32::from_rgb(181, 136, 99),
+			light_color: Color32::from_rgb(240, 217, 181),
+			show_coordinates_mod: CoordMod::NumbersAside,
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for BaghChal {
 	type PieceType = BaghChalPiece;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		5
@@ -69,13 +88,6 @@ impl BoardGame for BaghChal {
 		5
 	}
 
-	fn get_name(&self, p: Player) -> String {
-		match p {
-			Player::PLAYER1 => "Goats".into(),
-			Player::PLAYER2 => "Tigers".into(),
-			_ => unreachable!(),
-		}
-	}
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		if self.tigers.get(x, y) {
 			Some(BaghChalPiece::Tiger)
@@ -91,14 +103,7 @@ impl BoardGame for BaghChal {
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		Bitboard5x5::coords_from_index(index as usize)
 	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			dark_color: egui::Color32::from_rgb(181, 136, 99),
-			light_color: Color32::from_rgb(240, 217, 181),
-			show_coordinates_mod: CoordMod::NumbersAside,
-			..Default::default()
-		}
-	}
+	
 }
 struct BaghChalSquareDrawer;
 impl<G> SquareDrawer<G> for BaghChalSquareDrawer
@@ -210,7 +215,7 @@ pub fn create_board() -> GenericBoardApp<BaghChal> {
 	//board.board_drawer.get_style_mut().light_color=Color32::from_rgb(240, 217, 181);
 	//board.board_drawer.get_style_mut().show_coordinates_mod=crate::common::gui::CoordMod::NumbersAside;
 	board
-		.board_drawer
+		.game_drawer
 		.set_square_drawer(Box::new(BaghChalSquareDrawer {}));
 	board.max_depth = 13;
 	board.depth = 8;

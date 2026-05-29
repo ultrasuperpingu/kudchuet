@@ -4,7 +4,7 @@ use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::ai::move_search::perfect_solver::PerfectSolver;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::{GameOutcome, Player};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame};
 use kudchuet::gui::shapes::{Shape, StrokeData};
 
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -34,18 +34,17 @@ impl EGUIPieceType for Cell {
 	}
 }
 
-impl BoardGame for HareAndHounds {
-	type PieceType=Cell;
+impl GUIGame for HareAndHounds {
 	type Settings = kudchuet::gui::DefaultSettings;
-
-	fn width(&self) -> u8 {
-		5
+	type Style = kudchuet::gui::BoardStyle;
+	
+	fn get_name(&self, p: Player) -> String {
+		match p {
+			Player::PLAYER1 => "Hounds".into(),
+			Player::PLAYER2 => "Har".into(),
+			_ => unreachable!()
+		}
 	}
-
-	fn height(&self) -> u8 {
-		3
-	}
-
 	fn play(&mut self, mv: Self::M) {
 		self.play_unchecked(mv);
 	}
@@ -61,13 +60,25 @@ impl BoardGame for HareAndHounds {
 			false => Player::PLAYER1,
 		}
 	}
-	fn get_name(&self, p: Player) -> String {
-		match p {
-			Player::PLAYER1 => "Hounds".into(),
-			Player::PLAYER2 => "Har".into(),
-			_ => unreachable!()
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			show_coordinates_mod: CoordMod::NumbersAside,
+			//checkerboard_mod: CheckerBoardMod::None,
+			..Default::default()
 		}
 	}
+}
+impl BoardGame for HareAndHounds {
+	type PieceType=Cell;
+
+	fn width(&self) -> u8 {
+		5
+	}
+
+	fn height(&self) -> u8 {
+		3
+	}
+
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		match self.cell(x, y) {
 			Cell::Empty => None,
@@ -82,13 +93,7 @@ impl BoardGame for HareAndHounds {
 	fn coords_from_index(i: u16) -> (u8, u8) {
 		Board::coords_from_index(i as usize)
 	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			show_coordinates_mod: CoordMod::NumbersAside,
-			//checkerboard_mod: CheckerBoardMod::None,
-			..Default::default()
-		}
-	}
+	
 }
 
 struct HareAndHoundsSquareDrawer {
@@ -202,7 +207,7 @@ pub fn create_board() -> GenericBoardApp<HareAndHounds> {
 		Box::new(AIBuilder::<HareAndHounds, PerfectSolver<HareAndHounds>>::new("Perfect")),
 	];
 	let mut board=GenericBoardApp::new(HareAndHounds::default(), engines);
-	board.board_drawer.set_square_drawer(Box::new(HareAndHoundsSquareDrawer{}));
+	board.game_drawer.set_square_drawer(Box::new(HareAndHoundsSquareDrawer{}));
 	board.depth = 12;
 	board.max_depth = 25;
 	board

@@ -5,7 +5,7 @@ use egui::Color32;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::input_handler::MoveResult;
 use kudchuet::gui::shapes::Shape;
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame};
 
 use crate::{bitboard::Bitboard6x5, rules::YotePlayer};
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -13,6 +13,25 @@ use kudchuet::gui::board_app::GenericBoardApp;
 use super::game::YoteMaterialEval;
 use super::rules::{Move, Yote};
 
+impl GUIGame for Yote {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+	
+	fn legal_moves(&self) -> Vec<Self::M> {
+		let mut moves = vec![];
+		self.legal_moves_inplace(&mut moves);
+		moves
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			checkerboard_mod: CheckerBoardMod::None,
+			uniform_color: Color32::from_rgb(235, 230, 220),
+			show_coordinates_mod: CoordMod::FileRankAside,
+			square_stroke_color: Some(egui::Color32::BLACK),
+			..Default::default()
+		}
+	}
+}
 impl BoardMove<Yote> for Move {
 	fn handle_clicks_interaction(
 		_state: &Yote,
@@ -159,7 +178,6 @@ impl EGUIPieceType for YotePlayer {
 
 impl BoardGame for Yote {
 	type PieceType = YotePlayer;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		6
@@ -167,12 +185,6 @@ impl BoardGame for Yote {
 
 	fn height(&self) -> u8 {
 		5
-	}
-
-	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut moves = vec![];
-		self.legal_moves_inplace(&mut moves);
-		moves
 	}
 
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
@@ -191,15 +203,6 @@ impl BoardGame for Yote {
 
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		Bitboard6x5::coords_from_index(index as usize)
-	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			checkerboard_mod: CheckerBoardMod::None,
-			uniform_color: Color32::from_rgb(235, 230, 220),
-			show_coordinates_mod: CoordMod::FileRankAside,
-			square_stroke_color: Some(egui::Color32::BLACK),
-			..Default::default()
-		}
 	}
 }
 

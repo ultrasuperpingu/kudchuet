@@ -1,6 +1,7 @@
 use eframe::egui;
 use egui::{Color32, Stroke};
 use kudchuet::ai::move_search::UniformRolloutPolicy;
+use kudchuet::gui::GUIGame;
 
 use crate::game::GomokuEvalDumb;
 use crate::sgf::{parse_sgf, serialize_sgf};
@@ -51,18 +52,9 @@ impl EGUIPieceType for Cell {
 	}
 }
 
-impl BoardGame for Gomoku {
-	type PieceType = Cell;
+impl GUIGame for Gomoku {
 	type Settings = kudchuet::gui::DefaultSettings;
-
-	fn width(&self) -> u8 {
-		19
-	}
-
-	fn height(&self) -> u8 {
-		19
-	}
-
+	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {
 		match p {
 			Player::PLAYER1 => "Black".into(),
@@ -70,24 +62,11 @@ impl BoardGame for Gomoku {
 			_ => unreachable!(),
 		}
 	}
-	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
-		match self.cell(x, y) {
-			Cell::White => Some(Cell::White),
-			Cell::Black => Some(Cell::Black),
-			Cell::Empty => None,
-		}
-	}
 	fn get_position_from_string(&self, _pos_str: &str) -> Result<Self, String> {
 		parse_sgf(_pos_str)
 	}
 	fn position_to_string(&self) -> Option<String> {
 		Some(serialize_sgf(self))
-	}
-	fn index_from_coords(x: u8, y: u8) -> u16 {
-		Goban::index_from_coords(x, y) as u16
-	}
-	fn coords_from_index(index: u16) -> (u8, u8) {
-		Goban::coords_from_index(index as usize)
 	}
 	fn default_style() -> BoardStyle {
 		BoardStyle {
@@ -99,6 +78,33 @@ impl BoardGame for Gomoku {
 			..Default::default()
 		}
 	}
+}
+impl BoardGame for Gomoku {
+	type PieceType = Cell;
+
+	fn width(&self) -> u8 {
+		19
+	}
+
+	fn height(&self) -> u8 {
+		19
+	}
+
+	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
+		match self.cell(x, y) {
+			Cell::White => Some(Cell::White),
+			Cell::Black => Some(Cell::Black),
+			Cell::Empty => None,
+		}
+	}
+
+	fn index_from_coords(x: u8, y: u8) -> u16 {
+		Goban::index_from_coords(x, y) as u16
+	}
+	fn coords_from_index(index: u16) -> (u8, u8) {
+		Goban::coords_from_index(index as usize)
+	}
+	
 }
 pub struct GobanSquareDrawer;
 impl SquareDrawer<Gomoku> for GobanSquareDrawer {
@@ -182,11 +188,14 @@ pub fn create_board() -> GenericBoardApp<Gomoku> {
 	let engines: Vec<Box<dyn AIEngineProvider<Gomoku>>> = vec![
 		Box::new(MoveSearcherBuilder::new("Dumb", GomokuEvalDumb, 4)),
 		Box::new(MoveSearcherBuilder::new("Simple", GomokuEvalSimple, 4)),
-		Box::new(AIBuilder::<Gomoku, MCTS<Gomoku, UniformRolloutPolicy<Gomoku>>>::new("MCTS")),
+		Box::new(AIBuilder::<
+			Gomoku,
+			MCTS<Gomoku, UniformRolloutPolicy<Gomoku>>,
+		>::new("MCTS")),
 	];
 	let mut board = GenericBoardApp::new(Gomoku::default(), engines);
 	board
-		.board_drawer
+		.game_drawer
 		.set_square_drawer(Box::new(GobanSquareDrawer {}));
 	board
 }

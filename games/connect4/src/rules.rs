@@ -287,7 +287,7 @@ impl fmt::Display for ConnectFour {
 }
 #[cfg(test)]
 mod tests {
-	use kudchuet::gui::BoardGame;
+	use kudchuet::gui::GUIGame;
 	use crate::bitboard::Bitboard7x7Col;
 
 use super::{Column, ConnectFour};

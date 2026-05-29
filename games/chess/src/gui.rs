@@ -4,7 +4,7 @@ use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, TextData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, DefaultSettings, EGUIPieceType, GUIGame};
 
 use crate::bitboard::Bitboard8x8;
 use crate::mychess::ChessBoard;
@@ -185,53 +185,15 @@ pub enum ChessPiece {
 	BlackQueen,
 	BlackKing,
 }
-impl BoardGame for ChessBoard {
-	type PieceType = ChessPiece;
-	type Settings = kudchuet::gui::DefaultSettings;
-
-	fn width(&self) -> u8 {
-		8
-	}
-
-	fn height(&self) -> u8 {
-		8
-	}
+impl GUIGame for ChessBoard {
+	type Settings = DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {
 		match p {
 			Player::PLAYER1 => "White".into(),
 			Player::PLAYER2 => "Black".into(),
 			_ => unreachable!(),
 		}
-	}
-	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
-		let sq = Square::from_coords(x as usize, y as usize);
-		let color = self.color_at(sq)?;
-		if color == Color::White {
-			match self.piece_at(sq)? {
-				Piece::Pawn => Some(ChessPiece::WhitePawn),
-				Piece::Rook => Some(ChessPiece::WhiteRook),
-				Piece::Knight => Some(ChessPiece::WhiteKnight),
-				Piece::Bishop => Some(ChessPiece::WhiteBishop),
-				Piece::Queen => Some(ChessPiece::WhiteQueen),
-				Piece::King => Some(ChessPiece::WhiteKing),
-			}
-		} else {
-			match self.piece_at(sq)? {
-				Piece::Pawn => Some(ChessPiece::BlackPawn),
-				Piece::Rook => Some(ChessPiece::BlackRook),
-				Piece::Knight => Some(ChessPiece::BlackKnight),
-				Piece::Bishop => Some(ChessPiece::BlackBishop),
-				Piece::Queen => Some(ChessPiece::BlackQueen),
-				Piece::King => Some(ChessPiece::BlackKing),
-			}
-		}
-	}
-
-	fn index_from_coords(x: u8, y: u8) -> u16 {
-		Bitboard8x8::index_from_coords(x, y) as u16
-	}
-	fn coords_from_index(index: u16) -> (u8, u8) {
-		Bitboard8x8::coords_from_index(index as usize)
 	}
 	fn position_to_string(&self) -> Option<String> {
 		Some(self.to_fen())
@@ -279,6 +241,49 @@ impl BoardGame for ChessBoard {
 			..Default::default()
 		}
 	}
+}
+impl BoardGame for ChessBoard {
+	type PieceType = ChessPiece;
+
+	fn width(&self) -> u8 {
+		8
+	}
+
+	fn height(&self) -> u8 {
+		8
+	}
+	
+	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
+		let sq = Square::from_coords(x as usize, y as usize);
+		let color = self.color_at(sq)?;
+		if color == Color::White {
+			match self.piece_at(sq)? {
+				Piece::Pawn => Some(ChessPiece::WhitePawn),
+				Piece::Rook => Some(ChessPiece::WhiteRook),
+				Piece::Knight => Some(ChessPiece::WhiteKnight),
+				Piece::Bishop => Some(ChessPiece::WhiteBishop),
+				Piece::Queen => Some(ChessPiece::WhiteQueen),
+				Piece::King => Some(ChessPiece::WhiteKing),
+			}
+		} else {
+			match self.piece_at(sq)? {
+				Piece::Pawn => Some(ChessPiece::BlackPawn),
+				Piece::Rook => Some(ChessPiece::BlackRook),
+				Piece::Knight => Some(ChessPiece::BlackKnight),
+				Piece::Bishop => Some(ChessPiece::BlackBishop),
+				Piece::Queen => Some(ChessPiece::BlackQueen),
+				Piece::King => Some(ChessPiece::BlackKing),
+			}
+		}
+	}
+
+	fn index_from_coords(x: u8, y: u8) -> u16 {
+		Bitboard8x8::index_from_coords(x, y) as u16
+	}
+	fn coords_from_index(index: u16) -> (u8, u8) {
+		Bitboard8x8::coords_from_index(index as usize)
+	}
+	
 }
 
 pub fn create_board() -> GenericBoardApp<ChessBoard> {

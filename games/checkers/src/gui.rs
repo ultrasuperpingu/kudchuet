@@ -1,10 +1,10 @@
 use eframe::egui;
 use egui::{Color32, Stroke, StrokeKind};
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
+use kudchuet::gui::GUIGame;
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::Shape;
 use kudchuet::{
-	Player,
 	gui::{
 		BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType,
 		shapes::{StrokeData, TextData},
@@ -75,38 +75,10 @@ impl EGUIPieceType for Cell {
 	}
 }
 
-impl BoardGame for Checkers10 {
-	type PieceType = Cell;
+impl GUIGame for Checkers10 {
 	type Settings = kudchuet::gui::DefaultSettings;
-
-	fn width(&self) -> u8 {
-		10
-	}
-
-	fn height(&self) -> u8 {
-		10
-	}
-
-	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
-		match self.cell_from_coords(x, y) {
-			Cell::Empty => None,
-			Cell::WhitePawn => Some(Cell::WhitePawn),
-			Cell::BlackPawn => Some(Cell::BlackPawn),
-			Cell::WhiteQueen => Some(Cell::WhiteQueen),
-			Cell::BlackQueen => Some(Cell::BlackQueen),
-		}
-	}
-
-	fn index_from_coords(x: u8, y: u8) -> u16 {
-		if let Some(index) = Checkers10::coords_to_index(x, y) {
-			index as u16
-		} else {
-			100
-		}
-	}
-	fn coords_from_index(index: u16) -> (u8, u8) {
-		Checkers10::index_to_coords(index as u8)
-	}
+	type Style = kudchuet::gui::BoardStyle;
+	
 	fn position_to_string(&self) -> Option<String> {
 		Some(self.to_fen())
 	}
@@ -140,6 +112,10 @@ impl BoardGame for Checkers10 {
 		Some(format!("{}x{}", m.from() + 1, m.to() + 1))
 	}
 
+
+	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
+		Self::M::from_uci(m_str)
+	}
 	fn default_style() -> BoardStyle {
 		BoardStyle {
 			checkerboard_mod: CheckerBoardMod::OddDark,
@@ -150,20 +126,38 @@ impl BoardGame for Checkers10 {
 			..Default::default()
 		}
 	}
+}
+impl BoardGame for Checkers10 {
+	type PieceType = Cell;
 
-	fn nb_players(&self) -> u8 {
-		2
+	fn width(&self) -> u8 {
+		10
 	}
 
-	fn get_name(&self, p: Player) -> String {
-		p.to_string()
+	fn height(&self) -> u8 {
+		10
 	}
 
-	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
-		Self::M::from_uci(m_str)
+	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
+		match self.cell_from_coords(x, y) {
+			Cell::Empty => None,
+			Cell::WhitePawn => Some(Cell::WhitePawn),
+			Cell::BlackPawn => Some(Cell::BlackPawn),
+			Cell::WhiteQueen => Some(Cell::WhiteQueen),
+			Cell::BlackQueen => Some(Cell::BlackQueen),
+		}
 	}
 
-	fn play_random(&mut self) {}
+	fn index_from_coords(x: u8, y: u8) -> u16 {
+		if let Some(index) = Checkers10::coords_to_index(x, y) {
+			index as u16
+		} else {
+			100
+		}
+	}
+	fn coords_from_index(index: u16) -> (u8, u8) {
+		Checkers10::index_to_coords(index as u8)
+	}
 }
 
 pub fn create_board() -> GenericBoardApp<Checkers10> {

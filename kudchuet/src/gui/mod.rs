@@ -1,22 +1,21 @@
-
 use std::fmt::Debug;
 
-use egui::{Color32, Stroke};
-use egui_field_editor::EguiInspect;
 use crate::ai::move_search::interface::Game;
-use serde::{Deserialize, Serialize};
 use crate::gui::shapes::StrokeData;
 use crate::gui::{input_handler::MoveResult, shapes::Shape};
+use egui::{Color32, Stroke};
+use egui_field_editor::EguiInspect;
+use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 
-
-use super::{GameOutcome, Player};
 use self::options_panel::RightTab;
+use super::{GameOutcome, Player};
 
 pub mod board_app;
 pub mod board_drawer;
-pub mod options_panel;
 pub mod game_state_manager;
 pub mod input_handler;
+pub mod options_panel;
 pub mod shapes;
 
 #[derive(EguiInspect, Clone, PartialEq, Eq, Copy, Debug, Serialize, Deserialize)]
@@ -73,7 +72,7 @@ pub enum CheckerBoardMod {
 	None,
 	#[default]
 	EvenDark,
-	OddDark
+	OddDark,
 }
 
 #[derive(EguiInspect, Debug, Default, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -81,7 +80,7 @@ pub enum RowOffsetPattern {
 	#[default]
 	NoOffset,
 	EvenRowsShifted,
-	OddRowsShifted
+	OddRowsShifted,
 }
 #[derive(EguiInspect, Clone, Debug, Serialize, Deserialize)]
 pub struct BoardStyle {
@@ -115,19 +114,22 @@ impl Default for BoardStyle {
 				fill_color: None,
 				size: 1.0,
 				text: None,
-				stroke: Some(StrokeData { stroke: Stroke::new( 3.0, egui::Color32::YELLOW), kind: egui::StrokeKind::Inside})
+				stroke: Some(StrokeData {
+					stroke: Stroke::new(3.0, egui::Color32::YELLOW),
+					kind: egui::StrokeKind::Inside,
+				}),
 			},
 			legal_highlights_shape: Shape::Circle {
 				fill_color: Some(egui::Color32::from_rgb(50, 50, 150)),
 				size: 0.3,
 				text: None,
-				stroke: None
+				stroke: None,
 			},
 			played_highlights_shape: Shape::Rect {
 				fill_color: Some(Color32::from_rgba_unmultiplied(150, 150, 250, 80)),
 				size: 1.0,
 				text: None,
-				stroke: None
+				stroke: None,
 			},
 			mirrored: false,
 		}
@@ -138,53 +140,47 @@ pub trait EGUIPieceType {
 }
 #[derive(Default, Debug, EguiInspect)]
 pub struct DefaultSettings;
-pub trait BoardGame : Game<S = Self>+Default+Clone
-	where Self::M: BoardMove<Self> + Copy,
+pub trait GUIGame: Game<S = Self> + Default + Clone // Self::M: BoardMove<Self> + Copy,
 {
-	type PieceType: Copy+EGUIPieceType;
-	type Settings: Default+EguiInspect;
+	type Settings: Default + EguiInspect;
+	type Style: Default + EguiInspect + Serialize + DeserializeOwned;
 	/// Create a Board game from the provided settings.
-	/// 
+	///
 	/// Default implementation ignores settings; override if game requires configuration.
 	fn build_from_settings(_settings: &Self::Settings) -> Self {
 		Self::default()
 	}
-	/// Width of the board
-	fn width(&self) -> u8;
-	/// Height of the board
-	fn height(&self) -> u8;
-
 	/// Generate legal moves from the current position.
-	/// 
+	///
 	/// This is a convinience method. Default implementation call Game::generate_moves.
 	/// Collects all generated moves into a Vec.
 	/// Prefer using generate_moves for performance-critical paths.
 	/// This does not need to be reimplemented.
 	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut moves=vec![];
+		let mut moves = vec![];
 		<Self as Game>::generate_moves(self, &mut moves);
 		moves
 	}
 
 	/// Apply a move to the game.
-	/// 
+	///
 	/// This is a convinient method. Default implementation call Game::apply(self).
 	/// This does not need to be reimplemented.
 	fn play(&mut self, mv: Self::M) {
-		let state=<Self as Game>::apply(self, mv);
+		let state = <Self as Game>::apply(self, mv);
 		if let Some(state) = state {
-			*self=state;
+			*self = state;
 		}
 	}
 	/// Get the current status of the game.
-	/// 
+	///
 	/// This is a convinient method. Default implementation call Game::get_winner(self) and convert it to GameResult.
 	/// This does not need to be reimplemented.
 	fn result(&self) -> GameOutcome {
 		Self::get_outcome(self)
 	}
 	/// Get the player which have to play
-	/// 
+	///
 	/// This is a convinient method. Default implementation call Game::current_player(self).
 	/// This does not need to be reimplemented.
 	fn current_player(&self) -> Player {
@@ -199,11 +195,11 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	fn get_name(&self, p: Player) -> String {
 		p.to_string()
 	}
-	/// Returns the piece at a particular square on the board
-	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType>;
-	
-	fn index_from_coords(x: u8, y: u8) -> u16;
-	fn coords_from_index(index: u16) -> (u8, u8);
+
+	fn play_random(&mut self) {}
+	fn default_style() -> Self::Style {
+		Self::Style::default()
+	}
 	fn position_to_string(&self) -> Option<String> {
 		None
 	}
@@ -216,20 +212,88 @@ pub trait BoardGame : Game<S = Self>+Default+Clone
 	fn get_position_from_string(&self, _pos_str: &str) -> Result<Self, String> {
 		Err("Not Supported".into())
 	}
-	fn move_from_string(&self, m_str: &str) -> Result<Self::M, String> {
-		Self::M::from_uci(m_str)
+	fn move_from_string(&self, _m_str: &str) -> Result<Self::M, String> {
+		//Self::M::from_uci(m_str)
+		Err("Not Supported".into())
 	}
-	fn move_to_string(&self, m: &Self::M) -> Option<String> {
-		Self::M::to_uci(m)
+	fn move_to_string(&self, _m: &Self::M) -> Option<String> {
+		//Self::M::to_uci(m)
+		None
 	}
-	fn default_style() -> BoardStyle {
-		BoardStyle::default()
-	}
-	fn play_random(&mut self) {}
 }
 
-pub trait BoardMove<G : Game> : Debug + Sized + Copy
+pub trait BoardGame: GUIGame<S = Self, Style = BoardStyle> + Default + Clone
+where
+	Self::M: BoardMove<Self> + Copy,
 {
+	type PieceType: Copy + EGUIPieceType;
+	/*type Settings: Default+EguiInspect;
+	/// Create a Board game from the provided settings.
+	///
+	/// Default implementation ignores settings; override if game requires configuration.
+	fn build_from_settings(_settings: &Self::Settings) -> Self {
+		Self::default()
+	}
+
+	/// Generate legal moves from the current position.
+	///
+	/// This is a convinience method. Default implementation call Game::generate_moves.
+	/// Collects all generated moves into a Vec.
+	/// Prefer using generate_moves for performance-critical paths.
+	/// This does not need to be reimplemented.
+	fn legal_moves(&self) -> Vec<Self::M> {
+		let mut moves=vec![];
+		<Self as Game>::generate_moves(self, &mut moves);
+		moves
+	}
+
+	/// Apply a move to the game.
+	///
+	/// This is a convinient method. Default implementation call Game::apply(self).
+	/// This does not need to be reimplemented.
+	fn play(&mut self, mv: Self::M) {
+		let state=<Self as Game>::apply(self, mv);
+		if let Some(state) = state {
+			*self=state;
+		}
+	}
+	/// Get the current status of the game.
+	///
+	/// This is a convinient method. Default implementation call Game::get_winner(self) and convert it to GameResult.
+	/// This does not need to be reimplemented.
+	fn result(&self) -> GameOutcome {
+		Self::get_outcome(self)
+	}
+	/// Get the player which have to play
+	///
+	/// This is a convinient method. Default implementation call Game::current_player(self).
+	/// This does not need to be reimplemented.
+	fn current_player(&self) -> Player {
+		<Self as Game>::get_current_player(self)
+	}
+	/// Number of players (default is 2)
+	fn nb_players(&self) -> u8 {
+		2
+	}
+	/// Should returns Player's name (ex: White, Black).
+	/// Default is Player n.
+	fn get_name(&self, p: Player) -> String {
+		p.to_string()
+	}*/
+	/// Width of the board
+	fn width(&self) -> u8;
+	/// Height of the board
+	fn height(&self) -> u8;
+	/// Returns the piece at a particular square on the board
+	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType>;
+
+	fn index_from_coords(x: u8, y: u8) -> u16;
+	fn coords_from_index(index: u16) -> (u8, u8);
+	
+	//fn play_random(&mut self) {}
+}
+
+pub trait BoardMove<G: Game>: Debug + Sized + Copy {
 	fn from(&self) -> Option<u16> {
 		None
 	}
@@ -240,17 +304,20 @@ pub trait BoardMove<G : Game> : Debug + Sized + Copy
 	fn played_highlights(&self, state: &G) -> Vec<u16> {
 		self.click_sequence(state)
 	}
-	fn handle_clicks_interaction(state: &G, legals: &[G::M], clicks: &[u16]) -> MoveResult<G> 
-		where
-			G: BoardGame,
-			G::M: BoardMove<G> 
+	fn handle_clicks_interaction(state: &G, legals: &[G::M], clicks: &[u16]) -> MoveResult<G>
+	where
+		G: BoardGame,
+		G::M: BoardMove<G>,
 	{
-		let candidates: Vec<G::M> = legals.iter()
+		let candidates: Vec<G::M> = legals
+			.iter()
 			.filter(|&&m| m.matches_prefix(state, legals, clicks))
 			.copied()
 			.collect();
 
-		if candidates.is_empty() { return MoveResult::Invalid; }
+		if candidates.is_empty() {
+			return MoveResult::Invalid;
+		}
 
 		let n = clicks.len();
 
@@ -268,7 +335,8 @@ pub trait BoardMove<G : Game> : Debug + Sized + Copy
 		}
 
 		if next_possible_clicks.is_empty() {
-			let exact_matches: Vec<G::M> = candidates.iter()
+			let exact_matches: Vec<G::M> = candidates
+				.iter()
 				.filter(|m| m.click_sequence(state).len() == n)
 				.copied()
 				.collect();
@@ -288,8 +356,7 @@ pub trait BoardMove<G : Game> : Debug + Sized + Copy
 		MoveResult::Incomplete {
 			selected: Some(clicks[n - 1]),
 			highlights: next_possible_clicks,
-			matching_moves: candidates
-			//intermediate_state: Self::compute_intermediate_state(state, legals, clicks),
+			matching_moves: candidates, //intermediate_state: Self::compute_intermediate_state(state, legals, clicks),
 		}
 	}
 	/// Some games need to move multiple piece per turn for example, hence, need to display an intermediate state.
@@ -320,9 +387,8 @@ pub trait BoardMove<G : Game> : Debug + Sized + Copy
 	}
 }
 
-
 pub enum MultipleMoveSelectionResult<M> {
 	Pending,
 	Cancelled,
-	Selected(M)
+	Selected(M),
 }

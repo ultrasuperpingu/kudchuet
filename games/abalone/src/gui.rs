@@ -7,9 +7,9 @@ use egui::{Color32, Rect, Stroke, Vec2};
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
-use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, PieceDrawer, SquareDrawer};
+use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, GameDrawer, PieceDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType, GUIGame};
 
 impl BoardMove<Abalone> for Move {
 	fn click_sequence(&self, _state: &Abalone) -> Vec<u16> {
@@ -71,18 +71,9 @@ impl EGUIPieceType for Cell {
 		}
 	}
 }
-impl BoardGame for Abalone {
-	type PieceType = Cell;
+impl GUIGame for Abalone {
 	type Settings = kudchuet::gui::DefaultSettings;
-
-	fn width(&self) -> u8 {
-		8
-	}
-
-	fn height(&self) -> u8 {
-		8
-	}
-
+	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {
 		match p {
 			Player::PLAYER1 => "Black".into(),
@@ -90,22 +81,6 @@ impl BoardGame for Abalone {
 			_ => unreachable!(),
 		}
 	}
-	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
-		if self.white.get(x, y) {
-			Some(Cell::White)
-		} else if self.black.get(x, y) {
-			Some(Cell::Black)
-		} else {
-			None
-		}
-	}
-	fn index_from_coords(x: u8, y: u8) -> u16 {
-		BitboardAbalone::index_from_coords(x, y) as u16
-	}
-	fn coords_from_index(index: u16) -> (u8, u8) {
-		BitboardAbalone::coords_from_index(index as usize)
-	}
-
 	fn get_position_from_string(&self, pos_str: &str) -> Result<Self, String> {
 		Self::from_fen(pos_str)
 	}
@@ -145,8 +120,65 @@ impl BoardGame for Abalone {
 		style
 	}
 }
+impl BoardGame for Abalone {
+	type PieceType = Cell;
 
-struct AbaloneBoardDrawer<G>(DefaultBoardDrawer<G>);
+	fn width(&self) -> u8 {
+		8
+	}
+
+	fn height(&self) -> u8 {
+		8
+	}
+
+	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
+		if self.white.get(x, y) {
+			Some(Cell::White)
+		} else if self.black.get(x, y) {
+			Some(Cell::Black)
+		} else {
+			None
+		}
+	}
+	fn index_from_coords(x: u8, y: u8) -> u16 {
+		BitboardAbalone::index_from_coords(x, y) as u16
+	}
+	fn coords_from_index(index: u16) -> (u8, u8) {
+		BitboardAbalone::coords_from_index(index as usize)
+	}
+
+}
+
+struct AbaloneBoardDrawer<G: BoardGame>(DefaultBoardDrawer<G>)
+where G::M: BoardMove<G>;
+impl GameDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
+	type Click = (u8, u8);
+
+	fn draw(
+			&mut self,
+			ui: &mut egui::Ui,
+			game: &Abalone,
+			//input: &Box<dyn InputHandler<G>>,
+			can_interact: bool,
+		) -> Option<Self::Click> {
+		self.draw_board(ui, game, can_interact)
+	}
+
+	fn get_style(&self) -> &BoardStyle {
+		self.0.get_style()
+	}
+
+	fn get_style_mut(&mut self) -> &mut BoardStyle {
+		self.0.get_style_mut()
+	}
+
+	fn set_style(&mut self, style: BoardStyle) {
+		self.0.set_style(style)
+	}
+	fn full_reset(&mut self) {
+		self.0.full_reset()
+	}
+}
 impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 	fn draw_board(
 		&self,
@@ -272,18 +304,6 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 		self.0.set_piece_drawer(sq_drawer)
 	}
 
-	fn get_style(&self) -> &BoardStyle {
-		self.0.get_style()
-	}
-
-	fn get_style_mut(&mut self) -> &mut BoardStyle {
-		self.0.get_style_mut()
-	}
-
-	fn set_style(&mut self, style: BoardStyle) {
-		self.0.set_style(style)
-	}
-
 	fn get_selected(&self) -> Option<u16> {
 		self.0.get_selected()
 	}
@@ -312,17 +332,14 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 		self.0.set_played_highlights(played_highlights)
 	}
 
-	fn full_reset(&mut self) {
-		self.0.full_reset()
-	}
 }
 pub fn create_board() -> GenericBoardApp<Abalone> {
 	let engines: Vec<Box<dyn AIEngineProvider<Abalone>>> = vec![Box::new(
 		MoveSearcherBuilder::new("Material", AbaloneMaterialEval, 4),
 	)];
 	let mut board = GenericBoardApp::new(Abalone::default(), engines);
-	board.board_drawer = Box::new(AbaloneBoardDrawer(DefaultBoardDrawer::new()));
-	*board.board_drawer.get_style_mut() = Abalone::default_style();
+	board.game_drawer = Box::new(AbaloneBoardDrawer(DefaultBoardDrawer::new()));
+	*board.game_drawer.get_style_mut() = Abalone::default_style();
 	board.max_depth = 6;
 	board.depth = 4;
 	board

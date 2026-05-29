@@ -5,7 +5,7 @@ use egui_field_editor::EguiInspect;
 
 use crate::ai::uci::{Serializable, UciFen, UciInfoAttribute, UciMessage, UciOptionConfig, UciSearchControl, UciTimeControl, UciValue};
 use crate::ai::{AIEngine, AIEngineProvider};
-use crate::gui::{BoardGame, BoardMove};
+use crate::gui::{BoardGame, BoardMove, GUIGame};
 use std::collections::{VecDeque, HashMap};
 use std::path::PathBuf;
 use futures::channel::oneshot;
@@ -298,9 +298,10 @@ impl ExternalEngine
 	}
 }
 
-impl<G: BoardGame+Sync+Send+'static> AIEngine<G> for ExternalEngine
+impl<G: GUIGame+Sync+Send+'static> AIEngine<G> for ExternalEngine
 where
-	G::M: BoardMove<G>+Send
+	//G::M: BoardMove<G>+Send
+	G::M: Send
 {
 	fn get_options(&self) -> Option<&HashMap<String, UciValue>> {
 		Some(&self.options)

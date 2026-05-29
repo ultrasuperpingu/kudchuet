@@ -1,4 +1,3 @@
-
 use egui_field_editor::{EguiInspect, EguiInspector, add_button};
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -14,12 +13,14 @@ pub(super) enum RightTab {
 	Theme,
 	ImportExport,
 	#[cfg(not(target_arch = "wasm32"))]
-	ExternalEngine
+	ExternalEngine,
 }
 const LABEL_RATIO: f32 = 0.4;
 
-impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
-	where G::M : BoardMove<G> + Send
+impl<G: BoardGame + Sync + Send + 'static>
+	GenericBoardApp<G>
+where
+	G::M: BoardMove<G> + Send,
 {
 	pub(super) fn draw_options_panels(&mut self, ui: &mut egui::Ui) {
 		if let Some(tab) = self.open_right_tab {
@@ -38,20 +39,33 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 							RightTab::ExternalEngine => "🖥 External AI Engine",
 						});
 						ui.separator();
-						
+
 						egui::ScrollArea::vertical().show(ui, |ui| {
 							match tab {
 								RightTab::GameSettings => {
-									if self.game_state_manager.get_settings_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
-									}
+									if self
+										.game_state_manager
+										.get_settings_mut()
+										.inspect("", "", LABEL_RATIO, false, ui)
+										.changed()
+									{}
 								}
 								RightTab::Settings => {
-									let active_engines = self.ai_engine_manager.get_all_engine_names();
+									let active_engines =
+										self.ai_engine_manager.get_all_engine_names();
 									let mut opts_changed = None;
 									for engine_name in active_engines {
-										if let Ok(engine) = self.ai_engine_manager.ensure_engine(&engine_name) {
-											if let Some(opts)= engine.get_options_mut() {
-												let resp = opts.inspect(engine_name.as_str(), "", LABEL_RATIO, false, ui);
+										if let Ok(engine) =
+											self.ai_engine_manager.ensure_engine(&engine_name)
+										{
+											if let Some(opts) = engine.get_options_mut() {
+												let resp = opts.inspect(
+													engine_name.as_str(),
+													"",
+													LABEL_RATIO,
+													false,
+													ui,
+												);
 												//let resp = ui.add(EguiInspector::new(&mut opts).id_salt(engine_name.as_str()));
 												if resp.changed() {
 													/*println!("Options changed for engine {} {:?}", engine_name, resp.id);
@@ -61,51 +75,90 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 															println!("Option {} changed to {:?}", k, v);
 														}
 													}*/
-													opts_changed = Some((engine_name, opts.clone()));
+													opts_changed =
+														Some((engine_name, opts.clone()));
 												}
 											}
 										}
 									}
 									if let Some((engine_name, opts)) = opts_changed {
-										if let Some(engine) = self.ai_engine_manager.get_engine_mut(&engine_name) {
+										if let Some(engine) =
+											self.ai_engine_manager.get_engine_mut(&engine_name)
+										{
 											engine.set_options(opts.clone());
-											self.ai_engine_manager.save_all_engine_options(ui.ctx());
+											self.ai_engine_manager
+												.save_all_engine_options(ui.ctx());
 										}
 									}
 									if self.ai_engine_manager.is_thinking() {
-										egui_field_editor::add_button("Stop Thinking", "Stop thinking and return current best move", false, ui, |_ui| {
-											self.ai_engine_manager.stop_thinking();
-										});
+										egui_field_editor::add_button(
+											"Stop Thinking",
+											"Stop thinking and return current best move",
+											false,
+											ui,
+											|_ui| {
+												self.ai_engine_manager.stop_thinking();
+											},
+										);
 									}
 								}
 								RightTab::Theme => {
 									//ui.heading("Board Style");
 									//if self.board_drawer.get_style_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
-									if ui.add(EguiInspector::new(self.board_drawer.get_style_mut()).id_salt("board_style").with_title("Board Style")).changed() {
-										self.board_drawer.save_style(ui.ctx());
+									if ui
+										.add(
+											EguiInspector::new(self.game_drawer.get_style_mut())
+												.id_salt("board_style")
+												.with_title("Board Style"),
+										)
+										.changed()
+									{
+										self.game_drawer.save_style(ui.ctx());
 									}
-									add_button("Default Board Style", "Reset board style to default", false, ui, |ui| {
-										*self.board_drawer.get_style_mut() = G::default_style();
-										self.board_drawer.save_style(ui.ctx());
-									});
-									if self.board_drawer.get_piece_drawer().has_custom_properties() {
+									add_button(
+										"Default Board Style",
+										"Reset board style to default",
+										false,
+										ui,
+										|ui| {
+											*self.game_drawer.get_style_mut() = G::Style::default();
+											self.game_drawer.save_style(ui.ctx());
+										},
+									);
+									/*if self.board_drawer.get_piece_drawer().has_custom_properties()
+									{
 										let piece_drawer = self.board_drawer.get_piece_drawer_mut();
 										//if self.board_drawer.get_piece_drawer_mut().inspect("", "", LABEL_RATIO, false, ui).changed() {
-										if ui.add(EguiInspector::new(piece_drawer).id_salt("piece_style").with_title("Piece Style")).changed() {
+										if ui
+											.add(
+												EguiInspector::new(piece_drawer)
+													.id_salt("piece_style")
+													.with_title("Piece Style"),
+											)
+											.changed()
+										{
 											//self.board_drawer.save_style(ui.ctx());
 										}
-										add_button("Default Piece Style", "Reset pieces style to default", false, ui, |_ui| {
-											self.board_drawer.get_piece_drawer_mut().reset_to_defaults();
-											//self.board_drawer.save_style(ui.ctx());
-										});
-									}
+										add_button(
+											"Default Piece Style",
+											"Reset pieces style to default",
+											false,
+											ui,
+											|_ui| {
+												self.board_drawer
+													.get_piece_drawer_mut()
+													.reset_to_defaults();
+												//self.board_drawer.save_style(ui.ctx());
+											},
+										);
+									}*/
 								}
 								RightTab::ImportExport => {
 									let game = self.game().clone();
 									self.import_export_panel.ui(ui, &game, &mut |game| {
 										self.ai_engine_manager.set_paused(true);
 										self.game_state_manager.load(game);
-										self.board_drawer.full_reset();
+										self.game_drawer.full_reset();
 									});
 								}
 								#[cfg(not(target_arch = "wasm32"))]
@@ -121,11 +174,11 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 		egui::Panel::right("tab_buttons")
 			.resizable(false)
 			.exact_size(40.0)
-			.frame(egui::Frame::NONE.inner_margin(4.0)) 
+			.frame(egui::Frame::NONE.inner_margin(4.0))
 			.show_inside(ui, |ui| {
 				ui.vertical_centered(|ui| {
 					ui.add_space(10.0);
-					
+
 					let mut tab_button = |ui: &mut egui::Ui, tab: RightTab, icon: &str| {
 						let is_selected = self.open_right_tab == Some(tab);
 						let btn = egui::RichText::new(icon).size(20.0);
@@ -137,7 +190,6 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 							}
 						}
 					};
-					
 
 					//tab_button(ui, RightTab::GameSettings, "🎲");
 					tab_button(ui, RightTab::GameSettings, "🎾");
@@ -163,8 +215,16 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 
 		let mut changed = false;
 		let mut remove_idx: Option<usize> = None;
-		for (i, entry) in self.ai_engine_manager.get_external_providers_mut().iter_mut().enumerate() {
-			if entry.inspect(&entry.name.clone(), "", LABEL_RATIO, false, ui).changed() {
+		for (i, entry) in self
+			.ai_engine_manager
+			.get_external_providers_mut()
+			.iter_mut()
+			.enumerate()
+		{
+			if entry
+				.inspect(&entry.name.clone(), "", LABEL_RATIO, false, ui)
+				.changed()
+			{
 				changed = true;
 			}
 
@@ -175,16 +235,20 @@ impl<G: BoardGame+Sync+Send+'static> GenericBoardApp<G>
 		}
 
 		if let Some(i) = remove_idx {
-			let _ = self.ai_engine_manager.get_external_providers_mut().remove(i);
+			let _ = self
+				.ai_engine_manager
+				.get_external_providers_mut()
+				.remove(i);
 			changed = true;
 		}
 
 		if ui.button("➕ Add Engine").clicked() {
-			self.ai_engine_manager.add_external_provider(ExternalEngineEntry {
-				name: "New Engine".into(),
-				path: "".into(),
-				args: "".into()
-			});
+			self.ai_engine_manager
+				.add_external_provider(ExternalEngineEntry {
+					name: "New Engine".into(),
+					path: "".into(),
+					args: "".into(),
+				});
 		}
 		if changed {
 			self.ai_engine_manager.save_external_engines(ui.ctx());
@@ -199,20 +263,22 @@ pub struct ImportExportPanel {
 
 impl ImportExportPanel {
 	pub fn ui<G: BoardGame>(
-		&mut self, 
-		ui: &mut egui::Ui, 
+		&mut self,
+		ui: &mut egui::Ui,
 		game: &G,
-		on_position_loaded: &mut dyn FnMut(G)
-	)
-	where <G as Game>::M: BoardMove<G>
+		on_position_loaded: &mut dyn FnMut(G),
+	) where
+		<G as Game>::M: BoardMove<G>,
 	{
 		ui.vertical(|ui| {
 			ui.label(egui::RichText::new("Position").strong());
-			
-			ui.add(egui::TextEdit::multiline(&mut self.position_input)
-				//.hint_text("Ex: A valid FEN or equivalent")
-				.desired_rows(5)
-				.font(egui::TextStyle::Monospace));
+
+			ui.add(
+				egui::TextEdit::multiline(&mut self.position_input)
+					//.hint_text("Ex: A valid FEN or equivalent")
+					.desired_rows(5)
+					.font(egui::TextStyle::Monospace),
+			);
 
 			ui.add_space(8.0);
 
@@ -222,7 +288,7 @@ impl ImportExportPanel {
 						self.position_input = pos;
 						self.last_error = None;
 					} else {
-						self.last_error=Some("Not supported".into());
+						self.last_error = Some("Not supported".into());
 					}
 				}
 
@@ -233,13 +299,21 @@ impl ImportExportPanel {
 
 			ui.separator();
 			if let Some(err) = &self.last_error {
-				ui.label(egui::RichText::new(format!("Invalid input: {}", err)).color(egui::Color32::RED));
+				ui.label(
+					egui::RichText::new(format!("Invalid input: {}", err))
+						.color(egui::Color32::RED),
+				);
 			}
 			ui.scope(|ui| {
 				ui.visuals_mut().widgets.inactive.bg_fill = egui::Color32::from_rgb(40, 80, 40);
-				if ui.button(egui::RichText::new("📥 Load").strong().color(egui::Color32::WHITE))
+				if ui
+					.button(
+						egui::RichText::new("📥 Load")
+							.strong()
+							.color(egui::Color32::WHITE),
+					)
 					.on_hover_text("This will reset the current game state!")
-					.clicked() 
+					.clicked()
 				{
 					match game.get_position_from_string(&self.position_input) {
 						Ok(p) => {

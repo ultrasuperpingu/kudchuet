@@ -653,7 +653,7 @@ impl Abalone {
 #[cfg(test)]
 mod tests {
 
-	use kudchuet::gui::BoardGame;
+	use kudchuet::gui::GUIGame;
 
 use crate::{bitboard::BitboardAbalone, rules::{Abalone, RAYS, to_bitboard}};
 

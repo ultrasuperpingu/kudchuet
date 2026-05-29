@@ -4,7 +4,7 @@ use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame};
 
 use crate::bitboard::Bitboard7x7;
 use crate::rules::Action;
@@ -108,9 +108,21 @@ impl EGUIPieceType for Cell {
 	}
 }
 
+impl GUIGame for Diaballik {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			checkerboard_mod: CheckerBoardMod::None,
+			uniform_color: Color32::LIGHT_BLUE,
+			square_stroke_color: Some(Color32::BLUE),
+			show_coordinates_mod: CoordMod::NumbersOnSquare,
+			..Default::default()
+		}
+	}
+}
 impl BoardGame for Diaballik {
 	type PieceType = Cell;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		7
@@ -132,15 +144,6 @@ impl BoardGame for Diaballik {
 	}
 	fn coords_from_index(i: u16) -> (u8, u8) {
 		Bitboard7x7::coords_from_index(i as usize)
-	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			checkerboard_mod: CheckerBoardMod::None,
-			uniform_color: Color32::LIGHT_BLUE,
-			square_stroke_color: Some(Color32::BLUE),
-			show_coordinates_mod: CoordMod::NumbersOnSquare,
-			..Default::default()
-		}
 	}
 }
 

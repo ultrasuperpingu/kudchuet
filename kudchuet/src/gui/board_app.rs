@@ -1,30 +1,30 @@
-
 use egui::{Align, Layout, Ui};
 
-use crate::gui::{MultipleMoveSelectionResult, RightTab};
-use crate::gui::board_drawer::BoardDrawer;
 use crate::ai::AIEngineProvider;
 use crate::ai::engine_manager::{EngineManager, ThinkingResult};
+use crate::gui::board_drawer::BoardDrawer;
+use crate::gui::input_handler::InputHandler;
+use crate::gui::{MultipleMoveSelectionResult, RightTab};
 use crate::utils::short_type_name;
 
-use super::{BoardGame, BoardMove};
-use super::input_handler::{InputHandler, MoveResult};
-use super::game_state_manager::GameStateManager;
-use super::options_panel::ImportExportPanel;
 use super::board_drawer::DefaultBoardDrawer;
+use super::game_state_manager::GameStateManager;
+use super::input_handler::{BoardInputHandler, MoveResult};
+use super::options_panel::ImportExportPanel;
+use super::{BoardGame, BoardMove};
 use super::{GameOutcome, Player};
 
-
-pub struct GenericBoardApp<G: BoardGame+Sync+Send>
-	where G::M : BoardMove<G> + Send
+//pub struct GenericBoardApp<G: GUIGame+Sync+Send, Drawer: GameDrawer<G>+Default>
+pub struct GenericBoardApp<G: BoardGame + Sync + Send>
+where
+	G::M: BoardMove<G> + Send,
 {
 	pub name: String,
 	pub(super) ai_engine_manager: EngineManager<G>,
-	
 
-	pub board_drawer: Box<dyn BoardDrawer<G>>,
+	pub game_drawer: Box<dyn BoardDrawer<G, Click = (u8, u8)>>,
 
-	pub input_handler: InputHandler<G>,
+	pub input_handler: BoardInputHandler<G>,
 
 	pub(super) game_state_manager: GameStateManager<G>,
 
@@ -32,18 +32,19 @@ pub struct GenericBoardApp<G: BoardGame+Sync+Send>
 	pub max_depth: u8,
 	pub max_time: f32,
 
-
 	pub(super) open_right_tab: Option<RightTab>,
 	pub(super) import_export_panel: ImportExportPanel,
 	inited: bool,
 }
-impl<G: BoardGame+Sync+Send+'static> eframe::App for GenericBoardApp<G>
-	where G::M : BoardMove<G>+Send
+//impl<G: BoardGame+Sync+Send+'static, Drawer: GameDrawer<G>+Default> eframe::App for GenericBoardApp<G, Drawer>
+impl<G: BoardGame + Clone + Sync + Send + 'static> eframe::App for GenericBoardApp<G>
+where
+	G::M: BoardMove<G> + Send,
 {
 	fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 		if !self.inited {
 			self.ai_engine_manager.load_engines_parameters(ctx);
-			self.board_drawer.load_style(ctx);
+			self.game_drawer.load_style(ctx);
 			self.inited = true;
 		}
 	}
@@ -54,9 +55,16 @@ impl<G: BoardGame+Sync+Send+'static> eframe::App for GenericBoardApp<G>
 			ui.separator();
 			let computer_playing = self.is_current_player_computer();
 			let is_random_move = self.is_current_player_random();
-			if let Some(click) = self.board_drawer.draw_board(ui, self.game_to_draw(), !computer_playing || is_random_move) {
-				match self.input_handler.process(click, &self.game_state_manager, &mut self.board_drawer) {
-					MoveResult::Created{mv, ..} => {
+			if let Some(click) =
+				self.game_drawer
+					.draw(ui, &self.game_to_draw().clone(),!computer_playing || is_random_move)
+			{
+				match self.input_handler.process(
+					click,
+					&self.game_state_manager,
+					&mut self.game_drawer,
+				) {
+					MoveResult::Created { mv, .. } => {
 						self.game_state_manager.apply_move(mv);
 					}
 					_ => {
@@ -67,20 +75,26 @@ impl<G: BoardGame+Sync+Send+'static> eframe::App for GenericBoardApp<G>
 				}
 			}
 			if result == GameOutcome::OnGoing {
-				if self.is_current_player_computer() && !self.is_current_player_random() && !self.ai_engine_manager.is_paused() {
+				if self.is_current_player_computer()
+					&& !self.is_current_player_random()
+					&& !self.ai_engine_manager.is_paused()
+				{
 					match self.ai_engine_manager.poll_ai_result() {
 						ThinkingResult::NotThinking => {
-							if let Err(err) = self.ai_engine_manager.choose_move_async(&self.game().clone()) {
+							if let Err(err) = self
+								.ai_engine_manager
+								.choose_move_async(&self.game().clone())
+							{
 								eprintln!("Error while trying to play: {}", err);
 							}
 							ui.request_repaint();
-						},
+						}
 						ThinkingResult::FinishedThinking(m) => {
 							if let Some(mv) = m {
 								self.apply_move(mv);
 								ui.request_repaint();
 							}
-						},
+						}
 						ThinkingResult::Thinking => {
 							//println!("Still thinking");
 						}
@@ -90,38 +104,41 @@ impl<G: BoardGame+Sync+Send+'static> eframe::App for GenericBoardApp<G>
 			if let Some(candidates) = self.input_handler.pending_moves().clone() {
 				match self.ask_select_between_multiple_moves(ui.ctx(), candidates) {
 					MultipleMoveSelectionResult::Pending => {}
-					MultipleMoveSelectionResult::Cancelled=> {
-						self.input_handler.reset(&mut self.board_drawer, &self.game_state_manager);
+					MultipleMoveSelectionResult::Cancelled => {
+						self.input_handler
+							.reset(&mut self.game_drawer, &self.game_state_manager);
 					}
 					MultipleMoveSelectionResult::Selected(mv) => {
 						self.apply_move(mv);
-						self.input_handler.reset(&mut self.board_drawer, &self.game_state_manager);
+						self.input_handler
+							.reset(&mut self.game_drawer, &self.game_state_manager);
 					}
 				}
 			}
 		});
 	}
 }
-impl<G: BoardGame + Clone +Sync+Send+ 'static> GenericBoardApp<G>
-where G::M: BoardMove<G>+Send
+//impl<G: BoardGame + Clone +Sync+Send+ 'static, Drawer: GameDrawer<G>+Default> GenericBoardApp<G, Drawer>
+impl<G: BoardGame + Clone + Sync + Send + 'static> GenericBoardApp<G>
+where
+	G::M: BoardMove<G> + Send,
 {
 	//pub fn new(game: G, ai: Box<dyn AIEngine<G>>) -> Self {
 	pub fn new(game: G, internals_ai: Vec<Box<dyn AIEngineProvider<G>>>) -> Self {
 		Self {
 			name: short_type_name::<G>().to_owned(),
-			ai_engine_manager:  EngineManager::new_with_internals(internals_ai),
+			ai_engine_manager: EngineManager::new_with_internals(internals_ai),
 			//players: [PlayerType::Human, PlayerType::Computer],
-
 			depth: 5,
 			max_depth: 15,
-			max_time:0.0,
-			
-			input_handler: InputHandler::new(),
-			board_drawer: Box::new(DefaultBoardDrawer::new()),
+			max_time: 0.0,
+
+			input_handler: BoardInputHandler::new(),
+			game_drawer: Box::new(DefaultBoardDrawer::default()),
 
 			game_state_manager: GameStateManager::new(game),
 
-			open_right_tab:None,
+			open_right_tab: None,
 			import_export_panel: ImportExportPanel::default(),
 			inited: false,
 		}
@@ -141,34 +158,44 @@ where G::M: BoardMove<G>+Send
 	}
 	pub(super) fn undo(&mut self) {
 		if self.game_state_manager.undo() {
-			self.board_drawer.full_reset();
-			self.input_handler.reset(&mut self.board_drawer, &self.game_state_manager);
+			self.game_drawer.full_reset();
+			self.input_handler
+				.reset(&mut self.game_drawer, &self.game_state_manager);
 		}
 	}
 	pub(super) fn redo(&mut self) {
 		if self.game_state_manager.redo() {
-			self.board_drawer.full_reset();
-			self.input_handler.reset(&mut self.board_drawer, &self.game_state_manager);
+			self.game_drawer.full_reset();
+			self.input_handler
+				.reset(&mut self.game_drawer, &self.game_state_manager);
 		}
 	}
 	pub(super) fn is_current_player_computer(&self) -> bool {
-		self.ai_engine_manager.get_player_engine(self.game().current_player()).is_some()
+		self.ai_engine_manager
+			.get_player_engine(self.game().current_player())
+			.is_some()
 	}
 	pub(super) fn is_current_player_random(&self) -> bool {
 		G::is_random_move(self.game())
 	}
-	
+
 	pub(super) fn apply_move(&mut self, mv: G::M) {
 		println!("playing {mv:?}");
 		self.game_state_manager.apply_move(mv);
-		self.board_drawer.set_played_highlights( mv.played_highlights(self.game()));
-		self.board_drawer.clear_selection();
-		self.input_handler.reset(&mut self.board_drawer, &self.game_state_manager)
+		self.game_drawer
+			.set_played_highlights(mv.played_highlights(self.game()));
+		self.game_drawer.clear_selection();
+		self.input_handler
+			.reset(&mut self.game_drawer, &self.game_state_manager)
 	}
 
-	fn ask_select_between_multiple_moves(&self, ctx: &egui::Context, candidates: &Vec<G::M>) -> MultipleMoveSelectionResult<G::M> {
+	fn ask_select_between_multiple_moves(
+		&self,
+		ctx: &egui::Context,
+		candidates: &Vec<G::M>,
+	) -> MultipleMoveSelectionResult<G::M> {
 		let screen_rect = ctx.content_rect();
-	
+
 		// Modal dialog with fade mask
 		egui::Area::new(egui::Id::new("modal_layer"))
 			.fixed_pos(screen_rect.min)
@@ -177,40 +204,47 @@ where G::M: BoardMove<G>+Send
 				//catch clicks on boards
 				ui.allocate_response(screen_rect.size(), egui::Sense::click_and_drag());
 				// fade out board
-				ui.painter().rect_filled(screen_rect, 0.0, egui::Color32::from_black_alpha(150));
+				ui.painter()
+					.rect_filled(screen_rect, 0.0, egui::Color32::from_black_alpha(150));
 			});
-	
+
 		// Selection area
 		egui::Area::new(egui::Id::new("select_move_area"))
 			.order(egui::Order::Tooltip)
 			.anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
 			.show(ctx, |ui| {
-				egui::Frame::window(ui.style()).show(ui, |ui| {
-					ui.set_width(250.0);
-					ui.vertical_centered(|ui| {
-						ui.heading("Select Move");
-						ui.add_space(8.0);
-						ui.label("Multiple moves possible:");
-						ui.add_space(12.0);
-					
-						for mv in candidates {
-							let label = self.game().move_to_string(mv)
-								.unwrap_or_else(|| format!("{:?}", mv));
+				egui::Frame::window(ui.style())
+					.show(ui, |ui| {
+						ui.set_width(250.0);
+						ui.vertical_centered(|ui| {
+							ui.heading("Select Move");
+							ui.add_space(8.0);
+							ui.label("Multiple moves possible:");
+							ui.add_space(12.0);
 
-							if ui.button(label).clicked() {
-								return MultipleMoveSelectionResult::Selected(mv.clone());
+							for mv in candidates {
+								let label = self
+									.game()
+									.move_to_string(mv)
+									.unwrap_or_else(|| format!("{:?}", mv));
+
+								if ui.button(label).clicked() {
+									return MultipleMoveSelectionResult::Selected(mv.clone());
+								}
 							}
-						}
 
-						ui.add_space(12.0);
-						ui.separator();
-						if ui.button("Cancel").clicked() {
-							return MultipleMoveSelectionResult::Cancelled;
-						}
-						MultipleMoveSelectionResult::Pending
-					}).inner
-				}).inner
-			}).inner
+							ui.add_space(12.0);
+							ui.separator();
+							if ui.button("Cancel").clicked() {
+								return MultipleMoveSelectionResult::Cancelled;
+							}
+							MultipleMoveSelectionResult::Pending
+						})
+						.inner
+					})
+					.inner
+			})
+			.inner
 	}
 
 	fn draw_header_panel(&mut self, ui: &mut Ui) -> GameOutcome {
@@ -230,42 +264,42 @@ where G::M: BoardMove<G>+Send
 					});
 				});
 			}
-				/*ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-					ui.horizontal(|ui| {
-						ui.label("Depth:");
-						if ui.add(egui::Slider::new(&mut self.depth, 1..=self.max_depth)).changed() {
-							if self.max_time == 0.0 {
-								self.ai.set_max_depth(self.depth);
-							} else {
-								self.ai.set_depth_or_timeout(self.depth, Duration::from_secs_f32(self.max_time));
-							}
+			/*ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+				ui.horizontal(|ui| {
+					ui.label("Depth:");
+					if ui.add(egui::Slider::new(&mut self.depth, 1..=self.max_depth)).changed() {
+						if self.max_time == 0.0 {
+							self.ai.set_max_depth(self.depth);
+						} else {
+							self.ai.set_depth_or_timeout(self.depth, Duration::from_secs_f32(self.max_time));
 						}
-					});
+					}
 				});
-				ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-					ui.horizontal(|ui| {
-						ui.label("Max Time:");
-						if ui.add(egui::Slider::new(&mut self.max_time, 0.0..=120.0)).changed() {
-							if self.max_time == 0.0 {
-								self.ai.set_max_depth(self.depth);
-							} else {
-								self.ai.set_depth_or_timeout(self.depth, Duration::from_secs_f32(self.max_time));
-							}
-						}
-					});
-				});
-				ui.separator();
-				if ui.button("Clear TT").clicked() {
-					let opts = self.ai.get_options().clone();
-					self.ai.reset_with_options(opts);
-				}*/
 			});
-	
+			ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+				ui.horizontal(|ui| {
+					ui.label("Max Time:");
+					if ui.add(egui::Slider::new(&mut self.max_time, 0.0..=120.0)).changed() {
+						if self.max_time == 0.0 {
+							self.ai.set_max_depth(self.depth);
+						} else {
+							self.ai.set_depth_or_timeout(self.depth, Duration::from_secs_f32(self.max_time));
+						}
+					}
+				});
+			});
+			ui.separator();
+			if ui.button("Clear TT").clicked() {
+				let opts = self.ai.get_options().clone();
+				self.ai.reset_with_options(opts);
+			}*/
+		});
+
 		ui.separator();
 		ui.horizontal(|ui| {
 			if ui.button("New Game").clicked() {
 				self.game_state_manager.new_game();
-				self.board_drawer.full_reset();
+				self.game_drawer.full_reset();
 			}
 
 			ui.add_enabled(self.game_state_manager.can_undo(), |ui: &mut Ui| {
@@ -289,13 +323,21 @@ where G::M: BoardMove<G>+Send
 				ui.response()
 			});
 			ui.separator();
-			if ui.button("↕").on_hover_text("Invert view").clicked() {
-				self.board_drawer.get_style_mut().mirrored = !self.board_drawer.get_style().mirrored;
-			}
+			//if ui.button("↕").on_hover_text("Invert view").clicked() {
+			//	self.board_drawer.get_style_mut().mirrored = !self.board_drawer.get_style().mirrored;
+			//}
 			ui.separator();
 
 			// end turn btn
-			let exact_matches : Vec<G::M> = self.input_handler.matching_moves().iter().filter(|m| m.click_sequence(self.game()) == self.input_handler.current_clicks().clone()).copied().collect();
+			let exact_matches: Vec<G::M> = self
+				.input_handler
+				.matching_moves()
+				.iter()
+				.filter(|m| {
+					m.click_sequence(self.game()) == self.input_handler.current_clicks().clone()
+				})
+				.copied()
+				.collect();
 			if !exact_matches.is_empty() && ui.button("End Turn").clicked() {
 				if exact_matches.len() > 1 {
 					self.input_handler.set_pending_moves(exact_matches);
@@ -323,7 +365,7 @@ where G::M: BoardMove<G>+Send
 		}
 	}
 	fn draw_player(&mut self, p: Player, engines: &[String], ui: &mut Ui) {
-		let p_name=self.game().get_name(p);
+		let p_name = self.game().get_name(p);
 		ui.horizontal(|ui| {
 			ui.label(p_name.clone() + ":");
 
@@ -337,7 +379,8 @@ where G::M: BoardMove<G>+Send
 
 			if ui.selectable_label(is_computer, "Computer").clicked() {
 				if !is_computer {
-					self.ai_engine_manager.set_player_engine(p, engines.first().cloned());
+					self.ai_engine_manager
+						.set_player_engine(p, engines.first().cloned());
 				}
 			}
 
@@ -345,7 +388,8 @@ where G::M: BoardMove<G>+Send
 				ui.add_space(8.0);
 
 				let current_engine = self.ai_engine_manager.get_player_engine(p).cloned();
-				let mut selected_engine = current_engine.clone()
+				let mut selected_engine = current_engine
+					.clone()
 					.unwrap_or_else(|| engines.first().cloned().unwrap_or_default());
 
 				egui::ComboBox::from_id_salt(format!("{} Engine", p_name))
@@ -357,7 +401,8 @@ where G::M: BoardMove<G>+Send
 					});
 
 				if Some(&selected_engine) != current_engine.as_ref() {
-					self.ai_engine_manager.set_player_engine(p, Some(selected_engine));
+					self.ai_engine_manager
+						.set_player_engine(p, Some(selected_engine));
 				}
 			}
 		});

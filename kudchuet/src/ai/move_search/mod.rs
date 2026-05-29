@@ -15,6 +15,8 @@ pub use crate::ai::move_search::random::Random;
 #[cfg(not(target_arch = "wasm32"))]
 pub use crate::ai::move_search::ybw::ParallelSearch;
 
+pub mod test_dfs;
+
 mod common;
 pub mod gametree;
 pub mod interface;

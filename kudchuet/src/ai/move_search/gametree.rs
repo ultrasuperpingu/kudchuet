@@ -24,7 +24,7 @@ impl PlayerSet {
 		(self.0 & 1 << p.0) != 0
 	}
 }*/
-#[derive(Clone,Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ProofOutcome {
 	Unproved,
 	Draw(u16),
@@ -42,7 +42,7 @@ impl ProofOutcome {
 	}
 
 	pub fn is_proved(&self) -> bool {
-		!matches!(self, ProofOutcome::Unproved)
+		!matches!(self, Self::Unproved)
 	}
 	pub fn is_draw(&self) -> bool {
 		matches!(self, Self::Draw(_))
@@ -77,7 +77,15 @@ impl ProofOutcome {
 			Self::Player(p, d) => Self::Player(p, d + 1),
 		}
 	}
-}impl ProofOutcome {
+	pub fn with_depth(self, depth: u16) -> Self {
+		match self {
+			Self::Unproved => Self::Unproved,
+			Self::Draw(_) => Self::Draw(depth),
+			Self::Player(p, _) => Self::Player(p, depth),
+		}
+	}
+}
+impl ProofOutcome {
 	pub fn merge(&mut self, other: Self, is_max: bool) -> &mut Self {
 		use ProofOutcome::*;
 
@@ -108,8 +116,7 @@ impl ProofOutcome {
 				}
 			}
 
-			(Player(_, _), Draw(_))
-			| (Draw(_), Player(_, _)) => {
+			(Player(_, _), Draw(_)) | (Draw(_), Player(_, _)) => {
 				panic!("Contradictory proved outcomes");
 			}
 		}
@@ -122,9 +129,7 @@ impl From<GameOutcome> for ProofOutcome {
 		match value {
 			GameOutcome::Player(p) => ProofOutcome::Player(p, 0),
 			GameOutcome::Draw => ProofOutcome::Draw(0),
-			GameOutcome::OnGoing | GameOutcome::InCycle => {
-				ProofOutcome::Unproved
-			}
+			GameOutcome::OnGoing => ProofOutcome::Unproved,
 		}
 	}
 }
@@ -155,14 +160,14 @@ pub struct Node<G: Game, Data> {
 	pub(crate) untried_moves: Vec<G::M>,
 	pub(crate) player_to_move: Player,
 	pub(crate) outcome: ProofOutcome,
-	pub(crate) depth_to_end: u16,
+	//pub(crate) depth_to_end: u16,
 }
 impl<G: Game, Data> Node<G, Data> {
 	pub fn player_to_move(&self) -> Player {
 		self.player_to_move
 	}
 	pub fn depth_to_end(&self) -> u16 {
-		self.depth_to_end
+		self.outcome.depth().unwrap_or(u16::MAX)
 	}
 	pub fn outcome(&self) -> ProofOutcome {
 		self.outcome
@@ -173,6 +178,7 @@ pub struct Edge<M> {
 	pub mv: M,
 	pub child: usize,
 }
+
 #[derive(Debug, Clone)]
 pub struct GameTree<G: Game, Data>
 where
@@ -213,7 +219,7 @@ where
 			untried_moves: moves,
 			player_to_move: player,
 			outcome: ProofOutcome::Unproved,
-			depth_to_end: u16::MAX,
+			//depth_to_end: u16::MAX,
 		});
 		s.state_to_node.insert(hash, 0);
 		s
@@ -346,12 +352,9 @@ where
 		while let Some(m) = self.nodes[node_id].untried_moves.pop() {
 			let (_child_id, res) = self.expand_single_child(node_id, m);
 			if res.is_win_for(self.nodes[node_id].player_to_move) {
-				self.nodes[node_id].outcome.merge(res.increment_depth(), false);
-				//self.nodes[node_id].outcome = res;
-				//self.nodes[node_id].depth_to_end = u16::min(
-				//	self.nodes[node_id].depth_to_end,
-				//	self.nodes[child_id].depth_to_end + 1,
-				//);
+				self.nodes[node_id]
+					.outcome
+					.merge(res.increment_depth(), false);
 			}
 		}
 		let children: Vec<_> = self.nodes[node_id]
@@ -367,18 +370,12 @@ where
 		for child_id in children {
 			let res = self.expand_to_depth_recursive(child_id, max_depth, depth + 1);
 			if res.is_win_for(self.nodes[node_id].player_to_move) {
-				//println!("res: {:?}, outcome:{:?}", res, self.nodes[node_id].outcome);
-				self.nodes[node_id].outcome.merge(res.increment_depth(), false);
-				//println!("merged outcome:{:?}", self.nodes[node_id].outcome);
-				//self.nodes[node_id].outcome = res;
-				//self.nodes[node_id].depth_to_end = u16::min(
-				//	self.nodes[node_id].depth_to_end,
-				//	self.nodes[child_id].depth_to_end + 1,
-				//);
+				self.nodes[node_id]
+					.outcome
+					.merge(res.increment_depth(), false);
 				is_lose = false;
 			} else if res.is_draw() {
 				is_draw = true;
-				//draw_depth = u16::min(draw_depth, self.nodes[child_id].depth_to_end + 1);
 				draw_depth = res.depth().unwrap() + 1;
 				is_lose = false;
 			} else if !res.is_ended() {
@@ -387,20 +384,17 @@ where
 			} else if is_lose {
 				//lose
 				debug_assert!(res.is_lose_for(self.nodes[node_id].player_to_move));
-				//loose_depth = u16::max(loose_depth, self.nodes[child_id].depth_to_end + 1);
 				loose_depth = u16::max(loose_depth, res.depth().unwrap() + 1);
 			} else {
-				//println!("res: {:?}", res);
 				debug_assert!(res.is_lose_for(self.nodes[node_id].player_to_move));
 			}
 		}
 		if is_lose {
 			//TODO: real player win (for multiplayer)
-			self.nodes[node_id].outcome = ProofOutcome::Player(self.nodes[node_id].player_to_move.opponent(), loose_depth);
-			//self.nodes[node_id].depth_to_end = loose_depth;
+			self.nodes[node_id].outcome =
+				ProofOutcome::Player(self.nodes[node_id].player_to_move.opponent(), loose_depth);
 		} else if self.nodes[node_id].outcome == ProofOutcome::Unproved && !has_unknown && is_draw {
 			self.nodes[node_id].outcome = ProofOutcome::Draw(draw_depth);
-			//self.nodes[node_id].depth_to_end = draw_depth;
 		}
 		self.nodes[node_id].outcome
 		//self.get_outcome(node_id)
@@ -433,7 +427,7 @@ where
 					untried_moves: moves,
 					player_to_move: player,
 					outcome: outcome.into(),
-					depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
+					//depth_to_end: if outcome.is_ended() { 0 } else { u16::MAX },
 				});
 				self.nodes[node_id].children.push(Edge {
 					mv: m,
@@ -492,11 +486,11 @@ where
 			let best_child = if !maximize_depth {
 				filtered
 					.iter()
-					.min_by_key(|c| self.get_node(c.child).unwrap().depth_to_end)
+					.min_by_key(|c| self.get_node(c.child).unwrap().depth_to_end())
 			} else {
 				filtered
 					.iter()
-					.max_by_key(|c| self.get_node(c.child).unwrap().depth_to_end)
+					.max_by_key(|c| self.get_node(c.child).unwrap().depth_to_end())
 			};
 			if let Some(best_child) = best_child {
 				let best_move = best_child.mv;
@@ -575,7 +569,7 @@ where
 		&self.nodes[self.root_id]
 	}
 	pub fn get_depth_to_end(&self) -> u16 {
-		self.nodes[self.root_id].depth_to_end
+		self.nodes[self.root_id].depth_to_end()
 	}
 	pub fn get_root_id(&self) -> usize {
 		self.root_id
@@ -636,7 +630,7 @@ where
 		}
 		let node = &tree[id];
 		let indent = "  ".repeat(depth);
-		let (outcome, depth_to_end) = { (node.outcome, node.depth_to_end) };
+		let (outcome, depth_to_end) = { (node.outcome, node.depth_to_end()) };
 
 		let _ = writeln!(
 			f,

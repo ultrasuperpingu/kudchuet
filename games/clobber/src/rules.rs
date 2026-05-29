@@ -1,6 +1,6 @@
 use bitboard::{BitIter, Bitboard};
 use bitboard_proc_macro::bitboard;
-use kudchuet::{GameOutcome, Player, gui::BoardGame, utils::splitmix64};
+use kudchuet::{GameOutcome, Player, gui::GUIGame, utils::splitmix64};
 #[bitboard(width = 5, height = 6)]
 #[derive(Debug, Hash)]
 pub(crate) struct Bitboard5x6;

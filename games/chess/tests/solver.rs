@@ -1,5 +1,5 @@
 use chess::mychess::ChessBoard;
-use kudchuet::ai::move_search::{Game, gametree::GameTree};
+use kudchuet::ai::move_search::{Game, gametree::{GameTree, ProofOutcome}, test_dfs::PerfectSolver};
 
 //https://wtharvey.com/m8n2.txt
 static TWO_MOVES: [&str; 11] = [
@@ -46,7 +46,7 @@ fn test_solve() {
 		let res = tree.iterative_deepening_solve(0, 3);
 		println!("{:?} ({})", res, tree.get_root().depth_to_end());
 		tree.print(1);
-		assert_eq!(res, ChessBoard::get_current_player(&board).into());
+		assert_eq!(res, ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(3));
 	}
 	for fen in THREE_MOVES {
 		let board = ChessBoard::from_fen(fen).unwrap();
@@ -54,10 +54,10 @@ fn test_solve() {
 		println!("{:?}", board.status());
 		//println!("{:?}", board.legal_moves());
 		let mut tree = GameTree::<ChessBoard, ()>::from(board);
-		let res = tree.expand_to_depth(0, 5);
+		let res = tree.iterative_deepening_solve(0, 5);
 		println!("{:?} ({})", res, tree.get_root().depth_to_end());
 		tree.print(1);
-		assert_eq!(res, ChessBoard::get_current_player(&board).into());
+		assert_eq!(res,  ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(5));
 	}
 	for fen in FOUR_MOVES {
 		let board = ChessBoard::from_fen(fen).unwrap();
@@ -68,7 +68,45 @@ fn test_solve() {
 		let res = tree.expand_to_depth(0, 7);
 		println!("{:?} ({})", res, tree.get_root().depth_to_end());
 		tree.print(1);
-		assert_eq!(res, ChessBoard::get_current_player(&board).into());
+		assert_eq!(res,  ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(7));
+	}
+}
+
+
+#[test]
+fn test_solve_dfs() {
+	for fen in TWO_MOVES {
+		let mut board = ChessBoard::from_fen(fen).unwrap();
+		println!("{}", board);
+		println!("{:?}", board.status());
+		//println!("{:?}", board.legal_moves());
+		let mut solver = PerfectSolver::default();
+		//let res = tree.expand_to_depth(0, 3);
+		let res = solver.solve::<ChessBoard>(&mut board, 5);
+		println!("{:?}", res);
+		assert_eq!(res, ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(3));
+	}
+	for fen in THREE_MOVES {
+		let mut board = ChessBoard::from_fen(fen).unwrap();
+		println!("{}", board);
+		println!("{:?}", board.status());
+		//println!("{:?}", board.legal_moves());
+		let mut solver = PerfectSolver::default();
+		//let res = tree.expand_to_depth(0, 3);
+		let res = solver.solve::<ChessBoard>(&mut board, 5);
+		println!("{:?}", res);
+		assert_eq!(res,  ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(5));
+	}
+	for fen in FOUR_MOVES {
+		let mut board = ChessBoard::from_fen(fen).unwrap();
+		println!("{}", board);
+		println!("{:?}", board.status());
+		//println!("{:?}", board.legal_moves());
+		let mut solver = PerfectSolver::default();
+		//let res = tree.expand_to_depth(0, 3);
+		let res = solver.solve::<ChessBoard>(&mut board, 7);
+		println!("{:?}", res);
+		assert_eq!(res,  ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(7));
 	}
 }
 

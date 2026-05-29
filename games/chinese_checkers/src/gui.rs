@@ -1,16 +1,17 @@
-use eframe::egui;
-use egui::{Color32, Stroke};
-use egui_field_editor::EguiInspect;
-use kudchuet::ai::MoveSearcherBuilder;
 use crate::bitboard::ChineseCheckerBoard;
 use crate::game::ChineseCheckersMaterialEval;
 use crate::rules::{ChineseCheckers, ChineseCheckersPlayer, Move};
+use eframe::egui;
+use egui::{Color32, Stroke};
+use egui_field_editor::EguiInspect;
 use kudchuet::Player;
+use kudchuet::ai::MoveSearcherBuilder;
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, RowOffsetPattern};
 use kudchuet::gui::shapes::{Shape, StrokeData};
-
+use kudchuet::gui::{
+	BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, RowOffsetPattern,
+};
 
 impl BoardMove<ChineseCheckers> for Move {
 	fn from(&self) -> Option<u16> {
@@ -24,41 +25,61 @@ impl BoardMove<ChineseCheckers> for Move {
 impl EGUIPieceType for ChineseCheckersPlayer {
 	fn shape(&self) -> Shape {
 		match self {
-			ChineseCheckersPlayer::Red => Shape::Circle { fill_color: Some(Color32::RED), size: 0.7, text: None, stroke: None },
-			ChineseCheckersPlayer::Blue => Shape::Circle { fill_color: Some(Color32::BLUE), size: 0.7, text: None, stroke: None },
-			ChineseCheckersPlayer::Green => Shape::Circle { fill_color: Some(Color32::GREEN), size: 0.7, text: None, stroke: None },
-			ChineseCheckersPlayer::Yellow => Shape::Circle { fill_color: Some(Color32::YELLOW), size: 0.7, text: None, stroke: None },
-			ChineseCheckersPlayer::Black => Shape::Circle { fill_color: Some(Color32::BLACK), size: 0.7, text: None, stroke: None },
-			ChineseCheckersPlayer::White => Shape::Circle { fill_color: Some(Color32::WHITE), size: 0.7, text: None, stroke: None },
+			ChineseCheckersPlayer::Red => Shape::Circle {
+				fill_color: Some(Color32::RED),
+				size: 0.7,
+				text: None,
+				stroke: None,
+			},
+			ChineseCheckersPlayer::Blue => Shape::Circle {
+				fill_color: Some(Color32::BLUE),
+				size: 0.7,
+				text: None,
+				stroke: None,
+			},
+			ChineseCheckersPlayer::Green => Shape::Circle {
+				fill_color: Some(Color32::GREEN),
+				size: 0.7,
+				text: None,
+				stroke: None,
+			},
+			ChineseCheckersPlayer::Yellow => Shape::Circle {
+				fill_color: Some(Color32::YELLOW),
+				size: 0.7,
+				text: None,
+				stroke: None,
+			},
+			ChineseCheckersPlayer::Black => Shape::Circle {
+				fill_color: Some(Color32::BLACK),
+				size: 0.7,
+				text: None,
+				stroke: None,
+			},
+			ChineseCheckersPlayer::White => Shape::Circle {
+				fill_color: Some(Color32::WHITE),
+				size: 0.7,
+				text: None,
+				stroke: None,
+			},
 		}
 	}
 }
 #[derive(EguiInspect)]
 pub struct ChineseCheckersSettings {
-	#[inspect(range(min=2.0, max=6.0))]
-	pub nb_players:u8
+	#[inspect(range(min = 2.0, max = 6.0))]
+	pub nb_players: u8,
 }
 impl Default for ChineseCheckersSettings {
 	fn default() -> Self {
 		Self { nb_players: 2 }
 	}
 }
-impl BoardGame for ChineseCheckers {
-
-	type PieceType=ChineseCheckersPlayer;
+impl GUIGame for ChineseCheckers {
 	type Settings = ChineseCheckersSettings;
-
+	type Style = kudchuet::gui::BoardStyle;
 	fn build_from_settings(settings: &Self::Settings) -> Self {
 		Self::new(settings.nb_players)
 	}
-	fn width(&self) -> u8 {
-		13
-	}
-
-	fn height(&self) -> u8 {
-		17
-	}
-
 	fn play(&mut self, mv: Self::M) {
 		let _ = self.play(mv);
 	}
@@ -78,30 +99,77 @@ impl BoardGame for ChineseCheckers {
 						ChineseCheckersPlayer::Yellow => "Yellow",
 						ChineseCheckersPlayer::Black => "Black",
 						ChineseCheckersPlayer::White => "White",
-					}.into()
+					}
+					.into();
 				}
 				"".into()
 			}
 		}
 	}
+	fn get_position_from_string(&self, fen: &str) -> Result<Self, String> {
+		Self::from_fen(fen)
+	}
+	fn position_to_string(&self) -> Option<String> {
+		Some(self.to_fen())
+	}
+	fn default_style() -> BoardStyle {
+		BoardStyle {
+			uniform_color: egui::Color32::from_rgb(200, 190, 125),
+			show_coordinates_mod: CoordMod::None,
+			played_highlights_shape: Shape::Rect {
+				fill_color: Some(Color32::from_rgba_unmultiplied(120, 120, 120, 128)),
+				size: 1.0,
+				text: None,
+				stroke: None,
+			},
+			row_offset_pattern: RowOffsetPattern::EvenRowsShifted,
+			clear_color: Some(egui::Color32::from_rgb(200, 190, 125)),
+			empty_cell_shape: Some(Shape::Circle {
+				//fill_color: Some(Color32::from_rgba_unmultiplied(12, 150, 200, 255)),
+				fill_color: Some(Color32::from_rgba_unmultiplied(200, 200, 200, 255)),
+				size: 0.7,
+				text: None,
+				stroke: Some(StrokeData {
+					stroke: Stroke {
+						width: 3.0,
+						color: Color32::from_rgb(181, 136, 99),
+					},
+					kind: egui::StrokeKind::Inside,
+				}),
+			}),
+			..Default::default()
+		}
+	}
+}
+impl BoardGame for ChineseCheckers {
+	type PieceType = ChineseCheckersPlayer;
+
+	fn width(&self) -> u8 {
+		13
+	}
+
+	fn height(&self) -> u8 {
+		17
+	}
+
 	fn piece_at(&self, x: u8, y: u8) -> Option<Self::PieceType> {
 		if self.black.get(x, y) {
-			return  Some(ChineseCheckersPlayer::Black);
+			return Some(ChineseCheckersPlayer::Black);
 		}
 		if self.white.get(x, y) {
-			return  Some(ChineseCheckersPlayer::White);
+			return Some(ChineseCheckersPlayer::White);
 		}
 		if self.yellow.get(x, y) {
-			return  Some(ChineseCheckersPlayer::Yellow);
+			return Some(ChineseCheckersPlayer::Yellow);
 		}
 		if self.green.get(x, y) {
-			return  Some(ChineseCheckersPlayer::Green);
+			return Some(ChineseCheckersPlayer::Green);
 		}
 		if self.blue.get(x, y) {
-			return  Some(ChineseCheckersPlayer::Blue);
+			return Some(ChineseCheckersPlayer::Blue);
 		}
 		if self.red.get(x, y) {
-			return  Some(ChineseCheckersPlayer::Red);
+			return Some(ChineseCheckersPlayer::Red);
 		}
 		None
 	}
@@ -116,77 +184,70 @@ impl BoardGame for ChineseCheckers {
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		ChineseCheckerBoard::coords_from_index(index as usize)
 	}
-	fn default_style() -> BoardStyle {
-		BoardStyle {
-			uniform_color: egui::Color32::from_rgb(200, 190, 125),
-			show_coordinates_mod: CoordMod::None,
-			played_highlights_shape: Shape::Rect {
-				fill_color: Some(Color32::from_rgba_unmultiplied(120, 120, 120, 128)),
-				size: 1.0,
-				text: None,
-				stroke: None
-			},
-			row_offset_pattern: RowOffsetPattern::EvenRowsShifted,
-			clear_color: Some(egui::Color32::from_rgb(200, 190, 125)),
-			empty_cell_shape: Some(Shape::Circle {
-				//fill_color: Some(Color32::from_rgba_unmultiplied(12, 150, 200, 255)),
-				fill_color: Some(Color32::from_rgba_unmultiplied(200, 200, 200, 255)),
-				size: 0.7,
-				text: None,
-				stroke: Some(StrokeData{
-					stroke: Stroke {
-						width: 3.0,
-						color: Color32::from_rgb(181, 136, 99)
-					},
-					kind: egui::StrokeKind::Inside
-				})
-			}),
-			..Default::default()
-		}
-	}
-	fn get_position_from_string(&self, fen: &str) -> Result<Self, String> {
-		Self::from_fen(fen)
-	}
-	fn position_to_string(&self) -> Option<String> {
-		Some(self.to_fen())
-	}
 }
 
-struct ChineseCheckerSquareDrawer{}
+struct ChineseCheckerSquareDrawer {}
 impl SquareDrawer<ChineseCheckers> for ChineseCheckerSquareDrawer {
-	fn draw(&self, painter: &egui::Painter, style: &BoardStyle, _game: &ChineseCheckers, square: &egui::Rect, x_coord: u8, y_coord: u8)
-	{
+	fn draw(
+		&self,
+		painter: &egui::Painter,
+		style: &BoardStyle,
+		_game: &ChineseCheckers,
+		square: &egui::Rect,
+		x_coord: u8,
+		y_coord: u8,
+	) {
 		painter.rect_filled(*square, 0.0, style.uniform_color);
 		if ChineseCheckerBoard::is_playable(x_coord, y_coord) {
 			let actives = ChineseCheckers::active_players(_game.nb_players);
-			painter.circle_stroke(square.center(), square.width()*0.7/2.0, Stroke::new(3.0, style.dark_color));
-			if actives.contains(&ChineseCheckersPlayer::Red) && ChineseCheckerBoard::initial_blue().get(x_coord, y_coord) {
-				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::RED);
-			}
-			else if actives.contains(&ChineseCheckersPlayer::Blue) && ChineseCheckerBoard::initial_red().get(x_coord, y_coord) {
-				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::BLUE);
-			}
-			else if actives.contains(&ChineseCheckersPlayer::Yellow) && ChineseCheckerBoard::initial_green().get(x_coord, y_coord) {
-				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::YELLOW);
-			}
-			else if actives.contains(&ChineseCheckersPlayer::Green) && ChineseCheckerBoard::initial_yellow().get(x_coord, y_coord) {
-				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::GREEN);
-			}
-			else if actives.contains(&ChineseCheckersPlayer::Black) && ChineseCheckerBoard::initial_white().get(x_coord, y_coord) {
-				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::BLACK);
-			}
-			else if actives.contains(&ChineseCheckersPlayer::White) && ChineseCheckerBoard::initial_black().get(x_coord, y_coord) {
-				painter.circle_filled(square.center(), square.width()*0.3/2.0, Color32::WHITE);
+			painter.circle_stroke(
+				square.center(),
+				square.width() * 0.7 / 2.0,
+				Stroke::new(3.0, style.dark_color),
+			);
+			if actives.contains(&ChineseCheckersPlayer::Red)
+				&& ChineseCheckerBoard::initial_blue().get(x_coord, y_coord)
+			{
+				painter.circle_filled(square.center(), square.width() * 0.3 / 2.0, Color32::RED);
+			} else if actives.contains(&ChineseCheckersPlayer::Blue)
+				&& ChineseCheckerBoard::initial_red().get(x_coord, y_coord)
+			{
+				painter.circle_filled(square.center(), square.width() * 0.3 / 2.0, Color32::BLUE);
+			} else if actives.contains(&ChineseCheckersPlayer::Yellow)
+				&& ChineseCheckerBoard::initial_green().get(x_coord, y_coord)
+			{
+				painter.circle_filled(square.center(), square.width() * 0.3 / 2.0, Color32::YELLOW);
+			} else if actives.contains(&ChineseCheckersPlayer::Green)
+				&& ChineseCheckerBoard::initial_yellow().get(x_coord, y_coord)
+			{
+				painter.circle_filled(square.center(), square.width() * 0.3 / 2.0, Color32::GREEN);
+			} else if actives.contains(&ChineseCheckersPlayer::Black)
+				&& ChineseCheckerBoard::initial_white().get(x_coord, y_coord)
+			{
+				painter.circle_filled(square.center(), square.width() * 0.3 / 2.0, Color32::BLACK);
+			} else if actives.contains(&ChineseCheckersPlayer::White)
+				&& ChineseCheckerBoard::initial_black().get(x_coord, y_coord)
+			{
+				painter.circle_filled(square.center(), square.width() * 0.3 / 2.0, Color32::WHITE);
 			}
 		}
 	}
 
-	fn draw_overlay(&self, _painter: &egui::Painter, _style: &BoardStyle, _game: &ChineseCheckers, _board_rect: &egui::Rect, _cell_size: f32) {
+	fn draw_overlay(
+		&self,
+		_painter: &egui::Painter,
+		_style: &BoardStyle,
+		_game: &ChineseCheckers,
+		_board_rect: &egui::Rect,
+		_cell_size: f32,
+	) {
 	}
 }
 pub fn create_board() -> GenericBoardApp<ChineseCheckers> {
 	let ai_provider = MoveSearcherBuilder::new("Material", ChineseCheckersMaterialEval, 4);
 	let mut board = GenericBoardApp::new(ChineseCheckers::new(6), vec![Box::new(ai_provider)]);
-	board.board_drawer.set_square_drawer(Box::new(ChineseCheckerSquareDrawer{}));
+	board
+		.game_drawer
+		.set_square_drawer(Box::new(ChineseCheckerSquareDrawer {}));
 	board
 }

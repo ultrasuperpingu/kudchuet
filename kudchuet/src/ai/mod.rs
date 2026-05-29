@@ -9,11 +9,11 @@ use std::{collections::HashMap, fmt::Debug, pin::Pin, time::Duration};
 
 use crate::ai::internal_engine::InternalEngine;
 use crate::ai::uci::UciValue;
-use crate::gui::{BoardGame, BoardMove};
+use crate::gui::{BoardGame, BoardMove, GUIGame};
 use crate::{StrategyWithOptions, new_move_searcher_static};
-pub trait AIEngine<G: BoardGame + Sync>: Send
-where
-	G::M: BoardMove<G> + Send,
+pub trait AIEngine<G: GUIGame + Sync>: Send
+//where
+	//G::M: BoardMove<G> + Send,
 {
 	fn get_options(&self) -> Option<&HashMap<String, UciValue>>;
 	fn get_options_mut(&mut self) -> Option<&mut HashMap<String, UciValue>>;
@@ -37,16 +37,16 @@ where
 }
 pub trait AIEngineProvider<G>: Send + Sync
 where
-	G: BoardGame + Sync,
-	G::M: BoardMove<G> + Send,
+	G: GUIGame + Sync,
+	//G::M: BoardMove<G> + Send,
 {
 	fn get_name(&self) -> &str;
 	fn build_engine(&self) -> Box<dyn AIEngine<G>>;
 }
 pub struct AIBuilder<G, AI>
 where
-	G: BoardGame + Sync,
-	G::M: BoardMove<G> + Send,
+	G: GUIGame + Sync,
+	//G::M: BoardMove<G> + Send,
 	AI: StrategyWithOptions<G> + Default,
 {
 	name: String,
@@ -55,8 +55,8 @@ where
 
 impl<G, AI> AIBuilder<G, AI>
 where
-	G: BoardGame + Sync,
-	G::M: BoardMove<G> + Send,
+	G: GUIGame + Sync,
+	//G::M: BoardMove<G> + Send,
 	AI: StrategyWithOptions<G> + Default,
 {
 	pub fn new(name: impl Into<String>) -> Self {
@@ -68,8 +68,9 @@ where
 }
 impl<G, AI> AIEngineProvider<G> for AIBuilder<G, AI>
 where
-	G: BoardGame + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
+	G: GUIGame + Send + Sync + 'static,
+	//G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
+	G::M: Copy + Send + Sync + Eq + 'static,
 	AI: StrategyWithOptions<G> + Default + Send + Sync + 'static,
 {
 	fn get_name(&self) -> &str {
@@ -82,8 +83,8 @@ where
 }
 pub struct MoveSearcherBuilder<G, E>
 where
-	G: BoardGame,
-	G::M: BoardMove<G>,
+	G: GUIGame,
+	//G::M: BoardMove<G>,
 	E: move_search::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static,
 {
 	name: String,
@@ -94,8 +95,8 @@ where
 
 impl<G, T> MoveSearcherBuilder<G, T>
 where
-	G: BoardGame,
-	G::M: BoardMove<G>,
+	G: GUIGame,
+	//G::M: BoardMove<G>,
 	T: move_search::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static,
 {
 	pub fn new(name: impl Into<String>, evaluator: T, initial_depth: u8) -> Self {
@@ -110,8 +111,9 @@ where
 
 impl<G, T> AIEngineProvider<G> for MoveSearcherBuilder<G, T>
 where
-	G: BoardGame + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
+	G: GUIGame + Send + Sync + 'static,
+	//G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
+	G::M: Copy + Send + Sync + Eq + 'static,
 	T: move_search::Evaluator<G = G> + Default + Clone + Send + Sync + Eq + 'static + Debug,
 {
 	fn get_name(&self) -> &str {

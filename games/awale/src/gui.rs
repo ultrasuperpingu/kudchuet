@@ -4,7 +4,7 @@ use crate::game::AwaleMaterialEval;
 use kudchuet::{
 	Player, PlayerType,
 	ai::{AIEngine, AIEngineProvider, MoveSearcherBuilder},
-	gui::{BoardGame, BoardMove, EGUIPieceType},
+	gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, GUIGame},
 };
 
 use super::rules::Awale;
@@ -27,9 +27,16 @@ impl EGUIPieceType for Place {
 		}
 	}
 }
+impl GUIGame for Awale {
+	type Settings = kudchuet::gui::DefaultSettings;
+	type Style = kudchuet::gui::BoardStyle;
+
+	fn default_style() -> Self::Style {
+		BoardStyle::default()
+	}
+}
 impl BoardGame for Awale {
 	type PieceType = Place;
-	type Settings = kudchuet::gui::DefaultSettings;
 
 	fn width(&self) -> u8 {
 		todo!()
@@ -57,8 +64,7 @@ impl Default for AwaleApp {
 		Self {
 			game: Awale::default(),
 			//computer: new_move_searcher(AwaleMaterialEval::new(), 5),
-			computer: MoveSearcherBuilder::new("Material", AwaleMaterialEval, 5)
-				.build_engine(),
+			computer: MoveSearcherBuilder::new("Material", AwaleMaterialEval, 5).build_engine(),
 			selected: None,
 			players: [PlayerType::default(), PlayerType::Computer],
 		}

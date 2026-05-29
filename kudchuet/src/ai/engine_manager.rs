@@ -3,7 +3,7 @@ use crate::Player;
 use crate::ai::external_engine::{ExternalEngine, ExternalEngineEntry};
 use crate::ai::uci::UciValue;
 use crate::ai::{AIEngine, AIEngineProvider};
-use crate::gui::{BoardGame, BoardMove};
+use crate::gui::GUIGame;
 use crate::utils::short_type_name;
 use std::collections::HashMap;
 use std::pin::Pin;
@@ -13,9 +13,9 @@ pub enum ThinkingResult<M> {
 	FinishedThinking(Option<M>),
 }
 type FutureHandler<M> = Pin<Box<dyn Future<Output = Option<M>> + Send>>;
-pub struct EngineManager<G: BoardGame + Sync>
-where
-	G::M: BoardMove<G>,
+pub struct EngineManager<G: GUIGame + Sync>
+//where
+//	G::M: BoardMove<G>,
 {
 	engines: HashMap<String, Box<dyn AIEngine<G>>>,
 	engine_options: Option<HashMap<String, HashMap<String, UciValue>>>,
@@ -26,17 +26,19 @@ where
 	paused: bool,
 	ai_future: Option<FutureHandler<G::M>>,
 }
-impl<G: BoardGame + Clone + Sync + Send + 'static> Default for EngineManager<G>
+impl<G: GUIGame + Clone + Sync + Send + 'static> Default for EngineManager<G>
 where
-	G::M: BoardMove<G> + Send,
+//	G::M: BoardMove<G> + Send,
+	G::M: Send,
 {
 	fn default() -> Self {
 		Self::new()
 	}
 }
-impl<G: BoardGame + Clone + Sync + Send + 'static> EngineManager<G>
+impl<G: GUIGame + Clone + Sync + Send + 'static> EngineManager<G>
 where
-	G::M: BoardMove<G> + Send,
+//	G::M: BoardMove<G> + Send,
+	G::M: Send,
 {
 	pub fn new() -> Self {
 		Self {

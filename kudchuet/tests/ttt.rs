@@ -4,7 +4,11 @@ extern crate kudchuet;
 mod ttt;
 
 use kudchuet::{
-	GameOutcome, Player, ai::move_search::{ExpectiMinimax, Game, PerfectSolver, Random, UniformRolloutPolicy, gametree::ProofOutcome, mcts::MCTS, util::battle_royale}
+	Player,
+	ai::move_search::{
+		ExpectiMinimax, Game, PerfectSolver, Random, UniformRolloutPolicy, gametree::ProofOutcome,
+		mcts::MCTS, util::battle_royale,
+	},
 };
 
 use crate::ttt::TTTGame;
@@ -51,13 +55,32 @@ fn test_ttt_recursive() {
 	tree.print(2);
 	TTTGame::apply(&mut game, ttt::Place { i: 0 });
 	TTTGame::apply(&mut game, ttt::Place { i: 1 });
-	let node = tree
-		.get_state_node_id(TTTGame::get_hash(&game))
-		.unwrap();
+	let node = tree.get_state_node_id(TTTGame::get_hash(&game)).unwrap();
 	tree.set_root_id(node);
 	tree.print(2);
-	assert_eq!(tree.get_root().outcome(), ProofOutcome::Player(Player::PLAYER1, 5));
+	assert_eq!(
+		tree.get_root().outcome(),
+		ProofOutcome::Player(Player::PLAYER1, 5)
+	);
 	//assert_eq!(tree.get_root().depth_to_end(), 5);
+}
+// Test TTT Perfect Solver
+#[test]
+fn test_ttt_dfs_solver() {
+	let mut game = ttt::Board::default();
+	let mut solver = kudchuet::ai::move_search::test_dfs::PerfectSolver::default();
+	assert_eq!(
+		solver.solve::<ttt::TTTGame>(&mut game, 100),
+		ProofOutcome::Draw(9)
+	);
+
+	TTTGame::apply(&mut game, ttt::Place { i: 0 });
+	TTTGame::apply(&mut game, ttt::Place { i: 1 });
+	println!("{:?}", solver.solve::<ttt::TTTGame>(&mut game, 100));
+	assert_eq!(
+		solver.solve::<ttt::TTTGame>(&mut game, 100),
+		ProofOutcome::Player(Player::PLAYER1, 5)
+	);
 }
 /*
 // Test TTT Perfect Solver

@@ -259,7 +259,7 @@ impl core::fmt::Display for Hex {
 }
 #[cfg(test)]
 mod tests {
-	use kudchuet::{gui::BoardGame, utils::Rng, GameOutcome};
+	use kudchuet::{gui::GUIGame, utils::Rng, GameOutcome};
 
 	use crate::rules::Hex;
 

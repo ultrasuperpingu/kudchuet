@@ -417,7 +417,7 @@ impl ChineseCheckers {
 mod tests {
 	use super::{ChineseCheckers, ChineseCheckersPlayer, Move};
 	use crate::bitboard::ChineseCheckerBoard;
-	use kudchuet::{GameOutcome, gui::BoardGame};
+	use kudchuet::{GameOutcome, gui::GUIGame};
 	#[test]
 	fn test_display() {
 		let board = ChineseCheckers::new(2);

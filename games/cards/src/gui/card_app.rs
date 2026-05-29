@@ -1,0 +1,440 @@
+use eframe::egui::{self, Align, Layout, Ui};
+use kudchuet::{
+	GameOutcome, Player, ai::{
+		AIEngineProvider, engine_manager::{EngineManager, ThinkingResult}, move_search::Game
+	}, gui::{MultipleMoveSelectionResult, game_state_manager::GameStateManager, input_handler::{BoardInputHandler, InputHandler, MoveResult}, options_panel::ImportExportPanel}, utils::short_type_name
+};
+
+use crate::{gui::{CardGame, CardInputHandler, CardMove, DefaultCardInputHandler, card_view::{CardGameDrawer, DefaultCardGameDrawer}}, playing_cards32::PlayingCard32};
+
+#[derive(PartialEq, Copy, Clone)]
+pub(super) enum RightTab {
+	GameSettings,
+	Settings,
+	Theme,
+	ImportExport,
+	#[cfg(not(target_arch = "wasm32"))]
+	ExternalEngine,
+}
+const LABEL_RATIO: f32 = 0.4;
+pub struct CardApp<G: CardGame + Sync + Send>
+where
+	<G as Game>::M: CardMove<G>,
+{
+	pub name: String,
+	pub(super) ai_engine_manager: EngineManager<G>,
+
+	pub game_drawer: Box<dyn CardGameDrawer<G, Click = PlayingCard32>>,
+
+	//pub input_handler: Box<dyn InputHandler<G>>,
+
+	pub(super) game_state_manager: GameStateManager<G>,
+
+	pub depth: u8,
+	pub max_depth: u8,
+	pub max_time: f32,
+
+	pub(super) open_right_tab: Option<RightTab>,
+	inited: bool,
+}
+
+impl<G: CardGame + Sync + Send + 'static> eframe::App for CardApp<G>
+where
+	G::M: CardMove<G> + Send,
+{
+	fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+		if !self.inited {
+			self.ai_engine_manager.load_engines_parameters(ctx);
+			//self.game_drawer.load_style(ctx);
+			egui_extras::install_image_loaders(ctx);
+			self.inited = true;
+		}
+	}
+	fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+		//self.draw_options_panels(ui);
+		egui::CentralPanel::default().show_inside(ui, |ui| {
+			let result = self.draw_header_panel(ui);
+			ui.separator();
+			let computer_playing = self.is_current_player_computer();
+			let is_random_move = self.is_current_player_random();
+			if let Some(click) = self.game_drawer.draw(
+				ui,
+				&self.game_to_draw().clone(),
+				!computer_playing || is_random_move,
+			) {
+				/*match self.input_handler.process(
+					click,
+					&self.game_state_manager,
+					&mut self.game_drawer,
+				) {
+					MoveResult::Created { mv, .. } => {
+						self.game_state_manager.apply_move(mv);
+					}
+					_ => {
+						if is_random_move {
+							self.game_state_manager.play_random();
+						}
+					}
+				}*/
+			}
+			if result == GameOutcome::OnGoing {
+				if self.is_current_player_computer()
+					&& !self.is_current_player_random()
+					&& !self.ai_engine_manager.is_paused()
+				{
+					match self.ai_engine_manager.poll_ai_result() {
+						ThinkingResult::NotThinking => {
+							if let Err(err) = self
+								.ai_engine_manager
+								.choose_move_async(&self.game().clone())
+							{
+								eprintln!("Error while trying to play: {}", err);
+							}
+							ui.request_repaint();
+						}
+						ThinkingResult::FinishedThinking(m) => {
+							if let Some(mv) = m {
+								self.apply_move(mv);
+								ui.request_repaint();
+							}
+						}
+						ThinkingResult::Thinking => {
+							//println!("Still thinking");
+						}
+					}
+				}
+			}
+			/*if let Some(candidates) = self.input_handler.pending_moves().clone() {
+				match self.ask_select_between_multiple_moves(ui.ctx(), candidates) {
+					MultipleMoveSelectionResult::Pending => {}
+					MultipleMoveSelectionResult::Cancelled => {
+						//self.input_handler
+						//	.reset(&mut self.game_drawer, &self.game_state_manager);
+					}
+					MultipleMoveSelectionResult::Selected(mv) => {
+						self.apply_move(mv);
+						//self.input_handler
+						//	.reset(&mut self.game_drawer, &self.game_state_manager);
+					}
+				}
+			}*/
+		});
+	}
+}
+impl<G: CardGame + Clone + Sync + Send + 'static> CardApp<G>
+where
+	G::M: CardMove<G> + Send,
+{
+	//pub fn new(game: G, ai: Box<dyn AIEngine<G>>) -> Self {
+	pub fn new(game: G, internals_ai: Vec<Box<dyn AIEngineProvider<G>>>) -> Self {
+		Self {
+			name: short_type_name::<G>().to_owned(),
+			ai_engine_manager: EngineManager::new_with_internals(internals_ai),
+			//players: [PlayerType::Human, PlayerType::Computer],
+			depth: 5,
+			max_depth: 15,
+			max_time: 0.0,
+
+			//input_handler: Box::new(DefaultCardInputHandler::default()),
+			game_drawer: Box::new(DefaultCardGameDrawer::default()),
+
+			game_state_manager: GameStateManager::new(game),
+
+			open_right_tab: None,
+			inited: false,
+		}
+	}
+	pub fn game(&self) -> &G {
+		self.game_state_manager.game()
+	}
+	pub fn game_to_draw(&self) -> &G {
+		//if let Some(g) = self.input_handler.intermediate_state() {
+		//	g
+		//} else {
+			self.game_state_manager.game()
+		//}
+	}
+	pub fn legal_moves(&self) -> &[G::M] {
+		self.game_state_manager.legal_moves()
+	}
+	pub(super) fn undo(&mut self) {
+		if self.game_state_manager.undo() {
+			self.game_drawer.full_reset();
+			//self.input_handler
+			//	.reset(&mut self.game_drawer, &self.game_state_manager);
+		}
+	}
+	pub(super) fn redo(&mut self) {
+		if self.game_state_manager.redo() {
+			self.game_drawer.full_reset();
+			//self.input_handler
+			//	.reset(&mut self.game_drawer, &self.game_state_manager);
+		}
+	}
+	pub(super) fn is_current_player_computer(&self) -> bool {
+		self.ai_engine_manager
+			.get_player_engine(self.game().current_player())
+			.is_some()
+	}
+	pub(super) fn is_current_player_random(&self) -> bool {
+		G::is_random_move(self.game())
+	}
+
+	pub(super) fn apply_move(&mut self, mv: G::M) {
+		println!("playing {mv:?}");
+		self.game_state_manager.apply_move(mv);
+		//self.game_drawer
+		//	.set_played_highlights(mv.played_highlights(self.game()));
+		//self.game_drawer.clear_selection();
+		//self.input_handler
+		//	.reset(&mut self.game_drawer, &self.game_state_manager)
+	}
+
+	fn ask_select_between_multiple_moves(
+		&self,
+		ctx: &egui::Context,
+		candidates: &Vec<G::M>,
+	) -> MultipleMoveSelectionResult<G::M> {
+		let screen_rect = ctx.content_rect();
+
+		// Modal dialog with fade mask
+		egui::Area::new(egui::Id::new("modal_layer"))
+			.fixed_pos(screen_rect.min)
+			.order(egui::Order::Foreground)
+			.show(ctx, |ui| {
+				//catch clicks on boards
+				ui.allocate_response(screen_rect.size(), egui::Sense::click_and_drag());
+				// fade out board
+				ui.painter()
+					.rect_filled(screen_rect, 0.0, egui::Color32::from_black_alpha(150));
+			});
+
+		// Selection area
+		egui::Area::new(egui::Id::new("select_move_area"))
+			.order(egui::Order::Tooltip)
+			.anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+			.show(ctx, |ui| {
+				egui::Frame::window(ui.style())
+					.show(ui, |ui| {
+						ui.set_width(250.0);
+						ui.vertical_centered(|ui| {
+							ui.heading("Select Move");
+							ui.add_space(8.0);
+							ui.label("Multiple moves possible:");
+							ui.add_space(12.0);
+
+							for mv in candidates {
+								let label = self
+									.game()
+									.move_to_string(mv)
+									.unwrap_or_else(|| format!("{:?}", mv));
+
+								if ui.button(label).clicked() {
+									return MultipleMoveSelectionResult::Selected(mv.clone());
+								}
+							}
+
+							ui.add_space(12.0);
+							ui.separator();
+							if ui.button("Cancel").clicked() {
+								return MultipleMoveSelectionResult::Cancelled;
+							}
+							MultipleMoveSelectionResult::Pending
+						})
+						.inner
+					})
+					.inner
+			})
+			.inner
+	}
+
+	fn draw_header_panel(&mut self, ui: &mut Ui) -> GameOutcome {
+		let result = self.game().result();
+		let engines = self.ai_engine_manager.get_all_engine_names();
+		ui.horizontal(|ui| {
+			ui.vertical(|ui| {
+				self.draw_players_list(&engines, ui);
+			});
+			ui.separator();
+			if self.ai_engine_manager.is_thinking() {
+				ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+					ui.horizontal(|ui| {
+						if ui.button("Stop thinking").clicked() {
+							self.ai_engine_manager.stop_thinking();
+						}
+					});
+				});
+			}
+			/*ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+				ui.horizontal(|ui| {
+					ui.label("Depth:");
+					if ui.add(egui::Slider::new(&mut self.depth, 1..=self.max_depth)).changed() {
+						if self.max_time == 0.0 {
+							self.ai.set_max_depth(self.depth);
+						} else {
+							self.ai.set_depth_or_timeout(self.depth, Duration::from_secs_f32(self.max_time));
+						}
+					}
+				});
+			});
+			ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+				ui.horizontal(|ui| {
+					ui.label("Max Time:");
+					if ui.add(egui::Slider::new(&mut self.max_time, 0.0..=120.0)).changed() {
+						if self.max_time == 0.0 {
+							self.ai.set_max_depth(self.depth);
+						} else {
+							self.ai.set_depth_or_timeout(self.depth, Duration::from_secs_f32(self.max_time));
+						}
+					}
+				});
+			});
+			ui.separator();
+			if ui.button("Clear TT").clicked() {
+				let opts = self.ai.get_options().clone();
+				self.ai.reset_with_options(opts);
+			}*/
+		});
+
+		ui.separator();
+		ui.horizontal(|ui| {
+			if ui.button("New Game").clicked() {
+				self.game_state_manager.new_game();
+				self.game_drawer.full_reset();
+			}
+
+			ui.add_enabled(self.game_state_manager.can_undo(), |ui: &mut Ui| {
+				if ui.button("↩").clicked() {
+					self.undo();
+					self.ai_engine_manager.set_paused(true);
+				}
+				ui.response()
+			});
+
+			ui.add_enabled(self.game_state_manager.can_redo(), |ui: &mut Ui| {
+				if ui.button("↪").clicked() {
+					self.redo();
+				}
+				ui.response()
+			});
+			ui.add_enabled(self.ai_engine_manager.is_paused(), |ui: &mut Ui| {
+				if ui.button("▶").clicked() {
+					self.ai_engine_manager.set_paused(false);
+				}
+				ui.response()
+			});
+			//ui.separator();
+			//if ui.button("↕").on_hover_text("Invert view").clicked() {
+			//	self.game_drawer.get_style_mut().mirrored =
+			//		!self.game_drawer.get_style().mirrored;
+			//}
+			ui.separator();
+
+			// end turn btn
+			/*let exact_matches: Vec<G::M> = self
+				.input_handler
+				.matching_moves()
+				.iter()
+				.filter(|m: G::M| {
+					m.click_sequence(self.game()) == self.input_handler.current_clicks().clone()
+				})
+				.copied()
+				.collect();
+			if !exact_matches.is_empty() && ui.button("End Turn").clicked() {
+				if exact_matches.len() > 1 {
+					self.input_handler.set_pending_moves(exact_matches);
+				} else if exact_matches.len() == 1 {
+					self.apply_move(exact_matches[0].clone());
+				}
+			}*/
+
+			match result {
+				GameOutcome::Player(p) => {
+					ui.heading(format!("Winner: {}", self.game().get_name(p)));
+				}
+				GameOutcome::Draw => {
+					ui.heading("Draw Game");
+				}
+				_ => {}
+			}
+		});
+		result
+	}
+
+	fn draw_players_list(&mut self, engines: &[String], ui: &mut Ui) {
+		for i in 0..self.game().nb_players() {
+			self.draw_player(Player(i), engines, ui);
+		}
+	}
+	fn draw_player(&mut self, p: Player, engines: &[String], ui: &mut Ui) {
+		let p_name = self.game().get_name(p);
+		ui.horizontal(|ui| {
+			ui.label(p_name.clone() + ":");
+
+			let current_engine = self.ai_engine_manager.get_player_engine(p).cloned();
+			let mut is_computer = current_engine.is_some();
+
+			if ui.selectable_label(!is_computer, "Human").clicked() {
+				self.ai_engine_manager.set_player_engine(p, None);
+				is_computer = false;
+			}
+
+			if ui.selectable_label(is_computer, "Computer").clicked() {
+				if !is_computer {
+					self.ai_engine_manager
+						.set_player_engine(p, engines.first().cloned());
+				}
+			}
+
+			if is_computer {
+				ui.add_space(8.0);
+
+				let current_engine = self.ai_engine_manager.get_player_engine(p).cloned();
+				let mut selected_engine = current_engine
+					.clone()
+					.unwrap_or_else(|| engines.first().cloned().unwrap_or_default());
+
+				egui::ComboBox::from_id_salt(format!("{} Engine", p_name))
+					.selected_text(selected_engine.clone())
+					.show_ui(ui, |ui| {
+						for eng in engines.iter() {
+							ui.selectable_value(&mut selected_engine, eng.clone(), eng);
+						}
+					});
+
+				if Some(&selected_engine) != current_engine.as_ref() {
+					self.ai_engine_manager
+						.set_player_engine(p, Some(selected_engine));
+				}
+			}
+		});
+	}
+}
+
+impl<G: CardGame + Sync + Send+'static> CardApp<G>
+where
+	<G as Game>::M: CardMove<G>+Send+'static,
+{
+	fn run_ai_if_needed(&mut self, ui: &egui::Ui) {
+		if self.is_current_player_computer()
+			&& !self.ai_engine_manager.is_paused()
+			&& !self.game().result().is_ended()
+		{
+			match self.ai_engine_manager.poll_ai_result() {
+				ThinkingResult::NotThinking => {
+					let _ = self
+						.ai_engine_manager
+						.choose_move_async(&self.game().clone());
+					ui.ctx().request_repaint();
+				}
+
+				ThinkingResult::FinishedThinking(Some(mv)) => {
+					self.game_state_manager.apply_move(mv);
+					ui.ctx().request_repaint();
+				}
+
+				_ => {}
+			}
+		}
+	}
+}

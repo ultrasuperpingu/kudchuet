@@ -24,6 +24,8 @@ use crate::ai::move_search::ybw::ParallelSearch;
 use crate::ai::uci::UciValue;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::uci::UciValue;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::gui::GUIGame;
 use crate::gui::{BoardGame, BoardMove};
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
@@ -70,7 +72,6 @@ pub enum GameOutcome {
 	Player(Player),
 	Draw,
 	OnGoing,
-	InCycle,
 }
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Default)]
 pub struct Player(pub u8);
@@ -148,7 +149,6 @@ impl TryFrom<GameOutcome> for Player {
 			GameOutcome::Player(p) => Ok(p),
 			GameOutcome::Draw => Err("Draw can not be converted to Player".into()),
 			GameOutcome::OnGoing => Err("OnGoing can not be converted to Player".into()),
-			GameOutcome::InCycle => Err("InCycle can not be converted to Player".into()),
 		}
 	}
 }
@@ -164,7 +164,7 @@ where
 }
 
 #[cfg(target_arch = "wasm32")]
-pub type MoveSearcher<T> = ai::minimax::IterativeSearch<T>;
+pub type MoveSearcher<T> = ai::move_search::IterativeSearch<T>;
 #[cfg(not(target_arch = "wasm32"))]
 pub type MoveSearcher<T> = ParallelSearch<T>;
 
@@ -287,8 +287,9 @@ where
 #[cfg(not(target_arch = "wasm32"))]
 pub fn new_move_searcher_static<G, T>(evaluator: T, initial_depth: u8) -> MoveSearcher<T>
 where
-	G: BoardGame + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
+	G: GUIGame + Send + Sync + 'static,
+	//G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
+	G::M: Copy + Send + Sync + Eq + 'static,
 	T: Evaluator<G = G> + Default + Clone + Send + Sync + 'static,
 {
 	let opts = IterativeOptions::new().with_table_byte_size(128 * 1024 * 1024);
