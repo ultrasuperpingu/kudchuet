@@ -110,12 +110,12 @@ impl Default for OrderedCardSet32 {
 	}
 }
 impl IntoIterator for OrderedCardSet32 {
-	type Item = PlayingCard32;
-	type IntoIter = std::slice::Iter<'_, PlayingCard32>;
+    type Item = PlayingCard32;
+    type IntoIter = std::vec::IntoIter<PlayingCard32>;
 
-	fn into_iter(self) -> Self::IntoIter {
-		self.iter()
-	}
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
 }
 impl FromIterator<PlayingCard32> for OrderedCardSet32 {
 	fn from_iter<T: IntoIterator<Item = PlayingCard32>>(iter: T) -> Self {

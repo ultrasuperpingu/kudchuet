@@ -9,7 +9,14 @@ use kudchuet::gui::{BoardStyle, CoordMod, GUIGame};
 
 use crate::manille::{Manille, Move};
 
-impl CardMove<Manille> for Move {}
+impl CardMove<Manille> for Move {
+	fn card(&self) -> Option<PlayingCard32> {
+		if let Move::Play(card) = self {
+			return Some(*card);
+		}
+		None
+	}
+}
 impl GUIGame for Manille {
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
@@ -35,6 +42,14 @@ impl CardGame for Manille {
 		p: kudchuet::Player,
 	) -> crate::unordered_card_sets32::UnorderedCardSet32 {
 		self.players[p.0 as usize]
+	}
+
+	fn revealed_cards(&self) -> crate::unordered_card_sets32::UnorderedCardSet32 {
+		self.trump_card.into()
+	}
+
+	fn draw_revealed_cards(&self) -> bool {
+		self.scores[0] == 0 && self.scores[1] == 0 && self.ply.iter().all(|m| m.is_none())
 	}
 }
 pub fn create_board() -> CardApp<Manille> {

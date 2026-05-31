@@ -10,6 +10,7 @@ pub struct Manille {
 	pub ply: [Option<PlayingCard32>; 4],
 	pub taking_team: Option<u8>,
 	pub on_turn: u8,
+	pub last_ply_leader: u8,
 }
 impl Default for Manille {
 	fn default() -> Self {
@@ -27,6 +28,7 @@ impl Default for Manille {
 			ply: Default::default(),
 			taking_team: None,
 			on_turn: 0,
+			last_ply_leader: 0,
 		}
 	}
 }
@@ -96,11 +98,18 @@ impl Manille {
 			PlyStatus::ColorAdverseLeads(color, best_rank) => {
 				let cards: UnorderedCardSet32 = self.get_current_player_cards();
 				let mut valid = cards.of_color(color);
+				// a better card if any
 				valid = valid.iter().filter(|c| c.rank() > best_rank).collect();
 				if valid.is_empty() {
+					// if no better card, you still have to provide the color
+					valid = cards.of_color(color);
+				}
+				if valid.is_empty() {
+					// if no card of the color, you have to cut
 					valid = cards.of_color(self.trump_card.color());
 				}
 				if valid.is_empty() {
+					// otherwise, can play any card
 					valid = cards;
 				}
 				valid
@@ -131,37 +140,47 @@ impl Manille {
 		}
 	}
 	fn get_ply_status(&self) -> PlyStatus {
+		if self.last_ply_leader == self.on_turn {
+			if let Some(_c) = self.ply[self.on_turn as usize] {
+				// ply fini!!
+				return PlyStatus::FirstToPlay
+			} else {
+				return PlyStatus::FirstToPlay
+			}
+		}
 		let mut status = PlyStatus::FirstToPlay;
-		let mut color = None;
+		let mut ply_color = None;
 		let mut color_is_trump = false;
 		let mut current_leader = 0;
 		let mut leader_rank = 0;
 		let mut leader_cutted = false;
 
-		for (i, c) in self.ply.iter().enumerate() {
+		for i in 0..4 {
+			let player_index = (self.last_ply_leader + i) %4;
+			let c = self.ply[player_index as usize];
 			if let Some(c) = c {
 				if i == 0 {
-					color = Some(c.color());
+					ply_color = Some(c.color());
 					color_is_trump = c.color() == self.trump_card.color();
-					current_leader = self.get_player_from_ply_index(i);
+					current_leader = i;
 					leader_rank = c.rank();
 				} else {
 					if !color_is_trump && c.color() == self.trump_card.color() {
 						if leader_cutted {
 							if leader_rank < c.rank() {
 								leader_rank = c.rank();
-								current_leader = self.get_player_from_ply_index(i);
+								current_leader = player_index;
 							}
 						} else {
 							leader_cutted = true;
 							leader_rank = c.rank();
-							current_leader = self.get_player_from_ply_index(i);
+							current_leader = player_index;
 						}
 					} else {
 						if !leader_cutted {
-							if c.color() == color.unwrap() && leader_rank < c.rank() {
+							if c.color() == ply_color.unwrap() && leader_rank < c.rank() {
 								leader_rank = c.rank();
-								current_leader = self.get_player_from_ply_index(i);
+								current_leader = player_index;
 							}
 						}
 					}
@@ -170,7 +189,7 @@ impl Manille {
 				break;
 			}
 		}
-		if let Some(color) = color {
+		if let Some(color) = ply_color {
 			let same_team = Manille::same_team(current_leader, self.on_turn);
 			if leader_cutted {
 				if same_team {
@@ -187,11 +206,6 @@ impl Manille {
 			}
 		}
 		status
-	}
-	fn get_player_from_ply_index(&self, idx: usize) -> u8 {
-		let ply_len = self.ply.iter().take_while(|c| c.is_some()).count() as u8;
-
-		(idx as u8 + self.on_turn + 4 - ply_len) % 4
 	}
 	pub fn get_current_player_cards(&self) -> UnorderedCardSet32 {
 		self.players[self.on_turn as usize]
@@ -211,11 +225,13 @@ impl Manille {
 			}
 			Move::Play(card) => {
 				self.get_current_player_cards_mut().remove(card);
-				if self.add_to_ply(card) {
+				self.ply[self.on_turn as usize] = Some(card);
+				if self.ply.iter().all(|m| m.is_some()) {
 					let (winner, score) = self.get_ply_winner_and_value();
 					self.ply = Default::default();
 					self.scores[winner as usize % 2] += score;
 					self.on_turn = winner;
+					self.last_ply_leader = winner;
 				} else {
 					self.on_turn += 1;
 					self.on_turn = self.on_turn % 4;
@@ -223,17 +239,7 @@ impl Manille {
 			}
 		}
 	}
-	fn add_to_ply(&mut self, c: PlayingCard32) -> bool {
-		let mut i = 0;
-		while i < self.ply.len() {
-			if self.ply[i].is_none() {
-				self.ply[i] = Some(c);
-				return i == 3;
-			}
-			i += 1;
-		}
-		unreachable!()
-	}
+	
 	fn get_ply_winner_and_value(&self) -> (u8, u8) {
 		let mut color = None;
 		let mut color_is_trump = false;
@@ -242,30 +248,32 @@ impl Manille {
 		let mut leader_cutted = false;
 		let mut value = 0;
 
-		for (i, c) in self.ply.iter().map(|c| c.unwrap()).enumerate() {
+		for i in 0..4 {
+			let player_index = (self.last_ply_leader + i) %4;
+			let c = self.ply[player_index as usize].unwrap();
 			value += c.value();
 			if i == 0 {
 				color = Some(c.color());
 				color_is_trump = c.color() == self.trump_card.color();
-				current_leader = self.get_player_from_ply_index(i);
+				current_leader = player_index;
 				leader_rank = c.rank();
 			} else {
 				if !color_is_trump && c.color() == self.trump_card.color() {
 					if leader_cutted {
 						if leader_rank < c.rank() {
 							leader_rank = c.rank();
-							current_leader = self.get_player_from_ply_index(i);
+							current_leader = player_index;
 						}
 					} else {
 						leader_cutted = true;
 						leader_rank = c.rank();
-						current_leader = self.get_player_from_ply_index(i);
+						current_leader = player_index;
 					}
 				} else {
 					if !leader_cutted {
 						if c.color() == color.unwrap() && leader_rank < c.rank() {
 							leader_rank = c.rank();
-							current_leader = self.get_player_from_ply_index(i);
+							current_leader = player_index;
 						}
 					}
 				}

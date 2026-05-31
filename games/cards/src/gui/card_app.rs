@@ -1,11 +1,27 @@
 use eframe::egui::{self, Align, Layout, Ui};
 use kudchuet::{
-	GameOutcome, Player, ai::{
-		AIEngineProvider, engine_manager::{EngineManager, ThinkingResult}, move_search::Game
-	}, gui::{MultipleMoveSelectionResult, game_state_manager::GameStateManager, input_handler::{BoardInputHandler, InputHandler, MoveResult}, options_panel::ImportExportPanel}, utils::short_type_name
+	GameOutcome, Player,
+	ai::{
+		AIEngineProvider,
+		engine_manager::{EngineManager, ThinkingResult},
+		move_search::Game,
+	},
+	gui::{
+		MultipleMoveSelectionResult,
+		game_state_manager::GameStateManager,
+		input_handler::{BoardInputHandler, InputHandler, MoveResult},
+		options_panel::ImportExportPanel,
+	},
+	utils::short_type_name,
 };
 
-use crate::{gui::{CardGame, CardInputHandler, CardMove, DefaultCardInputHandler, card_view::{CardGameDrawer, DefaultCardGameDrawer}}, playing_cards32::PlayingCard32};
+use crate::{
+	gui::{
+		CardGame, CardInputHandler, CardMove,
+		card_view::{CardGameDrawer, DefaultCardGameDrawer},
+	},
+	playing_cards32::PlayingCard32,
+};
 
 #[derive(PartialEq, Copy, Clone)]
 pub(super) enum RightTab {
@@ -26,8 +42,7 @@ where
 
 	pub game_drawer: Box<dyn CardGameDrawer<G, Click = PlayingCard32>>,
 
-	//pub input_handler: Box<dyn InputHandler<G>>,
-
+	pub input_handler: CardInputHandler<G>,
 	pub(super) game_state_manager: GameStateManager<G>,
 
 	pub depth: u8,
@@ -62,10 +77,25 @@ where
 				&self.game_to_draw().clone(),
 				!computer_playing || is_random_move,
 			) {
-				/*match self.input_handler.process(
+				println!("{}", click);
+				let candidates: Vec<_> = self
+					.game_state_manager
+					.legal_moves()
+					.iter()
+					.filter(|m| m.card() == Some(click))
+					.cloned()
+					.collect();
+				match candidates.len() {
+					0 => {}
+					1 => self.apply_move(candidates[0]),
+					_ => {
+						// popup de sélection
+					}
+				}
+				match self.input_handler.process_click(
 					click,
-					&self.game_state_manager,
-					&mut self.game_drawer,
+					&self.game_state_manager.game(),
+					//&mut self.game_drawer,
 				) {
 					MoveResult::Created { mv, .. } => {
 						self.game_state_manager.apply_move(mv);
@@ -75,7 +105,7 @@ where
 							self.game_state_manager.play_random();
 						}
 					}
-				}*/
+				}
 			}
 			if result == GameOutcome::OnGoing {
 				if self.is_current_player_computer()
@@ -104,8 +134,11 @@ where
 					}
 				}
 			}
-			/*if let Some(candidates) = self.input_handler.pending_moves().clone() {
-				match self.ask_select_between_multiple_moves(ui.ctx(), candidates) {
+			let moves = self
+					.game_state_manager
+					.legal_moves();
+			if moves.iter().all(|m| m.card().is_none()) {
+				match self.ask_select_between_multiple_moves(ui.ctx(), &moves.iter().cloned().collect()) {
 					MultipleMoveSelectionResult::Pending => {}
 					MultipleMoveSelectionResult::Cancelled => {
 						//self.input_handler
@@ -117,7 +150,7 @@ where
 						//	.reset(&mut self.game_drawer, &self.game_state_manager);
 					}
 				}
-			}*/
+			}
 		});
 	}
 }
@@ -135,7 +168,7 @@ where
 			max_depth: 15,
 			max_time: 0.0,
 
-			//input_handler: Box::new(DefaultCardInputHandler::default()),
+			input_handler: CardInputHandler::default(),
 			game_drawer: Box::new(DefaultCardGameDrawer::default()),
 
 			game_state_manager: GameStateManager::new(game),
@@ -151,7 +184,7 @@ where
 		//if let Some(g) = self.input_handler.intermediate_state() {
 		//	g
 		//} else {
-			self.game_state_manager.game()
+		self.game_state_manager.game()
 		//}
 	}
 	pub fn legal_moves(&self) -> &[G::M] {
@@ -411,9 +444,9 @@ where
 	}
 }
 
-impl<G: CardGame + Sync + Send+'static> CardApp<G>
+impl<G: CardGame + Sync + Send + 'static> CardApp<G>
 where
-	<G as Game>::M: CardMove<G>+Send+'static,
+	<G as Game>::M: CardMove<G> + Send + 'static,
 {
 	fn run_ai_if_needed(&mut self, ui: &egui::Ui) {
 		if self.is_current_player_computer()
@@ -438,3 +471,5 @@ where
 		}
 	}
 }
+
+

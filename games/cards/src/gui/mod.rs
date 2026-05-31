@@ -1,5 +1,10 @@
 use kudchuet::{
-	Player, ai::move_search::Game, gui::{GUIGame, input_handler::InputHandler}
+	Player,
+	ai::move_search::Game,
+	gui::{
+		GUIGame,
+		input_handler::{InputHandler, MoveResult},
+	},
 };
 use std::fmt::Debug;
 
@@ -14,41 +19,69 @@ where
 {
 	fn player_ply_card(&self, p: Player) -> Option<PlayingCard32>;
 	fn player_hand_cards(&self, p: Player) -> UnorderedCardSet32;
+	fn revealed_cards(&self) -> UnorderedCardSet32;
+	fn draw_revealed_cards(&self) -> bool;
 }
 
 pub trait CardMove<G: Game>: Debug + Sized + Copy {
+	fn card(&self) -> Option<PlayingCard32>;
 }
 
-trait CardInputHandler<G: CardGame>: InputHandler<G>
+#[derive(Clone)]
+pub struct CardInputHandler<G: CardGame>
+where
+	G::M: CardMove<G>,
+{
+	pending_moves: Option<Vec<G::M>>,
+	matching_moves: Vec<G::M>,
+}
+impl<G: CardGame> Default for CardInputHandler<G>
 where
 	<G as Game>::M: CardMove<G>,
 {
+	fn default() -> Self {
+		Self {
+			pending_moves: Default::default(),
+			matching_moves: Default::default(),
+		}
+	}
 }
-#[derive(Default, Clone, Debug)]
-pub struct DefaultCardInputHandler<G: CardGame>
+impl<G: CardGame> CardInputHandler<G>
 where
-	<G as Game>::M: CardMove<G>,
+	G::M: CardMove<G>,
 {
-	pending_moves: Vec<G::M>,
+	pub fn new() -> Self {
+		Self {
+			pending_moves: None,
+			matching_moves: vec![],
+		}
+	}
+
+	pub fn process_click(&mut self, card: PlayingCard32, game: &G) -> MoveResult<G> {
+		let legals = game.legal_moves();
+
+		let candidates: Vec<G::M> = legals
+			.into_iter()
+			.filter(|m| m.card() == Some(card))
+			.collect();
+
+		match candidates.len() {
+			0 => MoveResult::Invalid,
+
+			1 => MoveResult::Created {
+				mv: candidates[0],
+				highlights_played: vec![],
+			},
+
+			_ => {
+				self.pending_moves = Some(candidates.clone());
+				MoveResult::ChoiceRequired { candidates }
+			}
+		}
+	}
+
+	pub fn reset(&mut self) {
+		self.pending_moves = None;
+		self.matching_moves.clear();
+	}
 }
-impl<G: CardGame> InputHandler<G> for DefaultCardInputHandler<G>
-where
-	<G as Game>::M: CardMove<G>,
-{
-	fn pending_moves(&self) -> Option<&Vec<<G>::M>> {
-		Some(&self.pending_moves)
-	}
-
-	fn set_pending_moves(&mut self, moves: Vec<<G>::M>) {
-		self.pending_moves = moves;
-	}
-
-	fn clear_pending_moves(&mut self) {
-		self.pending_moves.clear();
-	}
-
-	fn matching_moves(&self) -> &Vec<<G>::M> {
-		todo!()
-	}
-}
-impl<G: CardGame> CardInputHandler<G> for DefaultCardInputHandler<G> where <G as Game>::M: CardMove<G> {}
