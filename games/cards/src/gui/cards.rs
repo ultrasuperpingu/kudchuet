@@ -1,9 +1,9 @@
 use egui::include_image;
 
-use crate::playing_cards32::PlayingCard32;
+use crate::{playing_cards32::PlayingCard32, playing_cards54::PlayingCard54};
 
 impl PlayingCard32 {
-	pub fn card_texture(&self) -> egui::ImageSource {
+	pub fn card_texture(&self) -> egui::ImageSource<'_> {
 		match self {
 			PlayingCard32::SevenOfSpades =>   include_image!("../../cards/07_of_spades.svg"),
 			PlayingCard32::EightOfSpades =>   include_image!("../../cards/08_of_spades.svg"),
@@ -37,6 +37,70 @@ impl PlayingCard32 {
 			PlayingCard32::QueenOfClubs =>    include_image!("../../cards/Queen_of_clubs_fr.svg"),
 			PlayingCard32::KingOfClubs =>     include_image!("../../cards/King_of_clubs_fr.svg"),
 			PlayingCard32::AceOfClubs =>      include_image!("../../cards/01_of_clubs_01.svg"),
+		}
+	}
+}
+
+impl PlayingCard54 {
+	pub fn card_texture(&self) -> egui::ImageSource<'_> {
+		match self {
+			PlayingCard54::TwoOfSpades =>     include_image!("../../cards/02_of_spades.svg"),
+			PlayingCard54::ThreeOfSpades =>   include_image!("../../cards/03_of_spades.svg"),
+			PlayingCard54::FourOfSpades =>    include_image!("../../cards/04_of_spades.svg"),
+			PlayingCard54::FiveOfSpades =>    include_image!("../../cards/05_of_spades.svg"),
+			PlayingCard54::SixOfSpades =>     include_image!("../../cards/06_of_spades.svg"),
+			PlayingCard54::SevenOfSpades =>   include_image!("../../cards/07_of_spades.svg"),
+			PlayingCard54::EightOfSpades =>   include_image!("../../cards/08_of_spades.svg"),
+			PlayingCard54::NineOfSpades =>    include_image!("../../cards/09_of_spades.svg"),
+			PlayingCard54::TenOfSpades =>     include_image!("../../cards/10_of_spades.svg"),
+			PlayingCard54::JackOfSpades =>    include_image!("../../cards/Jack_of_spades_fr.svg"),
+			PlayingCard54::QueenOfSpades =>   include_image!("../../cards/Queen_of_spades_fr.svg"),
+			PlayingCard54::KingOfSpades =>    include_image!("../../cards/King_of_spades_fr.svg"),
+			PlayingCard54::AceOfSpades =>     include_image!("../../cards/01_of_spades_01.svg"),
+
+			PlayingCard54::TwoOfHearts =>     include_image!("../../cards/02_of_hearts.svg"),
+			PlayingCard54::ThreeOfHearts =>   include_image!("../../cards/03_of_hearts.svg"),
+			PlayingCard54::FourOfHearts =>    include_image!("../../cards/04_of_hearts.svg"),
+			PlayingCard54::FiveOfHearts =>    include_image!("../../cards/05_of_hearts.svg"),
+			PlayingCard54::SixOfHearts =>     include_image!("../../cards/06_of_hearts.svg"),
+			PlayingCard54::SevenOfHearts =>   include_image!("../../cards/07_of_hearts.svg"),
+			PlayingCard54::EightOfHearts =>   include_image!("../../cards/08_of_hearts.svg"),
+			PlayingCard54::NineOfHearts =>    include_image!("../../cards/09_of_hearts.svg"),
+			PlayingCard54::TenOfHearts =>     include_image!("../../cards/10_of_hearts.svg"),
+			PlayingCard54::JackOfHearts =>    include_image!("../../cards/Jack_of_hearts_fr.svg"),
+			PlayingCard54::QueenOfHearts =>   include_image!("../../cards/Queen_of_hearts_fr.svg"),
+			PlayingCard54::KingOfHearts =>    include_image!("../../cards/King_of_hearts_fr.svg"),
+			PlayingCard54::AceOfHearts =>     include_image!("../../cards/01_of_hearts_01.svg"),
+			
+			PlayingCard54::TwoOfDiamonds =>   include_image!("../../cards/02_of_diamonds.svg"),
+			PlayingCard54::ThreeOfDiamonds => include_image!("../../cards/03_of_diamonds.svg"),
+			PlayingCard54::FourOfDiamonds =>  include_image!("../../cards/04_of_diamonds.svg"),
+			PlayingCard54::FiveOfDiamonds =>  include_image!("../../cards/05_of_diamonds.svg"),
+			PlayingCard54::SixOfDiamonds =>   include_image!("../../cards/06_of_diamonds.svg"),
+			PlayingCard54::SevenOfDiamonds => include_image!("../../cards/07_of_diamonds.svg"),
+			PlayingCard54::EightOfDiamonds => include_image!("../../cards/08_of_diamonds.svg"),
+			PlayingCard54::NineOfDiamonds =>  include_image!("../../cards/09_of_diamonds.svg"),
+			PlayingCard54::TenOfDiamonds =>   include_image!("../../cards/10_of_diamonds.svg"),
+			PlayingCard54::JackOfDiamonds =>  include_image!("../../cards/Jack_of_diamonds_fr.svg"),
+			PlayingCard54::QueenOfDiamonds => include_image!("../../cards/Queen_of_diamonds_fr.svg"),
+			PlayingCard54::KingOfDiamonds =>  include_image!("../../cards/King_of_diamonds_fr.svg"),
+			PlayingCard54::AceOfDiamonds =>   include_image!("../../cards/01_of_diamonds_01.svg"),
+			
+			PlayingCard54::TwoOfClubs =>      include_image!("../../cards/02_of_clubs.svg"),
+			PlayingCard54::ThreeOfClubs =>    include_image!("../../cards/03_of_clubs.svg"),
+			PlayingCard54::FourOfClubs =>     include_image!("../../cards/04_of_clubs.svg"),
+			PlayingCard54::FiveOfClubs =>     include_image!("../../cards/05_of_clubs.svg"),
+			PlayingCard54::SixOfClubs =>      include_image!("../../cards/06_of_clubs.svg"),
+			PlayingCard54::SevenOfClubs =>    include_image!("../../cards/07_of_clubs.svg"),
+			PlayingCard54::EightOfClubs =>    include_image!("../../cards/08_of_clubs.svg"),
+			PlayingCard54::NineOfClubs =>     include_image!("../../cards/09_of_clubs.svg"),
+			PlayingCard54::TenOfClubs =>      include_image!("../../cards/10_of_clubs.svg"),
+			PlayingCard54::JackOfClubs =>     include_image!("../../cards/Jack_of_clubs_fr.svg"),
+			PlayingCard54::QueenOfClubs =>    include_image!("../../cards/Queen_of_clubs_fr.svg"),
+			PlayingCard54::KingOfClubs =>     include_image!("../../cards/King_of_clubs_fr.svg"),
+			PlayingCard54::AceOfClubs =>      include_image!("../../cards/01_of_clubs_01.svg"),
+			PlayingCard54::BlackJoker =>      include_image!("../../cards/Joker_black.svg"),
+			PlayingCard54::RedJoker =>        include_image!("../../cards/Joker_red.svg"),
 		}
 	}
 }

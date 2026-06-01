@@ -133,21 +133,23 @@ where
 						}
 					}
 				}
-			}
-			let moves = self
-					.game_state_manager
-					.legal_moves();
-			if moves.iter().all(|m| m.card().is_none()) {
-				match self.ask_select_between_multiple_moves(ui.ctx(), &moves.iter().cloned().collect()) {
-					MultipleMoveSelectionResult::Pending => {}
-					MultipleMoveSelectionResult::Cancelled => {
-						//self.input_handler
-						//	.reset(&mut self.game_drawer, &self.game_state_manager);
-					}
-					MultipleMoveSelectionResult::Selected(mv) => {
-						self.apply_move(mv);
-						//self.input_handler
-						//	.reset(&mut self.game_drawer, &self.game_state_manager);
+
+				let moves = self.game_state_manager.legal_moves();
+				if moves.iter().all(|m| m.card().is_none()) {
+					match self.ask_select_between_multiple_moves(
+						ui.ctx(),
+						&moves.iter().cloned().collect(),
+					) {
+						MultipleMoveSelectionResult::Pending => {}
+						MultipleMoveSelectionResult::Cancelled => {
+							//self.input_handler
+							//	.reset(&mut self.game_drawer, &self.game_state_manager);
+						}
+						MultipleMoveSelectionResult::Selected(mv) => {
+							self.apply_move(mv);
+							//self.input_handler
+							//	.reset(&mut self.game_drawer, &self.game_state_manager);
+						}
 					}
 				}
 			}
@@ -471,5 +473,3 @@ where
 		}
 	}
 }
-
-

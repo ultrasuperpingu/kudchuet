@@ -188,8 +188,51 @@ where
 
 		response
 	}
-
 	fn draw_center(&self, ui: &mut egui::Ui, game: &G, table: Rect) {
+		let center = table.center();
+		let card_size = egui::vec2(50.0, 75.0);
+		let radius = 120.0;
+		if game.draw_revealed_cards() {
+			let spacing = 70.0;
+			let nb_cards = game.revealed_cards().len() as f32;
+			for (i, card) in game.revealed_cards().into_iter().enumerate() {
+				let x = center.x + (i as f32 - (nb_cards - 1.0) / 2.0) * spacing;
+				let pos = pos2(x - card_size.x * 0.5, center.y - card_size.y * 0.5);
+				self.draw_card(ui, card, pos, card_size, 0.0);
+			}
+		}
+
+		for i in 0..G::nb_players(game) {
+			let angle = match i {
+				2 => -std::f32::consts::FRAC_PI_2, // N
+				3 => 0.0,                          // E
+				0 => std::f32::consts::FRAC_PI_2,  // S
+				1 => std::f32::consts::PI,         // W
+				_ => continue,
+			};
+
+			let card_center = pos2(
+				center.x + radius * angle.cos(),
+				center.y + radius * angle.sin(),
+			);
+
+			let pos = pos2(
+				card_center.x - card_size.x * 0.5,
+				card_center.y - card_size.y * 0.5,
+			);
+
+			if let Some(card) = game.player_ply_card(Player(i)) {
+				self.draw_card(
+					ui,
+					card,
+					pos,
+					card_size,
+					angle + std::f32::consts::FRAC_PI_2,
+				);
+			}
+		}
+	}
+	/*fn draw_center(&self, ui: &mut egui::Ui, game: &G, table: Rect) {
 		let center = table.center();
 		let card_size = egui::vec2(50.0, 75.0);
 		let spacing = 70.0;
@@ -210,7 +253,7 @@ where
 				self.draw_card(ui, card, pos, card_size, 0.0);
 			}
 		}
-	}
+	}*/
 }
 pub struct TableLayout {
 	pub player_areas: Vec<PlayerLayout>,

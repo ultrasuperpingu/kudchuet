@@ -23,6 +23,17 @@ impl GUIGame for Manille {
 	fn nb_players(&self) -> u8 {
 		4
 	}
+	fn get_name(&self, p: kudchuet::Player) -> String {
+		if p.0 == 0 {
+			"Team 1 (S)".into()
+		} else if p.0 == 1 {
+			"Team 2 (W)".into()
+		} else if p.0 == 3 {
+			"Team 1 (N)".into()
+		} else {
+			"Team 2 (E)".into()
+		}
+	}
 	fn default_style() -> BoardStyle {
 		BoardStyle {
 			dark_color: egui::Color32::from_rgb(181, 136, 99),

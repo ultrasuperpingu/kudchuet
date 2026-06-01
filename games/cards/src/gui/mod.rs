@@ -85,3 +85,20 @@ where
 		self.matching_moves.clear();
 	}
 }
+impl<G: CardGame> InputHandler<G> for CardInputHandler<G> where G::M: CardMove<G> {
+	fn pending_moves(&self) -> Option<&Vec<G::M>> {
+		self.pending_moves.as_ref()
+	}
+
+	fn set_pending_moves(&mut self, moves: Vec<G::M>) {
+		self.pending_moves = Some(moves);
+	}
+
+	fn clear_pending_moves(&mut self) {
+		self.pending_moves = None;
+	}
+
+	fn matching_moves(&self) -> &Vec<G::M> {
+		&self.matching_moves
+	}
+}

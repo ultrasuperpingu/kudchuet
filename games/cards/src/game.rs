@@ -40,6 +40,9 @@ impl Game for Manille {
 	}
 
 	fn get_current_player(state: &Self::S) -> Player {
+		if state.on_turn >= 4 {
+			return Player(0);
+		}
 		Player(state.on_turn)
 	}
 	#[inline]
