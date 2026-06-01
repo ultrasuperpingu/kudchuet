@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="kudchuet.svg" width="180" />
+</p>
+
 # Kudchuet
 
 Kudchuet is a Rust framework for building board games, AI engines, and graphical game UIs using `egui`.
