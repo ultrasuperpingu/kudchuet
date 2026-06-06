@@ -1,7 +1,12 @@
 use egui::pos2;
 
 use crate::{
-	freecell::{are_alternate, foundation_index, rank}, gui::card_view::{CardSetLayout, CardZone}, ordered_card_set::OrderedCardSet54, playing_cards::PlayingCard, playing_cards54::PlayingCard54, unordered_card_set::UnorderedCardSet54
+	freecell::{are_alternate, foundation_index, rank},
+	gui::card_view::{CardSetLayout, CardZone},
+	ordered_card_set::OrderedCardSet54,
+	playing_cards::PlayingCard,
+	playing_cards54::PlayingCard54,
+	unordered_card_set::UnorderedCardSet54,
 };
 pub struct Klondike {
 	pub stock: OrderedCardSet54,
@@ -269,31 +274,37 @@ impl Klondike {
 		let game = self;
 		let mut zones = vec![];
 		zones.push(CardZone {
+			id: 0,
 			set: game.stock.clone(),
 			layout: CardSetLayout::Stack,
 			origin: pos2(20.0, 20.0),
 			rotation: 0.0,
 			card_spacing: 0.0,
 			face_up: false,
+			draw_empty: true,
 		});
 
 		zones.push(CardZone {
+			id: 1,
 			set: game.revealed_stock.clone(),
 			layout: CardSetLayout::Stack,
 			origin: pos2(140.0, 20.0),
 			rotation: 0.0,
 			card_spacing: 30.0,
 			face_up: true,
+			draw_empty: true,
 		});
 
 		for (i, col) in game.tableau.iter().enumerate() {
 			zones.push(CardZone {
+				id: i as u8 + 2,
 				set: col.clone(),
 				layout: CardSetLayout::Vertical,
 				origin: pos2(20.0 + i as f32 * 110.0, 180.0),
 				rotation: 0.0,
 				card_spacing: 25.0,
 				face_up: true,
+				draw_empty: true,
 			});
 		}
 		zones

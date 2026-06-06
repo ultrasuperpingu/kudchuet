@@ -66,6 +66,7 @@ impl CardGame for Manille {
 		// Mains des joueurs
 		for p in 0..4 {
 			zones.push(CardZone {
+				id: p as u8 + 2,
 				set: OrderedCardSet32::from_iter(self.players[p].iter()),
 				layout: match p {
 					0 => CardSetLayout::Horizontal, // Sud
@@ -90,18 +91,21 @@ impl CardGame for Manille {
 				},
 				card_spacing: 25.0,
 				face_up: p == 0,
+				draw_empty: true,
 			});
 		}
 
 		// Atout visible
 		if self.scores[0] == 0 && self.scores[1] == 0 && self.ply.iter().all(|m| m.is_none()) {
 			zones.push(CardZone {
+				id: 1,
 				set: self.trump_card.into(),
 				layout: CardSetLayout::Stack,
 				origin: pos2(0.50, 0.35),
 				rotation: 0.0,
 				card_spacing: 0.0,
 				face_up: true,
+				draw_empty: false,
 			});
 		}
 
@@ -109,6 +113,7 @@ impl CardGame for Manille {
 		let ply = OrderedCardSet32::from_iter(self.ply.iter().flatten().copied());
 
 		zones.push(CardZone {
+			id: 0,
 			set: ply,
 			layout: CardSetLayout::Circle {
 				start_angle: -std::f32::consts::FRAC_PI_2,
@@ -117,6 +122,7 @@ impl CardGame for Manille {
 			rotation: 0.0,
 			card_spacing: 0.0,
 			face_up: true,
+			draw_empty: false,
 		});
 
 		zones

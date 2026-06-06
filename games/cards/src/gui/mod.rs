@@ -73,11 +73,12 @@ where
 		self.clicks.push(click);
 
 		let custom_result = G::M::handle_clicks_interaction(game, legals.as_slice(), &self.clicks);
-		println!("{:?}",custom_result);
+		println!("{:?}: {:?}: {:?}",custom_result, legals, self.clicks);
 		match &custom_result {
 			MoveResult::Created {
 				highlights_played, ..
 			} => {
+				self.reset();
 				//self.reset(drawer, game_manager);
 				//drawer.set_played_highlights(highlights_played.clone());
 				custom_result
@@ -99,6 +100,7 @@ where
 			}
 			MoveResult::Invalid => {
 				//self.reset(drawer, game_manager);
+				self.reset();
 				MoveResult::Invalid
 			}
 			MoveResult::ChoiceRequired { candidates } => {
@@ -107,31 +109,32 @@ where
 			}
 		}
 
-		/*let legals = game.legal_moves();
-		let candidates: Vec<G::M> = legals
-			.into_iter()
-			.filter(|m| m.click() == Some(click))
-			.collect();
-
-		match candidates.len() {
-			0 => MoveResult::Invalid,
-
-			1 => MoveResult::Created {
-				mv: candidates[0],
-				highlights_played: vec![],
-			},
-
-			_ => {
-				self.pending_moves = Some(candidates.clone());
-				MoveResult::ChoiceRequired { candidates }
-			}
-		}*/
 	}
 
 	pub fn reset(&mut self) {
+		self.clicks.clear();
 		self.pending_moves = None;
 		self.matching_moves.clear();
 	}
+	/*pub fn reset(
+		&mut self,
+		drawer: &mut Box<dyn BoardDrawer<G>>,
+		game_manager: &GameStateManager<G>,
+	) where
+		G: BoardGame,
+		G::M: BoardMove<G>,
+	{
+		self.clicks.clear();
+		self.pending_moves = None;
+		self.intermediate_state = None;
+		self.matching_moves = game_manager
+			.legal_moves()
+			.iter()
+			.filter(|m| m.click_sequence(game_manager.game()) == self.clicks)
+			.copied()
+			.collect();
+		drawer.clear_selection();
+	}*/
 }
 impl<G: CardGame> InputHandler<G> for CardInputHandler<G>
 where

@@ -11,7 +11,7 @@ use crate::{
 		CardGame, CardMove,
 		card_view::{CardGameClick, CardSetLayout, CardZone},
 	},
-	ordered_card_set::{OrderedCardSet54},
+	ordered_card_set::OrderedCardSet54,
 	playing_cards::{CardSet, CardSuit, PlayingCard},
 	playing_cards54::PlayingCard54,
 	unordered_card_set::UnorderedCardSet54,
@@ -643,34 +643,40 @@ impl CardGame for Freecell {
 
 		for (i, col) in self.foundations.iter().enumerate() {
 			zones.push(CardZone {
+				id: i as u8,
 				set: OrderedCardSet54::from_iter(*col),
 				layout: CardSetLayout::Stack,
 				origin: pos2(0.60 + i as f32 * x_step, base_y_top),
 				rotation: 0.0,
 				card_spacing: 0.0,
 				face_up: true,
+				draw_empty: true,
 			});
 		}
 
 		for (i, cell) in self.free_cells.iter().enumerate() {
 			zones.push(CardZone {
+				id: i as u8 + 4,
 				set: OrderedCardSet54::from_iter(cell.clone()),
 				layout: CardSetLayout::Stack,
 				origin: pos2(0.05 + i as f32 * x_step, base_y_top),
 				rotation: 0.0,
 				card_spacing: 0.03,
 				face_up: true,
+				draw_empty: true,
 			});
 		}
 
 		for (i, col) in self.tableau.iter().enumerate() {
 			zones.push(CardZone {
+				id: i as u8 + 8,
 				set: col.clone(),
 				layout: CardSetLayout::Vertical,
 				origin: pos2(0.05 + i as f32 * 0.08, base_y_bottom),
 				rotation: 0.0,
 				card_spacing: 25.0,
 				face_up: true,
+				draw_empty: true,
 			});
 		}
 
@@ -683,30 +689,30 @@ impl GUIMove<Freecell> for Move {
 		match self {
 			Move::TableauToTableau { from, to, count } => {
 				let len = state.tableau[*from].len();
-				let card_from = state.tableau[*from].iter().nth(len-*count).unwrap();
+				let card_from = state.tableau[*from].iter().nth(len - *count).unwrap();
 				let card_to = state.tableau[*to].iter().last().unwrap();
 				res.push(CardGameClick::Card(*card_from));
 				res.push(CardGameClick::Card(*card_to));
-			},
+			}
 			Move::TableauToFreeCell { from, cell } => {
 				let card_from = state.tableau[*from].iter().last().unwrap();
 				res.push(CardGameClick::Card(*card_from));
 				res.push(CardGameClick::CardZone(*cell as u8));
-			},
+			}
 			Move::FreeCellToTableau { cell, to } => {
 				let card_to = state.tableau[*to].iter().last().unwrap();
 				res.push(CardGameClick::CardZone(*cell as u8));
 				res.push(CardGameClick::Card(*card_to));
-			},
+			}
 			Move::TableauToFoundation { from, foundation } => {
 				let card_from = state.tableau[*from].iter().last().unwrap();
 				res.push(CardGameClick::Card(*card_from));
 				res.push(CardGameClick::CardZone(*foundation as u8 + 4));
-			},
+			}
 			Move::FreeCellToFoundation { cell, foundation } => {
 				res.push(CardGameClick::CardZone(*cell as u8));
 				res.push(CardGameClick::CardZone(*foundation as u8 + 4));
-			},
+			}
 		}
 		res
 	}
@@ -716,7 +722,7 @@ impl CardMove<Freecell> for Move {
 		todo!()
 	}
 }
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug, Default, Copy, Clone)]
 pub struct FreecellEval;
 impl Evaluator for FreecellEval {
 	type G = Freecell;
@@ -901,13 +907,15 @@ mod tests {
 	#[cfg(not(target_arch = "wasm32"))]
 	fn test_gui() -> eframe::Result<()> {
 		use crate::gui::card_app::CardApp;
-		use kudchuet::ai::AIEngineProvider;
+		use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 		use winit::platform::windows::EventLoopBuilderExtWindows;
 
 		let engines: Vec<Box<dyn AIEngineProvider<Freecell>>> = vec![];
-		//vec![Box::new(
-		//	MoveSearcherBuilder::new("Material", ManilleMaterialEval, 8),
-		//)];
+		vec![Box::new(MoveSearcherBuilder::new(
+			"Simple",
+			FreecellEval,
+			5,
+		))];
 		let mut board = CardApp::new(Freecell::new(), engines);
 		board.max_depth = 13;
 		board.depth = 8;

@@ -39,13 +39,16 @@ where
 	) -> egui::Response;
 }
 #[derive(Clone)]
-pub struct DefaultCardGameDrawer<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard>
-where
+pub struct DefaultCardGameDrawer<
+	G: CardGame<Card = C, Click = CardGameClick<C>>,
+	C: DrawablePlayingCard,
+> where
 	G::M: CardMove<G> + Copy,
 {
 	style: G::Style,
 }
-impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> Default for DefaultCardGameDrawer<G, C>
+impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> Default
+	for DefaultCardGameDrawer<G, C>
 where
 	G::M: CardMove<G> + Copy,
 {
@@ -55,11 +58,11 @@ where
 		}
 	}
 }
-impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> GameDrawer<G> for DefaultCardGameDrawer<G, C>
+impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> GameDrawer<G>
+	for DefaultCardGameDrawer<G, C>
 where
 	<G as Game>::M: CardMove<G>,
 {
-
 	fn draw(
 		&mut self,
 		ui: &mut egui::Ui,
@@ -126,7 +129,8 @@ where
 		response
 	}
 }
-impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> DefaultCardGameDrawer<G, C>
+impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard>
+	DefaultCardGameDrawer<G, C>
 where
 	<G as Game>::M: CardMove<G>,
 {
@@ -170,12 +174,14 @@ pub enum CardSetLayout {
 }
 #[derive(Debug, PartialEq)]
 pub struct CardZone<Set: CardSet<Card = C>, C: PlayingCard> {
+	pub id: u8,
 	pub set: Set,
 	pub layout: CardSetLayout,
 	pub rotation: f32,
 	pub origin: Pos2,
 	pub card_spacing: f32,
 	pub face_up: bool,
+	pub draw_empty: bool,
 }
 impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 	pub fn draw<G: CardGame<Card = C>, Drawer: CardGameDrawer<G, C>>(
@@ -208,8 +214,18 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 					if resp.clicked() {
 						return Some(CardGameClick::Card(card));
 					}
-				}
+				} else if self.draw_empty {
+					let rect = Rect::from_center_size(origin, size);
 
+					let resp = ui.allocate_rect(rect, egui::Sense::click());
+
+					ui.painter()
+						.rect_stroke(rect, 4.0, egui::Stroke::new(2.0, Color32::GRAY), egui::StrokeKind::Middle);
+
+					if resp.clicked() {
+						return Some(CardGameClick::CardZone(self.id));
+					}
+				}
 				None
 			}
 
