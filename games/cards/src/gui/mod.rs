@@ -1,21 +1,21 @@
 use kudchuet::{
-	Player,
 	ai::move_search::Game,
 	gui::{
-		GUIGame,
+		GUIGame, GUIMove,
 		input_handler::{InputHandler, MoveResult},
 	},
 };
-use std::{fmt::Debug, marker::PhantomData};
+use std::fmt::Debug;
 
 use crate::{
-	gui::card_view::{CardGameClick, CardZone}, playing_cards::{CardSet, PlayingCard}
+	gui::card_view::{CardGameClick, CardZone},
+	playing_cards::{CardSet, PlayingCard},
 };
 pub mod card_app;
 pub mod card_view;
 pub mod cards;
 
-pub trait CardGame: GUIGame<S = Self> + Default + Clone
+pub trait CardGame: GUIGame<S = Self, Click = CardGameClick<Self::Card>> + Default + Clone
 where
 	Self::M: CardMove<Self> + Copy,
 {
@@ -23,7 +23,7 @@ where
 	fn build_board(&self) -> Vec<CardZone<impl CardSet<Card = Self::Card>, Self::Card>>;
 }
 
-pub trait CardMove<G: CardGame>: Debug + Sized + Copy
+pub trait CardMove<G: CardGame>: GUIMove<G> + Debug + Sized + Copy
 where
 	G::M: CardMove<G>,
 {
@@ -35,9 +35,10 @@ pub struct CardInputHandler<G: CardGame>
 where
 	G::M: CardMove<G>,
 {
+	clicks: Vec<G::Click>,
 	pending_moves: Option<Vec<G::M>>,
 	matching_moves: Vec<G::M>,
-	_dummy: PhantomData<CardGameClick<G::Card>>,
+	//_dummy: PhantomData<CardGameClick<G::Card>>,
 }
 impl<G: CardGame> Default for CardInputHandler<G>
 where
@@ -45,9 +46,10 @@ where
 {
 	fn default() -> Self {
 		Self {
+			clicks: Default::default(),
 			pending_moves: Default::default(),
 			matching_moves: Default::default(),
-			_dummy: PhantomData,
+			//_dummy: PhantomData,
 		}
 	}
 }
@@ -57,15 +59,55 @@ where
 {
 	pub fn new() -> Self {
 		Self {
+			clicks: vec![],
 			pending_moves: None,
 			matching_moves: vec![],
-			_dummy: PhantomData,
+			//_dummy: PhantomData,
 		}
 	}
-
-	pub fn process_click(&mut self, click: CardGameClick<Card>, game: &G) -> MoveResult<G, CardGameClick<G::Card>> {
+	pub fn current_clicks(&self) -> &Vec<G::Click> {
+		&self.clicks
+	}
+	pub fn process_click(&mut self, click: G::Click, game: &G) -> MoveResult<G, G::Click> {
 		let legals = game.legal_moves();
+		self.clicks.push(click);
 
+		let custom_result = G::M::handle_clicks_interaction(game, legals.as_slice(), &self.clicks);
+		println!("{:?}",custom_result);
+		match &custom_result {
+			MoveResult::Created {
+				highlights_played, ..
+			} => {
+				//self.reset(drawer, game_manager);
+				//drawer.set_played_highlights(highlights_played.clone());
+				custom_result
+			}
+			MoveResult::Incomplete {
+				selected,
+				highlights,
+				matching_moves, /*, intermediate_state*/
+			} => {
+				//drawer.set_selected(selected.clone());
+				//drawer.set_legal_highlights(highlights.clone());
+				self.matching_moves = matching_moves.clone();
+				if !self.matching_moves.is_empty() {
+					//	self.intermediate_state = self.matching_moves[0]
+					//		.compute_intermediate_state(game_manager.game(), &self.clicks)
+					//		.clone();
+				}
+				custom_result
+			}
+			MoveResult::Invalid => {
+				//self.reset(drawer, game_manager);
+				MoveResult::Invalid
+			}
+			MoveResult::ChoiceRequired { candidates } => {
+				self.pending_moves = Some(candidates.clone());
+				custom_result
+			}
+		}
+
+		/*let legals = game.legal_moves();
 		let candidates: Vec<G::M> = legals
 			.into_iter()
 			.filter(|m| m.click() == Some(click))
@@ -83,7 +125,7 @@ where
 				self.pending_moves = Some(candidates.clone());
 				MoveResult::ChoiceRequired { candidates }
 			}
-		}
+		}*/
 	}
 
 	pub fn reset(&mut self) {

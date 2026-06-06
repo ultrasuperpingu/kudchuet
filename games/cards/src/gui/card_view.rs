@@ -39,13 +39,13 @@ where
 	) -> egui::Response;
 }
 #[derive(Clone)]
-pub struct DefaultCardGameDrawer<G: CardGame<Card = C>, C: DrawablePlayingCard>
+pub struct DefaultCardGameDrawer<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard>
 where
 	G::M: CardMove<G> + Copy,
 {
 	style: G::Style,
 }
-impl<G: CardGame<Card = C>, C: DrawablePlayingCard> Default for DefaultCardGameDrawer<G, C>
+impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> Default for DefaultCardGameDrawer<G, C>
 where
 	G::M: CardMove<G> + Copy,
 {
@@ -55,11 +55,10 @@ where
 		}
 	}
 }
-impl<G: CardGame<Card = C>, C: DrawablePlayingCard> GameDrawer<G> for DefaultCardGameDrawer<G, C>
+impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> GameDrawer<G> for DefaultCardGameDrawer<G, C>
 where
 	<G as Game>::M: CardMove<G>,
 {
-	type Click = CardGameClick<C>;
 
 	fn draw(
 		&mut self,
@@ -67,7 +66,7 @@ where
 		game: &G,
 		//input: &Box<dyn InputHandler<G>>,
 		can_interact: bool,
-	) -> Option<Self::Click> {
+	) -> Option<G::Click> {
 		self.draw_board(ui, game, can_interact)
 	}
 
@@ -85,7 +84,7 @@ where
 		self.style = style;
 	}
 }
-impl<G: CardGame<Card = C>, C: DrawablePlayingCard> CardGameDrawer<G, C>
+impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> CardGameDrawer<G, C>
 	for DefaultCardGameDrawer<G, C>
 where
 	<G as Game>::M: CardMove<G>,
@@ -127,7 +126,7 @@ where
 		response
 	}
 }
-impl<G: CardGame<Card = C>, C: DrawablePlayingCard> DefaultCardGameDrawer<G, C>
+impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> DefaultCardGameDrawer<G, C>
 where
 	<G as Game>::M: CardMove<G>,
 {
@@ -136,7 +135,7 @@ where
 		ui: &mut egui::Ui,
 		game: &G,
 		can_interact: bool,
-	) -> Option<CardGameClick<C>> {
+	) -> Option<G::Click> {
 		let available = ui.available_rect_before_wrap();
 
 		let table_rect = available.shrink(20.0);
@@ -145,11 +144,15 @@ where
 			.rect_filled(table_rect, 16.0, Color32::from_rgb(20, 90, 20));
 
 		let board = game.build_board();
+		let mut click = None;
 		for l in board {
 			//println!("{:?}", l);
 			let resp = l.draw(ui, self, table_rect);
+			if can_interact && resp.is_some() {
+				click = resp;
+			}
 		}
-		None
+		click
 	}
 }
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
@@ -186,6 +189,7 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 		Set::Card: PlayingCard,
 		Set::Item: PlayingCard,
 	{
+		//println!("{:?}", self);
 		let size = vec2(80.0, 120.0);
 		let origin = pos2(
 			rect.min.x + self.origin.x * rect.width(),

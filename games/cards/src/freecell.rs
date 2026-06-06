@@ -11,7 +11,7 @@ use crate::{
 		CardGame, CardMove,
 		card_view::{CardGameClick, CardSetLayout, CardZone},
 	},
-	ordered_card_set::{OrderedCardSet, OrderedCardSet54},
+	ordered_card_set::{OrderedCardSet54},
 	playing_cards::{CardSet, CardSuit, PlayingCard},
 	playing_cards54::PlayingCard54,
 	unordered_card_set::UnorderedCardSet54,
@@ -19,12 +19,17 @@ use crate::{
 use std::fmt;
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
-#[derive(Clone, Default, Debug, Hash)]
+#[derive(Clone, Debug, Hash)]
 pub struct Freecell {
 	pub free_cells: [Option<PlayingCard54>; 4],
 	pub tableau: [OrderedCardSet54; 8],
 	pub foundations: [UnorderedCardSet54; 4],
 	h: u64,
+}
+impl Default for Freecell {
+	fn default() -> Self {
+		Self::new()
+	}
 }
 impl Freecell {
 	pub fn new() -> Self {
@@ -627,79 +632,88 @@ impl GUIGame for Freecell {
 }
 impl CardGame for Freecell {
 	type Card = PlayingCard54;
-	
+
 	fn build_board(&self) -> Vec<CardZone<OrderedCardSet54, PlayingCard54>> {
-		let game = self;
 		let mut zones = vec![];
-		for (i, col) in game.foundations.iter().enumerate() {
+
+		let x_step = 0.08;
+		let base_y_top = 0.05;
+		//let base_y_mid = 0.15;
+		let base_y_bottom = 0.55;
+
+		for (i, col) in self.foundations.iter().enumerate() {
 			zones.push(CardZone {
 				set: OrderedCardSet54::from_iter(*col),
 				layout: CardSetLayout::Stack,
-				origin: pos2(420.0 + i as f32 * 110.0, 20.0),
+				origin: pos2(0.60 + i as f32 * x_step, base_y_top),
 				rotation: 0.0,
 				card_spacing: 0.0,
 				face_up: true,
 			});
 		}
 
-		zones.push(CardZone {
-			set: OrderedCardSet54::from_iter(game.free_cells[0].clone()),
-			layout: CardSetLayout::Stack,
-			origin: pos2(20.0, 20.0),
-			rotation: 0.0,
-			card_spacing: 30.0,
-			face_up: true,
-		});
-		zones.push(CardZone {
-			set: OrderedCardSet54::from_iter(game.free_cells[1].clone()),
-			layout: CardSetLayout::Stack,
-			origin: pos2(130.0, 20.0),
-			rotation: 0.0,
-			card_spacing: 30.0,
-			face_up: true,
-		});
-		zones.push(CardZone {
-			set: OrderedCardSet54::from_iter(game.free_cells[2].clone()),
-			layout: CardSetLayout::Stack,
-			origin: pos2(240.0, 20.0),
-			rotation: 0.0,
-			card_spacing: 30.0,
-			face_up: true,
-		});
-		zones.push(CardZone {
-			set: OrderedCardSet54::from_iter(game.free_cells[3].clone()),
-			layout: CardSetLayout::Stack,
-			origin: pos2(350.0, 20.0),
-			rotation: 0.0,
-			card_spacing: 30.0,
-			face_up: true,
-		});
+		for (i, cell) in self.free_cells.iter().enumerate() {
+			zones.push(CardZone {
+				set: OrderedCardSet54::from_iter(cell.clone()),
+				layout: CardSetLayout::Stack,
+				origin: pos2(0.05 + i as f32 * x_step, base_y_top),
+				rotation: 0.0,
+				card_spacing: 0.03,
+				face_up: true,
+			});
+		}
 
-		for (i, col) in game.tableau.iter().enumerate() {
+		for (i, col) in self.tableau.iter().enumerate() {
 			zones.push(CardZone {
 				set: col.clone(),
 				layout: CardSetLayout::Vertical,
-				origin: pos2(20.0 + i as f32 * 110.0, 180.0),
+				origin: pos2(0.05 + i as f32 * 0.08, base_y_bottom),
 				rotation: 0.0,
 				card_spacing: 25.0,
 				face_up: true,
 			});
 		}
+
 		zones
 	}
 }
-
-impl CardMove<Freecell> for Move {
-	fn click(&self) -> Option<CardGameClick<PlayingCard54>> {
-		/*match self {
+impl GUIMove<Freecell> for Move {
+	fn click_sequence(&self, state: &Freecell) -> Vec<<Freecell as GUIGame>::Click> {
+		let mut res = vec![];
+		match self {
 			Move::TableauToTableau { from, to, count } => {
+				let len = state.tableau[*from].len();
+				let card_from = state.tableau[*from].iter().nth(len-*count).unwrap();
+				let card_to = state.tableau[*to].iter().last().unwrap();
+				res.push(CardGameClick::Card(*card_from));
+				res.push(CardGameClick::Card(*card_to));
 			},
-			Move::TableauToFreeCell { from, cell } => todo!(),
-			Move::FreeCellToTableau { cell, to } => todo!(),
-			Move::TableauToFoundation { from, foundation } => todo!(),
-			Move::FreeCellToFoundation { cell, foundation } => todo!(),
-		}*/
-		None
+			Move::TableauToFreeCell { from, cell } => {
+				let card_from = state.tableau[*from].iter().last().unwrap();
+				res.push(CardGameClick::Card(*card_from));
+				res.push(CardGameClick::CardZone(*cell as u8));
+			},
+			Move::FreeCellToTableau { cell, to } => {
+				let card_to = state.tableau[*to].iter().last().unwrap();
+				res.push(CardGameClick::CardZone(*cell as u8));
+				res.push(CardGameClick::Card(*card_to));
+			},
+			Move::TableauToFoundation { from, foundation } => {
+				let card_from = state.tableau[*from].iter().last().unwrap();
+				res.push(CardGameClick::Card(*card_from));
+				res.push(CardGameClick::CardZone(*foundation as u8 + 4));
+			},
+			Move::FreeCellToFoundation { cell, foundation } => {
+				res.push(CardGameClick::CardZone(*cell as u8));
+				res.push(CardGameClick::CardZone(*foundation as u8 + 4));
+			},
+		}
+		res
+	}
+}
+impl CardMove<Freecell> for Move {
+	fn click(&self) -> Option<CardGameClick<<Freecell as CardGame>::Card>> {
+		todo!()
 	}
 }
 #[derive(Eq, PartialEq, Debug)]
@@ -886,18 +900,15 @@ mod tests {
 	#[test]
 	#[cfg(not(target_arch = "wasm32"))]
 	fn test_gui() -> eframe::Result<()> {
+		use crate::gui::card_app::CardApp;
 		use kudchuet::ai::AIEngineProvider;
 		use winit::platform::windows::EventLoopBuilderExtWindows;
-		use crate::gui::card_app::CardApp;
 
 		let engines: Vec<Box<dyn AIEngineProvider<Freecell>>> = vec![];
 		//vec![Box::new(
 		//	MoveSearcherBuilder::new("Material", ManilleMaterialEval, 8),
 		//)];
 		let mut board = CardApp::new(Freecell::new(), engines);
-		//board.board_drawer.get_style_mut().dark_color=egui::Color32::from_rgb(181, 136, 99);
-		//board.board_drawer.get_style_mut().light_color=Color32::from_rgb(240, 217, 181);
-		//board.board_drawer.get_style_mut().show_coordinates_mod=crate::common::gui::CoordMod::NumbersAside;
 		board.max_depth = 13;
 		board.depth = 8;
 		let mut options = eframe::NativeOptions::default();

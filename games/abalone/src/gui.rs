@@ -156,7 +156,6 @@ impl BoardGame for Abalone {
 struct AbaloneBoardDrawer<G: BoardGame>(DefaultBoardDrawer<G>)
 where G::M: BoardMove<G>;
 impl GameDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
-	type Click = u16;
 
 	fn draw(
 			&mut self,
@@ -164,7 +163,7 @@ impl GameDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 			game: &Abalone,
 			//input: &Box<dyn InputHandler<G>>,
 			can_interact: bool,
-		) -> Option<Self::Click> {
+		) -> Option<<Abalone as GUIGame>::Click> {
 		self.draw_board(ui, game, can_interact)
 	}
 
@@ -189,7 +188,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 		ui: &mut egui::Ui,
 		game: &Abalone,
 		can_interact: bool,
-	) -> Option<Self::Click> {
+	) -> Option<<Abalone as GUIGame>::Click> {
 		let available = ui.available_rect_before_wrap();
 		let painter = ui.painter_at(available);
 

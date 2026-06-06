@@ -6,10 +6,18 @@ use crate::playing_cards32::PlayingCard32;
 use eframe::egui;
 use egui::Color32;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::{BoardStyle, CoordMod, GUIGame};
+use kudchuet::gui::{BoardStyle, CoordMod, GUIGame, GUIMove};
 
 use crate::manille::{Manille, Move};
 
+impl GUIMove<Manille> for Move {
+	fn click_sequence(&self, state: &Manille) -> Vec<<Manille as GUIGame>::Click> {
+		if let Move::Play(card) = self {
+			return vec![CardGameClick::Card(*card)];
+		}
+		vec![]
+	}
+}
 impl CardMove<Manille> for Move {
 	fn click(&self) -> Option<CardGameClick<PlayingCard32>> {
 		if let Move::Play(card) = self {
@@ -47,24 +55,6 @@ impl GUIGame for Manille {
 }
 impl CardGame for Manille {
 	type Card = PlayingCard32;
-	/*fn player_ply_card(&self, p: kudchuet::Player) -> Option<PlayingCard32> {
-		self.ply[p.0 as usize]
-	}
-
-	fn player_hand_cards(
-		&self,
-		p: kudchuet::Player,
-	) -> crate::unordered_card_set::UnorderedCardSet32 {
-		self.players[p.0 as usize]
-	}
-
-	fn revealed_cards(&self) -> crate::unordered_card_set::UnorderedCardSet32 {
-		self.trump_card.into()
-	}
-
-	fn draw_revealed_cards(&self) -> bool {
-		self.scores[0] == 0 && self.scores[1] == 0 && self.ply.iter().all(|m| m.is_none())
-	}*/
 
 	fn build_board(&self) -> Vec<CardZone<crate::ordered_card_set::OrderedCardSet32, Self::Card>> {
 		use crate::gui::card_view::{CardSetLayout, CardZone};

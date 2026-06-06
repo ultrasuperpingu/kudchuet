@@ -12,14 +12,13 @@ use crate::{
 	utils::short_type_name,
 };
 pub trait GameDrawer<G: GUIGame> {
-	type Click;
 	fn draw(
 		&mut self,
 		ui: &mut egui::Ui,
 		game: &G,
 		//input: &Box<dyn InputHandler<G>>,
 		can_interact: bool,
-	) -> Option<Self::Click>;
+	) -> Option<G::Click>;
 
 	fn full_reset(&mut self);
 
@@ -440,8 +439,6 @@ impl<G: BoardGame> GameDrawer<G> for DefaultBoardDrawer<G>
 where
 	G::M : BoardMove<G>
 {
-	type Click = u16;
-
 	fn get_style(&self) -> &G::Style {
 		&self.style
 	}
@@ -460,7 +457,7 @@ where
 		game: &G,
 		//_input: &Box<dyn InputHandler<G>>,
 		can_interact: bool,
-	) -> Option<Self::Click> {
+	) -> Option<G::Click> {
 		self.draw_board(ui, game, can_interact)
 	}
 

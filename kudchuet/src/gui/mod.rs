@@ -142,7 +142,7 @@ pub trait EGUIPieceType {
 pub struct DefaultSettings;
 pub trait GUIGame: Game<S = Self> + Default + Clone // Self::M: BoardMove<Self> + Copy,
 {
-	type Click: Copy + Eq;
+	type Click: Copy + Eq + Debug;
 	type Settings: Default + EguiInspect;
 	type Style: Default + EguiInspect + Serialize + DeserializeOwned;
 	/// Create a Board game from the provided settings.

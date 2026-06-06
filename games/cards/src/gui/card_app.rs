@@ -7,7 +7,7 @@ use kudchuet::{
 		move_search::Game,
 	},
 	gui::{
-		MultipleMoveSelectionResult,
+		GUIGame, GUIMove, MultipleMoveSelectionResult,
 		game_state_manager::GameStateManager,
 		input_handler::{BoardInputHandler, InputHandler, MoveResult},
 		options_panel::ImportExportPanel,
@@ -19,7 +19,9 @@ use crate::{
 	gui::{
 		CardGame, CardInputHandler, CardMove,
 		card_view::{CardGameClick, CardGameDrawer, DefaultCardGameDrawer},
-	}, playing_cards::DrawablePlayingCard, playing_cards32::PlayingCard32
+	},
+	playing_cards::DrawablePlayingCard,
+	playing_cards32::PlayingCard32,
 };
 
 #[derive(PartialEq, Copy, Clone)]
@@ -39,7 +41,7 @@ where
 	pub name: String,
 	pub(super) ai_engine_manager: EngineManager<G>,
 
-	pub game_drawer: Box<dyn CardGameDrawer<G, G::Card, Click = CardGameClick<G::Card>>>,
+	pub game_drawer: Box<dyn CardGameDrawer<G, G::Card>>,
 
 	pub input_handler: CardInputHandler<G>,
 	pub(super) game_state_manager: GameStateManager<G>,
@@ -82,7 +84,9 @@ where
 					.game_state_manager
 					.legal_moves()
 					.iter()
-					.filter(|m| m.click() == Some(click))
+					.filter(|m| {
+						m.click_sequence(self.game()) == self.input_handler.current_clicks().clone()
+					})
 					.cloned()
 					.collect();
 				match candidates.len() {
@@ -134,12 +138,10 @@ where
 					}
 				}
 
-				let moves = self.game_state_manager.legal_moves();
-				if moves.iter().all(|m| m.click().is_none()) {
-					match self.ask_select_between_multiple_moves(
-						ui.ctx(),
-						&moves.iter().cloned().collect(),
-					) {
+				//let moves = self.game_state_manager.legal_moves();
+				//if moves.iter().all(|m| m.click().is_none()) {
+				if let Some(candidates) = self.input_handler.pending_moves().clone() {
+					match self.ask_select_between_multiple_moves(ui.ctx(), candidates) {
 						MultipleMoveSelectionResult::Pending => {}
 						MultipleMoveSelectionResult::Cancelled => {
 							//self.input_handler
@@ -156,10 +158,12 @@ where
 		});
 	}
 }
-impl<G: CardGame + Clone + Sync + Send + 'static> CardApp<G>
+impl<G> CardApp<G>
 where
+	G: CardGame + Clone + Sync + Send + 'static,
+	G::Click: Sized,
 	G::M: CardMove<G> + Send,
-	<G as CardGame>::Card: DrawablePlayingCard,
+	G::Card: DrawablePlayingCard,
 {
 	//pub fn new(game: G, ai: Box<dyn AIEngine<G>>) -> Self {
 	pub fn new(game: G, internals_ai: Vec<Box<dyn AIEngineProvider<G>>>) -> Self {

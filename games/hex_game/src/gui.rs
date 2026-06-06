@@ -279,7 +279,6 @@ const SQRT_3: f32 = 1.7320508;
 #[derive(Default)]
 struct HexBoardDrawer(DefaultBoardDrawer<Hex>);
 impl GameDrawer<Hex> for HexBoardDrawer {
-	type Click = u16;
 
 	fn get_style(&self) -> &BoardStyle {
 		self.0.get_style()

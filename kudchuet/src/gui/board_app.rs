@@ -23,7 +23,7 @@ where
 	pub name: String,
 	pub(super) ai_engine_manager: EngineManager<G>,
 
-	pub game_drawer: Box<dyn BoardDrawer<G, Click = u16>>,
+	pub game_drawer: Box<dyn BoardDrawer<G>>,
 
 	pub input_handler: BoardInputHandler<G>,
 

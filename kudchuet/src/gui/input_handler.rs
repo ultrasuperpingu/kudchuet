@@ -1,6 +1,6 @@
 use crate::ai::move_search::interface::Game;
 
-use crate::gui::board_drawer::{BoardDrawer, GameDrawer};
+use crate::gui::board_drawer::BoardDrawer;
 use crate::gui::game_state_manager::GameStateManager;
 use crate::gui::{BoardGame, BoardMove, GUIGame};
 use crate::gui::GUIMove;
@@ -35,7 +35,7 @@ pub trait InputHandler<G: GUIGame> {
 		G: BoardGame,
 		G::M: BoardMove<G>;*/
 }
-
+#[derive(Debug)]
 pub enum MoveResult<G: Game, Click> {
 	Invalid,
 	Incomplete {
@@ -118,7 +118,7 @@ where
 		&mut self,
 		click_pos: u16,
 		game_manager: &GameStateManager<G>,
-		drawer: &mut Box<dyn BoardDrawer<G, Click = u16>>,
+		drawer: &mut Box<dyn BoardDrawer<G>>,
 	) -> MoveResult<G, u16>
 	where
 		G: BoardGame,
@@ -171,7 +171,7 @@ where
 
 	pub fn reset(
 		&mut self,
-		drawer: &mut Box<dyn BoardDrawer<G, Click = u16>>,
+		drawer: &mut Box<dyn BoardDrawer<G>>,
 		game_manager: &GameStateManager<G>,
 	) where
 		G: BoardGame,
