@@ -21,6 +21,7 @@ members = [
 	"games/hex_game",
 	"games/neutron",
 	"games/reversi",
+	"games/taquin",
 	"games/teeko",
 	"games/three_musketeers",
 	"games/yote",

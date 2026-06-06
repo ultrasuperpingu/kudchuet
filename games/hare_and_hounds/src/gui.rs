@@ -4,7 +4,7 @@ use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::ai::move_search::perfect_solver::PerfectSolver;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::{GameOutcome, Player};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, GUIMove};
 use kudchuet::gui::shapes::{Shape, StrokeData};
 
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -15,6 +15,11 @@ use super::game::HareAndHoundsEval;
 
 use super::rules::{Cell, Move, HareAndHounds};
 
+impl GUIMove<HareAndHounds> for Move {
+	fn click_sequence(&self, _state: &HareAndHounds) -> Vec<<HareAndHounds as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<HareAndHounds> for Move {
 	fn from(&self) -> Option<u16> {
 		Some(self.from as u16)
@@ -35,6 +40,7 @@ impl EGUIPieceType for Cell {
 }
 
 impl GUIGame for HareAndHounds {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	

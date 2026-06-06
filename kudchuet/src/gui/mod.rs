@@ -142,6 +142,7 @@ pub trait EGUIPieceType {
 pub struct DefaultSettings;
 pub trait GUIGame: Game<S = Self> + Default + Clone // Self::M: BoardMove<Self> + Copy,
 {
+	type Click: Copy + Eq;
 	type Settings: Default + EguiInspect;
 	type Style: Default + EguiInspect + Serialize + DeserializeOwned;
 	/// Create a Board game from the provided settings.
@@ -221,8 +222,83 @@ pub trait GUIGame: Game<S = Self> + Default + Clone // Self::M: BoardMove<Self> 
 		None
 	}
 }
+pub trait GUIMove<G: GUIGame>: Debug + Copy {
 
-pub trait BoardGame: GUIGame<S = Self, Style = BoardStyle> + Default + Clone
+	fn click_sequence(&self, state: &G) -> Vec<G::Click>;
+
+	fn played_highlights(&self, state: &G) -> Vec<G::Click> {
+		self.click_sequence(state)
+	}
+
+	fn compute_intermediate_state(&self, _state: &G, _clicks: &[G::Click]) -> Option<G> {
+		None
+	}
+
+	fn matches_prefix(&self, state: &G, _legals: &[G::M], clicks: &[G::Click]) -> bool {
+		let seq = self.click_sequence(state);
+		clicks.len() <= seq.len() && &seq[..clicks.len()] == clicks
+	}
+
+	fn handle_clicks_interaction(
+		state: &G,
+		legals: &[G::M],
+		clicks: &[G::Click],
+	) -> MoveResult<G, G::Click>
+	where
+		G::M: GUIMove<G>,
+	{
+		let candidates: Vec<G::M> = legals
+			.iter()
+			.filter(|&&m| m.matches_prefix(state, legals, clicks))
+			.copied()
+			.collect();
+
+		if candidates.is_empty() {
+			return MoveResult::Invalid;
+		}
+
+		let n = clicks.len();
+
+		// Possible next clicks
+		let mut next_possible_clicks = Vec::new();
+
+		for m in &candidates {
+			let seq = m.click_sequence(state);
+			if seq.len() > n {
+				let idx = seq[n];
+				if !next_possible_clicks.contains(&idx) {
+					next_possible_clicks.push(idx);
+				}
+			}
+		}
+
+		if next_possible_clicks.is_empty() {
+			let exact_matches: Vec<G::M> = candidates
+				.iter()
+				.filter(|m| m.click_sequence(state).len() == n)
+				.copied()
+				.collect();
+
+			return match exact_matches.len() {
+				0 => MoveResult::Invalid,
+				1 => MoveResult::Created {
+					mv: exact_matches[0],
+					highlights_played: clicks.to_owned(),
+				},
+				_ => MoveResult::ChoiceRequired {
+					candidates: exact_matches,
+				},
+			};
+		}
+
+		MoveResult::Incomplete {
+			selected: Some(clicks[n - 1]),
+			highlights: next_possible_clicks,
+			matching_moves: candidates, //intermediate_state: Self::compute_intermediate_state(state, legals, clicks),
+		}
+	}
+}
+pub trait BoardGame: GUIGame<S = Self, Style = BoardStyle, Click = u16> + Default + Clone
 where
 	Self::M: BoardMove<Self> + Copy,
 {
@@ -289,22 +365,23 @@ where
 
 	fn index_from_coords(x: u8, y: u8) -> u16;
 	fn coords_from_index(index: u16) -> (u8, u8);
-	
+
 	//fn play_random(&mut self) {}
 }
 
-pub trait BoardMove<G: Game>: Debug + Sized + Copy {
-	fn from(&self) -> Option<u16> {
+pub trait BoardMove<G: GUIGame<Click = u16>>: Debug + Sized + Copy + GUIMove<G>
+{
+	fn from(&self) -> Option<G::Click> {
 		None
 	}
 
 	fn to(&self) -> u16 {
 		0
 	}
-	fn played_highlights(&self, state: &G) -> Vec<u16> {
+	/*fn played_highlights(&self, state: &G) -> Vec<G::Click> {
 		self.click_sequence(state)
 	}
-	fn handle_clicks_interaction(state: &G, legals: &[G::M], clicks: &[u16]) -> MoveResult<G>
+	fn handle_clicks_interaction(state: &G, legals: &[G::M], clicks: &[u16]) -> MoveResult<G, Self::Click>
 	where
 		G: BoardGame,
 		G::M: BoardMove<G>,
@@ -378,12 +455,29 @@ pub trait BoardMove<G: Game>: Debug + Sized + Copy {
 	fn matches_prefix(&self, state: &G, _legals: &[G::M], clicks: &[u16]) -> bool {
 		let seq = self.click_sequence(state);
 		clicks.len() <= seq.len() && &seq[..clicks.len()] == clicks
-	}
+	}*/
 	fn to_uci(&self) -> Option<String> {
 		None
 	}
 	fn from_uci(_m_str: &str) -> Result<Self, String> {
 		Err("Not supported".into())
+	}
+	/*
+	/// Get the click sequence needed to generate this move
+	/// By default, first click is from, second to for a piece move, otherwise, it's "to" for a drop.
+	fn click_sequence(&self, _state: &G) -> Vec<G::Click> {
+		if let Some(f) = self.from() {
+			vec![f, self.to()]
+		} else {
+			vec![self.to()]
+		}
+	}*/
+	fn click_sequence_board_move_default(&self, _state: &G) -> Vec<G::Click> {
+		if let Some(f) = self.from() {
+			vec![f, self.to()]
+		} else {
+			vec![self.to()]
+		}
 	}
 }
 

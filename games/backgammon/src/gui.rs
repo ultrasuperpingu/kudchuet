@@ -6,7 +6,7 @@ use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 use kudchuet::gui::{
-	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame,
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame, GUIMove,
 };
 use kudchuet::Player;
 
@@ -58,7 +58,7 @@ impl EGUIPieceType for Piece {
 		}
 	}
 }
-impl BoardMove<Backgammon> for Move {
+impl GUIMove<Backgammon> for Move {
 	fn click_sequence(&self, _state: &Backgammon) -> Vec<u16> {
 		let mut seq = Vec::new();
 		if self.is_random() {
@@ -89,6 +89,9 @@ impl BoardMove<Backgammon> for Move {
 
 		Some(sim)
 	}
+}
+impl BoardMove<Backgammon> for Move {
+	
 }
 
 impl Backgammon {
@@ -139,6 +142,7 @@ fn col(x: u8) -> u8 {
 	}
 }
 impl GUIGame for Backgammon {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 

@@ -4,7 +4,7 @@ use crate::game::AwaleMaterialEval;
 use kudchuet::{
 	Player, PlayerType,
 	ai::{AIEngine, AIEngineProvider, MoveSearcherBuilder},
-	gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, GUIGame},
+	gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, GUIGame, GUIMove},
 };
 
 use super::rules::Awale;
@@ -28,6 +28,7 @@ impl EGUIPieceType for Place {
 	}
 }
 impl GUIGame for Awale {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 
@@ -35,6 +36,7 @@ impl GUIGame for Awale {
 		BoardStyle::default()
 	}
 }
+
 impl BoardGame for Awale {
 	type PieceType = Place;
 
@@ -55,6 +57,11 @@ impl BoardGame for Awale {
 	}
 
 	fn coords_from_index(_index: u16) -> (u8, u8) {
+		todo!()
+	}
+}
+impl GUIMove<Awale> for usize {
+	fn click_sequence(&self, _state: &Awale) -> Vec<<Awale as GUIGame>::Click> {
 		todo!()
 	}
 }

@@ -4,7 +4,7 @@ use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::shapes::Shape;
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, GUIGame};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, EGUIPieceType, GUIGame, GUIMove};
 use kudchuet::gui::{CheckerBoardMod, CoordMod};
 
 use super::game::ReversiEval;
@@ -12,6 +12,11 @@ use crate::bitboard::Bitboard8x8;
 use crate::rules::{Cell, Reversi};
 use kudchuet::gui::board_app::GenericBoardApp;
 
+impl GUIMove<Reversi> for (u8, u8) {
+	fn click_sequence(&self, _state: &Reversi) -> Vec<<Reversi as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<Reversi> for (u8, u8) {
 	fn from(&self) -> Option<u16> {
 		None
@@ -43,6 +48,7 @@ impl EGUIPieceType for Cell {
 }
 
 impl GUIGame for Reversi {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {

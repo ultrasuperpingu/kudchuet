@@ -1,7 +1,7 @@
 use eframe::egui;
 use egui::{Color32, Stroke};
 use kudchuet::ai::move_search::UniformRolloutPolicy;
-use kudchuet::gui::GUIGame;
+use kudchuet::gui::{GUIGame, GUIMove};
 
 use crate::game::GomokuEvalDumb;
 use crate::sgf::{parse_sgf, serialize_sgf};
@@ -23,6 +23,11 @@ use kudchuet::gui::{
 
 use kudchuet::gui::board_app::GenericBoardApp;
 
+impl GUIMove<Gomoku> for Move {
+	fn click_sequence(&self, _state: &Gomoku) -> Vec<<Gomoku as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<Gomoku> for Move {
 	fn from(&self) -> Option<u16> {
 		None
@@ -53,6 +58,7 @@ impl EGUIPieceType for Cell {
 }
 
 impl GUIGame for Gomoku {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {

@@ -69,6 +69,11 @@ pub const fn fibo_hash_64(x: u64) -> u64 {
 	//h.swap_bytes()
 	h ^ (h >> 32)
 }
+pub const fn inv_fibo_hash_64(mut h: u64) -> u64 {
+    const K_INV: u64 = 17428512612931826493;
+	h ^= h >> 32;
+    h.wrapping_mul(K_INV)
+}
 use std::hash::{BuildHasher, Hasher};
 
 /// A hasher that performs **no hashing at all** for `u64` keys.

@@ -5,7 +5,7 @@ use egui::Color32;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::input_handler::MoveResult;
 use kudchuet::gui::shapes::Shape;
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame, GUIMove};
 
 use crate::{bitboard::Bitboard6x5, rules::YotePlayer};
 use kudchuet::gui::board_app::GenericBoardApp;
@@ -14,6 +14,7 @@ use super::game::YoteMaterialEval;
 use super::rules::{Move, Yote};
 
 impl GUIGame for Yote {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	
@@ -32,12 +33,16 @@ impl GUIGame for Yote {
 		}
 	}
 }
-impl BoardMove<Yote> for Move {
+
+impl GUIMove<Yote> for Move {
+	fn click_sequence(&self, _state: &Yote) -> Vec<<Yote as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
 	fn handle_clicks_interaction(
 		_state: &Yote,
 		legals: &[Move],
 		clicks: &[u16],
-	) -> MoveResult<Yote> {
+	) -> MoveResult<Yote, u16> {
 		if clicks.len() == 1 {
 			let cindex = clicks[0] as u8;
 			let filtered = legals.iter().filter(|m| match m {
@@ -156,6 +161,9 @@ impl BoardMove<Yote> for Move {
 		}
 		MoveResult::Invalid
 	}
+}
+impl BoardMove<Yote> for Move {
+	
 }
 impl EGUIPieceType for YotePlayer {
 	fn shape(&self) -> Shape {

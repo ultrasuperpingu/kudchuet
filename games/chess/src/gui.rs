@@ -4,13 +4,18 @@ use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, TextData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, DefaultSettings, EGUIPieceType, GUIGame};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, DefaultSettings, EGUIPieceType, GUIGame, GUIMove};
 
 use crate::bitboard::Bitboard8x8;
 use crate::mychess::ChessBoard;
 use crate::mychess::{ChessMaterialEval, ChessPosEval};
 use crate::rules::{Color, Move, Piece, Square};
 
+impl GUIMove<ChessBoard> for Move {
+	fn click_sequence(&self, _state: &ChessBoard) -> Vec<<ChessBoard as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<ChessBoard> for Move {
 	fn from(&self) -> Option<u16> {
 		Some(self.from.0 as u16)
@@ -186,6 +191,7 @@ pub enum ChessPiece {
 	BlackKing,
 }
 impl GUIGame for ChessBoard {
+	type Click = u16;
 	type Settings = DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {

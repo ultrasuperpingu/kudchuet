@@ -6,7 +6,7 @@ use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame, GUIMove};
 use kudchuet::Player;
 
 use crate::game::{ClobberDumbEval, ClobberSimpleEval};
@@ -41,6 +41,11 @@ impl EGUIPieceType for Piece {
 		}
 	}
 }
+impl GUIMove<Clobber> for Move {
+	fn click_sequence(&self, _state: &Clobber) -> Vec<<Clobber as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<Clobber> for Move {
 	fn to(&self) -> u16 {
 		self.to as u16
@@ -51,6 +56,7 @@ impl BoardMove<Clobber> for Move {
 }
 
 impl GUIGame for Clobber {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {

@@ -1,9 +1,9 @@
 use egui::include_image;
 
-use crate::{playing_cards32::PlayingCard32, playing_cards54::PlayingCard54};
+use crate::{playing_cards::DrawablePlayingCard, playing_cards32::PlayingCard32, playing_cards54::PlayingCard54};
 
-impl PlayingCard32 {
-	pub fn card_texture(&self) -> egui::ImageSource<'_> {
+impl DrawablePlayingCard for PlayingCard32 {
+	fn card_texture(&self) -> egui::ImageSource<'_> {
 		match self {
 			PlayingCard32::SevenOfSpades =>   include_image!("../../cards/07_of_spades.svg"),
 			PlayingCard32::EightOfSpades =>   include_image!("../../cards/08_of_spades.svg"),
@@ -41,8 +41,8 @@ impl PlayingCard32 {
 	}
 }
 
-impl PlayingCard54 {
-	pub fn card_texture(&self) -> egui::ImageSource<'_> {
+impl DrawablePlayingCard for PlayingCard54 {
+	fn card_texture(&self) -> egui::ImageSource<'_> {
 		match self {
 			PlayingCard54::TwoOfSpades =>     include_image!("../../cards/02_of_spades.svg"),
 			PlayingCard54::ThreeOfSpades =>   include_image!("../../cards/03_of_spades.svg"),

@@ -239,6 +239,11 @@ impl IterativeOptions {
 		self.verbose = true;
 		self
 	}
+	/// Set shuffle moves.
+	pub fn with_shuffle_moves(mut self, shuffle: bool) -> Self {
+		self.shuffle_moves = shuffle;
+		self
+	}
 }
 
 #[derive(Default)]

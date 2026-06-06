@@ -95,11 +95,12 @@ where
 		self.deadline = Instant::now() + duration;
 	}
 	#[cfg(not(target_arch = "wasm32"))]
-	fn reset_timeout(&mut self, duration: Duration) {
+	fn reset_timeout(&mut self, duration: Duration) -> Arc<()>{
 		if duration == Duration::new(0, 0) {
 			self.timeout.store(false, Ordering::Relaxed);
+			Arc::new(())
 		} else {
-			timeout_signal(duration, &self.timeout);
+			timeout_signal(duration, &self.timeout)
 		}
 	}
 
@@ -599,7 +600,7 @@ where
 		self.actual_depth = 0;
 		let start_time = Instant::now();
 		// Start timer if configured.
-		self.minimaxer.reset_timeout(self.max_time);
+		let _cancel_on_drop = self.minimaxer.reset_timeout(self.max_time);
 
 		let root_hash = E::G::get_hash(s);
 		let mut s_clone = s.clone();

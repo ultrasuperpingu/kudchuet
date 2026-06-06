@@ -172,6 +172,9 @@ impl<G: Game, Data> Node<G, Data> {
 	pub fn outcome(&self) -> ProofOutcome {
 		self.outcome
 	}
+	pub fn untried_moves(&self) -> &Vec<G::M> {
+		&self.untried_moves
+	}
 }
 #[derive(Debug, Clone)]
 pub struct Edge<M> {
@@ -401,7 +404,7 @@ where
 		//GameOutcome::OnGoing
 	}
 
-	pub(crate) fn expand_single_child(&mut self, node_id: usize, m: G::M) -> (usize, ProofOutcome) {
+	pub fn expand_single_child(&mut self, node_id: usize, m: G::M) -> (usize, ProofOutcome) {
 		let state = self.get_node_state_mut(node_id).unwrap();
 		let new_state = AppliedMove::<G>::applied_clone(state, m);
 		let new_state_hash = G::get_hash(&new_state);

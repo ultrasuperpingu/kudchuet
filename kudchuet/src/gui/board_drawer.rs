@@ -53,7 +53,7 @@ pub trait BoardDrawer<G: BoardGame>: GameDrawer<G>
 where
 	G::M: BoardMove<G>,
 {
-	fn draw_board(&self, ui: &mut egui::Ui, game: &G, can_interact: bool) -> Option<(u8, u8)> {
+	fn draw_board(&self, ui: &mut egui::Ui, game: &G, can_interact: bool) -> Option<u16> {
 		let mut click = None;
 		let w = game.width();
 		let h = game.height();
@@ -117,7 +117,7 @@ where
 								index,
 								G::coords_from_index(index)
 							);
-							click = Some((x_coord, y_coord));
+							click = Some(index);
 						}
 					}
 				}
@@ -440,7 +440,7 @@ impl<G: BoardGame> GameDrawer<G> for DefaultBoardDrawer<G>
 where
 	G::M : BoardMove<G>
 {
-	type Click = (u8,u8);
+	type Click = u16;
 
 	fn get_style(&self) -> &G::Style {
 		&self.style
@@ -460,7 +460,7 @@ where
 		game: &G,
 		//_input: &Box<dyn InputHandler<G>>,
 		can_interact: bool,
-	) -> Option<(u8,u8)> {
+	) -> Option<Self::Click> {
 		self.draw_board(ui, game, can_interact)
 	}
 

@@ -8,7 +8,7 @@ use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, GameDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{
-	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame,
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame, GUIMove,
 };
 use kudchuet::Player;
 
@@ -51,6 +51,11 @@ impl EGUIPieceType for Piece {
 		}
 	}
 }
+impl GUIMove<Hex> for Move {
+	fn click_sequence(&self, _state: &Hex) -> Vec<<Hex as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<Hex> for Move {
 	fn to(&self) -> u16 {
 		match self {
@@ -61,6 +66,7 @@ impl BoardMove<Hex> for Move {
 }
 
 impl GUIGame for Hex {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {
@@ -273,7 +279,7 @@ const SQRT_3: f32 = 1.7320508;
 #[derive(Default)]
 struct HexBoardDrawer(DefaultBoardDrawer<Hex>);
 impl GameDrawer<Hex> for HexBoardDrawer {
-	type Click = (u8, u8);
+	type Click = u16;
 
 	fn get_style(&self) -> &BoardStyle {
 		self.0.get_style()
@@ -296,7 +302,7 @@ impl GameDrawer<Hex> for HexBoardDrawer {
 		game: &Hex,
 		//input: &Box<dyn InputHandler<G>>,
 		can_interact: bool,
-	) -> Option<Self::Click> {
+	) -> Option<u16> {
 		self.draw_board(ui, game, can_interact)
 	}
 }

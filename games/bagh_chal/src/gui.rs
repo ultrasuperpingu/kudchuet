@@ -8,10 +8,15 @@ use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, GUIMove};
 
 use crate::rules::{BaghChal, Move};
 
+impl GUIMove<BaghChal> for Move {
+	fn click_sequence(&self, _state: &BaghChal) -> Vec<<BaghChal as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<BaghChal> for Move {
 	fn from(&self) -> Option<u16> {
 		self.from.map(|f| f as u16)
@@ -58,6 +63,7 @@ impl EGUIPieceType for BaghChalPiece {
 	}
 }
 impl GUIGame for BaghChal {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 

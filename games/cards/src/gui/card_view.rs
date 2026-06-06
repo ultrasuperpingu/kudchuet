@@ -1,13 +1,15 @@
-use eframe::egui::{self, Color32, Pos2, Rect, include_image, pos2};
-use egui::{Image, vec2};
-use kudchuet::{Player, ai::move_search::Game, gui::board_drawer::GameDrawer};
+use core::f32;
+
+use eframe::egui::{self, Color32, Pos2, Rect, include_image};
+use egui::{Image, pos2, vec2};
+use kudchuet::{ai::move_search::Game, gui::board_drawer::GameDrawer};
 
 use crate::{
 	gui::{CardGame, CardMove},
-	playing_cards32::PlayingCard32,
-	unordered_card_sets32::UnorderedCardSet32,
+	ordered_card_set::OrderedCardSet,
+	playing_cards::{CardSet, DrawablePlayingCard, PlayingCard},
 };
-pub trait CardGameDrawer<G: CardGame>: GameDrawer<G>
+pub trait CardGameDrawer<G: CardGame<Card = C>, C: PlayingCard>: GameDrawer<G>
 where
 	<G as Game>::M: CardMove<G>,
 {
@@ -20,30 +22,44 @@ where
 	) -> Option<G::M>;
 
 	fn full_reset(&mut self);*/
+	fn draw_back_cards(
+		&self,
+		ui: &mut egui::Ui,
+		pos: Pos2,
+		size: egui::Vec2,
+		rotation: f32,
+	) -> egui::Response;
+	fn draw_card(
+		&self,
+		ui: &mut egui::Ui,
+		card: C,
+		pos: Pos2,
+		size: egui::Vec2,
+		rotation: f32,
+	) -> egui::Response;
 }
-pub struct CardVisual {
-	pub card: PlayingCard32,
-	pub pos: Pos2,
-	pub rotation: f32,
-	pub scale: f32,
-}
-pub struct PlayerLayout {
-	pub rect: Rect,
-	pub rotation: f32,
-}
-#[derive(Clone, Default)]
-pub struct DefaultCardGameDrawer<G: CardGame>
+#[derive(Clone)]
+pub struct DefaultCardGameDrawer<G: CardGame<Card = C>, C: DrawablePlayingCard>
 where
 	G::M: CardMove<G> + Copy,
 {
 	style: G::Style,
 }
-
-impl<G: CardGame> GameDrawer<G> for DefaultCardGameDrawer<G>
+impl<G: CardGame<Card = C>, C: DrawablePlayingCard> Default for DefaultCardGameDrawer<G, C>
+where
+	G::M: CardMove<G> + Copy,
+{
+	fn default() -> Self {
+		Self {
+			style: Default::default(),
+		}
+	}
+}
+impl<G: CardGame<Card = C>, C: DrawablePlayingCard> GameDrawer<G> for DefaultCardGameDrawer<G, C>
 where
 	<G as Game>::M: CardMove<G>,
 {
-	type Click = PlayingCard32;
+	type Click = CardGameClick<C>;
 
 	fn draw(
 		&mut self,
@@ -52,7 +68,6 @@ where
 		//input: &Box<dyn InputHandler<G>>,
 		can_interact: bool,
 	) -> Option<Self::Click> {
-		//todo!()
 		self.draw_board(ui, game, can_interact)
 	}
 
@@ -70,90 +85,13 @@ where
 		self.style = style;
 	}
 }
-impl<G: CardGame> CardGameDrawer<G> for DefaultCardGameDrawer<G> where <G as Game>::M: CardMove<G> {}
-impl<G: CardGame> DefaultCardGameDrawer<G>
+impl<G: CardGame<Card = C>, C: DrawablePlayingCard> CardGameDrawer<G, C>
+	for DefaultCardGameDrawer<G, C>
 where
 	<G as Game>::M: CardMove<G>,
 {
-	pub fn draw_board(
-		&mut self,
-		ui: &mut egui::Ui,
-		game: &G,
-		can_interact: bool,
-	) -> Option<PlayingCard32> {
-		let available = ui.available_rect_before_wrap();
-
-		let table_rect = available.shrink(20.0);
-
-		ui.painter()
-			.rect_filled(table_rect, 16.0, Color32::from_rgb(20, 90, 20));
-
-		self.draw_center(ui, game, table_rect);
-		let layout = TableLayout::new(table_rect, G::nb_players(game) as usize);
-
-		//self.draw_hand(ui, game, can_interact, table_rect)
-		for i in 0..G::nb_players(game) {
-			if i == game.current_player().0 {
-				continue;
-			}
-			self.draw_player(
-				ui,
-				game.player_hand_cards(Player(i)),
-				layout.player_areas[i as usize].rect,
-				layout.player_areas[i as usize].rotation,
-				false,
-				can_interact,
-			);
-		}
-		let p = &layout.player_areas[game.current_player().0 as usize];
-
-		self.draw_player(
-			ui,
-			game.player_hand_cards(game.current_player()),
-			p.rect,
-			p.rotation,
-			true,
-			can_interact,
-		)
-	}
-
-	fn draw_player(
-		&mut self,
-		ui: &mut egui::Ui,
-		cards: UnorderedCardSet32,
-		area: Rect,
-		rotation: f32,
-		face_up: bool,
-		interactive: bool,
-	) -> Option<PlayingCard32> {
-		let mut clicked = None;
-
-		let card_size = vec2(80.0, 120.0);
-		let spacing = 45.0;
-		//let total_width = (cards.len().saturating_sub(1) as f32) * spacing + card_size.x;
-		let spread = vec2(rotation.cos(), rotation.sin()) * spacing;
-		let start = area.center() - spread * ((cards.len().saturating_sub(1) as f32) * 0.5);
-
-		for (i, card) in cards.iter().enumerate() {
-			let center = start + spread * i as f32;
-
-			let pos = center - card_size * 0.5;
-
-			let response = if face_up {
-				self.draw_card(ui, card, pos, card_size, rotation)
-			} else {
-				self.draw_back_cards(ui, pos, card_size, rotation)
-			};
-
-			if interactive && response.clicked() {
-				clicked = Some(card);
-			}
-		}
-
-		clicked
-	}
-	pub fn draw_back_cards(
-		&mut self,
+	fn draw_back_cards(
+		&self,
 		ui: &mut egui::Ui,
 		pos: Pos2,
 		size: egui::Vec2,
@@ -171,10 +109,10 @@ where
 		response
 	}
 
-	pub fn draw_card(
+	fn draw_card(
 		&self,
 		ui: &mut egui::Ui,
-		card: PlayingCard32,
+		card: C,
 		pos: Pos2,
 		size: egui::Vec2,
 		rotation: f32,
@@ -188,105 +126,193 @@ where
 
 		response
 	}
-	fn draw_center(&self, ui: &mut egui::Ui, game: &G, table: Rect) {
-		let center = table.center();
-		let card_size = egui::vec2(50.0, 75.0);
-		let radius = 120.0;
-		if game.draw_revealed_cards() {
-			let spacing = 70.0;
-			let nb_cards = game.revealed_cards().len() as f32;
-			for (i, card) in game.revealed_cards().into_iter().enumerate() {
-				let x = center.x + (i as f32 - (nb_cards - 1.0) / 2.0) * spacing;
-				let pos = pos2(x - card_size.x * 0.5, center.y - card_size.y * 0.5);
-				self.draw_card(ui, card, pos, card_size, 0.0);
-			}
+}
+impl<G: CardGame<Card = C>, C: DrawablePlayingCard> DefaultCardGameDrawer<G, C>
+where
+	<G as Game>::M: CardMove<G>,
+{
+	pub fn draw_board(
+		&mut self,
+		ui: &mut egui::Ui,
+		game: &G,
+		can_interact: bool,
+	) -> Option<CardGameClick<C>> {
+		let available = ui.available_rect_before_wrap();
+
+		let table_rect = available.shrink(20.0);
+
+		ui.painter()
+			.rect_filled(table_rect, 16.0, Color32::from_rgb(20, 90, 20));
+
+		let board = game.build_board();
+		for l in board {
+			//println!("{:?}", l);
+			let resp = l.draw(ui, self, table_rect);
 		}
+		None
+	}
+}
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub enum CardGameClick<C: PlayingCard> {
+	Card(C),
+	CardZone(u8),
+}
+#[derive(Debug, PartialEq)]
+pub enum CardSetLayout {
+	Stack,
+	Vertical,
+	Horizontal,
+	Circle { start_angle: f32 },
+	PlayersAround(u8),
+}
+#[derive(Debug, PartialEq)]
+pub struct CardZone<Set: CardSet<Card = C>, C: PlayingCard> {
+	pub set: Set,
+	pub layout: CardSetLayout,
+	pub rotation: f32,
+	pub origin: Pos2,
+	pub card_spacing: f32,
+	pub face_up: bool,
+}
+impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
+	pub fn draw<G: CardGame<Card = C>, Drawer: CardGameDrawer<G, C>>(
+		&self,
+		ui: &mut egui::Ui,
+		drawer: &Drawer,
+		rect: Rect,
+	) -> Option<CardGameClick<C>>
+	where
+		<G as Game>::M: CardMove<G>,
+		Set::Card: PlayingCard,
+		Set::Item: PlayingCard,
+	{
+		let size = vec2(80.0, 120.0);
+		let origin = pos2(
+			rect.min.x + self.origin.x * rect.width(),
+			rect.min.y + self.origin.y * rect.height(),
+		);
 
-		for i in 0..G::nb_players(game) {
-			let angle = match i {
-				2 => -std::f32::consts::FRAC_PI_2, // N
-				3 => 0.0,                          // E
-				0 => std::f32::consts::FRAC_PI_2,  // S
-				1 => std::f32::consts::PI,         // W
-				_ => continue,
-			};
+		match self.layout {
+			CardSetLayout::Stack => {
+				if let Some(card) = self.set.iter().last() {
+					let resp = if self.face_up {
+						drawer.draw_card(ui, card, origin, size, self.rotation)
+					} else {
+						drawer.draw_back_cards(ui, origin, size, self.rotation)
+					};
 
-			let card_center = pos2(
-				center.x + radius * angle.cos(),
-				center.y + radius * angle.sin(),
-			);
+					if resp.clicked() {
+						return Some(CardGameClick::Card(card));
+					}
+				}
 
-			let pos = pos2(
-				card_center.x - card_size.x * 0.5,
-				card_center.y - card_size.y * 0.5,
-			);
+				None
+			}
 
-			if let Some(card) = game.player_ply_card(Player(i)) {
-				self.draw_card(
-					ui,
-					card,
-					pos,
-					card_size,
-					angle + std::f32::consts::FRAC_PI_2,
-				);
+			CardSetLayout::Horizontal => {
+				for (i, card) in self.set.iter().enumerate() {
+					let pos = origin + vec2(i as f32 * self.card_spacing, 0.0);
+
+					let resp = if self.face_up {
+						drawer.draw_card(ui, card, pos, size, self.rotation)
+					} else {
+						drawer.draw_back_cards(ui, pos, size, self.rotation)
+					};
+
+					if resp.clicked() {
+						return Some(CardGameClick::Card(card));
+					}
+				}
+
+				None
+			}
+
+			CardSetLayout::Vertical => {
+				for (i, card) in self.set.iter().enumerate() {
+					let pos = origin + vec2(0.0, i as f32 * self.card_spacing);
+
+					let resp = if self.face_up {
+						drawer.draw_card(ui, card, pos, size, self.rotation)
+					} else {
+						drawer.draw_back_cards(ui, pos, size, self.rotation)
+					};
+
+					if resp.clicked() {
+						return Some(CardGameClick::Card(card));
+					}
+				}
+
+				None
+			}
+
+			CardSetLayout::Circle { start_angle } => {
+				let len = self.set.len();
+				let radius = 0.15 * rect.height();
+
+				for (i, card) in self.set.iter().enumerate() {
+					let angle = start_angle + i as f32 / len as f32 * f32::consts::TAU;
+
+					let pos = origin + vec2(angle.cos() * radius, angle.sin() * radius);
+
+					let resp = if self.face_up {
+						drawer.draw_card(ui, card, pos, size, self.rotation)
+					} else {
+						drawer.draw_back_cards(ui, pos, size, self.rotation)
+					};
+
+					if resp.clicked() {
+						return Some(CardGameClick::Card(card));
+					}
+				}
+
+				None
+			}
+
+			CardSetLayout::PlayersAround(nb_players) => {
+				let radius = 0.15 * rect.height();
+				let n = nb_players as f32;
+
+				for (i, card) in self.set.iter().enumerate() {
+					let angle = i as f32 / n * f32::consts::TAU;
+
+					let pos = origin + vec2(angle.cos() * radius, angle.sin() * radius);
+
+					let resp = if self.face_up {
+						drawer.draw_card(ui, card, pos, size, self.rotation)
+					} else {
+						drawer.draw_back_cards(ui, pos, size, self.rotation)
+					};
+
+					if resp.clicked() {
+						return Some(CardGameClick::Card(card));
+					}
+				}
+
+				None
 			}
 		}
 	}
-	/*fn draw_center(&self, ui: &mut egui::Ui, game: &G, table: Rect) {
-		let center = table.center();
-		let card_size = egui::vec2(50.0, 75.0);
-		let spacing = 70.0;
-		let nb_players = G::nb_players(game) as f32;
-
-		if game.draw_revealed_cards() {
-			for (i, card) in game.revealed_cards().into_iter().enumerate() {
-				let x = center.x + (i as f32 - (nb_players - 1.0) / 2.0) * spacing;
-				let pos = pos2(x - card_size.x * 0.5, center.y - card_size.y * 0.5);
-				self.draw_card(ui, card, pos, card_size, 0.0);
-			}
-		}
-
-		for i in 0..G::nb_players(game) {
-			if let Some(card) = game.player_ply_card(Player(i)) {
-				let x = center.x + (i as f32 - (nb_players - 1.0) / 2.0) * spacing;
-				let pos = pos2(x - card_size.x * 0.5, center.y - card_size.y * 0.5);
-				self.draw_card(ui, card, pos, card_size, 0.0);
-			}
-		}
-	}*/
 }
-pub struct TableLayout {
-	pub player_areas: Vec<PlayerLayout>,
+pub struct CardBoard<Set, C>
+where
+	Set: CardSet<Card = C>,
+	C: PlayingCard,
+{
+	pub zones: Vec<CardZone<Set, C>>,
 }
-impl TableLayout {
-	pub fn new(table: Rect, nb_players: usize) -> Self {
-		let mut player_areas = Vec::new();
-
-		let center = table.center();
-
-		let radius_x = table.width() * 0.40;
-		let radius_y = table.height() * 0.40;
-
-		let hand_size = vec2(400.0, 160.0);
-
-		for i in 0..nb_players {
-			let t = i as f32 / nb_players as f32;
-			let angle = std::f32::consts::TAU * t + std::f32::consts::FRAC_PI_2;
-
-			let x = center.x + angle.cos() * radius_x;
-			let y = center.y + angle.sin() * radius_y;
-
-			// rotation vers le centre
-			let dir = (center - pos2(x, y)).angle() + std::f32::consts::FRAC_PI_2;
-
-			let rect = Rect::from_center_size(pos2(x, y), hand_size);
-
-			player_areas.push(PlayerLayout {
-				rect,
-				rotation: dir,
-			});
+impl<Set, C> CardBoard<Set, C>
+where
+	Set: CardSet<Card = C>,
+	C: DrawablePlayingCard,
+{
+	pub fn draw<G, D>(&self, ui: &mut egui::Ui, drawer: &D, rect: Rect)
+	where
+		G: CardGame<Card = C>,
+		D: CardGameDrawer<G, C>,
+		<G as Game>::M: CardMove<G>,
+	{
+		for zone in &self.zones {
+			zone.draw(ui, drawer, rect);
 		}
-
-		Self { player_areas }
 	}
 }

@@ -13,6 +13,7 @@ use super::input_handler::{BoardInputHandler, MoveResult};
 use super::options_panel::ImportExportPanel;
 use super::{BoardGame, BoardMove};
 use super::{GameOutcome, Player};
+use crate::gui::GUIMove;
 
 //pub struct GenericBoardApp<G: GUIGame+Sync+Send, Drawer: GameDrawer<G>+Default>
 pub struct GenericBoardApp<G: BoardGame + Sync + Send>
@@ -22,7 +23,7 @@ where
 	pub name: String,
 	pub(super) ai_engine_manager: EngineManager<G>,
 
-	pub game_drawer: Box<dyn BoardDrawer<G, Click = (u8, u8)>>,
+	pub game_drawer: Box<dyn BoardDrawer<G, Click = u16>>,
 
 	pub input_handler: BoardInputHandler<G>,
 

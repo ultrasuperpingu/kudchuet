@@ -9,10 +9,10 @@ use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, GameDrawer, PieceDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType, GUIGame};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType, GUIGame, GUIMove};
 
-impl BoardMove<Abalone> for Move {
-	fn click_sequence(&self, _state: &Abalone) -> Vec<u16> {
+impl GUIMove<Abalone> for Move {
+	fn click_sequence(&self, _state: &Abalone) -> Vec<<Abalone as GUIGame>::Click> {
 		let mut clicks = vec![];
 		match self {
 			Move::Simple { from, dir } => {
@@ -44,6 +44,9 @@ impl BoardMove<Abalone> for Move {
 		}
 		clicks
 	}
+}
+impl BoardMove<Abalone> for Move {
+	
 	fn to_uci(&self) -> Option<String> {
 		Some(self.to_string())
 	}
@@ -72,6 +75,7 @@ impl EGUIPieceType for Cell {
 	}
 }
 impl GUIGame for Abalone {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {
@@ -152,7 +156,7 @@ impl BoardGame for Abalone {
 struct AbaloneBoardDrawer<G: BoardGame>(DefaultBoardDrawer<G>)
 where G::M: BoardMove<G>;
 impl GameDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
-	type Click = (u8, u8);
+	type Click = u16;
 
 	fn draw(
 			&mut self,
@@ -185,7 +189,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 		ui: &mut egui::Ui,
 		game: &Abalone,
 		can_interact: bool,
-	) -> Option<(u8, u8)> {
+	) -> Option<Self::Click> {
 		let available = ui.available_rect_before_wrap();
 		let painter = ui.painter_at(available);
 
@@ -260,7 +264,7 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 				.draw(ui.painter(), square.center(), size);
 		}
 		if let Some(h) = clicked_hex {
-			idx(h).map(BitboardAbalone::coords_from_index)
+			idx(h).map(|e| e as u16)
 		} else {
 			None
 		}

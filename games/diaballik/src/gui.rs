@@ -4,7 +4,9 @@ use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame};
+use kudchuet::gui::{
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame, GUIMove,
+};
 
 use crate::bitboard::Bitboard7x7;
 use crate::rules::Action;
@@ -13,8 +15,9 @@ use kudchuet::gui::board_app::GenericBoardApp;
 use super::game::DiaballikEvalMaterial;
 
 use super::rules::{Cell, Diaballik, Move};
-impl BoardMove<Diaballik> for Move {
-	fn click_sequence(&self, _state: &Diaballik) -> Vec<u16> {
+
+impl GUIMove<Diaballik> for Move {
+	fn click_sequence(&self, _state: &Diaballik) -> Vec<<Diaballik as GUIGame>::Click> {
 		let mut seq = Vec::new();
 		for action in self.0.iter().flatten() {
 			match action {
@@ -68,6 +71,7 @@ impl BoardMove<Diaballik> for Move {
 		Some(sim)
 	}
 }
+impl BoardMove<Diaballik> for Move {}
 impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
@@ -109,6 +113,7 @@ impl EGUIPieceType for Cell {
 }
 
 impl GUIGame for Diaballik {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn default_style() -> BoardStyle {

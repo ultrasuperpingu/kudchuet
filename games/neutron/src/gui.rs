@@ -7,18 +7,11 @@ use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, GUIMove};
 
 use super::game::NeutronDumbEval;
 
-impl BoardMove<Neutron> for Move {
-	fn from(&self) -> Option<u16> {
-		Some(self.pawn.0 as u16)
-	}
-	fn to(&self) -> u16 {
-		self.pawn.1 as u16
-	}
-
+impl GUIMove<Neutron> for Move {
 	fn click_sequence(&self, state: &Neutron) -> Vec<u16> {
 		match self.neutron {
 			None => vec![self.pawn.0 as u16, self.pawn.1 as u16],
@@ -45,6 +38,16 @@ impl BoardMove<Neutron> for Move {
 		None
 	}
 }
+impl BoardMove<Neutron> for Move {
+	fn from(&self) -> Option<u16> {
+		Some(self.pawn.0 as u16)
+	}
+	fn to(&self) -> u16 {
+		self.pawn.1 as u16
+	}
+
+	
+}
 impl EGUIPieceType for Piece {
 	fn shape(&self) -> Shape {
 		match self {
@@ -70,6 +73,7 @@ impl EGUIPieceType for Piece {
 	}
 }
 impl GUIGame for Neutron {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {

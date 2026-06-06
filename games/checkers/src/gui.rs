@@ -1,7 +1,7 @@
 use eframe::egui;
 use egui::{Color32, Stroke, StrokeKind};
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::GUIGame;
+use kudchuet::gui::{GUIGame, GUIMove};
 use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::shapes::Shape;
 use kudchuet::{
@@ -14,6 +14,11 @@ use kudchuet::{
 use crate::game::CheckersEval;
 use crate::rules::{Cell, Checkers10, Move};
 
+impl GUIMove<Checkers10> for Move {
+	fn click_sequence(&self, _state: &Checkers10) -> Vec<<Checkers10 as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<Checkers10> for Move {
 	fn from(&self) -> Option<u16> {
 		Some(self.from() as u16)
@@ -76,6 +81,7 @@ impl EGUIPieceType for Cell {
 }
 
 impl GUIGame for Checkers10 {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	
@@ -127,6 +133,7 @@ impl GUIGame for Checkers10 {
 		}
 	}
 }
+
 impl BoardGame for Checkers10 {
 	type PieceType = Cell;
 

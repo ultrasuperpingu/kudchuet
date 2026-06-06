@@ -18,9 +18,8 @@ use kudchuet::{
 use crate::{
 	gui::{
 		CardGame, CardInputHandler, CardMove,
-		card_view::{CardGameDrawer, DefaultCardGameDrawer},
-	},
-	playing_cards32::PlayingCard32,
+		card_view::{CardGameClick, CardGameDrawer, DefaultCardGameDrawer},
+	}, playing_cards::DrawablePlayingCard, playing_cards32::PlayingCard32
 };
 
 #[derive(PartialEq, Copy, Clone)]
@@ -40,7 +39,7 @@ where
 	pub name: String,
 	pub(super) ai_engine_manager: EngineManager<G>,
 
-	pub game_drawer: Box<dyn CardGameDrawer<G, Click = PlayingCard32>>,
+	pub game_drawer: Box<dyn CardGameDrawer<G, G::Card, Click = CardGameClick<G::Card>>>,
 
 	pub input_handler: CardInputHandler<G>,
 	pub(super) game_state_manager: GameStateManager<G>,
@@ -56,6 +55,7 @@ where
 impl<G: CardGame + Sync + Send + 'static> eframe::App for CardApp<G>
 where
 	G::M: CardMove<G> + Send,
+	<G as CardGame>::Card: DrawablePlayingCard,
 {
 	fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 		if !self.inited {
@@ -77,12 +77,12 @@ where
 				&self.game_to_draw().clone(),
 				!computer_playing || is_random_move,
 			) {
-				println!("{}", click);
+				println!("{:?}", click);
 				let candidates: Vec<_> = self
 					.game_state_manager
 					.legal_moves()
 					.iter()
-					.filter(|m| m.card() == Some(click))
+					.filter(|m| m.click() == Some(click))
 					.cloned()
 					.collect();
 				match candidates.len() {
@@ -135,7 +135,7 @@ where
 				}
 
 				let moves = self.game_state_manager.legal_moves();
-				if moves.iter().all(|m| m.card().is_none()) {
+				if moves.iter().all(|m| m.click().is_none()) {
 					match self.ask_select_between_multiple_moves(
 						ui.ctx(),
 						&moves.iter().cloned().collect(),
@@ -159,6 +159,7 @@ where
 impl<G: CardGame + Clone + Sync + Send + 'static> CardApp<G>
 where
 	G::M: CardMove<G> + Send,
+	<G as CardGame>::Card: DrawablePlayingCard,
 {
 	//pub fn new(game: G, ai: Box<dyn AIEngine<G>>) -> Self {
 	pub fn new(game: G, internals_ai: Vec<Box<dyn AIEngineProvider<G>>>) -> Self {
@@ -449,6 +450,7 @@ where
 impl<G: CardGame + Sync + Send + 'static> CardApp<G>
 where
 	<G as Game>::M: CardMove<G> + Send + 'static,
+	<G as CardGame>::Card: DrawablePlayingCard,
 {
 	fn run_ai_if_needed(&mut self, ui: &egui::Ui) {
 		if self.is_current_player_computer()

@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use crate::playing_cards::{CardSuit, PlayingCard};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -12,7 +13,7 @@ pub enum PlayingCard32 {
 	QueenOfSpades,
 	KingOfSpades,
 	AceOfSpades,
-	
+
 	SevenOfHearts,
 	EightOfHearts,
 	NineOfHearts,
@@ -21,7 +22,7 @@ pub enum PlayingCard32 {
 	QueenOfHearts,
 	KingOfHearts,
 	AceOfHearts,
-	
+
 	SevenOfDiamonds,
 	EightOfDiamonds,
 	NineOfDiamonds,
@@ -30,7 +31,7 @@ pub enum PlayingCard32 {
 	QueenOfDiamonds,
 	KingOfDiamonds,
 	AceOfDiamonds,
-	
+
 	SevenOfClubs,
 	EightOfClubs,
 	NineOfClubs,
@@ -45,14 +46,7 @@ impl TryFrom<u8> for PlayingCard32 {
 
 	#[inline]
 	fn try_from(v: u8) -> Result<Self, Self::Error> {
-		if v < 32 {
-			// SAFETY:
-			// repr(u8) guarantees discriminant layout
-			// and we checked bounds.
-			Ok(unsafe { std::mem::transmute(v) })
-		} else {
-			Err(())
-		}
+		Self::from_index(v).ok_or(())
 	}
 }
 impl std::fmt::Display for PlayingCard32 {
@@ -81,23 +75,82 @@ impl std::fmt::Display for PlayingCard32 {
 		write!(f, "{}{}", rank, suit)
 	}
 }
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
-pub enum Color {
-	Spades,
-	Hearts,
-	Diamonds,
-	Clubs
-}
 impl PlayingCard32 {
-	pub const fn color(self) -> Color {
+	pub const fn color(self) -> CardSuit {
 		let v = self as u8;
 
 		match v / 8 {
-			0 => Color::Spades,
-			1 => Color::Hearts,
-			2 => Color::Diamonds,
-			3 => Color::Clubs,
+			0 => CardSuit::Spades,
+			1 => CardSuit::Hearts,
+			2 => CardSuit::Diamonds,
+			3 => CardSuit::Clubs,
 			_ => unreachable!(),
 		}
+	}
+	pub const fn from_index(v: u8) -> Option<Self> {
+		if v < 32 {
+			// SAFETY:
+			// repr(u8) guarantees discriminant layout
+			// and we checked bounds.
+			Some(unsafe { std::mem::transmute(v) })
+		} else {
+			None
+		}
+	}
+}
+impl PlayingCard for PlayingCard32 {
+	const CARD_COUNT: u8 = 32;
+	const ALL: &'static [Self] = &[
+		PlayingCard32::SevenOfSpades,
+		PlayingCard32::EightOfSpades,
+		PlayingCard32::NineOfSpades,
+		PlayingCard32::TenOfSpades,
+		PlayingCard32::JackOfSpades,
+		PlayingCard32::QueenOfSpades,
+		PlayingCard32::KingOfSpades,
+		PlayingCard32::AceOfSpades,
+		PlayingCard32::SevenOfHearts,
+		PlayingCard32::EightOfHearts,
+		PlayingCard32::NineOfHearts,
+		PlayingCard32::TenOfHearts,
+		PlayingCard32::JackOfHearts,
+		PlayingCard32::QueenOfHearts,
+		PlayingCard32::KingOfHearts,
+		PlayingCard32::AceOfHearts,
+		PlayingCard32::SevenOfDiamonds,
+		PlayingCard32::EightOfDiamonds,
+		PlayingCard32::NineOfDiamonds,
+		PlayingCard32::TenOfDiamonds,
+		PlayingCard32::JackOfDiamonds,
+		PlayingCard32::QueenOfDiamonds,
+		PlayingCard32::KingOfDiamonds,
+		PlayingCard32::AceOfDiamonds,
+		PlayingCard32::SevenOfClubs,
+		PlayingCard32::EightOfClubs,
+		PlayingCard32::NineOfClubs,
+		PlayingCard32::TenOfClubs,
+		PlayingCard32::JackOfClubs,
+		PlayingCard32::QueenOfClubs,
+		PlayingCard32::KingOfClubs,
+		PlayingCard32::AceOfClubs,
+	];
+	type Color = CardSuit;
+
+	fn index(self) -> u8 {
+		self as u8
+	}
+	fn color(self) -> Self::Color {
+		self.color()
+	}
+	fn from_index(v: u8) -> Option<Self> {
+		/*if v < 32 {
+			// SAFETY:
+			// repr(u8) guarantees discriminant layout
+			// and we checked bounds.
+			Some(unsafe { std::mem::transmute(v) })
+		} else {
+			None
+		}*/
+		Self::from_index(v)
 	}
 }

@@ -2,7 +2,7 @@ use eframe::egui;
 use egui::Color32;
 use kudchuet::ai::move_search::{Game, MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::GUIGame;
+use kudchuet::gui::{GUIGame, GUIMove};
 
 use crate::bitboard::Bitboard5x5;
 use crate::game::ThreeMusketeersEvalSimple;
@@ -20,6 +20,7 @@ use kudchuet::gui::board_app::GenericBoardApp;
 //use super::{game::ThreeMusketeersEvalAdvance};
 
 impl GUIGame for ThreeMusketeers {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	
@@ -70,15 +71,15 @@ impl GUIGame for ThreeMusketeers {
 		}
 	}
 }
-impl BoardMove<ThreeMusketeers> for Move {
-	fn from(&self) -> Option<u16> {
-		Some(self.from as u16)
+impl GUIMove<ThreeMusketeers> for Move {
+	//TODO: check impl (same as default???)
+	fn click_sequence(&self, _state: &ThreeMusketeers) -> Vec<u16> {
+		if let Some(f) = self.from() {
+			vec![f, self.to()]
+		} else {
+			vec![self.to()]
+		}
 	}
-
-	fn to(&self) -> u16 {
-		self.to as u16
-	}
-
 	fn played_highlights(&self, state: &ThreeMusketeers) -> Vec<u16> {
 		self.click_sequence(state)
 	}
@@ -87,7 +88,7 @@ impl BoardMove<ThreeMusketeers> for Move {
 		state: &ThreeMusketeers,
 		legals: &[<ThreeMusketeers as Game>::M],
 		clicks: &[u16],
-	) -> kudchuet::gui::input_handler::MoveResult<ThreeMusketeers>
+	) -> kudchuet::gui::input_handler::MoveResult<ThreeMusketeers, u16>
 	where
 		ThreeMusketeers: BoardGame,
 		<ThreeMusketeers as Game>::M: BoardMove<ThreeMusketeers>,
@@ -147,14 +148,6 @@ impl BoardMove<ThreeMusketeers> for Move {
 		None
 	}
 
-	fn click_sequence(&self, _state: &ThreeMusketeers) -> Vec<u16> {
-		if let Some(f) = self.from() {
-			vec![f, self.to()]
-		} else {
-			vec![self.to()]
-		}
-	}
-
 	fn matches_prefix(
 		&self,
 		state: &ThreeMusketeers,
@@ -163,6 +156,15 @@ impl BoardMove<ThreeMusketeers> for Move {
 	) -> bool {
 		let seq = self.click_sequence(state);
 		clicks.len() <= seq.len() && &seq[..clicks.len()] == clicks
+	}
+}
+impl BoardMove<ThreeMusketeers> for Move {
+	fn from(&self) -> Option<u16> {
+		Some(self.from as u16)
+	}
+
+	fn to(&self) -> u16 {
+		self.to as u16
 	}
 
 	fn to_uci(&self) -> Option<String> {

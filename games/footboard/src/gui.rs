@@ -6,7 +6,7 @@ use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StripData, StrokeData, TextData};
 use kudchuet::gui::{
-	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame,
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame, GUIMove,
 };
 
 use crate::rules::Action;
@@ -16,7 +16,7 @@ use super::game::FootboardEvalDumb;
 
 use super::rules::{Cell, FootBoard, Move};
 
-impl BoardMove<FootBoard> for Move {
+impl GUIMove<FootBoard> for Move {
 	fn click_sequence(&self, _state: &FootBoard) -> Vec<u16> {
 		let mut seq = Vec::new();
 		for action in self.0.iter().flatten() {
@@ -92,6 +92,8 @@ impl BoardMove<FootBoard> for Move {
 		Some(sim)
 	}
 }
+
+impl BoardMove<FootBoard> for Move {}
 impl EGUIPieceType for Cell {
 	fn shape(&self) -> Shape {
 		match self {
@@ -233,6 +235,7 @@ impl EGUIPieceType for Cell {
 }
 
 impl GUIGame for FootBoard {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn default_style() -> BoardStyle {
@@ -271,7 +274,6 @@ impl BoardGame for FootBoard {
 	fn coords_from_index(i: u16) -> (u8, u8) {
 		Bitboard9x13::coords_from_index(i as usize)
 	}
-
 }
 
 struct FootboardSquareDrawer {

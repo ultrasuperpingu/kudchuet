@@ -10,9 +10,14 @@ use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{
-	BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, RowOffsetPattern,
+	BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, GUIMove, RowOffsetPattern
 };
 
+impl GUIMove<ChineseCheckers> for Move {
+	fn click_sequence(&self, _state: &ChineseCheckers) -> Vec<<ChineseCheckers as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<ChineseCheckers> for Move {
 	fn from(&self) -> Option<u16> {
 		Some(self.from as u16)
@@ -75,6 +80,7 @@ impl Default for ChineseCheckersSettings {
 	}
 }
 impl GUIGame for ChineseCheckers {
+	type Click = u16;
 	type Settings = ChineseCheckersSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn build_from_settings(settings: &Self::Settings) -> Self {

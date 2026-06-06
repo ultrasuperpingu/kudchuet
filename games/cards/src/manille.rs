@@ -1,6 +1,5 @@
 use crate::{
-	playing_cards32::{Color, PlayingCard32},
-	unordered_card_sets32::UnorderedCardSet32,
+	playing_cards::{CardSet, CardSuit}, playing_cards32::PlayingCard32, unordered_card_set::UnorderedCardSet32
 };
 #[derive(Clone, Debug, Hash)]
 pub struct Manille {
@@ -83,7 +82,7 @@ impl Manille {
 		let status = self.get_ply_status();
 		let set = match status {
 			PlyStatus::FirstToPlay => self.get_current_player_cards(),
-			PlyStatus::ColorPartnerLeads(color) => {
+			PlyStatus::CardSuitPartnerLeads(color) => {
 				let cards: UnorderedCardSet32 = self.get_current_player_cards();
 				let mut valid = cards.of_color(color);
 				//Don't need to cut
@@ -95,7 +94,7 @@ impl Manille {
 				}
 				valid
 			}
-			PlyStatus::ColorAdverseLeads(color, best_rank) => {
+			PlyStatus::CardSuitAdverseLeads(color, best_rank) => {
 				let cards: UnorderedCardSet32 = self.get_current_player_cards();
 				let mut valid = cards.of_color(color);
 				// a better card if any
@@ -114,7 +113,7 @@ impl Manille {
 				}
 				valid
 			}
-			PlyStatus::ColorCuttedPartner(color) => {
+			PlyStatus::CardSuitCuttedPartner(color) => {
 				let cards: UnorderedCardSet32 = self.get_current_player_cards();
 				let mut valid = cards.of_color(color);
 				if valid.is_empty() {
@@ -122,7 +121,7 @@ impl Manille {
 				}
 				valid
 			}
-			PlyStatus::ColorCuttedAdverse(color, best_rank) => {
+			PlyStatus::CardSuitCuttedAdverse(color, best_rank) => {
 				let cards: UnorderedCardSet32 = self.get_current_player_cards();
 				let mut valid = cards.of_color(color);
 				if valid.is_empty() {
@@ -193,15 +192,15 @@ impl Manille {
 			let same_team = Manille::same_team(current_leader, self.on_turn);
 			if leader_cutted {
 				if same_team {
-					status = PlyStatus::ColorCuttedPartner(color);
+					status = PlyStatus::CardSuitCuttedPartner(color);
 				} else {
-					status = PlyStatus::ColorCuttedAdverse(color, leader_rank);
+					status = PlyStatus::CardSuitCuttedAdverse(color, leader_rank);
 				}
 			} else {
 				if same_team {
-					status = PlyStatus::ColorPartnerLeads(color);
+					status = PlyStatus::CardSuitPartnerLeads(color);
 				} else {
-					status = PlyStatus::ColorAdverseLeads(color, leader_rank);
+					status = PlyStatus::CardSuitAdverseLeads(color, leader_rank);
 				}
 			}
 		}
@@ -284,8 +283,8 @@ impl Manille {
 }
 enum PlyStatus {
 	FirstToPlay,
-	ColorPartnerLeads(Color),
-	ColorAdverseLeads(Color, u8),
-	ColorCuttedPartner(Color),
-	ColorCuttedAdverse(Color, u8),
+	CardSuitPartnerLeads(CardSuit),
+	CardSuitAdverseLeads(CardSuit, u8),
+	CardSuitCuttedPartner(CardSuit),
+	CardSuitCuttedAdverse(CardSuit, u8),
 }

@@ -2,7 +2,7 @@ use eframe::egui;
 use egui::Color32;
 use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::GUIGame;
+use kudchuet::gui::{GUIGame, GUIMove};
 
 use crate::bitboard::Bitboard5x5;
 use crate::game::TeekoEvalDumb;
@@ -16,6 +16,14 @@ use kudchuet::{
 use kudchuet::gui::board_app::GenericBoardApp;
 //use super::{game::ThreeMusketeersEvalAdvance};
 
+impl GUIMove<Teeko> for Move {
+	fn click_sequence(&self, _state: &Teeko) -> Vec<<Teeko as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+	fn played_highlights(&self, state: &Teeko) -> Vec<u16> {
+		self.click_sequence(state)
+	}
+}
 impl BoardMove<Teeko> for Move {
 	fn from(&self) -> Option<u16> {
 		self.from.map(|m| m as u16)
@@ -23,10 +31,6 @@ impl BoardMove<Teeko> for Move {
 
 	fn to(&self) -> u16 {
 		self.to as u16
-	}
-
-	fn played_highlights(&self, state: &Teeko) -> Vec<u16> {
-		self.click_sequence(state)
 	}
 
 	fn to_uci(&self) -> Option<String> {
@@ -62,6 +66,7 @@ impl EGUIPieceType for TeekoPiece {
 }
 
 impl GUIGame for Teeko {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {

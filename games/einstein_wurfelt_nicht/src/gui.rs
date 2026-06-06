@@ -7,7 +7,7 @@ use kudchuet::gui::board_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 use kudchuet::gui::{
-	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame,
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame, GUIMove,
 };
 use kudchuet::Player;
 
@@ -70,6 +70,11 @@ impl EGUIPieceType for Piece {
 		}
 	}
 }
+impl GUIMove<EinsteinWurfeltNicht> for MovePlay {
+	fn click_sequence(&self, _state: &EinsteinWurfeltNicht) -> Vec<<EinsteinWurfeltNicht as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<EinsteinWurfeltNicht> for MovePlay {
 	fn to(&self) -> u16 {
 		match self {
@@ -86,6 +91,7 @@ impl BoardMove<EinsteinWurfeltNicht> for MovePlay {
 }
 
 impl GUIGame for EinsteinWurfeltNicht {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn play_random(&mut self) {

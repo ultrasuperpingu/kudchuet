@@ -5,7 +5,7 @@ use kudchuet::{
 	Player,
 	PlayerType,
 	ai::{AIEngine, AIEngineProvider, MoveSearcherBuilder, move_search::Game},
-	gui::{BoardGame, BoardMove, GUIGame},
+	gui::{BoardGame, BoardMove, GUIGame, GUIMove},
 	//new_move_searcher,
 };
 
@@ -21,6 +21,7 @@ pub struct MancalaApp {
 }
 
 impl GUIGame for Mancala {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 
@@ -62,7 +63,14 @@ impl BoardGame for Mancala {
 		todo!()
 	}
 }
-impl BoardMove<Mancala> for Move {}
+impl GUIMove<Mancala> for Move {
+	fn click_sequence(&self, _state: &Mancala) -> Vec<<Mancala as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
+impl BoardMove<Mancala> for Move {
+
+}
 impl Default for MancalaApp {
 	fn default() -> Self {
 		Self {

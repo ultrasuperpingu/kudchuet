@@ -6,9 +6,11 @@ use kudchuet::{
 		input_handler::{InputHandler, MoveResult},
 	},
 };
-use std::fmt::Debug;
+use std::{fmt::Debug, marker::PhantomData};
 
-use crate::{playing_cards32::PlayingCard32, unordered_card_sets32::UnorderedCardSet32};
+use crate::{
+	gui::card_view::{CardGameClick, CardZone}, playing_cards::{CardSet, PlayingCard}
+};
 pub mod card_app;
 pub mod card_view;
 pub mod cards;
@@ -17,14 +19,15 @@ pub trait CardGame: GUIGame<S = Self> + Default + Clone
 where
 	Self::M: CardMove<Self> + Copy,
 {
-	fn player_ply_card(&self, p: Player) -> Option<PlayingCard32>;
-	fn player_hand_cards(&self, p: Player) -> UnorderedCardSet32;
-	fn revealed_cards(&self) -> UnorderedCardSet32;
-	fn draw_revealed_cards(&self) -> bool;
+	type Card: PlayingCard;
+	fn build_board(&self) -> Vec<CardZone<impl CardSet<Card = Self::Card>, Self::Card>>;
 }
 
-pub trait CardMove<G: Game>: Debug + Sized + Copy {
-	fn card(&self) -> Option<PlayingCard32>;
+pub trait CardMove<G: CardGame>: Debug + Sized + Copy
+where
+	G::M: CardMove<G>,
+{
+	fn click(&self) -> Option<CardGameClick<G::Card>>;
 }
 
 #[derive(Clone)]
@@ -34,6 +37,7 @@ where
 {
 	pending_moves: Option<Vec<G::M>>,
 	matching_moves: Vec<G::M>,
+	_dummy: PhantomData<CardGameClick<G::Card>>,
 }
 impl<G: CardGame> Default for CardInputHandler<G>
 where
@@ -43,10 +47,11 @@ where
 		Self {
 			pending_moves: Default::default(),
 			matching_moves: Default::default(),
+			_dummy: PhantomData,
 		}
 	}
 }
-impl<G: CardGame> CardInputHandler<G>
+impl<G: CardGame<Card = Card>, Card: PlayingCard> CardInputHandler<G>
 where
 	G::M: CardMove<G>,
 {
@@ -54,15 +59,16 @@ where
 		Self {
 			pending_moves: None,
 			matching_moves: vec![],
+			_dummy: PhantomData,
 		}
 	}
 
-	pub fn process_click(&mut self, card: PlayingCard32, game: &G) -> MoveResult<G> {
+	pub fn process_click(&mut self, click: CardGameClick<Card>, game: &G) -> MoveResult<G, CardGameClick<G::Card>> {
 		let legals = game.legal_moves();
 
 		let candidates: Vec<G::M> = legals
 			.into_iter()
-			.filter(|m| m.card() == Some(card))
+			.filter(|m| m.click() == Some(click))
 			.collect();
 
 		match candidates.len() {
@@ -85,7 +91,10 @@ where
 		self.matching_moves.clear();
 	}
 }
-impl<G: CardGame> InputHandler<G> for CardInputHandler<G> where G::M: CardMove<G> {
+impl<G: CardGame> InputHandler<G> for CardInputHandler<G>
+where
+	G::M: CardMove<G>,
+{
 	fn pending_moves(&self) -> Option<&Vec<G::M>> {
 		self.pending_moves.as_ref()
 	}

@@ -4,7 +4,7 @@ use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame};
+use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, GUIMove};
 
 use super::game::ConnectFourEval;
 
@@ -12,6 +12,11 @@ use kudchuet::gui::board_app::GenericBoardApp;
 
 use super::rules::{Cell, Column, ConnectFour};
 
+impl GUIMove<ConnectFour> for Column {
+	fn click_sequence(&self, _state: &ConnectFour) -> Vec<<ConnectFour as GUIGame>::Click> {
+		self.click_sequence_board_move_default(_state)
+	}
+}
 impl BoardMove<ConnectFour> for Column {
 	fn to(&self) -> u16 {
 		Bitboard7x7Col::index_from_coords(self.0, 0) as u16
@@ -38,6 +43,7 @@ impl EGUIPieceType for Cell {
 }
 
 impl GUIGame for ConnectFour {
+	type Click = u16;
 	type Settings = kudchuet::gui::DefaultSettings;
 	type Style = kudchuet::gui::BoardStyle;
 	fn get_name(&self, p: Player) -> String {

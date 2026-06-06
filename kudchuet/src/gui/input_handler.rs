@@ -3,6 +3,7 @@ use crate::ai::move_search::interface::Game;
 use crate::gui::board_drawer::{BoardDrawer, GameDrawer};
 use crate::gui::game_state_manager::GameStateManager;
 use crate::gui::{BoardGame, BoardMove, GUIGame};
+use crate::gui::GUIMove;
 
 pub trait InputHandler<G: GUIGame> {
 	fn pending_moves(&self) -> Option<&Vec<G::M>>;
@@ -35,17 +36,17 @@ pub trait InputHandler<G: GUIGame> {
 		G::M: BoardMove<G>;*/
 }
 
-pub enum MoveResult<G: Game> {
+pub enum MoveResult<G: Game, Click> {
 	Invalid,
 	Incomplete {
-		selected: Option<u16>,
-		highlights: Vec<u16>,
+		selected: Option<Click>,
+		highlights: Vec<Click>,
 		matching_moves: Vec<G::M>,
 		//intermediate_state: Option<G::S>
 	},
 	Created {
 		mv: G::M,
-		highlights_played: Vec<u16>,
+		highlights_played: Vec<Click>,
 	},
 	ChoiceRequired {
 		candidates: Vec<G::M>,
@@ -56,7 +57,7 @@ pub struct BoardInputHandler<G: BoardGame>
 where
 	G::M: BoardMove<G>,
 {
-	clicks: Vec<u16>,
+	clicks: Vec<G::Click>,
 	pending_moves: Option<Vec<G::M>>,
 	matching_moves: Vec<G::M>,
 	intermediate_state: Option<G>,
@@ -115,16 +116,15 @@ where
 
 	pub fn process(
 		&mut self,
-		click_pos: (u8, u8),
+		click_pos: u16,
 		game_manager: &GameStateManager<G>,
-		drawer: &mut Box<dyn BoardDrawer<G, Click = (u8, u8)>>,
-	) -> MoveResult<G>
+		drawer: &mut Box<dyn BoardDrawer<G, Click = u16>>,
+	) -> MoveResult<G, u16>
 	where
 		G: BoardGame,
 		G::M: BoardMove<G>,
 	{
-		let (x, y) = click_pos;
-		let index = G::index_from_coords(x, y);
+		let index = click_pos;
 		println!("index: {}", index);
 
 		self.clicks.push(index);
@@ -171,7 +171,7 @@ where
 
 	pub fn reset(
 		&mut self,
-		drawer: &mut Box<dyn BoardDrawer<G, Click = (u8, u8)>>,
+		drawer: &mut Box<dyn BoardDrawer<G, Click = u16>>,
 		game_manager: &GameStateManager<G>,
 	) where
 		G: BoardGame,
