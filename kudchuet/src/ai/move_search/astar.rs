@@ -1,16 +1,12 @@
 use std::cmp::Reverse;
 
-use kudchuet::{
+use crate::{
 	StrategyWithOptions,
 	ai::move_search::{Game, Strategy},
 	utils::{NHHashMap, NHHashSet},
 };
 use priority_queue::PriorityQueue;
-/*
-struct AStarData {
-	g: u32,
-	h: i32,
-}*/
+
 type Queue = PriorityQueue<u64, Reverse<u32>>;
 //type SearchTree<G> = GameTree<G, AStarData>;
 pub trait Heuristic {
@@ -126,7 +122,7 @@ where
 		}
 	}
 
-	fn root_value(&self) -> kudchuet::ai::move_search::Evaluation {
+	fn root_value(&self) -> crate::ai::move_search::Evaluation {
 		0
 	}
 	fn principal_variation(&self) -> Vec<<E::G as Game>::M> {
@@ -140,13 +136,13 @@ where
 	<E::G as Game>::M: PartialEq,
 	<E::G as Game>::S: Eq + Clone,
 {
-	fn get_options(&self) -> std::collections::HashMap<String, kudchuet::ai::uci::UciValue> {
+	fn get_options(&self) -> std::collections::HashMap<String, crate::ai::uci::UciValue> {
 		std::collections::HashMap::new()
 	}
 
 	fn set_options(
 		&mut self,
-		_opts: &std::collections::HashMap<String, kudchuet::ai::uci::UciValue>,
+		_opts: &std::collections::HashMap<String, crate::ai::uci::UciValue>,
 	) {
 		//todo!()
 	}

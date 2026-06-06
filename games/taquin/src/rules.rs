@@ -402,9 +402,10 @@ impl<const W: usize, const H: usize, const NB: usize> Zobrist<W, H, NB> {
 }
 #[cfg(test)]
 mod tests {
-	use crate::{astar::AStar, rules::Taquin};
+	use crate::rules::Taquin;
 	use kudchuet::ai::move_search::Strategy;
-	use kudchuet::gui::GUIGame as _;
+	use kudchuet::ai::move_search::astar::AStar;
+use kudchuet::gui::GUIGame as _;
 
 	#[test]
 	fn display() {

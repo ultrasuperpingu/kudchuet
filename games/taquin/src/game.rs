@@ -1,14 +1,13 @@
 use egui::Color32;
 use kudchuet::{
 	Player,
-	ai::{AIBuilder, AIEngineProvider, move_search::Game},
+	ai::{AIBuilder, AIEngineProvider, move_search::{Game, astar::{AStar, Heuristic}}},
 	gui::{
 		BoardGame, BoardMove, BoardStyle, DefaultSettings, EGUIPieceType, GUIGame, GUIMove, board_app::GenericBoardApp, shapes::StrokeData
 	},
 };
 
 use crate::{
-	astar::{AStar, Heuristic},
 	rules::{Move, Taquin},
 };
 

@@ -13,6 +13,7 @@ egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor
 #egui_field_editor = {path="../../egui_inspect/egui_field_editor", features=["filepicker"] }
 #egui_field_editor = "0.5"
 
+priority-queue = "2.7"
 instant = { version = "0.1", features = ["wasm-bindgen"] }
 fastrand = "2.4"
 serde = "1.0"

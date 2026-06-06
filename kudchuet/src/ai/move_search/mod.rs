@@ -17,6 +17,7 @@ pub use crate::ai::move_search::ybw::ParallelSearch;
 
 pub mod test_dfs;
 
+pub mod astar;
 mod common;
 pub mod gametree;
 pub mod interface;
