@@ -1,4 +1,4 @@
-use egui::pos2;
+use egui::{Rect, pos2};
 use kudchuet::{
 	Player,
 	ai::move_search::{Evaluator, Game},
@@ -9,7 +9,7 @@ use kudchuet::{
 use crate::{
 	gui::{
 		CardGame, CardMove,
-		card_view::{CardGameClick, CardSetLayout, CardZone},
+		card_view::{CardBoard, CardGameClick, CardSetLayout, CardZone},
 	},
 	ordered_card_set::OrderedCardSet54,
 	playing_cards::{CardSet, CardSuit, PlayingCard},
@@ -66,6 +66,9 @@ impl Freecell {
 			foundations: [UnorderedCardSet54::EMPTY; 4],
 			h: 0,
 		};
+		for t in &mut s.tableau {
+			fastrand::shuffle(&mut t.0);
+		}
 		s.h = s.compute_hash();
 		s
 	}
@@ -633,7 +636,7 @@ impl GUIGame for Freecell {
 impl CardGame for Freecell {
 	type Card = PlayingCard54;
 
-	fn build_board(&self) -> Vec<CardZone<OrderedCardSet54, PlayingCard54>> {
+	fn build_board(&self) -> CardBoard<OrderedCardSet54, PlayingCard54> {
 		let mut zones = vec![];
 
 		let x_step = 0.08;
@@ -643,27 +646,37 @@ impl CardGame for Freecell {
 
 		for (i, col) in self.foundations.iter().enumerate() {
 			zones.push(CardZone {
-				id: i as u8,
+				id: i as u8 + 4,
 				set: OrderedCardSet54::from_iter(*col),
 				layout: CardSetLayout::Stack,
 				origin: pos2(0.60 + i as f32 * x_step, base_y_top),
+				rect: Rect::from_min_max(
+					pos2(0.60 + i as f32 * x_step, base_y_top),
+					pos2(0.60 + (i + 1) as f32 * x_step, 0.35),
+				),
 				rotation: 0.0,
 				card_spacing: 0.0,
 				face_up: true,
 				draw_empty: true,
+				zone_only: true,
 			});
 		}
 
 		for (i, cell) in self.free_cells.iter().enumerate() {
 			zones.push(CardZone {
-				id: i as u8 + 4,
+				id: i as u8,
 				set: OrderedCardSet54::from_iter(cell.clone()),
 				layout: CardSetLayout::Stack,
 				origin: pos2(0.05 + i as f32 * x_step, base_y_top),
+				rect: Rect::from_min_max(
+					pos2(0.05 + i as f32 * x_step, base_y_top),
+					pos2(0.05 + (i + 1) as f32 * x_step, 1.0),
+				),
 				rotation: 0.0,
 				card_spacing: 0.03,
 				face_up: true,
 				draw_empty: true,
+				zone_only: true,
 			});
 		}
 
@@ -673,16 +686,21 @@ impl CardGame for Freecell {
 				set: col.clone(),
 				layout: CardSetLayout::Vertical,
 				origin: pos2(0.05 + i as f32 * 0.08, base_y_bottom),
+				rect: Rect::from_min_max(
+					pos2(0.05 + i as f32 * 0.08, base_y_bottom),
+					pos2(0.05 + (i + 1) as f32 * 0.08, 0.35),
+				),
 				rotation: 0.0,
 				card_spacing: 25.0,
 				face_up: true,
 				draw_empty: true,
+				zone_only: false,
 			});
 		}
-
-		zones
+		CardBoard { zones }
 	}
 }
+
 impl GUIMove<Freecell> for Move {
 	fn click_sequence(&self, state: &Freecell) -> Vec<<Freecell as GUIGame>::Click> {
 		let mut res = vec![];
@@ -690,9 +708,13 @@ impl GUIMove<Freecell> for Move {
 			Move::TableauToTableau { from, to, count } => {
 				let len = state.tableau[*from].len();
 				let card_from = state.tableau[*from].iter().nth(len - *count).unwrap();
-				let card_to = state.tableau[*to].iter().last().unwrap();
+				let to = if let Some(card) = state.tableau[*to].iter().last() {
+					CardGameClick::Card(*card)
+				} else {
+					CardGameClick::CardZone(*to as u8 + 8)
+				};
 				res.push(CardGameClick::Card(*card_from));
-				res.push(CardGameClick::Card(*card_to));
+				res.push(to);
 			}
 			Move::TableauToFreeCell { from, cell } => {
 				let card_from = state.tableau[*from].iter().last().unwrap();
@@ -700,9 +722,13 @@ impl GUIMove<Freecell> for Move {
 				res.push(CardGameClick::CardZone(*cell as u8));
 			}
 			Move::FreeCellToTableau { cell, to } => {
-				let card_to = state.tableau[*to].iter().last().unwrap();
+				let to = if let Some(card) = state.tableau[*to].iter().last() {
+					CardGameClick::Card(*card)
+				} else {
+					CardGameClick::CardZone(*to as u8 + 8)
+				};
 				res.push(CardGameClick::CardZone(*cell as u8));
-				res.push(CardGameClick::Card(*card_to));
+				res.push(to);
 			}
 			Move::TableauToFoundation { from, foundation } => {
 				let card_from = state.tableau[*from].iter().last().unwrap();
@@ -776,6 +802,7 @@ impl Evaluator for FreecellEval {
 			+ ordered_bonus
 	}
 }
+
 #[cfg(test)]
 mod tests {
 
@@ -910,12 +937,9 @@ mod tests {
 		use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 		use winit::platform::windows::EventLoopBuilderExtWindows;
 
-		let engines: Vec<Box<dyn AIEngineProvider<Freecell>>> = vec![];
-		vec![Box::new(MoveSearcherBuilder::new(
-			"Simple",
-			FreecellEval,
-			5,
-		))];
+		let engines: Vec<Box<dyn AIEngineProvider<Freecell>>> = vec![Box::new(
+			MoveSearcherBuilder::new("Simple", FreecellEval, 5),
+		)];
 		let mut board = CardApp::new(Freecell::new(), engines);
 		board.max_depth = 13;
 		board.depth = 8;

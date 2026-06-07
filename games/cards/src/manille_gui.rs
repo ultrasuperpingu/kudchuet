@@ -1,10 +1,10 @@
 use crate::game::ManilleMaterialEval;
 use crate::gui::card_app::CardApp;
-use crate::gui::card_view::{CardGameClick, CardZone};
+use crate::gui::card_view::{CardBoard, CardGameClick, CardZone};
 use crate::gui::{CardGame, CardMove};
 use crate::playing_cards32::PlayingCard32;
 use eframe::egui;
-use egui::Color32;
+use egui::{Color32, Rect};
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::{BoardStyle, CoordMod, GUIGame, GUIMove};
 
@@ -56,7 +56,7 @@ impl GUIGame for Manille {
 impl CardGame for Manille {
 	type Card = PlayingCard32;
 
-	fn build_board(&self) -> Vec<CardZone<crate::ordered_card_set::OrderedCardSet32, Self::Card>> {
+	fn build_board(&self) -> CardBoard<crate::ordered_card_set::OrderedCardSet32, Self::Card> {
 		use crate::gui::card_view::{CardSetLayout, CardZone};
 		use crate::ordered_card_set::OrderedCardSet32;
 		use eframe::egui::pos2;
@@ -70,9 +70,9 @@ impl CardGame for Manille {
 				set: OrderedCardSet32::from_iter(self.players[p].iter()),
 				layout: match p {
 					0 => CardSetLayout::Horizontal, // Sud
-					1 => CardSetLayout::Vertical, // Ouest
+					1 => CardSetLayout::Vertical,   // Ouest
 					2 => CardSetLayout::Horizontal, // Nord
-					3 => CardSetLayout::Vertical, // Est
+					3 => CardSetLayout::Vertical,   // Est
 					_ => unreachable!(),
 				},
 				origin: match p {
@@ -80,6 +80,13 @@ impl CardGame for Manille {
 					1 => pos2(0.10, 0.50), // Ouest
 					2 => pos2(0.50, 0.10), // Nord
 					3 => pos2(0.90, 0.50), // Est
+					_ => unreachable!(),
+				},
+				rect: match p {
+					0 => Rect::from_min_max(pos2(0.15, 0.80), pos2(0.85, 0.98)), // Sud
+					1 => Rect::from_min_max(pos2(0.02, 0.15), pos2(0.18, 0.85)), // Ouest
+					2 => Rect::from_min_max(pos2(0.15, 0.02), pos2(0.85, 0.20)), // Nord
+					3 => Rect::from_min_max(pos2(0.82, 0.15), pos2(0.98, 0.85)), // Est
 					_ => unreachable!(),
 				},
 				rotation: match p {
@@ -92,6 +99,7 @@ impl CardGame for Manille {
 				card_spacing: 25.0,
 				face_up: p == 0,
 				draw_empty: true,
+				zone_only: false,
 			});
 		}
 
@@ -102,10 +110,12 @@ impl CardGame for Manille {
 				set: self.trump_card.into(),
 				layout: CardSetLayout::Stack,
 				origin: pos2(0.50, 0.35),
+				rect: Rect::from_min_max(pos2(0.50, 0.35), pos2(0.55, 0.45)),
 				rotation: 0.0,
 				card_spacing: 0.0,
 				face_up: true,
 				draw_empty: false,
+				zone_only: false,
 			});
 		}
 
@@ -117,15 +127,18 @@ impl CardGame for Manille {
 			set: ply,
 			layout: CardSetLayout::Circle {
 				start_angle: -std::f32::consts::FRAC_PI_2,
+				len: 4,
 			},
 			origin: pos2(0.50, 0.50),
+			rect: Rect::from_min_max(pos2(0.1, 0.1), pos2(0.9, 0.9)),
 			rotation: 0.0,
 			card_spacing: 0.0,
 			face_up: true,
 			draw_empty: false,
+			zone_only: false,
 		});
 
-		zones
+		CardBoard { zones }
 	}
 }
 pub fn create_board() -> CardApp<Manille> {

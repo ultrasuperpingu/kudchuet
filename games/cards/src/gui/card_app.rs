@@ -7,10 +7,9 @@ use kudchuet::{
 		move_search::Game,
 	},
 	gui::{
-		GUIGame, GUIMove, MultipleMoveSelectionResult,
+		GUIMove, MultipleMoveSelectionResult,
 		game_state_manager::GameStateManager,
-		input_handler::{BoardInputHandler, InputHandler, MoveResult},
-		options_panel::ImportExportPanel,
+		input_handler::{InputHandler, MoveResult},
 	},
 	utils::short_type_name,
 };
@@ -18,10 +17,9 @@ use kudchuet::{
 use crate::{
 	gui::{
 		CardGame, CardInputHandler, CardMove,
-		card_view::{CardGameClick, CardGameDrawer, DefaultCardGameDrawer},
+		card_view::{CardGameDrawer, DefaultCardGameDrawer},
 	},
 	playing_cards::DrawablePlayingCard,
-	playing_cards32::PlayingCard32,
 };
 
 #[derive(PartialEq, Copy, Clone)]
@@ -115,6 +113,7 @@ where
 				if self.is_current_player_computer()
 					&& !self.is_current_player_random()
 					&& !self.ai_engine_manager.is_paused()
+					|| self.ai_engine_manager.is_thinking()
 				{
 					match self.ai_engine_manager.poll_ai_result() {
 						ThinkingResult::NotThinking => {
@@ -128,8 +127,13 @@ where
 						}
 						ThinkingResult::FinishedThinking(m) => {
 							if let Some(mv) = m {
-								self.apply_move(mv);
-								ui.request_repaint();
+								if self.is_current_player_computer()
+									&& !self.is_current_player_random()
+									&& !self.ai_engine_manager.is_paused()
+								{
+									self.apply_move(mv);
+									ui.request_repaint();
+								}
 							}
 						}
 						ThinkingResult::Thinking => {
@@ -415,6 +419,7 @@ where
 			let mut is_computer = current_engine.is_some();
 
 			if ui.selectable_label(!is_computer, "Human").clicked() {
+				self.ai_engine_manager.stop_thinking();
 				self.ai_engine_manager.set_player_engine(p, None);
 				is_computer = false;
 			}

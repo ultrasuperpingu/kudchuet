@@ -20,7 +20,7 @@ where
 	Self: 'static,
 {
 	fn card_texture(&self) -> ImageSource<'_>;
-	fn card_aspect_ratio() -> f32 {
+	fn aspect_ratio() -> f32 {
 		2.0 / 3.0
 	}
 }

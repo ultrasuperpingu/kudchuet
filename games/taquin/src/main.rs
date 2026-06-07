@@ -6,7 +6,7 @@ fn main() -> eframe::Result<()> {
 	eframe::run_native(
 		"Taquin",
 		options,
-		Box::new(|_cc| Ok(Box::new(create_board::<4,4, 16>()))),
+		Box::new(|_cc| Ok(Box::new(create_board::<4,4, {4*4}>()))),
 	)
 }
 

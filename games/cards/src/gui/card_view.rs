@@ -1,12 +1,11 @@
 use core::f32;
 
 use eframe::egui::{self, Color32, Pos2, Rect, include_image};
-use egui::{Image, pos2, vec2};
+use egui::{Image, Vec2, pos2, vec2};
 use kudchuet::{ai::move_search::Game, gui::board_drawer::GameDrawer};
 
 use crate::{
 	gui::{CardGame, CardMove},
-	ordered_card_set::OrderedCardSet,
 	playing_cards::{CardSet, DrawablePlayingCard, PlayingCard},
 };
 pub trait CardGameDrawer<G: CardGame<Card = C>, C: PlayingCard>: GameDrawer<G>
@@ -99,7 +98,7 @@ where
 		size: egui::Vec2,
 		rotation: f32,
 	) -> egui::Response {
-		let rect = Rect::from_center_size(pos + size * 0.5, size);
+		let rect = Rect::from_min_size(pos, size);
 		let response = ui.allocate_rect(rect, egui::Sense::click());
 
 		let image = egui::Image::new(include_image!("../../cards/back.svg"))
@@ -148,15 +147,8 @@ where
 			.rect_filled(table_rect, 16.0, Color32::from_rgb(20, 90, 20));
 
 		let board = game.build_board();
-		let mut click = None;
-		for l in board {
-			//println!("{:?}", l);
-			let resp = l.draw(ui, self, table_rect);
-			if can_interact && resp.is_some() {
-				click = resp;
-			}
-		}
-		click
+		let click = board.draw(ui, self, table_rect);
+		if can_interact { click } else { None }
 	}
 }
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
@@ -169,7 +161,7 @@ pub enum CardSetLayout {
 	Stack,
 	Vertical,
 	Horizontal,
-	Circle { start_angle: f32 },
+	Circle { start_angle: f32, len: usize },
 	PlayersAround(u8),
 }
 #[derive(Debug, PartialEq)]
@@ -179,16 +171,19 @@ pub struct CardZone<Set: CardSet<Card = C>, C: PlayingCard> {
 	pub layout: CardSetLayout,
 	pub rotation: f32,
 	pub origin: Pos2,
+	pub rect: Rect,
 	pub card_spacing: f32,
 	pub face_up: bool,
 	pub draw_empty: bool,
+	pub zone_only: bool,
 }
 impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 	pub fn draw<G: CardGame<Card = C>, Drawer: CardGameDrawer<G, C>>(
 		&self,
 		ui: &mut egui::Ui,
 		drawer: &Drawer,
-		rect: Rect,
+		board_rect: Rect,
+		card_size: Vec2,
 	) -> Option<CardGameClick<C>>
 	where
 		<G as Game>::M: CardMove<G>,
@@ -196,31 +191,48 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 		Set::Item: PlayingCard,
 	{
 		//println!("{:?}", self);
-		let size = vec2(80.0, 120.0);
 		let origin = pos2(
-			rect.min.x + self.origin.x * rect.width(),
-			rect.min.y + self.origin.y * rect.height(),
+			board_rect.min.x + self.origin.x * board_rect.width(),
+			board_rect.min.y + self.origin.y * board_rect.height(),
+		);
+		let zone_rect = Rect::from_min_max(
+			pos2(
+				board_rect.min.x + self.rect.min.x * board_rect.width(),
+				board_rect.min.y + self.rect.min.y * board_rect.height(),
+			),
+			pos2(
+				board_rect.min.x + self.rect.max.x * board_rect.width(),
+				board_rect.min.y + self.rect.max.y * board_rect.height(),
+			),
 		);
 
 		match self.layout {
 			CardSetLayout::Stack => {
 				if let Some(card) = self.set.iter().last() {
 					let resp = if self.face_up {
-						drawer.draw_card(ui, card, origin, size, self.rotation)
+						drawer.draw_card(ui, card, origin, card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, origin, size, self.rotation)
+						drawer.draw_back_cards(ui, origin, card_size, self.rotation)
 					};
 
 					if resp.clicked() {
-						return Some(CardGameClick::Card(card));
+						if self.zone_only {
+							return Some(CardGameClick::CardZone(self.id));
+						} else {
+							return Some(CardGameClick::Card(card));
+						}
 					}
 				} else if self.draw_empty {
-					let rect = Rect::from_center_size(origin, size);
+					let rect = Rect::from_min_size(origin, card_size);
 
 					let resp = ui.allocate_rect(rect, egui::Sense::click());
 
-					ui.painter()
-						.rect_stroke(rect, 4.0, egui::Stroke::new(2.0, Color32::GRAY), egui::StrokeKind::Middle);
+					ui.painter().rect_stroke(
+						rect,
+						4.0,
+						egui::Stroke::new(2.0, Color32::GRAY),
+						egui::StrokeKind::Middle,
+					);
 
 					if resp.clicked() {
 						return Some(CardGameClick::CardZone(self.id));
@@ -230,44 +242,85 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 			}
 
 			CardSetLayout::Horizontal => {
+				let mut done = false;
 				for (i, card) in self.set.iter().enumerate() {
+					done = true;
 					let pos = origin + vec2(i as f32 * self.card_spacing, 0.0);
 
 					let resp = if self.face_up {
-						drawer.draw_card(ui, card, pos, size, self.rotation)
+						drawer.draw_card(ui, card, pos, card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, pos, size, self.rotation)
+						drawer.draw_back_cards(ui, pos, card_size, self.rotation)
 					};
 
 					if resp.clicked() {
-						return Some(CardGameClick::Card(card));
+						if self.zone_only {
+							return Some(CardGameClick::CardZone(self.id));
+						} else {
+							return Some(CardGameClick::Card(card));
+						}
 					}
 				}
+				if self.draw_empty && !done {
+					let rect = Rect::from_min_size(origin, card_size);
 
+					let resp = ui.allocate_rect(rect, egui::Sense::click());
+
+					ui.painter().rect_stroke(
+						rect,
+						4.0,
+						egui::Stroke::new(2.0, Color32::GRAY),
+						egui::StrokeKind::Middle,
+					);
+
+					if resp.clicked() {
+						return Some(CardGameClick::CardZone(self.id));
+					}
+				}
 				None
 			}
 
 			CardSetLayout::Vertical => {
+				let mut done = false;
 				for (i, card) in self.set.iter().enumerate() {
+					done = true;
 					let pos = origin + vec2(0.0, i as f32 * self.card_spacing);
 
 					let resp = if self.face_up {
-						drawer.draw_card(ui, card, pos, size, self.rotation)
+						drawer.draw_card(ui, card, pos, card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, pos, size, self.rotation)
+						drawer.draw_back_cards(ui, pos, card_size, self.rotation)
 					};
 
 					if resp.clicked() {
-						return Some(CardGameClick::Card(card));
+						if self.zone_only {
+							return Some(CardGameClick::CardZone(self.id));
+						} else {
+							return Some(CardGameClick::Card(card));
+						}
 					}
 				}
+				if self.draw_empty && !done {
+					let rect = Rect::from_min_size(origin, card_size);
 
+					let resp = ui.allocate_rect(rect, egui::Sense::click());
+
+					ui.painter().rect_stroke(
+						rect,
+						4.0,
+						egui::Stroke::new(2.0, Color32::GRAY),
+						egui::StrokeKind::Middle,
+					);
+
+					if resp.clicked() {
+						return Some(CardGameClick::CardZone(self.id));
+					}
+				}
 				None
 			}
 
-			CardSetLayout::Circle { start_angle } => {
-				let len = self.set.len();
-				let radius = 0.15 * rect.height();
+			CardSetLayout::Circle { start_angle, len } => {
+				let radius = 0.15 * board_rect.height();
 
 				for (i, card) in self.set.iter().enumerate() {
 					let angle = start_angle + i as f32 / len as f32 * f32::consts::TAU;
@@ -275,13 +328,17 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 					let pos = origin + vec2(angle.cos() * radius, angle.sin() * radius);
 
 					let resp = if self.face_up {
-						drawer.draw_card(ui, card, pos, size, self.rotation)
+						drawer.draw_card(ui, card, pos, card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, pos, size, self.rotation)
+						drawer.draw_back_cards(ui, pos, card_size, self.rotation)
 					};
 
 					if resp.clicked() {
-						return Some(CardGameClick::Card(card));
+						if self.zone_only {
+							return Some(CardGameClick::CardZone(self.id));
+						} else {
+							return Some(CardGameClick::Card(card));
+						}
 					}
 				}
 
@@ -289,7 +346,7 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 			}
 
 			CardSetLayout::PlayersAround(nb_players) => {
-				let radius = 0.15 * rect.height();
+				let radius = 0.15 * board_rect.height();
 				let n = nb_players as f32;
 
 				for (i, card) in self.set.iter().enumerate() {
@@ -298,9 +355,9 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 					let pos = origin + vec2(angle.cos() * radius, angle.sin() * radius);
 
 					let resp = if self.face_up {
-						drawer.draw_card(ui, card, pos, size, self.rotation)
+						drawer.draw_card(ui, card, pos, card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, pos, size, self.rotation)
+						drawer.draw_back_cards(ui, pos, card_size, self.rotation)
 					};
 
 					if resp.clicked() {
@@ -325,14 +382,88 @@ where
 	Set: CardSet<Card = C>,
 	C: DrawablePlayingCard,
 {
-	pub fn draw<G, D>(&self, ui: &mut egui::Ui, drawer: &D, rect: Rect)
+	pub fn draw<G, D>(&self, ui: &mut egui::Ui, drawer: &D, rect: Rect) -> Option<CardGameClick<C>>
 	where
 		G: CardGame<Card = C>,
 		D: CardGameDrawer<G, C>,
 		<G as Game>::M: CardMove<G>,
 	{
+		let card_size = self.best_card_size(rect);
+		let mut click = None;
 		for zone in &self.zones {
-			zone.draw(ui, drawer, rect);
+			let resp = zone.draw(ui, drawer, rect, card_size);
+			if resp.is_some() {
+				click = resp;
+			}
+		}
+		click
+	}
+	pub fn best_card_size(&self, rect: Rect) -> Vec2 {
+		//return Vec2::new(80.0, 120.0);
+		let mut size = Vec2::new(f32::MAX, f32::MAX);
+
+		for zone in &self.zones {
+			let zone_rect = zone.compute_rect(rect);
+			let zone_size = zone.max_card_size(zone_rect);
+			//println!("zone_size {}", zone_size);
+
+			size.x = size.x.min(zone_size.x);
+			size.y = size.y.min(zone_size.y);
+		}
+		//println!("size {}", size);
+		let ratio = C::aspect_ratio();
+
+		let width_from_height = size.y * ratio;
+		let height_from_width = size.x / ratio;
+
+		if width_from_height <= size.x {
+			size.x = width_from_height;
+		} else {
+			size.y = height_from_width;
+		}
+		//println!("final {}", size);
+		size
+	}
+}
+impl<Set: CardSet<Card = C>, C: PlayingCard> CardZone<Set, C> {
+	pub fn compute_rect(&self, board_rect: Rect) -> Rect {
+		Rect::from_min_max(
+			pos2(
+				board_rect.min.x + self.rect.min.x * board_rect.width(),
+				board_rect.min.y + self.rect.min.y * board_rect.height(),
+			),
+			pos2(
+				board_rect.min.x + self.rect.max.x * board_rect.width(),
+				board_rect.min.y + self.rect.max.y * board_rect.height(),
+			),
+		)
+	}
+}
+impl<Set, C> CardZone<Set, C>
+where
+	Set: CardSet<Card = C>,
+	C: DrawablePlayingCard,
+{
+	fn max_card_size(&self, zone_rect: Rect) -> Vec2 {
+		let ratio = C::aspect_ratio();
+
+		let w = zone_rect.width();
+		let h = zone_rect.height();
+
+		match self.layout {
+			CardSetLayout::Stack => vec2(w, h),
+
+			CardSetLayout::Vertical => {
+				let card_h = w / ratio;
+				vec2(w, card_h)
+			}
+
+			CardSetLayout::Horizontal => {
+				let card_w = h * ratio;
+				vec2(card_w, h)
+			}
+
+			_ => vec2(80.0, 120.0),
 		}
 	}
 }

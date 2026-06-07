@@ -8,7 +8,7 @@ use kudchuet::{
 use std::fmt::Debug;
 
 use crate::{
-	gui::card_view::{CardGameClick, CardZone},
+	gui::card_view::{CardBoard, CardGameClick},
 	playing_cards::{CardSet, PlayingCard},
 };
 pub mod card_app;
@@ -20,7 +20,7 @@ where
 	Self::M: CardMove<Self> + Copy,
 {
 	type Card: PlayingCard;
-	fn build_board(&self) -> Vec<CardZone<impl CardSet<Card = Self::Card>, Self::Card>>;
+	fn build_board(&self) -> CardBoard<impl CardSet<Card = Self::Card>, Self::Card>;
 }
 
 pub trait CardMove<G: CardGame>: GUIMove<G> + Debug + Sized + Copy

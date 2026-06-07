@@ -1,13 +1,24 @@
-use egui::pos2;
+use std::hash::{DefaultHasher, Hash, Hasher};
+
+use egui::{Rect, pos2};
+use kudchuet::{
+	Player,
+	ai::move_search::Game,
+	gui::{BoardStyle, DefaultSettings, GUIGame, GUIMove},
+};
 
 use crate::{
 	freecell::{are_alternate, foundation_index, rank},
-	gui::card_view::{CardSetLayout, CardZone},
+	gui::{
+		CardGame, CardMove,
+		card_view::{CardBoard, CardGameClick, CardSetLayout, CardZone},
+	},
 	ordered_card_set::OrderedCardSet54,
-	playing_cards::PlayingCard,
+	playing_cards::{CardSet, PlayingCard},
 	playing_cards54::PlayingCard54,
 	unordered_card_set::UnorderedCardSet54,
 };
+#[derive(Debug, Clone, Hash)]
 pub struct Klondike {
 	pub stock: OrderedCardSet54,
 	pub revealed_stock: OrderedCardSet54,
@@ -15,6 +26,12 @@ pub struct Klondike {
 	pub foundations: [UnorderedCardSet54; 4],
 	h: u64,
 }
+impl Default for Klondike {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+#[derive(Copy, Clone, Debug)]
 pub enum Move {
 	StockToReveal,
 	RecycleStock,
@@ -26,6 +43,46 @@ pub enum Move {
 	TableauToFoundation { from: usize, foundation: usize },
 }
 impl Klondike {
+	pub fn new() -> Self {
+		let mut deck = UnorderedCardSet54::ALL_BUT_JOKERS;
+
+		let mut s = Self {
+			stock: OrderedCardSet54::EMPTY,
+			revealed_stock: OrderedCardSet54::EMPTY,
+			tableau: [
+				CardSet::draw_random(1, &mut deck)
+					.expect("Should work")
+					.into(),
+				CardSet::draw_random(2, &mut deck)
+					.expect("Should work")
+					.into(),
+				CardSet::draw_random(3, &mut deck)
+					.expect("Should work")
+					.into(),
+				CardSet::draw_random(4, &mut deck)
+					.expect("Should work")
+					.into(),
+				CardSet::draw_random(5, &mut deck)
+					.expect("Should work")
+					.into(),
+				CardSet::draw_random(6, &mut deck)
+					.expect("Should work")
+					.into(),
+				CardSet::draw_random(7, &mut deck)
+					.expect("Should work")
+					.into(),
+			],
+			foundations: [UnorderedCardSet54::EMPTY; 4],
+			h: 0,
+		};
+		for t in &mut s.tableau {
+			fastrand::shuffle(&mut t.0);
+		}
+		s.stock = deck.into();
+		fastrand::shuffle(&mut s.stock.0);
+		s.h = s.compute_hash();
+		s
+	}
 	pub fn legal_moves(&self) -> Vec<Move> {
 		let mut moves = Vec::new();
 
@@ -162,9 +219,9 @@ fn can_place_on_foundation(card: PlayingCard54, f: UnorderedCardSet54) -> bool {
 	rank(card) == f.len() as u8 + 1
 }
 pub struct ZobristKlondike {
-	pub stock: [[u64; 52]; 24], // stock + revealed (approx max 24 visibles)
-	pub tableau: [[[u64; 52]; 20]; 7], // 7 colonnes max depth ~20
-	pub foundations: [[u64; 14]; 4], // 13 cartes max + safe margin
+	pub stock: [[u64; 52]; 24],
+	pub tableau: [[[u64; 52]; 20]; 7],
+	pub foundations: [[u64; 14]; 4],
 }
 impl ZobristKlondike {
 	pub const fn new(seed: u64) -> Self {
@@ -262,7 +319,7 @@ impl Klondike {
 		self.h ^= Self::ZOBRIST.tableau[col][to_row][card.index() as usize];
 	}
 	fn update_foundation_hash(&mut self, f: usize, card: PlayingCard54, add: bool) {
-		let idx = card.index() as usize;
+		let idx = card.index() as usize % 14;
 
 		if add {
 			self.h ^= Self::ZOBRIST.foundations[f][idx];
@@ -270,43 +327,230 @@ impl Klondike {
 			self.h ^= Self::ZOBRIST.foundations[f][idx];
 		}
 	}
-	fn test_ui(&self) -> Vec<CardZone<OrderedCardSet54, PlayingCard54>> {
-		let game = self;
+}
+
+impl Game for Klondike {
+	type S = Self;
+
+	type M = Move;
+
+	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> kudchuet::GameOutcome {
+		*moves = state.legal_moves();
+		if moves.len() == 0 {
+			if state.foundations.iter().map(|f| f.len()).sum::<usize>() == 52 {
+				kudchuet::GameOutcome::PLAYER1
+			} else {
+				kudchuet::GameOutcome::PLAYER2
+			}
+		} else {
+			kudchuet::GameOutcome::OnGoing
+		}
+	}
+
+	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
+		let mut s = state.clone();
+		s.play_unchecked(m);
+		Some(s)
+	}
+
+	fn get_outcome(state: &Self::S) -> kudchuet::GameOutcome {
+		let moves = state.legal_moves();
+		if moves.len() == 0 {
+			if state.foundations.iter().map(|f| f.len()).sum::<usize>() == 52 {
+				kudchuet::GameOutcome::PLAYER1
+			} else {
+				kudchuet::GameOutcome::PLAYER2
+			}
+		} else {
+			kudchuet::GameOutcome::OnGoing
+		}
+	}
+	fn get_hash(state: &Self::S) -> u64 {
+		let mut hasher = DefaultHasher::new();
+		state.hash(&mut hasher);
+		hasher.finish()
+		//state.h
+	}
+
+	fn get_current_player(_state: &Self::S) -> kudchuet::Player {
+		Player::PLAYER1
+	}
+	fn get_next_player(_state: &Self::S) -> Player {
+		Player::PLAYER1
+	}
+}
+impl GUIGame for Klondike {
+	type Click = CardGameClick<PlayingCard54>;
+	type Settings = DefaultSettings;
+
+	type Style = BoardStyle;
+	fn nb_players(&self) -> u8 {
+		1
+	}
+}
+impl GUIMove<Klondike> for Move {
+	fn click_sequence(&self, state: &Klondike) -> Vec<<Klondike as GUIGame>::Click> {
+		let mut res = vec![];
+
+		match self {
+			Move::TableauToTableau { from, to } => {
+				let from_col = &state.tableau[*from];
+				let to_col = &state.tableau[*to];
+
+				if let Some(card_from) = from_col.iter().last() {
+					let target = if let Some(card) = to_col.iter().last() {
+						CardGameClick::Card(*card)
+					} else {
+						CardGameClick::CardZone(*to as u8 + 6)
+					};
+
+					res.push(CardGameClick::Card(*card_from));
+					res.push(target);
+				}
+			}
+
+			Move::TableauToFoundation { from, foundation } => {
+				let from_col = &state.tableau[*from];
+
+				if let Some(card_from) = from_col.iter().last() {
+					res.push(CardGameClick::Card(*card_from));
+					res.push(CardGameClick::CardZone(*foundation as u8 + 2));
+				}
+			}
+
+			Move::RevealToFoundation { foundation } => {
+				if let Some(card) = state.revealed_stock.iter().last() {
+					res.push(CardGameClick::Card(*card));
+					res.push(CardGameClick::CardZone(*foundation as u8 + 2));
+				}
+			}
+
+			Move::StockToReveal => {
+				res.push(CardGameClick::CardZone(0));
+			}
+
+			Move::RecycleStock => {
+				res.push(CardGameClick::CardZone(0));
+			}
+
+			Move::RevealToTableau { to } => {
+				if let Some(card) = state.revealed_stock.iter().last() {
+					res.push(CardGameClick::Card(*card));
+					let to_col = &state.tableau[*to];
+
+					if let Some(card) = to_col.iter().last() {
+						res.push(CardGameClick::Card(*card));
+					} else {
+						res.push(CardGameClick::CardZone(*to as u8 + 6));
+					}
+				}
+			}
+		}
+
+		res
+	}
+}
+impl CardMove<Klondike> for Move {
+	fn click(&self) -> Option<CardGameClick<<Klondike as CardGame>::Card>> {
+		todo!()
+	}
+}
+impl CardGame for Klondike {
+	type Card = PlayingCard54;
+
+	fn build_board(&self) -> CardBoard<OrderedCardSet54, PlayingCard54> {
 		let mut zones = vec![];
+
 		zones.push(CardZone {
 			id: 0,
-			set: game.stock.clone(),
+			set: self.stock.clone(),
 			layout: CardSetLayout::Stack,
-			origin: pos2(20.0, 20.0),
+			origin: pos2(0.05, 0.05),
+			rect: Rect::from_min_max(pos2(0.05, 0.05), pos2(0.10, 0.35)),
 			rotation: 0.0,
 			card_spacing: 0.0,
 			face_up: false,
 			draw_empty: true,
+			zone_only: true,
 		});
 
 		zones.push(CardZone {
 			id: 1,
-			set: game.revealed_stock.clone(),
+			set: self.revealed_stock.clone(),
 			layout: CardSetLayout::Stack,
-			origin: pos2(140.0, 20.0),
+			origin: pos2(0.15, 0.05),
+			rect: Rect::from_min_max(pos2(0.15, 0.05), pos2(0.25, 0.35)),
 			rotation: 0.0,
 			card_spacing: 30.0,
 			face_up: true,
 			draw_empty: true,
+			zone_only: false,
 		});
-
-		for (i, col) in game.tableau.iter().enumerate() {
+		let len = self.foundations.len();
+		let table_width = 0.45 / len as f32;
+		for (i, col) in self.foundations.iter().enumerate() {
 			zones.push(CardZone {
 				id: i as u8 + 2,
-				set: col.clone(),
-				layout: CardSetLayout::Vertical,
-				origin: pos2(20.0 + i as f32 * 110.0, 180.0),
+				set: OrderedCardSet54::from_iter(*col),
+				layout: CardSetLayout::Stack,
+				origin: pos2(0.5 + i as f32 * table_width, 0.05),
+				rect: Rect::from_min_max(
+					pos2(0.5 + i as f32 * table_width, 0.05),
+					pos2(0.5 + (i + 1) as f32 * table_width, 0.35),
+				),
 				rotation: 0.0,
-				card_spacing: 25.0,
+				card_spacing: 20.0,
 				face_up: true,
 				draw_empty: true,
+				zone_only: true,
 			});
 		}
-		zones
+		let len = self.tableau.len();
+		let table_width = 0.9 / len as f32;
+		for (i, col) in self.tableau.iter().enumerate() {
+			zones.push(CardZone {
+				id: i as u8 + 6,
+				set: col.clone(),
+				layout: CardSetLayout::Vertical,
+				origin: pos2(0.05 + i as f32 * 0.12, 0.40),
+				rect: Rect::from_min_max(
+					pos2(0.05 + i as f32 * table_width, 0.40),
+					pos2(0.05 + (i + 1) as f32 * table_width, 1.0),
+				),
+				rotation: 0.0,
+				card_spacing: 20.0,
+				face_up: true,
+				draw_empty: true,
+				zone_only: false,
+			});
+		}
+
+		CardBoard { zones }
+	}
+}
+#[cfg(test)]
+mod tests {
+
+	#[test]
+	#[cfg(not(target_arch = "wasm32"))]
+	fn test_gui() -> eframe::Result<()> {
+		use crate::{gui::card_app::CardApp, klondike::Klondike};
+		use kudchuet::ai::AIEngineProvider;
+		use winit::platform::windows::EventLoopBuilderExtWindows;
+
+		let engines: Vec<Box<dyn AIEngineProvider<Klondike>>> = vec![];
+		//vec![Box::new(MoveSearcherBuilder::new(
+		//	"Simple",
+		//	FreecellEval,
+		//	5,
+		//))];
+		let mut board = CardApp::new(Klondike::new(), engines);
+		board.max_depth = 13;
+		board.depth = 8;
+		let mut options = eframe::NativeOptions::default();
+		options.event_loop_builder = Some(Box::new(|builder| {
+			builder.with_any_thread(true);
+		}));
+		eframe::run_native("Klondike", options, Box::new(|_cc| Ok(Box::new(board))))
 	}
 }
