@@ -1,9 +1,11 @@
 use std::fmt::Debug;
 
 use crate::ai::move_search::interface::Game;
+use crate::cards::playing_cards::{CardSet, PlayingCard};
+use crate::gui::card_view::{CardBoard, CardGameClick};
 use crate::gui::shapes::StrokeData;
 use crate::gui::{input_handler::MoveResult, shapes::Shape};
-use egui::{Color32, Stroke};
+use egui::{Color32, ImageSource, Stroke};
 use egui_field_editor::EguiInspect;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -17,6 +19,9 @@ pub mod game_state_manager;
 pub mod input_handler;
 pub mod options_panel;
 pub mod shapes;
+pub mod utils;
+pub mod card_view;
+pub mod cards;
 
 #[derive(EguiInspect, Clone, PartialEq, Eq, Copy, Debug, Serialize, Deserialize)]
 pub enum CoordMod {
@@ -303,59 +308,7 @@ where
 	Self::M: BoardMove<Self> + Copy,
 {
 	type PieceType: Copy + EGUIPieceType;
-	/*type Settings: Default+EguiInspect;
-	/// Create a Board game from the provided settings.
-	///
-	/// Default implementation ignores settings; override if game requires configuration.
-	fn build_from_settings(_settings: &Self::Settings) -> Self {
-		Self::default()
-	}
 
-	/// Generate legal moves from the current position.
-	///
-	/// This is a convinience method. Default implementation call Game::generate_moves.
-	/// Collects all generated moves into a Vec.
-	/// Prefer using generate_moves for performance-critical paths.
-	/// This does not need to be reimplemented.
-	fn legal_moves(&self) -> Vec<Self::M> {
-		let mut moves=vec![];
-		<Self as Game>::generate_moves(self, &mut moves);
-		moves
-	}
-
-	/// Apply a move to the game.
-	///
-	/// This is a convinient method. Default implementation call Game::apply(self).
-	/// This does not need to be reimplemented.
-	fn play(&mut self, mv: Self::M) {
-		let state=<Self as Game>::apply(self, mv);
-		if let Some(state) = state {
-			*self=state;
-		}
-	}
-	/// Get the current status of the game.
-	///
-	/// This is a convinient method. Default implementation call Game::get_winner(self) and convert it to GameResult.
-	/// This does not need to be reimplemented.
-	fn result(&self) -> GameOutcome {
-		Self::get_outcome(self)
-	}
-	/// Get the player which have to play
-	///
-	/// This is a convinient method. Default implementation call Game::current_player(self).
-	/// This does not need to be reimplemented.
-	fn current_player(&self) -> Player {
-		<Self as Game>::get_current_player(self)
-	}
-	/// Number of players (default is 2)
-	fn nb_players(&self) -> u8 {
-		2
-	}
-	/// Should returns Player's name (ex: White, Black).
-	/// Default is Player n.
-	fn get_name(&self, p: Player) -> String {
-		p.to_string()
-	}*/
 	/// Width of the board
 	fn width(&self) -> u8;
 	/// Height of the board
@@ -365,8 +318,10 @@ where
 
 	fn index_from_coords(x: u8, y: u8) -> u16;
 	fn coords_from_index(index: u16) -> (u8, u8);
+	//fn is_playable_square(_index: u16) -> bool {
+	//	true
+	//}
 
-	//fn play_random(&mut self) {}
 }
 
 pub trait BoardMove<G: GUIGame<Click = u16>>: Debug + Sized + Copy + GUIMove<G>
@@ -378,100 +333,14 @@ pub trait BoardMove<G: GUIGame<Click = u16>>: Debug + Sized + Copy + GUIMove<G>
 	fn to(&self) -> u16 {
 		0
 	}
-	/*fn played_highlights(&self, state: &G) -> Vec<G::Click> {
-		self.click_sequence(state)
-	}
-	fn handle_clicks_interaction(state: &G, legals: &[G::M], clicks: &[u16]) -> MoveResult<G, Self::Click>
-	where
-		G: BoardGame,
-		G::M: BoardMove<G>,
-	{
-		let candidates: Vec<G::M> = legals
-			.iter()
-			.filter(|&&m| m.matches_prefix(state, legals, clicks))
-			.copied()
-			.collect();
 
-		if candidates.is_empty() {
-			return MoveResult::Invalid;
-		}
-
-		let n = clicks.len();
-
-		// Possible next clicks
-		let mut next_possible_clicks = Vec::new();
-
-		for m in &candidates {
-			let seq = m.click_sequence(state);
-			if seq.len() > n {
-				let idx = seq[n];
-				if !next_possible_clicks.contains(&idx) {
-					next_possible_clicks.push(idx);
-				}
-			}
-		}
-
-		if next_possible_clicks.is_empty() {
-			let exact_matches: Vec<G::M> = candidates
-				.iter()
-				.filter(|m| m.click_sequence(state).len() == n)
-				.copied()
-				.collect();
-
-			return match exact_matches.len() {
-				0 => MoveResult::Invalid,
-				1 => MoveResult::Created {
-					mv: exact_matches[0],
-					highlights_played: clicks.to_owned(),
-				},
-				_ => MoveResult::ChoiceRequired {
-					candidates: exact_matches,
-				},
-			};
-		}
-
-		MoveResult::Incomplete {
-			selected: Some(clicks[n - 1]),
-			highlights: next_possible_clicks,
-			matching_moves: candidates, //intermediate_state: Self::compute_intermediate_state(state, legals, clicks),
-		}
-	}
-	/// Some games need to move multiple piece per turn for example, hence, need to display an intermediate state.
-	/// This method need to generate such intermediate state after a click
-	fn compute_intermediate_state(&self, _state: &G, _clicks: &[u16]) -> Option<G> {
-		None
-	}
-	/// Get the click sequence needed to generate this move
-	/// By default, first click is from, second to for a piece move, otherwise, it's "to" for a drop.
-	fn click_sequence(&self, _state: &G) -> Vec<u16> {
-		if let Some(f) = self.from() {
-			vec![f, self.to()]
-		} else {
-			vec![self.to()]
-		}
-	}
-
-	/// Check if a sequence a click match the beginning sequence of clicks to generate this move
-	fn matches_prefix(&self, state: &G, _legals: &[G::M], clicks: &[u16]) -> bool {
-		let seq = self.click_sequence(state);
-		clicks.len() <= seq.len() && &seq[..clicks.len()] == clicks
-	}*/
 	fn to_uci(&self) -> Option<String> {
 		None
 	}
 	fn from_uci(_m_str: &str) -> Result<Self, String> {
 		Err("Not supported".into())
 	}
-	/*
-	/// Get the click sequence needed to generate this move
-	/// By default, first click is from, second to for a piece move, otherwise, it's "to" for a drop.
-	fn click_sequence(&self, _state: &G) -> Vec<G::Click> {
-		if let Some(f) = self.from() {
-			vec![f, self.to()]
-		} else {
-			vec![self.to()]
-		}
-	}*/
+
 	fn click_sequence_board_move_default(&self, _state: &G) -> Vec<G::Click> {
 		if let Some(f) = self.from() {
 			vec![f, self.to()]
@@ -485,4 +354,21 @@ pub enum MultipleMoveSelectionResult<M> {
 	Pending,
 	Cancelled,
 	Selected(M),
+}
+pub trait CardGame: GUIGame<S = Self, Click = CardGameClick<Self::Card>> + Default + Clone
+where
+	Self::M: GUIMove<Self> + Copy,
+{
+	type Card: PlayingCard;
+	fn build_board(&self) -> CardBoard<impl CardSet<Card = Self::Card>, Self::Card>;
+}
+
+pub trait DrawablePlayingCard: PlayingCard
+where
+	Self: 'static,
+{
+	fn card_texture(&self) -> ImageSource<'_>;
+	fn aspect_ratio() -> f32 {
+		2.0 / 3.0
+	}
 }

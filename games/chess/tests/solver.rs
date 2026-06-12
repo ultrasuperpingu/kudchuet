@@ -1,5 +1,7 @@
 use chess::mychess::ChessBoard;
-use kudchuet::ai::move_search::{Game, gametree::{GameTree, ProofOutcome}, test_dfs::PerfectSolver};
+use kudchuet::{ai::move_search::{
+	Game, astar::{AStar, TrivialHeuristic}, gametree::{GameTree, ProofOutcome}, test_dfs::PerfectSolver
+}, gui::GUIGame};
 
 //https://wtharvey.com/m8n2.txt
 static TWO_MOVES: [&str; 11] = [
@@ -34,6 +36,7 @@ static FOUR_MOVES: [&str; 2] = [
 	"r5rk/2p1Nppp/3p3P/pp2p1P1/4P3/2qnPQK1/8/R6R w - - 1 0",
 	"1r2k1r1/pbppnp1p/1b3P2/8/Q7/B1PB1q2/P4PPP/3R2K1 w - - 1 0",
 ];
+static _FIVE_MOVES: [&str; 1] = ["n1rb4/1p3p1p/1p6/1R5K/8/p3p1PN/1PP1R3/N6k w - - 1 0"];
 #[test]
 fn test_solve() {
 	for fen in TWO_MOVES {
@@ -46,7 +49,10 @@ fn test_solve() {
 		let res = tree.iterative_deepening_solve(0, 3);
 		println!("{:?} ({})", res, tree.get_root().depth_to_end());
 		tree.print(1);
-		assert_eq!(res, ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(3));
+		assert_eq!(
+			res,
+			ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(3)
+		);
 	}
 	for fen in THREE_MOVES {
 		let board = ChessBoard::from_fen(fen).unwrap();
@@ -57,7 +63,10 @@ fn test_solve() {
 		let res = tree.iterative_deepening_solve(0, 5);
 		println!("{:?} ({})", res, tree.get_root().depth_to_end());
 		tree.print(1);
-		assert_eq!(res,  ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(5));
+		assert_eq!(
+			res,
+			ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(5)
+		);
 	}
 	for fen in FOUR_MOVES {
 		let board = ChessBoard::from_fen(fen).unwrap();
@@ -68,10 +77,12 @@ fn test_solve() {
 		let res = tree.expand_to_depth(0, 7);
 		println!("{:?} ({})", res, tree.get_root().depth_to_end());
 		tree.print(1);
-		assert_eq!(res,  ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(7));
+		assert_eq!(
+			res,
+			ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(7)
+		);
 	}
 }
-
 
 #[test]
 fn test_solve_dfs() {
@@ -84,7 +95,10 @@ fn test_solve_dfs() {
 		//let res = tree.expand_to_depth(0, 3);
 		let res = solver.solve::<ChessBoard>(&mut board, 5);
 		println!("{:?}", res);
-		assert_eq!(res, ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(3));
+		assert_eq!(
+			res,
+			ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(3)
+		);
 	}
 	for fen in THREE_MOVES {
 		let mut board = ChessBoard::from_fen(fen).unwrap();
@@ -95,7 +109,10 @@ fn test_solve_dfs() {
 		//let res = tree.expand_to_depth(0, 3);
 		let res = solver.solve::<ChessBoard>(&mut board, 5);
 		println!("{:?}", res);
-		assert_eq!(res,  ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(5));
+		assert_eq!(
+			res,
+			ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(5)
+		);
 	}
 	for fen in FOUR_MOVES {
 		let mut board = ChessBoard::from_fen(fen).unwrap();
@@ -106,7 +123,42 @@ fn test_solve_dfs() {
 		//let res = tree.expand_to_depth(0, 3);
 		let res = solver.solve::<ChessBoard>(&mut board, 7);
 		println!("{:?}", res);
-		assert_eq!(res,  ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(7));
+		assert_eq!(
+			res,
+			ProofOutcome::from(ChessBoard::get_current_player(&board)).with_depth(7)
+		);
 	}
 }
 
+#[test]
+fn test_astar() {
+	use kudchuet::ai::move_search::Strategy;
+	let mut chess = ChessBoard::default();
+	println!("{}", chess);
+	let mut search = AStar::<TrivialHeuristic<ChessBoard>>::default();
+	let mut count = 0;
+	while count < 300 {
+		let m = search.choose_move(&mut chess);
+		if let Some(m) = m {
+			chess.play(&m);
+		} else {
+			break;
+		}
+		println!("{}", chess);
+		count += 1;
+	}
+	println!("{:?}", chess.result());
+	chess=ChessBoard::from_fen("n1rb4/1p3p1p/1p6/1R5K/8/p3p1PN/1PP1R3/N6k w - - 1 0").unwrap();
+	let mut count = 0;
+	while count < 300 {
+		let m = search.choose_move(&mut chess);
+		if let Some(m) = m {
+			chess.play(&m);
+		} else {
+			break;
+		}
+		println!("{}", chess);
+		count += 1;
+	}
+	println!("{:?}", chess.result());
+}

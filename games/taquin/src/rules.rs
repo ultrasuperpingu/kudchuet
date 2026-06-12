@@ -51,6 +51,13 @@ impl<const W: usize, const H: usize, const NB: usize> Taquin<W, H, NB> {
 		s.hash = s.compute_hash();
 		s
 	}
+	pub fn new_random_safe() -> Self {
+		let _ = Self::_TEST_LENGTH;
+		let mut s = Self::SOLVED;
+		s.hash = s.compute_hash();
+		s.safe_shuffle(15000);
+		s
+	}
 	pub fn is_solvable(&self) -> bool {
 		Self::is_solvable_content(&self.content)
 	}
@@ -172,9 +179,16 @@ impl<const W: usize, const H: usize, const NB: usize> Taquin<W, H, NB> {
 		}
 		unreachable!()
 	}
+	pub fn safe_shuffle(&mut self, nb_moves: usize) {
+		for _ in 0..nb_moves {
+			let moves = self.legal_moves();
+			self.play_unchecked(fastrand::choice(moves).unwrap());
+		}
+	}
 }
 impl<const W: usize, const H: usize, const NB: usize> Default for Taquin<W, H, NB> {
 	fn default() -> Self {
+		//Self::new_random_safe()
 		Self::new_random()
 	}
 }
@@ -277,7 +291,6 @@ impl<const W: usize, const H: usize, const NB: usize> Taquin<W, H, NB> {
 			let goal_x = goal % W;
 			let goal_y = goal / W;
 
-			// seulement les tuiles qui doivent être dans cette colonne
 			if goal_x == x {
 				tiles.push((y, goal_y));
 			}
@@ -287,7 +300,6 @@ impl<const W: usize, const H: usize, const NB: usize> Taquin<W, H, NB> {
 
 		for i in 0..tiles.len() {
 			for j in i + 1..tiles.len() {
-				// inversion verticale dans la colonne
 				if tiles[i].1 > tiles[j].1 {
 					conflicts += 1;
 				}
@@ -405,7 +417,7 @@ mod tests {
 	use crate::rules::Taquin;
 	use kudchuet::ai::move_search::Strategy;
 	use kudchuet::ai::move_search::astar::AStar;
-use kudchuet::gui::GUIGame as _;
+	use kudchuet::gui::GUIGame as _;
 
 	#[test]
 	fn display() {
@@ -415,6 +427,27 @@ use kudchuet::gui::GUIGame as _;
 		println!("{}\n\n", taquin);
 		let taquin = Taquin::<16, 16, 256>::new_random();
 		println!("{}\n\n", taquin);
+	}
+	#[test]
+	fn test_solvable() {
+		for _ in 0..1000 {
+			let taquin = Taquin::<4, 4, { 4 * 4 }>::new_random_safe();
+			assert_eq!(taquin.is_solvable(), true);
+		}
+		for _ in 0..1000 {
+			let taquin = Taquin::<4, 4, { 4 * 4 }>::new_random();
+			assert_eq!(taquin.is_solvable(), true);
+		}
+		for _ in 0..1000 {
+			let mut taquin = Taquin::<4, 4, { 4 * 4 }>::new_random_safe();
+			let temp = taquin.content[0][0];
+			if taquin.content[0][0] == 0 || taquin.content[0][1] == 0 {
+				continue;
+			}
+			taquin.content[0][0] = taquin.content[0][1];
+			taquin.content[0][1] = temp;
+			assert_eq!(taquin.is_solvable(), false);
+		}
 	}
 	#[test]
 	fn test_legal_moves() {

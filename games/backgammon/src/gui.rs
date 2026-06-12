@@ -453,6 +453,7 @@ impl SquareDrawer<Backgammon> for BackgammonSquareDrawer {
 	}
 }
 pub fn create_board() -> GenericBoardApp<Backgammon> {
+	use kudchuet::gui::board_drawer::BoardDrawer;
 	let ai_provider = MoveSearcherBuilder::new("Material", BackgammonMaterialEval, 4);
 	let ai_provider2 = MoveSearcherBuilder::new("Simple", BackgammonSimpleEval, 4);
 	let mut board = GenericBoardApp::new(

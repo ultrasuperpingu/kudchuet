@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::playing_cards::{CardSuit, PlayingCard};
+use crate::cards::playing_cards::{CardSuit, PlayingCard};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

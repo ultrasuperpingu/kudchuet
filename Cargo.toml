@@ -20,6 +20,7 @@ members = [
 	"games/hare_and_hounds",
 	"games/hex_game",
 	"games/neutron",
+	"games/peg_solitaire",
 	"games/reversi",
 	"games/taquin",
 	"games/teeko",

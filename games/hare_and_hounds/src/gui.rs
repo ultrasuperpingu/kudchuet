@@ -208,6 +208,7 @@ impl<G> SquareDrawer<G> for HareAndHoundsSquareDrawer
 	}
 }
 pub fn create_board() -> GenericBoardApp<HareAndHounds> {
+	use kudchuet::gui::board_drawer::BoardDrawer;
 	let engines: Vec<Box<dyn AIEngineProvider<HareAndHounds>>> = vec![
 		Box::new(MoveSearcherBuilder::new("Simple", HareAndHoundsEval::new(), 4)),
 		Box::new(AIBuilder::<HareAndHounds, PerfectSolver<HareAndHounds>>::new("Perfect")),

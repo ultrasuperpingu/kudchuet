@@ -561,6 +561,7 @@ impl PieceDrawer<FootBoard> for FootboardPieceDrawer
 }*/
 
 pub fn create_board() -> GenericBoardApp<FootBoard> {
+	use kudchuet::gui::board_drawer::BoardDrawer;
 	let engines: Vec<Box<dyn AIEngineProvider<FootBoard>>> = vec![Box::new(
 		MoveSearcherBuilder::new("Dumb", FootboardEvalDumb, 3),
 	)];

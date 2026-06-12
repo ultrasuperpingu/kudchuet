@@ -198,6 +198,7 @@ impl SquareDrawer<EinsteinWurfeltNicht> for MySquareDrawer {
 	}
 }
 pub fn create_board() -> GenericBoardApp<EinsteinWurfeltNicht> {
+	use kudchuet::gui::board_drawer::BoardDrawer;
 	let engines: Vec<Box<dyn AIEngineProvider<EinsteinWurfeltNicht>>> = vec![
 		Box::new(MoveSearcherBuilder::new(
 			"Dumb",

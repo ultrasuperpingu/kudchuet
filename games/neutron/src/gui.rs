@@ -1,4 +1,5 @@
 use crate::bitboard::Bitboard5x5;
+use crate::game::NeutronMaterialEval;
 use crate::rules::{Move, Neutron, Piece};
 use bitboard::Bitboard;
 use eframe::egui;
@@ -45,8 +46,6 @@ impl BoardMove<Neutron> for Move {
 	fn to(&self) -> u16 {
 		self.pawn.1 as u16
 	}
-
-	
 }
 impl EGUIPieceType for Piece {
 	fn shape(&self) -> Shape {
@@ -122,8 +121,13 @@ impl BoardGame for Neutron {
 }
 
 pub fn create_board() -> GenericBoardApp<Neutron> {
-	let engines: Vec<Box<dyn AIEngineProvider<Neutron>>> = vec![Box::new(
-		MoveSearcherBuilder::new("Dumb", NeutronDumbEval::new(), 4),
-	)];
+	let engines: Vec<Box<dyn AIEngineProvider<Neutron>>> = vec![
+		Box::new(MoveSearcherBuilder::new("Dumb", NeutronDumbEval::new(), 4)),
+		Box::new(MoveSearcherBuilder::new(
+			"Material",
+			NeutronMaterialEval::new(),
+			4,
+		)),
+	];
 	GenericBoardApp::new(Neutron::default(), engines)
 }

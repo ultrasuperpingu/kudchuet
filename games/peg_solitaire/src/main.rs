@@ -1,12 +1,12 @@
-use taquin::gui::create_board;
+use peg_solitaire::gui::create_board;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
-	let options = kudchuet::gui::utils::get_native_default_option();
 
+	let options = kudchuet::gui::utils::get_native_default_option();
 	eframe::run_native(
-		"Taquin",
+		"Solitaire",
 		options,
-		Box::new(|_cc| Ok(Box::new(create_board::<4, 4, { 4 * 4 }>()))),
+		Box::new(|_cc| Ok(Box::new(create_board()))),
 	)
 }
 

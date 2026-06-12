@@ -3,8 +3,9 @@ use egui_field_editor::{EguiInspect, EguiInspector, add_button};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::external_engine::ExternalEngineEntry;
 use crate::ai::move_search::interface::Game;
-use crate::gui::board_app::GenericBoardApp;
-use crate::gui::{BoardGame, BoardMove};
+use crate::gui::board_app::GenericGameApp;
+use crate::gui::board_drawer::GameDrawer;
+use crate::gui::{GUIGame, GUIMove};
 
 #[derive(PartialEq, Copy, Clone)]
 pub(super) enum RightTab {
@@ -17,10 +18,10 @@ pub(super) enum RightTab {
 }
 const LABEL_RATIO: f32 = 0.4;
 
-impl<G: BoardGame + Sync + Send + 'static>
-	GenericBoardApp<G>
+impl<G: GUIGame + Sync + Send + 'static, Drawer: GameDrawer<G> + Default + 'static>
+	GenericGameApp<G, Drawer>
 where
-	G::M: BoardMove<G> + Send,
+	G::M: GUIMove<G> + Send,
 {
 	pub(super) fn draw_options_panels(&mut self, ui: &mut egui::Ui) {
 		if let Some(tab) = self.open_right_tab {
@@ -121,7 +122,7 @@ where
 										false,
 										ui,
 										|ui| {
-											*self.game_drawer.get_style_mut() = G::Style::default();
+											*self.game_drawer.get_style_mut() = G::default_style();
 											self.game_drawer.save_style(ui.ctx());
 										},
 									);
@@ -262,13 +263,13 @@ pub struct ImportExportPanel {
 }
 
 impl ImportExportPanel {
-	pub fn ui<G: BoardGame>(
+	pub fn ui<G: GUIGame>(
 		&mut self,
 		ui: &mut egui::Ui,
 		game: &G,
 		on_position_loaded: &mut dyn FnMut(G),
 	) where
-		<G as Game>::M: BoardMove<G>,
+		<G as Game>::M: GUIMove<G>,
 	{
 		ui.vertical(|ui| {
 			ui.label(egui::RichText::new("Position").strong());

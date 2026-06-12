@@ -1,4 +1,4 @@
-use crate::{
+use crate::cards::{
 	playing_cards::{CardSet, CardSuit, PlayingCard},
 	playing_cards32::PlayingCard32,
 	playing_cards54::PlayingCard54,
@@ -7,12 +7,8 @@ use crate::{
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct OrderedCardSet<C>(pub(crate) Vec<C>);
-//pub struct OrderedCardSet<C>(pub(crate) Vec<C>);
+pub struct OrderedCardSet<C>(pub Vec<C>);
 
-//pub type OrderedCardSet32 = OrderedCardSet<PlayingCard32, 32>;
-//pub type OrderedCardSet54 = OrderedCardSet<PlayingCard54, 54>;
-//pub type OrderedCardSet78 = OrderedCardSet<PlayingCard78, 78>;
 pub type OrderedCardSet32 = OrderedCardSet<PlayingCard32>;
 pub type OrderedCardSet54 = OrderedCardSet<PlayingCard54>;
 pub type OrderedCardSet78 = OrderedCardSet<PlayingCard78>;
@@ -67,16 +63,53 @@ where
 		self.0.is_empty()
 	}
 
-	pub fn draw_random(nb: u8, from: &mut Self) -> Result<Self, String> {
-		if from.len() < nb as usize {
+	#[inline]
+	pub fn shuffle(&mut self) {
+		fastrand::shuffle(&mut self.0);
+	}
+
+	pub fn draw_from_top(&mut self, nb: u8) -> Result<Self, String> {
+		if self.len() < nb as usize {
+			return Err("Not enough cards in the deck".into());
+		}
+		let mut result = Vec::new();
+		for _ in 0..nb {
+			result.push(self.0.pop().unwrap());
+		}
+
+		Ok(Self(result))
+	}
+	pub fn draw_from_bottom(&mut self, nb: u8) -> Result<Self, String> {
+		if self.len() < nb as usize {
+			return Err("Not enough cards in the deck".into());
+		}
+		let mut result: Vec<_> = self.0.drain(..nb as usize).collect();
+		result.reverse();
+		Ok(Self(result))
+	}
+	pub fn split(&mut self, nb: u8) -> Result<Self, String> {
+		if self.len() < nb as usize {
+			return Err("Not enough cards in the deck".into());
+		}
+		let splitted = self.0.split_off(nb as usize);
+		Ok(Self(splitted))
+	}
+	pub fn cut(&mut self, nb: u8) -> Result<(), String> {
+		let mut second = self.split(nb)?;
+		std::mem::swap(&mut self.0, &mut second.0);
+		self.0.extend(second);
+		Ok(())
+	}
+	pub fn draw_random(&mut self, nb: u8) -> Result<Self, String> {
+		if self.len() < nb as usize {
 			return Err("Not enough cards in the deck".into());
 		}
 
 		let mut result = Vec::new();
 
 		for _ in 0..nb {
-			let idx = fastrand::usize(..from.0.len());
-			result.push(from.0.swap_remove(idx));
+			let idx = fastrand::usize(..self.0.len());
+			result.push(self.0.swap_remove(idx));
 		}
 
 		Ok(Self(result))
@@ -260,26 +293,21 @@ where
 
 	#[inline]
 	fn draw_random(nb: u8, from: &mut Self) -> Result<Self, String> {
-		if from.len() < nb as usize {
-			return Err("Not enough cards in the deck".into());
-		}
-
-		let mut result = Vec::<C>::new();
-
-		for _ in 0..nb {
-			let idx = fastrand::usize(..from.0.len());
-			result.push(from.0.swap_remove(idx));
-		}
-
-		Ok(Self(result))
+		//if from.len() < nb as usize {
+		//	return Err("Not enough cards in the deck".into());
+		//}
+//
+		//let mut result = Vec::<C>::new();
+//
+		//for _ in 0..nb {
+		//	let idx = fastrand::usize(..from.0.len());
+		//	result.push(from.0.swap_remove(idx));
+		//}
+//
+		//Ok(Self(result))
+		from.draw_random(nb)
 	}
-	fn all() -> Self {
-		let mut vec = Vec::new();
-		for c in C::ALL {
-			vec.push(*c);
-		}
-		Self(vec)
-	}
+
 }
 
 impl OrderedCardSet32 {
@@ -418,26 +446,26 @@ impl From<UnorderedCardSet78> for OrderedCardSet78 {
 }
 #[cfg(test)]
 mod tests {
-	use crate::{
+	use crate::cards::{
 		ordered_card_set::{OrderedCardSet32, OrderedCardSet54},
-		playing_cards::CardSet,
+		playing_cards::{PlayingCard}, playing_cards32::PlayingCard32, playing_cards54::PlayingCard54,
 	};
 
 	#[test]
 	fn test_draw_random_ordered32() {
-		let mut deck = OrderedCardSet32::all();
-		let player1 = OrderedCardSet32::draw_random(8, &mut deck).expect("Should work");
-		let player2 = OrderedCardSet32::draw_random(8, &mut deck).expect("Should work");
-		let player3 = OrderedCardSet32::draw_random(8, &mut deck).expect("Should work");
-		let player4 = OrderedCardSet32::draw_random(8, &mut deck).expect("Should work");
+		let mut deck = OrderedCardSet32::from_iter(PlayingCard32::ALL.iter().cloned());
+		let player1 = deck.draw_random(8).expect("Should work");
+		let player2 = deck.draw_random(8).expect("Should work");
+		let player3 = deck.draw_random(8).expect("Should work");
+		let player4 = deck.draw_random(8).expect("Should work");
 		assert_eq!(deck.len(), 0);
 		assert_eq!(player1.len(), 8);
 		assert_eq!(player2.len(), 8);
 		assert_eq!(player3.len(), 8);
 		assert_eq!(player4.len(), 8);
 		assert_eq!(
-			player1.clone() | player2.clone() | player3.clone() | player4.clone(),
-			OrderedCardSet32::all()
+			(player1.clone() | player2.clone() | player3.clone() | player4.clone()).len(),
+			32
 		);
 		println!("Player1: {}", player1);
 		println!("Player2: {}", player2);
@@ -446,19 +474,19 @@ mod tests {
 	}
 	#[test]
 	fn test_draw_random_ordered54() {
-		let mut deck = OrderedCardSet54::all();
-		let player1 = OrderedCardSet54::draw_random(8, &mut deck).expect("Should work");
-		let player2 = OrderedCardSet54::draw_random(8, &mut deck).expect("Should work");
-		let player3 = OrderedCardSet54::draw_random(8, &mut deck).expect("Should work");
-		let player4 = OrderedCardSet54::draw_random(8, &mut deck).expect("Should work");
+		let mut deck = OrderedCardSet54::from_iter(PlayingCard54::ALL_BUT_JOKERS.iter().cloned());
+		let player1 = deck.draw_random(13).expect("Should work");
+		let player2 = deck.draw_random(13).expect("Should work");
+		let player3 = deck.draw_random(13).expect("Should work");
+		let player4 = deck.draw_random(13).expect("Should work");
 		assert_eq!(deck.len(), 0);
-		assert_eq!(player1.len(), 8);
-		assert_eq!(player2.len(), 8);
-		assert_eq!(player3.len(), 8);
-		assert_eq!(player4.len(), 8);
+		assert_eq!(player1.len(), 13);
+		assert_eq!(player2.len(), 13);
+		assert_eq!(player3.len(), 13);
+		assert_eq!(player4.len(), 13);
 		assert_eq!(
-			player1.clone() | player2.clone() | player3.clone() | player4.clone(),
-			OrderedCardSet54::all()
+			(player1.clone() | player2.clone() | player3.clone() | player4.clone()).len(),
+			52
 		);
 		println!("Player1: {}", player1);
 		println!("Player2: {}", player2);

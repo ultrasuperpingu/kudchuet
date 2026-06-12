@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::playing_cards::{CardSuit, PlayingCard};
+use crate::cards::playing_cards::{CardSuit, PlayingCard};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -106,6 +106,60 @@ impl std::fmt::Display for PlayingCard54 {
 }
 
 impl PlayingCard54 {
+	pub const ALL_BUT_JOKERS: &'static [Self] = &[
+		PlayingCard54::AceOfSpades,
+		PlayingCard54::TwoOfSpades,
+		PlayingCard54::ThreeOfSpades,
+		PlayingCard54::FourOfSpades,
+		PlayingCard54::FiveOfSpades,
+		PlayingCard54::SixOfSpades,
+		PlayingCard54::SevenOfSpades,
+		PlayingCard54::EightOfSpades,
+		PlayingCard54::NineOfSpades,
+		PlayingCard54::TenOfSpades,
+		PlayingCard54::JackOfSpades,
+		PlayingCard54::QueenOfSpades,
+		PlayingCard54::KingOfSpades,
+		PlayingCard54::AceOfHearts,
+		PlayingCard54::TwoOfHearts,
+		PlayingCard54::ThreeOfHearts,
+		PlayingCard54::FourOfHearts,
+		PlayingCard54::FiveOfHearts,
+		PlayingCard54::SixOfHearts,
+		PlayingCard54::SevenOfHearts,
+		PlayingCard54::EightOfHearts,
+		PlayingCard54::NineOfHearts,
+		PlayingCard54::TenOfHearts,
+		PlayingCard54::JackOfHearts,
+		PlayingCard54::QueenOfHearts,
+		PlayingCard54::KingOfHearts,
+		PlayingCard54::AceOfDiamonds,
+		PlayingCard54::TwoOfDiamonds,
+		PlayingCard54::ThreeOfDiamonds,
+		PlayingCard54::FourOfDiamonds,
+		PlayingCard54::FiveOfDiamonds,
+		PlayingCard54::SixOfDiamonds,
+		PlayingCard54::SevenOfDiamonds,
+		PlayingCard54::EightOfDiamonds,
+		PlayingCard54::NineOfDiamonds,
+		PlayingCard54::TenOfDiamonds,
+		PlayingCard54::JackOfDiamonds,
+		PlayingCard54::QueenOfDiamonds,
+		PlayingCard54::KingOfDiamonds,
+		PlayingCard54::AceOfClubs,
+		PlayingCard54::TwoOfClubs,
+		PlayingCard54::ThreeOfClubs,
+		PlayingCard54::FourOfClubs,
+		PlayingCard54::FiveOfClubs,
+		PlayingCard54::SixOfClubs,
+		PlayingCard54::SevenOfClubs,
+		PlayingCard54::EightOfClubs,
+		PlayingCard54::NineOfClubs,
+		PlayingCard54::TenOfClubs,
+		PlayingCard54::JackOfClubs,
+		PlayingCard54::QueenOfClubs,
+		PlayingCard54::KingOfClubs,
+	];
 	pub const fn color(self) -> CardSuit {
 		let v = self as u8;
 
@@ -187,6 +241,7 @@ impl PlayingCard for PlayingCard54 {
 		PlayingCard54::BlackJoker,
 		PlayingCard54::RedJoker,
 	];
+	
 	type Color = CardSuit;
 
 	fn index(self) -> u8 {
@@ -209,7 +264,7 @@ impl PlayingCard for PlayingCard54 {
 }
 #[cfg(test)]
 mod tests {
-	use crate::{playing_cards::CardSet, unordered_card_set::UnorderedCardSet54};
+	use crate::cards::{playing_cards::CardSet, unordered_card_set::UnorderedCardSet54};
 
 	#[test]
 	fn test_draw_random() {

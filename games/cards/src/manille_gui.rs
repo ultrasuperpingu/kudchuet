@@ -1,29 +1,21 @@
 use crate::game::ManilleMaterialEval;
-use crate::gui::card_app::CardApp;
-use crate::gui::card_view::{CardBoard, CardGameClick, CardZone};
-use crate::gui::{CardGame, CardMove};
-use crate::playing_cards32::PlayingCard32;
+use kudchuet::gui::CardGame;
+use kudchuet::gui::card_view::{CardBoard, CardGameClick, DefaultCardGameDrawer};
 use eframe::egui;
 use egui::{Color32, Rect};
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
+use kudchuet::cards::playing_cards32::PlayingCard32;
+use kudchuet::gui::board_app::GenericGameApp;
 use kudchuet::gui::{BoardStyle, CoordMod, GUIGame, GUIMove};
 
 use crate::manille::{Manille, Move};
 
 impl GUIMove<Manille> for Move {
-	fn click_sequence(&self, state: &Manille) -> Vec<<Manille as GUIGame>::Click> {
+	fn click_sequence(&self, _state: &Manille) -> Vec<<Manille as GUIGame>::Click> {
 		if let Move::Play(card) = self {
 			return vec![CardGameClick::Card(*card)];
 		}
 		vec![]
-	}
-}
-impl CardMove<Manille> for Move {
-	fn click(&self) -> Option<CardGameClick<PlayingCard32>> {
-		if let Move::Play(card) = self {
-			return Some(CardGameClick::Card(*card));
-		}
-		None
 	}
 }
 impl GUIGame for Manille {
@@ -55,15 +47,17 @@ impl GUIGame for Manille {
 }
 impl CardGame for Manille {
 	type Card = PlayingCard32;
-
-	fn build_board(&self) -> CardBoard<crate::ordered_card_set::OrderedCardSet32, Self::Card> {
-		use crate::gui::card_view::{CardSetLayout, CardZone};
-		use crate::ordered_card_set::OrderedCardSet32;
+	#[allow(refining_impl_trait)]
+	fn build_board(
+		&self,
+	) -> CardBoard<kudchuet::cards::ordered_card_set::OrderedCardSet32, Self::Card> {
+		use kudchuet::gui::card_view::{CardSetLayout, CardZone};
 		use eframe::egui::pos2;
+		use kudchuet::cards::ordered_card_set::OrderedCardSet32;
 
 		let mut zones = Vec::new();
 
-		// Mains des joueurs
+		// Players hands
 		for p in 0..4 {
 			zones.push(CardZone {
 				id: p as u8 + 2,
@@ -73,13 +67,6 @@ impl CardGame for Manille {
 					1 => CardSetLayout::Vertical,   // Ouest
 					2 => CardSetLayout::Horizontal, // Nord
 					3 => CardSetLayout::Vertical,   // Est
-					_ => unreachable!(),
-				},
-				origin: match p {
-					0 => pos2(0.50, 0.85), // Sud
-					1 => pos2(0.10, 0.50), // Ouest
-					2 => pos2(0.50, 0.10), // Nord
-					3 => pos2(0.90, 0.50), // Est
 					_ => unreachable!(),
 				},
 				rect: match p {
@@ -98,6 +85,7 @@ impl CardGame for Manille {
 				},
 				card_spacing: 25.0,
 				face_up: p == 0,
+				face_up_predicat: None,
 				draw_empty: true,
 				zone_only: false,
 			});
@@ -109,11 +97,11 @@ impl CardGame for Manille {
 				id: 1,
 				set: self.trump_card.into(),
 				layout: CardSetLayout::Stack,
-				origin: pos2(0.50, 0.35),
-				rect: Rect::from_min_max(pos2(0.50, 0.35), pos2(0.55, 0.45)),
+				rect: Rect::from_min_max(pos2(0.45, 0.35), pos2(0.55, 0.55)),
 				rotation: 0.0,
 				card_spacing: 0.0,
 				face_up: true,
+				face_up_predicat: None,
 				draw_empty: false,
 				zone_only: false,
 			});
@@ -129,11 +117,11 @@ impl CardGame for Manille {
 				start_angle: -std::f32::consts::FRAC_PI_2,
 				len: 4,
 			},
-			origin: pos2(0.50, 0.50),
-			rect: Rect::from_min_max(pos2(0.1, 0.1), pos2(0.9, 0.9)),
+			rect: Rect::from_min_max(pos2(0.2, 0.2), pos2(0.8, 0.8)),
 			rotation: 0.0,
 			card_spacing: 0.0,
 			face_up: true,
+			face_up_predicat: None,
 			draw_empty: false,
 			zone_only: false,
 		});
@@ -141,14 +129,12 @@ impl CardGame for Manille {
 		CardBoard { zones }
 	}
 }
-pub fn create_board() -> CardApp<Manille> {
+pub fn create_board() -> GenericGameApp<Manille, DefaultCardGameDrawer<Manille, PlayingCard32>> {
 	let engines: Vec<Box<dyn AIEngineProvider<Manille>>> = vec![Box::new(
 		MoveSearcherBuilder::new("Cheating Material", ManilleMaterialEval, 8),
 	)];
-	let mut board = CardApp::new(Manille::default(), engines);
-	//board.board_drawer.get_style_mut().dark_color=egui::Color32::from_rgb(181, 136, 99);
-	//board.board_drawer.get_style_mut().light_color=Color32::from_rgb(240, 217, 181);
-	//board.board_drawer.get_style_mut().show_coordinates_mod=crate::common::gui::CoordMod::NumbersAside;
+	let mut board = GenericGameApp::new(Manille::default(), engines);
+	board.game_drawer = Box::new(DefaultCardGameDrawer::default());
 	board.max_depth = 13;
 	board.depth = 8;
 	board

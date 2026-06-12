@@ -6,10 +6,14 @@ use eframe::egui;
 use egui::{Color32, Rect, Stroke, Vec2};
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::board_app::GenericBoardApp;
-use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, GameDrawer, PieceDrawer, SquareDrawer};
+use kudchuet::gui::board_app::GenericGameApp;
+use kudchuet::gui::board_drawer::{
+	BoardDrawer, DefaultBoardDrawer, GameDrawer, PieceDrawer, SquareDrawer,
+};
 use kudchuet::gui::shapes::{Shape, StrokeData};
-use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType, GUIGame, GUIMove};
+use kudchuet::gui::{
+	BoardGame, BoardMove, BoardStyle, CheckerBoardMod, EGUIPieceType, GUIGame, GUIMove,
+};
 
 impl GUIMove<Abalone> for Move {
 	fn click_sequence(&self, _state: &Abalone) -> Vec<<Abalone as GUIGame>::Click> {
@@ -46,7 +50,6 @@ impl GUIMove<Abalone> for Move {
 	}
 }
 impl BoardMove<Abalone> for Move {
-	
 	fn to_uci(&self) -> Option<String> {
 		Some(self.to_string())
 	}
@@ -150,20 +153,19 @@ impl BoardGame for Abalone {
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		BitboardAbalone::coords_from_index(index as usize)
 	}
-
 }
 
-struct AbaloneBoardDrawer<G: BoardGame>(DefaultBoardDrawer<G>)
-where G::M: BoardMove<G>;
+pub struct AbaloneBoardDrawer<G: BoardGame>(DefaultBoardDrawer<G>)
+where
+	G::M: BoardMove<G>;
 impl GameDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
-
 	fn draw(
-			&mut self,
-			ui: &mut egui::Ui,
-			game: &Abalone,
-			//input: &Box<dyn InputHandler<G>>,
-			can_interact: bool,
-		) -> Option<<Abalone as GUIGame>::Click> {
+		&mut self,
+		ui: &mut egui::Ui,
+		game: &Abalone,
+		//input: &Box<dyn InputHandler<G>>,
+		can_interact: bool,
+	) -> Option<<Abalone as GUIGame>::Click> {
 		self.draw_board(ui, game, can_interact)
 	}
 
@@ -180,6 +182,39 @@ impl GameDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 	}
 	fn full_reset(&mut self) {
 		self.0.full_reset()
+	}
+
+	fn get_selected(&self) -> Option<u16> {
+		self.0.get_selected()
+	}
+
+	fn set_selected(&mut self, selected: Option<u16>) {
+		self.0.set_selected(selected)
+	}
+
+	fn clear_selection(&mut self) {
+		self.0.clear_selection()
+	}
+
+	fn get_legal_highlights(&self) -> &Vec<u16> {
+		self.0.get_legal_highlights()
+	}
+
+	fn set_legal_highlights(&mut self, legal_highlights: Vec<u16>) {
+		self.0.set_legal_highlights(legal_highlights)
+	}
+
+	fn get_played_highlights(&self) -> &Vec<u16> {
+		self.0.get_played_highlights()
+	}
+
+	fn set_played_highlights(&mut self, played_highlights: Vec<u16>) {
+		self.0.set_played_highlights(played_highlights)
+	}
+}
+impl Default for AbaloneBoardDrawer<Abalone> {
+	fn default() -> Self {
+		AbaloneBoardDrawer(DefaultBoardDrawer::new())
 	}
 }
 impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
@@ -306,43 +341,13 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 	fn set_piece_drawer(&mut self, sq_drawer: Box<dyn PieceDrawer<Abalone>>) {
 		self.0.set_piece_drawer(sq_drawer)
 	}
-
-	fn get_selected(&self) -> Option<u16> {
-		self.0.get_selected()
-	}
-
-	fn set_selected(&mut self, selected: Option<u16>) {
-		self.0.set_selected(selected)
-	}
-
-	fn clear_selection(&mut self) {
-		self.0.clear_selection()
-	}
-
-	fn get_legal_highlights(&self) -> &Vec<u16> {
-		self.0.get_legal_highlights()
-	}
-
-	fn set_legal_highlights(&mut self, legal_highlights: Vec<u16>) {
-		self.0.set_legal_highlights(legal_highlights)
-	}
-
-	fn get_played_highlights(&self) -> &Vec<u16> {
-		self.0.get_played_highlights()
-	}
-
-	fn set_played_highlights(&mut self, played_highlights: Vec<u16>) {
-		self.0.set_played_highlights(played_highlights)
-	}
-
 }
-pub fn create_board() -> GenericBoardApp<Abalone> {
+pub fn create_board() -> GenericGameApp<Abalone, AbaloneBoardDrawer<Abalone>> {
 	let engines: Vec<Box<dyn AIEngineProvider<Abalone>>> = vec![Box::new(
 		MoveSearcherBuilder::new("Material", AbaloneMaterialEval, 4),
 	)];
-	let mut board = GenericBoardApp::new(Abalone::default(), engines);
+	let mut board = GenericGameApp::new(Abalone::default(), engines);
 	board.game_drawer = Box::new(AbaloneBoardDrawer(DefaultBoardDrawer::new()));
-	*board.game_drawer.get_style_mut() = Abalone::default_style();
 	board.max_depth = 6;
 	board.depth = 4;
 	board

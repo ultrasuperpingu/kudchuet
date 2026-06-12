@@ -6,8 +6,7 @@ use egui_field_editor::EguiInspect;
 
 use crate::{
 	gui::{
-		BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, RowOffsetPattern,
-		shapes::Shape,
+		BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, GUIMove, RowOffsetPattern, shapes::Shape
 	},
 	utils::short_type_name,
 };
@@ -47,6 +46,15 @@ pub trait GameDrawer<G: GUIGame> {
 	fn get_style(&self) -> &G::Style;
 	fn get_style_mut(&mut self) -> &mut G::Style;
 	fn set_style(&mut self, style: G::Style);
+
+
+	fn get_selected(&self) -> Option<G::Click>;
+	fn set_selected(&mut self, selected: Option<G::Click>);
+	fn clear_selection(&mut self);
+	fn get_legal_highlights(&self) -> &Vec<G::Click>;
+	fn set_legal_highlights(&mut self, legal_highlights: Vec<G::Click>);
+	fn get_played_highlights(&self) -> &Vec<G::Click>;
+	fn set_played_highlights(&mut self, played_highlights: Vec<G::Click>);
 }
 pub trait BoardDrawer<G: BoardGame>: GameDrawer<G>
 where
@@ -364,13 +372,7 @@ where
 	//fn get_style(&self) -> &Self::BoardStyle;
 	//fn get_style_mut(&mut self) -> &mut BoardStyle;
 	//fn set_style(&mut self, style: BoardStyle);
-	fn get_selected(&self) -> Option<u16>;
-	fn set_selected(&mut self, selected: Option<u16>);
-	fn clear_selection(&mut self);
-	fn get_legal_highlights(&self) -> &Vec<u16>;
-	fn set_legal_highlights(&mut self, legal_highlights: Vec<u16>);
-	fn get_played_highlights(&self) -> &Vec<u16>;
-	fn set_played_highlights(&mut self, played_highlights: Vec<u16>);
+	
 	/*	fn full_reset(&mut self);
 	fn load_style(&mut self, ctx: &egui::Context) {
 		if let Some(json) = ctx.data_mut(|d| {
@@ -392,9 +394,9 @@ where
 	*/
 }
 
-pub struct DefaultBoardDrawer<G: BoardGame>
+pub struct DefaultBoardDrawer<G: GUIGame>
 where
-	G::M: BoardMove<G>,
+	G::M: GUIMove<G>,
 {
 	style: G::Style,
 	square_drawer: Box<dyn SquareDrawer<G>>,
@@ -451,6 +453,34 @@ where
 		self.style = style;
 	}
 
+	fn get_selected(&self) -> Option<u16> {
+		self.selected
+	}
+
+	fn set_selected(&mut self, selected: Option<u16>) {
+		self.selected = selected
+	}
+
+	fn get_legal_highlights(&self) -> &Vec<u16> {
+		&self.legal_highlights
+	}
+
+	fn set_legal_highlights(&mut self, legal_highlights: Vec<u16>) {
+		self.legal_highlights = legal_highlights;
+	}
+
+	fn get_played_highlights(&self) -> &Vec<u16> {
+		&self.played_highlights
+	}
+
+	fn set_played_highlights(&mut self, played_highlights: Vec<u16>) {
+		self.played_highlights = played_highlights;
+	}
+	fn clear_selection(&mut self) {
+		self.selected = None;
+		self.legal_highlights.clear();
+		//self.intermediate_state = None;
+	}
 	fn draw(
 		&mut self,
 		ui: &mut egui::Ui,
@@ -488,34 +518,6 @@ where
 		self.piece_drawer = sq_drawer;
 	}
 
-	fn get_selected(&self) -> Option<u16> {
-		self.selected
-	}
-
-	fn set_selected(&mut self, selected: Option<u16>) {
-		self.selected = selected
-	}
-
-	fn get_legal_highlights(&self) -> &Vec<u16> {
-		&self.legal_highlights
-	}
-
-	fn set_legal_highlights(&mut self, legal_highlights: Vec<u16>) {
-		self.legal_highlights = legal_highlights;
-	}
-
-	fn get_played_highlights(&self) -> &Vec<u16> {
-		&self.played_highlights
-	}
-
-	fn set_played_highlights(&mut self, played_highlights: Vec<u16>) {
-		self.played_highlights = played_highlights;
-	}
-	fn clear_selection(&mut self) {
-		self.selected = None;
-		self.legal_highlights.clear();
-		//self.intermediate_state = None;
-	}
 }
 
 pub trait SquareDrawer<G>

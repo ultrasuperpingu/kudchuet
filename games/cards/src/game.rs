@@ -109,7 +109,7 @@ impl Evaluator for ManilleTestEval {
 			.iter()
 			.enumerate()
 			.filter(|(i, _)| (*i as u8 % 2) == team)
-			.map(|(_, hand)| hand.iter().map(|c| c.value() as i32).sum::<i32>())
+			.map(|(_, hand)| hand.iter().map(|c| crate::manille::value(&c) as i32).sum::<i32>())
 			.sum();
 
 		let opp_value: i32 = state
@@ -117,7 +117,7 @@ impl Evaluator for ManilleTestEval {
 			.iter()
 			.enumerate()
 			.filter(|(i, _)| (*i as u8 % 2) != team)
-			.map(|(_, hand)| hand.iter().map(|c| c.value() as i32).sum::<i32>())
+			.map(|(_, hand)| hand.iter().map(|c| crate::manille::value(&c) as i32).sum::<i32>())
 			.sum();
 
 		(score_diff * 100 + (hand_value - opp_value)) as Evaluation

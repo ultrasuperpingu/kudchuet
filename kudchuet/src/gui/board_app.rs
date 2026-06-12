@@ -2,30 +2,29 @@ use egui::{Align, Layout, Ui};
 
 use crate::ai::AIEngineProvider;
 use crate::ai::engine_manager::{EngineManager, ThinkingResult};
-use crate::gui::board_drawer::BoardDrawer;
+use crate::gui::board_drawer::GameDrawer;
 use crate::gui::input_handler::InputHandler;
-use crate::gui::{MultipleMoveSelectionResult, RightTab};
+use crate::gui::options_panel::ImportExportPanel;
+use crate::gui::{GUIGame, MultipleMoveSelectionResult, RightTab};
 use crate::utils::short_type_name;
 
 use super::board_drawer::DefaultBoardDrawer;
 use super::game_state_manager::GameStateManager;
-use super::input_handler::{BoardInputHandler, MoveResult};
-use super::options_panel::ImportExportPanel;
-use super::{BoardGame, BoardMove};
+use super::input_handler::{DefaultInputHandler, MoveResult};
 use super::{GameOutcome, Player};
 use crate::gui::GUIMove;
 
-//pub struct GenericBoardApp<G: GUIGame+Sync+Send, Drawer: GameDrawer<G>+Default>
-pub struct GenericBoardApp<G: BoardGame + Sync + Send>
+pub type GenericBoardApp<G> = GenericGameApp<G, DefaultBoardDrawer<G>>;
+pub struct GenericGameApp<G: GUIGame + Sync + Send, Drawer: GameDrawer<G>>
 where
-	G::M: BoardMove<G> + Send,
+	G::M: GUIMove<G> + Send,
 {
 	pub name: String,
 	pub(super) ai_engine_manager: EngineManager<G>,
 
-	pub game_drawer: Box<dyn BoardDrawer<G>>,
+	pub game_drawer: Box<Drawer>,
 
-	pub input_handler: BoardInputHandler<G>,
+	pub input_handler: DefaultInputHandler<G>,
 
 	pub(super) game_state_manager: GameStateManager<G>,
 
@@ -37,15 +36,17 @@ where
 	pub(super) import_export_panel: ImportExportPanel,
 	inited: bool,
 }
-//impl<G: BoardGame+Sync+Send+'static, Drawer: GameDrawer<G>+Default> eframe::App for GenericBoardApp<G, Drawer>
-impl<G: BoardGame + Clone + Sync + Send + 'static> eframe::App for GenericBoardApp<G>
+
+impl<G: GUIGame + Clone + Sync + Send + 'static, Drawer: GameDrawer<G> + Default + 'static> eframe::App
+	for GenericGameApp<G, Drawer>
 where
-	G::M: BoardMove<G> + Send,
+	G::M: GUIMove<G> + Send,
 {
 	fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 		if !self.inited {
 			self.ai_engine_manager.load_engines_parameters(ctx);
 			self.game_drawer.load_style(ctx);
+			egui_extras::install_image_loaders(&ctx);
 			self.inited = true;
 		}
 	}
@@ -56,14 +57,15 @@ where
 			ui.separator();
 			let computer_playing = self.is_current_player_computer();
 			let is_random_move = self.is_current_player_random();
-			if let Some(click) =
-				self.game_drawer
-					.draw(ui, &self.game_to_draw().clone(),!computer_playing || is_random_move)
-			{
+			if let Some(click) = self.game_drawer.draw(
+				ui,
+				&self.game_to_draw().clone(),
+				!computer_playing || is_random_move,
+			) {
 				match self.input_handler.process(
 					click,
 					&self.game_state_manager,
-					&mut self.game_drawer,
+					self.game_drawer.as_mut(),
 				) {
 					MoveResult::Created { mv, .. } => {
 						self.game_state_manager.apply_move(mv);
@@ -79,6 +81,7 @@ where
 				if self.is_current_player_computer()
 					&& !self.is_current_player_random()
 					&& !self.ai_engine_manager.is_paused()
+					|| self.ai_engine_manager.is_thinking()
 				{
 					match self.ai_engine_manager.poll_ai_result() {
 						ThinkingResult::NotThinking => {
@@ -92,8 +95,13 @@ where
 						}
 						ThinkingResult::FinishedThinking(m) => {
 							if let Some(mv) = m {
-								self.apply_move(mv);
-								ui.request_repaint();
+								if self.is_current_player_computer()
+									&& !self.is_current_player_random()
+									&& !self.ai_engine_manager.is_paused()
+								{
+									self.apply_move(mv);
+									ui.request_repaint();
+								}
 							}
 						}
 						ThinkingResult::Thinking => {
@@ -107,22 +115,23 @@ where
 					MultipleMoveSelectionResult::Pending => {}
 					MultipleMoveSelectionResult::Cancelled => {
 						self.input_handler
-							.reset(&mut self.game_drawer, &self.game_state_manager);
+							.reset(self.game_drawer.as_mut(), &self.game_state_manager);
 					}
 					MultipleMoveSelectionResult::Selected(mv) => {
 						self.apply_move(mv);
 						self.input_handler
-							.reset(&mut self.game_drawer, &self.game_state_manager);
+							.reset(self.game_drawer.as_mut(), &self.game_state_manager);
 					}
 				}
 			}
 		});
 	}
 }
-//impl<G: BoardGame + Clone +Sync+Send+ 'static, Drawer: GameDrawer<G>+Default> GenericBoardApp<G, Drawer>
-impl<G: BoardGame + Clone + Sync + Send + 'static> GenericBoardApp<G>
+
+impl<G: GUIGame + Clone + Sync + Send + 'static, Drawer: GameDrawer<G> + Default + 'static>
+	GenericGameApp<G, Drawer>
 where
-	G::M: BoardMove<G> + Send,
+	G::M: GUIMove<G> + Send,
 {
 	//pub fn new(game: G, ai: Box<dyn AIEngine<G>>) -> Self {
 	pub fn new(game: G, internals_ai: Vec<Box<dyn AIEngineProvider<G>>>) -> Self {
@@ -134,8 +143,8 @@ where
 			max_depth: 15,
 			max_time: 0.0,
 
-			input_handler: BoardInputHandler::new(),
-			game_drawer: Box::new(DefaultBoardDrawer::default()),
+			input_handler: DefaultInputHandler::new(),
+			game_drawer: Box::new(Drawer::default()),
 
 			game_state_manager: GameStateManager::new(game),
 
@@ -161,14 +170,14 @@ where
 		if self.game_state_manager.undo() {
 			self.game_drawer.full_reset();
 			self.input_handler
-				.reset(&mut self.game_drawer, &self.game_state_manager);
+				.reset(self.game_drawer.as_mut(), &self.game_state_manager);
 		}
 	}
 	pub(super) fn redo(&mut self) {
 		if self.game_state_manager.redo() {
 			self.game_drawer.full_reset();
 			self.input_handler
-				.reset(&mut self.game_drawer, &self.game_state_manager);
+				.reset(self.game_drawer.as_mut(), &self.game_state_manager);
 		}
 	}
 	pub(super) fn is_current_player_computer(&self) -> bool {
@@ -187,7 +196,7 @@ where
 			.set_played_highlights(mv.played_highlights(self.game()));
 		self.game_drawer.clear_selection();
 		self.input_handler
-			.reset(&mut self.game_drawer, &self.game_state_manager)
+			.reset(self.game_drawer.as_mut(), &self.game_state_manager)
 	}
 
 	fn ask_select_between_multiple_moves(
@@ -323,7 +332,7 @@ where
 				}
 				ui.response()
 			});
-			ui.separator();
+			//ui.separator();
 			//if ui.button("↕").on_hover_text("Invert view").clicked() {
 			//	self.board_drawer.get_style_mut().mirrored = !self.board_drawer.get_style().mirrored;
 			//}
@@ -374,6 +383,7 @@ where
 			let mut is_computer = current_engine.is_some();
 
 			if ui.selectable_label(!is_computer, "Human").clicked() {
+				self.ai_engine_manager.stop_thinking();
 				self.ai_engine_manager.set_player_engine(p, None);
 				is_computer = false;
 			}

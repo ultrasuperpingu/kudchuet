@@ -4,7 +4,7 @@ use teeko::gui::create_board;
 fn main() -> eframe::Result<()> {
 	eframe::run_native(
 		"Teeko",
-		eframe::NativeOptions::default(),
+		kudchuet::gui::utils::get_native_default_option(),
 		Box::new(|_cc| Ok(Box::new(create_board()))),
 	)
 }

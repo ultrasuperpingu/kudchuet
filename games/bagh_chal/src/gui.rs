@@ -213,6 +213,7 @@ where
 	}
 }
 pub fn create_board() -> GenericBoardApp<BaghChal> {
+	use kudchuet::gui::board_drawer::BoardDrawer;
 	let engines: Vec<Box<dyn AIEngineProvider<BaghChal>>> = vec![Box::new(
 		MoveSearcherBuilder::new("Material", BaghChalMaterialEval, 8),
 	)];

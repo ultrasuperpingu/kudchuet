@@ -1,9 +1,9 @@
 use crate::ai::move_search::interface::Game;
 
-use crate::gui::board_drawer::BoardDrawer;
-use crate::gui::game_state_manager::GameStateManager;
-use crate::gui::{BoardGame, BoardMove, GUIGame};
+use crate::gui::GUIGame;
 use crate::gui::GUIMove;
+use crate::gui::board_drawer::GameDrawer;
+use crate::gui::game_state_manager::GameStateManager;
 
 pub trait InputHandler<G: GUIGame> {
 	fn pending_moves(&self) -> Option<&Vec<G::M>>;
@@ -53,26 +53,26 @@ pub enum MoveResult<G: Game, Click> {
 	},
 }
 
-pub struct BoardInputHandler<G: BoardGame>
+pub struct DefaultInputHandler<G: GUIGame>
 where
-	G::M: BoardMove<G>,
+	G::M: GUIMove<G>,
 {
 	clicks: Vec<G::Click>,
 	pending_moves: Option<Vec<G::M>>,
 	matching_moves: Vec<G::M>,
 	intermediate_state: Option<G>,
 }
-impl<G: BoardGame> Default for BoardInputHandler<G>
+impl<G: GUIGame> Default for DefaultInputHandler<G>
 where
-	G::M: BoardMove<G>,
+	G::M: GUIMove<G>,
 {
 	fn default() -> Self {
 		Self::new()
 	}
 }
-impl<G: BoardGame> InputHandler<G> for BoardInputHandler<G>
+impl<G: GUIGame> InputHandler<G> for DefaultInputHandler<G>
 where
-	G::M: BoardMove<G>,
+	G::M: GUIMove<G>,
 {
 	fn pending_moves(&self) -> Option<&Vec<G::M>> {
 		self.pending_moves.as_ref()
@@ -95,11 +95,10 @@ where
 	fn set_intermediate_state(&mut self, is: Option<G>) {
 		self.intermediate_state = is;
 	}
-
 }
-impl<G: BoardGame> BoardInputHandler<G>
+impl<G: GUIGame> DefaultInputHandler<G>
 where
-	G::M: BoardMove<G>,
+	G::M: GUIMove<G>,
 {
 	pub fn new() -> Self {
 		Self {
@@ -110,22 +109,22 @@ where
 		}
 	}
 
-	pub fn current_clicks(&self) -> &Vec<u16> {
+	pub fn current_clicks(&self) -> &Vec<G::Click> {
 		&self.clicks
 	}
 
 	pub fn process(
 		&mut self,
-		click_pos: u16,
+		click_pos: G::Click,
 		game_manager: &GameStateManager<G>,
-		drawer: &mut Box<dyn BoardDrawer<G>>,
-	) -> MoveResult<G, u16>
+		drawer: &mut dyn GameDrawer<G>,
+	) -> MoveResult<G, G::Click>
 	where
-		G: BoardGame,
-		G::M: BoardMove<G>,
+		G: GUIGame,
+		G::M: GUIMove<G>,
 	{
 		let index = click_pos;
-		println!("index: {}", index);
+		println!("index: {:?}", index);
 
 		self.clicks.push(index);
 
@@ -169,13 +168,10 @@ where
 		}
 	}
 
-	pub fn reset(
-		&mut self,
-		drawer: &mut Box<dyn BoardDrawer<G>>,
-		game_manager: &GameStateManager<G>,
-	) where
-		G: BoardGame,
-		G::M: BoardMove<G>,
+	pub fn reset(&mut self, drawer: &mut dyn GameDrawer<G>, game_manager: &GameStateManager<G>)
+	where
+		G: GUIGame,
+		G::M: GUIMove<G>,
 	{
 		self.clicks.clear();
 		self.pending_moves = None;

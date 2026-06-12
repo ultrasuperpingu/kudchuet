@@ -1,14 +1,13 @@
-use std::cmp::Reverse;
+use std::{cmp::Reverse, marker::PhantomData};
 
 use crate::{
 	StrategyWithOptions,
-	ai::move_search::{Game, Strategy},
+	ai::move_search::{Game, Strategy, util::AppliedMove},
 	utils::{NHHashMap, NHHashSet},
 };
 use priority_queue::PriorityQueue;
 
 type Queue = PriorityQueue<u64, Reverse<u32>>;
-//type SearchTree<G> = GameTree<G, AStarData>;
 pub trait Heuristic {
 	type G: Game;
 	fn heuristic(&self, state: &<Self::G as Game>::S) -> u32;
@@ -32,6 +31,7 @@ where
 	) -> Vec<(u64, <E::G as Game>::M)> {
 		//let mut tree= GameTree::from(state);
 		let hash = E::G::get_hash(state);
+		let root_player = E::G::get_current_player(&state);
 
 		let mut states = NHHashMap::<u64, <E::G as Game>::S>::default();
 		states.insert(hash, state.clone());
@@ -44,21 +44,18 @@ where
 		let mut open = Queue::new();
 		open.push(hash, Reverse(self.evaluator.heuristic(state)));
 		while let Some((current, _)) = open.pop() {
-			//println!("current: {}", current);
 			let mut s = states.remove(&current).unwrap();
-			let p = E::G::get_current_player(&s);
-			if E::G::get_outcome(&s).is_win_for(p) {
-				println!("found");
-				return Self::build_path(&came_from, current);
+			if E::G::get_outcome(&s).is_win_for(root_player) {
+				let res=Self::build_path(&came_from, current);
+				println!("found len: {}", res.len());
+				return res;
 			}
 			closed.insert(current);
 			let mut moves = vec![];
 			E::G::generate_and_filter_moves(&s, &mut moves);
 			for m in moves {
-				let child_state = E::G::apply(&mut s, m).unwrap();
-				//println!("{:?}", child_state);
+				let child_state = AppliedMove::<E::G>::applied_clone(&mut s, m);
 				let child_hash = E::G::get_hash(&child_state);
-				//println!("child_hash: {}", child_hash);
 				states.insert(child_hash, child_state.clone());
 				if closed.contains(&child_hash) {
 					continue;
@@ -88,6 +85,19 @@ where
 			return path;
 		}
 		vec![]
+	}
+}
+pub struct TrivialHeuristic<G: Game>(PhantomData<G>);
+impl<G: Game> Default for TrivialHeuristic<G> {
+	fn default() -> Self {
+		Self(Default::default())
+	}
+}
+impl<G: Game> Heuristic for TrivialHeuristic<G> {
+	type G = G;
+
+	fn heuristic(&self, _state: &<Self::G as Game>::S) -> u32 {
+		0
 	}
 }
 impl<E: Heuristic> Strategy<E::G> for AStar<E>
@@ -140,10 +150,7 @@ where
 		std::collections::HashMap::new()
 	}
 
-	fn set_options(
-		&mut self,
-		_opts: &std::collections::HashMap<String, crate::ai::uci::UciValue>,
-	) {
+	fn set_options(&mut self, _opts: &std::collections::HashMap<String, crate::ai::uci::UciValue>) {
 		//todo!()
 	}
 }

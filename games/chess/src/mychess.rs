@@ -1,4 +1,3 @@
-
 use crate::bitboard::Bitboard8x8;
 use bitboard::{BitIter, Bitboard};
 
@@ -11,7 +10,7 @@ use super::pext_tables;
 use kudchuet::GameOutcome;
 //use super::magic_tables::{MagicEntry, ROOK_MOVES, ROOK_MAGICS};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct ChessBoard {
 	pub(crate) whites: Bitboard8x8,
 	pub(crate) blacks: Bitboard8x8,
@@ -683,10 +682,7 @@ impl ChessBoard {
 			let attacks = Self::king_attacks(from) & not_us;
 
 			for to_sq in attacks.iter_bits() {
-				if self.is_square_attacked::<IS_WHITE>(
-					Square(to_sq as u8),
-					self.all() & !king,
-				) {
+				if self.is_square_attacked::<IS_WHITE>(Square(to_sq as u8), self.all() & !king) {
 					continue; // illégal
 				}
 				out[*len] = Move {
@@ -1188,7 +1184,11 @@ impl ChessBoard {
 		self.update_hash_turn();
 	}
 	#[inline]
-	pub fn is_square_attacked<const IS_WHITE: bool>(&self, sq: Square, blockers: Bitboard8x8) -> bool {
+	pub fn is_square_attacked<const IS_WHITE: bool>(
+		&self,
+		sq: Square,
+		blockers: Bitboard8x8,
+	) -> bool {
 		let attackers = if IS_WHITE { self.blacks } else { self.whites };
 		let all = blockers;
 		if IS_WHITE {
@@ -1683,10 +1683,9 @@ impl Evaluator for ChessPosEval {
 }
 #[cfg(test)]
 mod tests {
-
 	use kudchuet::ai::move_search::util::perft;
 
-	use crate::bitboard::Bitboard8x8;
+use crate::bitboard::Bitboard8x8;
 
 	use super::ChessBoard;
 	#[test]
@@ -1948,5 +1947,5 @@ mod tests {
 				)
 			});
 	}
-	
+
 }

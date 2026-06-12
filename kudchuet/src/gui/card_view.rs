@@ -1,16 +1,15 @@
 use core::f32;
+use std::fmt::Debug;
 
 use eframe::egui::{self, Color32, Pos2, Rect, include_image};
 use egui::{Image, Vec2, pos2, vec2};
-use kudchuet::{ai::move_search::Game, gui::board_drawer::GameDrawer};
+use crate::{ai::move_search::Game, gui::{GUIGame, GUIMove, board_drawer::GameDrawer}};
 
-use crate::{
-	gui::{CardGame, CardMove},
-	playing_cards::{CardSet, DrawablePlayingCard, PlayingCard},
-};
+use crate::gui::{CardGame, DrawablePlayingCard};
+use crate::cards::playing_cards::{CardSet, PlayingCard};
 pub trait CardGameDrawer<G: CardGame<Card = C>, C: PlayingCard>: GameDrawer<G>
 where
-	<G as Game>::M: CardMove<G>,
+	<G as Game>::M: GUIMove<G>,
 {
 	/*fn draw(
 		&mut self,
@@ -21,7 +20,7 @@ where
 	) -> Option<G::M>;
 
 	fn full_reset(&mut self);*/
-	fn draw_back_cards(
+	fn draw_back_card(
 		&self,
 		ui: &mut egui::Ui,
 		pos: Pos2,
@@ -42,25 +41,32 @@ pub struct DefaultCardGameDrawer<
 	G: CardGame<Card = C, Click = CardGameClick<C>>,
 	C: DrawablePlayingCard,
 > where
-	G::M: CardMove<G> + Copy,
+	G::M: GUIMove<G> + Copy,
 {
 	style: G::Style,
+
+	selected: Option<CardGameClick<C>>,
+	legal_highlights: Vec<CardGameClick<C>>,
+	played_highlights: Vec<CardGameClick<C>>,
 }
 impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> Default
 	for DefaultCardGameDrawer<G, C>
 where
-	G::M: CardMove<G> + Copy,
+	G::M: GUIMove<G> + Copy,
 {
 	fn default() -> Self {
 		Self {
 			style: Default::default(),
+			selected: None,
+			legal_highlights: vec![],
+			played_highlights: vec![],
 		}
 	}
 }
 impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> GameDrawer<G>
 	for DefaultCardGameDrawer<G, C>
 where
-	<G as Game>::M: CardMove<G>,
+	<G as Game>::M: GUIMove<G>,
 {
 	fn draw(
 		&mut self,
@@ -74,24 +80,52 @@ where
 
 	fn full_reset(&mut self) {}
 
-	fn get_style(&self) -> &<G as kudchuet::gui::GUIGame>::Style {
+	fn get_selected(&self) -> Option<G::Click> {
+		self.selected
+	}
+
+	fn set_selected(&mut self, selected: Option<G::Click>) {
+		self.selected = selected
+	}
+
+	fn get_legal_highlights(&self) -> &Vec<G::Click> {
+		&self.legal_highlights
+	}
+
+	fn set_legal_highlights(&mut self, legal_highlights: Vec<G::Click>) {
+		self.legal_highlights = legal_highlights;
+	}
+
+	fn get_played_highlights(&self) -> &Vec<G::Click> {
+		&self.played_highlights
+	}
+
+	fn set_played_highlights(&mut self, played_highlights: Vec<G::Click>) {
+		self.played_highlights = played_highlights;
+	}
+	fn clear_selection(&mut self) {
+		self.selected = None;
+		self.legal_highlights.clear();
+		//self.intermediate_state = None;
+	}
+	fn get_style(&self) -> &<G as GUIGame>::Style {
 		&self.style
 	}
 
-	fn get_style_mut(&mut self) -> &mut <G as kudchuet::gui::GUIGame>::Style {
+	fn get_style_mut(&mut self) -> &mut <G as GUIGame>::Style {
 		&mut self.style
 	}
 
-	fn set_style(&mut self, style: <G as kudchuet::gui::GUIGame>::Style) {
+	fn set_style(&mut self, style: <G as GUIGame>::Style) {
 		self.style = style;
 	}
 }
 impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard> CardGameDrawer<G, C>
 	for DefaultCardGameDrawer<G, C>
 where
-	<G as Game>::M: CardMove<G>,
+	<G as Game>::M: GUIMove<G>,
 {
-	fn draw_back_cards(
+	fn draw_back_card(
 		&self,
 		ui: &mut egui::Ui,
 		pos: Pos2,
@@ -131,7 +165,7 @@ where
 impl<G: CardGame<Card = C, Click = CardGameClick<C>>, C: DrawablePlayingCard>
 	DefaultCardGameDrawer<G, C>
 where
-	<G as Game>::M: CardMove<G>,
+	<G as Game>::M: GUIMove<G>,
 {
 	pub fn draw_board(
 		&mut self,
@@ -155,6 +189,7 @@ where
 pub enum CardGameClick<C: PlayingCard> {
 	Card(C),
 	CardZone(u8),
+	CardDoubleClick(C),
 }
 #[derive(Debug, PartialEq)]
 pub enum CardSetLayout {
@@ -164,18 +199,34 @@ pub enum CardSetLayout {
 	Circle { start_angle: f32, len: usize },
 	PlayersAround(u8),
 }
-#[derive(Debug, PartialEq)]
+//#[derive(PartialEq)]
 pub struct CardZone<Set: CardSet<Card = C>, C: PlayingCard> {
 	pub id: u8,
 	pub set: Set,
 	pub layout: CardSetLayout,
 	pub rotation: f32,
-	pub origin: Pos2,
 	pub rect: Rect,
 	pub card_spacing: f32,
 	pub face_up: bool,
+	pub face_up_predicat: Option<Box<dyn Fn(&Self, usize) -> bool>>,
 	pub draw_empty: bool,
 	pub zone_only: bool,
+}
+impl<Set: CardSet<Card = C>, C: PlayingCard> Debug for CardZone<Set, C> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.debug_struct("CardZone")
+			.field("id", &self.id)
+			.field("set", &self.set)
+			.field("layout", &self.layout)
+			.field("rotation", &self.rotation)
+			.field("rect", &self.rect)
+			.field("card_spacing", &self.card_spacing)
+			.field("face_up", &self.face_up)
+			.field("face_up_predicat", &self.face_up_predicat.is_some())
+			.field("draw_empty", &self.draw_empty)
+			.field("zone_only", &self.zone_only)
+			.finish()
+	}
 }
 impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 	pub fn draw<G: CardGame<Card = C>, Drawer: CardGameDrawer<G, C>>(
@@ -186,15 +237,15 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 		card_size: Vec2,
 	) -> Option<CardGameClick<C>>
 	where
-		<G as Game>::M: CardMove<G>,
+		<G as Game>::M: GUIMove<G>,
 		Set::Card: PlayingCard,
 		Set::Item: PlayingCard,
 	{
 		//println!("{:?}", self);
-		let origin = pos2(
-			board_rect.min.x + self.origin.x * board_rect.width(),
-			board_rect.min.y + self.origin.y * board_rect.height(),
-		);
+		//let origin = pos2(
+		//	board_rect.min.x + self.origin.x * board_rect.width(),
+		//	board_rect.min.y + self.origin.y * board_rect.height(),
+		//);
 		let zone_rect = Rect::from_min_max(
 			pos2(
 				board_rect.min.x + self.rect.min.x * board_rect.width(),
@@ -209,10 +260,27 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 		match self.layout {
 			CardSetLayout::Stack => {
 				if let Some(card) = self.set.iter().last() {
-					let resp = if self.face_up {
-						drawer.draw_card(ui, card, origin, card_size, self.rotation)
+					let resp = if let Some(p) = &self.face_up_predicat {
+						if p(self, self.set.len() - 1) {
+							drawer.draw_card(
+								ui,
+								card,
+								zone_rect.left_top(),
+								card_size,
+								self.rotation,
+							)
+						} else {
+							drawer.draw_back_card(
+								ui,
+								zone_rect.left_top(),
+								card_size,
+								self.rotation,
+							)
+						}
+					} else if self.face_up {
+						drawer.draw_card(ui, card, zone_rect.left_top(), card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, origin, card_size, self.rotation)
+						drawer.draw_back_card(ui, zone_rect.left_top(), card_size, self.rotation)
 					};
 
 					if resp.clicked() {
@@ -223,8 +291,7 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 						}
 					}
 				} else if self.draw_empty {
-					let rect = Rect::from_min_size(origin, card_size);
-
+					let rect = Rect::from_min_size(zone_rect.left_top(), card_size);
 					let resp = ui.allocate_rect(rect, egui::Sense::click());
 
 					ui.painter().rect_stroke(
@@ -245,12 +312,18 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 				let mut done = false;
 				for (i, card) in self.set.iter().enumerate() {
 					done = true;
-					let pos = origin + vec2(i as f32 * self.card_spacing, 0.0);
+					let pos = zone_rect.left_top() + vec2(i as f32 * self.card_spacing, 0.0);
 
-					let resp = if self.face_up {
+					let resp = if let Some(p) = &self.face_up_predicat {
+						if p(self, i) {
+							drawer.draw_card(ui, card, pos, card_size, self.rotation)
+						} else {
+							drawer.draw_back_card(ui, pos, card_size, self.rotation)
+						}
+					} else if self.face_up {
 						drawer.draw_card(ui, card, pos, card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, pos, card_size, self.rotation)
+						drawer.draw_back_card(ui, pos, card_size, self.rotation)
 					};
 
 					if resp.clicked() {
@@ -262,7 +335,7 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 					}
 				}
 				if self.draw_empty && !done {
-					let rect = Rect::from_min_size(origin, card_size);
+					let rect = Rect::from_min_size(zone_rect.left_top(), card_size);
 
 					let resp = ui.allocate_rect(rect, egui::Sense::click());
 
@@ -284,12 +357,18 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 				let mut done = false;
 				for (i, card) in self.set.iter().enumerate() {
 					done = true;
-					let pos = origin + vec2(0.0, i as f32 * self.card_spacing);
+					let pos = zone_rect.left_top() + vec2(0.0, i as f32 * self.card_spacing);
 
-					let resp = if self.face_up {
+					let resp = if let Some(p) = &self.face_up_predicat {
+						if p(self, i) {
+							drawer.draw_card(ui, card, pos, card_size, self.rotation)
+						} else {
+							drawer.draw_back_card(ui, pos, card_size, self.rotation)
+						}
+					} else if self.face_up {
 						drawer.draw_card(ui, card, pos, card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, pos, card_size, self.rotation)
+						drawer.draw_back_card(ui, pos, card_size, self.rotation)
 					};
 
 					if resp.clicked() {
@@ -301,7 +380,7 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 					}
 				}
 				if self.draw_empty && !done {
-					let rect = Rect::from_min_size(origin, card_size);
+					let rect = Rect::from_min_size(zone_rect.left_top(), card_size);
 
 					let resp = ui.allocate_rect(rect, egui::Sense::click());
 
@@ -325,12 +404,12 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 				for (i, card) in self.set.iter().enumerate() {
 					let angle = start_angle + i as f32 / len as f32 * f32::consts::TAU;
 
-					let pos = origin + vec2(angle.cos() * radius, angle.sin() * radius);
+					let pos = zone_rect.center() + vec2(angle.cos() * radius, angle.sin() * radius);
 
 					let resp = if self.face_up {
 						drawer.draw_card(ui, card, pos, card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, pos, card_size, self.rotation)
+						drawer.draw_back_card(ui, pos, card_size, self.rotation)
 					};
 
 					if resp.clicked() {
@@ -352,12 +431,13 @@ impl<Set: CardSet<Card = C>, C: DrawablePlayingCard> CardZone<Set, C> {
 				for (i, card) in self.set.iter().enumerate() {
 					let angle = i as f32 / n * f32::consts::TAU;
 
-					let pos = origin + vec2(angle.cos() * radius, angle.sin() * radius);
+					let pos =
+						zone_rect.left_top() + vec2(angle.cos() * radius, angle.sin() * radius);
 
 					let resp = if self.face_up {
 						drawer.draw_card(ui, card, pos, card_size, self.rotation)
 					} else {
-						drawer.draw_back_cards(ui, pos, card_size, self.rotation)
+						drawer.draw_back_card(ui, pos, card_size, self.rotation)
 					};
 
 					if resp.clicked() {
@@ -386,7 +466,7 @@ where
 	where
 		G: CardGame<Card = C>,
 		D: CardGameDrawer<G, C>,
-		<G as Game>::M: CardMove<G>,
+		<G as Game>::M: GUIMove<G>,
 	{
 		let card_size = self.best_card_size(rect);
 		let mut click = None;

@@ -1,6 +1,5 @@
 use std::fmt::{Debug, Display};
 
-use egui::ImageSource;
 
 pub trait PlayingCard:
 	Copy + Clone + Eq + std::hash::Hash + TryFrom<u8, Error = ()> + Debug + Display
@@ -14,15 +13,6 @@ where
 	fn index(self) -> u8;
 	fn from_index(i: u8) -> Option<Self>;
 	fn color(self) -> Self::Color;
-}
-pub trait DrawablePlayingCard: PlayingCard
-where
-	Self: 'static,
-{
-	fn card_texture(&self) -> ImageSource<'_>;
-	fn aspect_ratio() -> f32 {
-		2.0 / 3.0
-	}
 }
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum CardSuit {
@@ -47,7 +37,7 @@ pub trait CardSet: Sized + IntoIterator<Item = Self::Card> + Debug {
 	fn is_empty(&self) -> bool;
 
 	fn draw_random(nb: u8, from: &mut Self) -> Result<Self, String>;
-	fn all() -> Self;
+	//fn all() -> Self;
 	fn iter(&self) -> impl Iterator<Item = Self::Card>;
 }
 impl<Card: PlayingCard> CardSet for Option<Card> {
@@ -94,9 +84,9 @@ impl<Card: PlayingCard> CardSet for Option<Card> {
 		}
 	}
 
-	fn all() -> Self {
-		unimplemented!()
-	}
+	//fn all() -> Self {
+	//	unimplemented!()
+	//}
 
 	fn iter(&self) -> impl Iterator<Item = Self::Card> {
 		self.iter().cloned()

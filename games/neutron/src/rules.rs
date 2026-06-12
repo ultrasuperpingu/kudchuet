@@ -143,6 +143,11 @@ impl Neutron {
 		}
 
 	}
+	pub fn get_neutron_moves(&self) -> Bitboard5x5 {
+		let blockers = self.occupied();
+		let neutron_idx = self.get_neutron_index();
+		get_slide_moves(neutron_idx as u8, blockers)
+	}
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

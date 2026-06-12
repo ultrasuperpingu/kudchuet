@@ -166,7 +166,7 @@ impl<G: Game> DfsHandler<G, SolveContext> for PerfectSolver {
 		match self.table.entry(hash) {
 			std::collections::hash_map::Entry::Occupied(occupied_entry) => {
 				Some(*occupied_entry.get())
-			},
+			}
 			std::collections::hash_map::Entry::Vacant(vacant_entry) => {
 				vacant_entry.insert(state_outcome.into());
 				None

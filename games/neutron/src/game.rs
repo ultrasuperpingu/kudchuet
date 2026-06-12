@@ -1,25 +1,26 @@
-
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
-
-use kudchuet::{GameOutcome, Player};
 use kudchuet::ai::move_search::{Evaluation, Evaluator, Game};
+use kudchuet::{GameOutcome, Player};
 
-use crate::{bitboard::Bitboard5x5, rules::{Move, Neutron}};
+use crate::{
+	bitboard::Bitboard5x5,
+	rules::{Move, Neutron},
+};
 
 impl Game for Neutron {
-	type S =  Neutron;
+	type S = Neutron;
 
 	type M = Move;
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> GameOutcome {
 		state.legal_moves_inplace(moves);
 		if !(state.neutron & Bitboard5x5::SOUTH_BORDER).is_empty() {
-			return GameOutcome::Player(Player::PLAYER2)
+			return GameOutcome::Player(Player::PLAYER2);
 		}
 
 		if !(state.neutron & Bitboard5x5::NORTH_BORDER).is_empty() {
-			return GameOutcome::Player(Player::PLAYER1)
+			return GameOutcome::Player(Player::PLAYER1);
 		}
 		if moves.is_empty() {
 			GameOutcome::Player(state.turn.opponent())
@@ -45,7 +46,7 @@ impl Game for Neutron {
 		state.get_hash()
 		//state.compute_hash()
 	}
-	
+
 	fn get_current_player(state: &Self::S) -> Player {
 		state.turn()
 	}
@@ -65,9 +66,9 @@ impl Evaluator for NeutronDumbEval {
 		0 as Evaluation
 	}
 }
-/*
-#[derive(Clone, Default, Copy)]
-pub struct NeutronMaterialEval(Player);
+
+#[derive(Clone, Default, Copy, PartialEq, Eq, Debug)]
+pub struct NeutronMaterialEval;
 
 impl NeutronMaterialEval {
 	pub fn new() -> Self {
@@ -75,17 +76,25 @@ impl NeutronMaterialEval {
 	}
 }
 impl Evaluator for NeutronMaterialEval {
-	
-	type G=NeutronGame;
-	fn evaluate(&self, state: &Neutron) -> Evaluation {
-		if state.turn == Player::White {
-			state.white_pawns_count()as Evaluation - state.black_pawns_count()as Evaluation 
-		} else {
-			state.black_pawns_count() as Evaluation - state.white_pawns_count() as Evaluation
-		}
+	type G = Neutron;
+
+	fn evaluate_for(&self, state: &Neutron, p: Player) -> Evaluation {
+		let idx = state.get_neutron_index();
+		let neutron_moves = state.get_neutron_moves();
+
+		let (_, y) = Bitboard5x5::coords_from_index(idx);
+
+		let position_score = match p {
+			Player::PLAYER1 => 4 - 2 * y as Evaluation,
+			Player::PLAYER2 => 2 * y as Evaluation - 4,
+			_ => 0,
+		};
+
+		let mobility = neutron_moves.count() as Evaluation;
+
+		position_score * 10 + mobility
 	}
-	
-}*/
+}
 // cargo test --release -p neutron game::tests::perft_test -- --nocapture
 //depth           count        time        kn/s
 //    0               1       2.2µs       454.5
@@ -101,15 +110,15 @@ mod tests {
 
 	use kudchuet::ai::move_search::util::perft;
 
-	use super::super::{game::Neutron};
+	use super::super::game::Neutron;
 	#[test]
 	fn perft_test() {
 		println!("BMI1 enabled? {}", cfg!(target_feature = "bmi1"));
 		let mut board = Neutron::new();
 		let max_depth = 6;
 		let nodes = perft::<Neutron>(&mut board, max_depth, true);
-			
-		const NB_NODES: [u64;8] = [
+
+		const NB_NODES: [u64; 8] = [
 			1,
 			13,
 			1070,
@@ -117,7 +126,7 @@ mod tests {
 			3155916,
 			147545320,
 			6502302474,
-			287147347484
+			287147347484,
 		];
 		for (i, n) in nodes.iter().enumerate() {
 			assert_eq!(NB_NODES[i], *n, "Mismatch at depth {}", i);

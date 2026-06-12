@@ -186,7 +186,7 @@ impl std::str::FromStr for Move {
 }
 
 // TODO: test if an enum is better
-#[derive(Clone, Copy, Debug, Default, Hash)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct CastlingRights(pub(crate) u8);
 impl CastlingRights {
 	pub const WK: u8 = 1;

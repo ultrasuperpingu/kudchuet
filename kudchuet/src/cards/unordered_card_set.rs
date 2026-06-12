@@ -1,4 +1,4 @@
-use crate::{
+use crate::cards::{
 	playing_cards::{CardSet, CardSuit, PlayingCard},
 	playing_cards32::PlayingCard32,
 	playing_cards54::PlayingCard54,
@@ -53,7 +53,7 @@ macro_rules! impl_unordered_card_set {
 	) => {
 		#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 		#[repr(transparent)]
-		pub struct $ident(pub(crate) $storage);
+		pub struct $ident(pub $storage);
 		impl $set {
 			pub const ALL: Self =
 				Self(((1u128 << <Self as CardSet>::Card::CARD_COUNT) - 1) as $storage);
@@ -125,6 +125,7 @@ macro_rules! impl_unordered_card_set {
 				self.0.count_ones() as usize
 			}
 			#[inline]
+			#[allow(refining_impl_trait)]
 			fn iter(&self) -> $iter {
 				$iter_ident(*self)
 			}
@@ -164,9 +165,6 @@ macro_rules! impl_unordered_card_set {
 				}
 
 				Ok(result)
-			}
-			fn all() -> Self {
-				Self::ALL
 			}
 		}
 		impl UnorderedCardSet for $set {
@@ -260,7 +258,7 @@ macro_rules! impl_unordered_card_set {
 		impl IntoIterator for $set {
 			type Item = $card;
 			type IntoIter = $iter;
-
+			
 			fn into_iter(self) -> Self::IntoIter {
 				self.iter()
 			}
@@ -606,8 +604,8 @@ impl UnorderedCardSet78 {
 
 #[cfg(test)]
 mod tests {
-	use crate::playing_cards::CardSet;
-	use crate::unordered_card_set::{UnorderedCardSet32, UnorderedCardSet54, UnorderedCardSet78};
+	use crate::cards::playing_cards::CardSet;
+	use crate::cards::unordered_card_set::{UnorderedCardSet32, UnorderedCardSet54, UnorderedCardSet78};
 
 	#[test]
 	fn test_draw_random32() {

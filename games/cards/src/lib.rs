@@ -1,13 +1,6 @@
 pub mod freecell;
 pub mod manille;
-pub mod playing_cards;
-pub mod playing_cards32;
-pub mod playing_cards54;
-pub mod playing_cards78;
-//pub mod tarot;
 pub mod game;
-pub mod gui;
+//pub mod gui;
 pub mod klondike;
 pub mod manille_gui;
-pub mod ordered_card_set;
-pub mod unordered_card_set;

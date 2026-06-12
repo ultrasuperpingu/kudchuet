@@ -240,6 +240,11 @@ impl IterativeOptions {
 		self.verbose = true;
 		self
 	}
+	/// Disable verbose.
+	pub fn without_verbose(mut self) -> Self {
+		self.verbose = false;
+		self
+	}
 	/// Set shuffle moves.
 	pub fn with_shuffle_moves(mut self, shuffle: bool) -> Self {
 		self.shuffle_moves = shuffle;

@@ -1,5 +1,7 @@
-use crate::{
-	playing_cards::{CardSet, CardSuit}, playing_cards32::PlayingCard32, unordered_card_set::UnorderedCardSet32
+use kudchuet::cards::{
+	playing_cards::{CardSet, CardSuit},
+	playing_cards32::PlayingCard32,
+	unordered_card_set::UnorderedCardSet32,
 };
 #[derive(Clone, Debug, Hash)]
 pub struct Manille {
@@ -37,38 +39,37 @@ pub enum Move {
 	Play(PlayingCard32),
 }
 
-impl PlayingCard32 {
-	pub fn rank(&self) -> u8 {
-		let v = *self as u8;
+pub fn rank(card: &PlayingCard32) -> u8 {
+	let v = *card as u8;
 
-		match v % 8 {
-			0 => 7,  //7
-			1 => 8,  //8
-			2 => 9,  //9
-			3 => 14, //10
-			4 => 10, //J
-			5 => 11, //Q
-			6 => 12, //K
-			7 => 13, //Ace
-			_ => unreachable!(),
-		}
-	}
-	pub fn value(&self) -> u8 {
-		let v = *self as u8;
-
-		match v % 8 {
-			0 => 0, //7
-			1 => 0, //8
-			2 => 0, //9
-			3 => 5, //10
-			4 => 1, //J
-			5 => 2, //Q
-			6 => 3, //K
-			7 => 4, //Ace
-			_ => unreachable!(),
-		}
+	match v % 8 {
+		0 => 7,  //7
+		1 => 8,  //8
+		2 => 9,  //9
+		3 => 14, //10
+		4 => 10, //J
+		5 => 11, //Q
+		6 => 12, //K
+		7 => 13, //Ace
+		_ => unreachable!(),
 	}
 }
+pub fn value(card: &PlayingCard32) -> u8 {
+	let v = *card as u8;
+
+	match v % 8 {
+		0 => 0, //7
+		1 => 0, //8
+		2 => 0, //9
+		3 => 5, //10
+		4 => 1, //J
+		5 => 2, //Q
+		6 => 3, //K
+		7 => 4, //Ace
+		_ => unreachable!(),
+	}
+}
+
 impl Manille {
 	pub fn same_team(p1: u8, p2: u8) -> bool {
 		p1 % 2 == p2 % 2
@@ -98,7 +99,7 @@ impl Manille {
 				let cards: UnorderedCardSet32 = self.get_current_player_cards();
 				let mut valid = cards.of_color(color);
 				// a better card if any
-				valid = valid.iter().filter(|c| c.rank() > best_rank).collect();
+				valid = valid.iter().filter(|c| rank(c) > best_rank).collect();
 				if valid.is_empty() {
 					// if no better card, you still have to provide the color
 					valid = cards.of_color(color);
@@ -126,7 +127,7 @@ impl Manille {
 				let mut valid = cards.of_color(color);
 				if valid.is_empty() {
 					valid = cards.of_color(self.trump_card.color());
-					valid = valid.iter().filter(|c| c.rank() > best_rank).collect();
+					valid = valid.iter().filter(|c| rank(c) > best_rank).collect();
 				}
 				if valid.is_empty() {
 					valid = cards;
@@ -142,9 +143,9 @@ impl Manille {
 		if self.last_ply_leader == self.on_turn {
 			if let Some(_c) = self.ply[self.on_turn as usize] {
 				// ply fini!!
-				return PlyStatus::FirstToPlay
+				return PlyStatus::FirstToPlay;
 			} else {
-				return PlyStatus::FirstToPlay
+				return PlyStatus::FirstToPlay;
 			}
 		}
 		let mut status = PlyStatus::FirstToPlay;
@@ -155,30 +156,30 @@ impl Manille {
 		let mut leader_cutted = false;
 
 		for i in 0..4 {
-			let player_index = (self.last_ply_leader + i) %4;
+			let player_index = (self.last_ply_leader + i) % 4;
 			let c = self.ply[player_index as usize];
 			if let Some(c) = c {
 				if i == 0 {
 					ply_color = Some(c.color());
 					color_is_trump = c.color() == self.trump_card.color();
 					current_leader = i;
-					leader_rank = c.rank();
+					leader_rank = rank(&c);
 				} else {
 					if !color_is_trump && c.color() == self.trump_card.color() {
 						if leader_cutted {
-							if leader_rank < c.rank() {
-								leader_rank = c.rank();
+							if leader_rank < rank(&c) {
+								leader_rank = rank(&c);
 								current_leader = player_index;
 							}
 						} else {
 							leader_cutted = true;
-							leader_rank = c.rank();
+							leader_rank = rank(&c);
 							current_leader = player_index;
 						}
 					} else {
 						if !leader_cutted {
-							if c.color() == ply_color.unwrap() && leader_rank < c.rank() {
-								leader_rank = c.rank();
+							if c.color() == ply_color.unwrap() && leader_rank < rank(&c) {
+								leader_rank = rank(&c);
 								current_leader = player_index;
 							}
 						}
@@ -238,7 +239,7 @@ impl Manille {
 			}
 		}
 	}
-	
+
 	fn get_ply_winner_and_value(&self) -> (u8, u8) {
 		let mut color = None;
 		let mut color_is_trump = false;
@@ -248,30 +249,30 @@ impl Manille {
 		let mut value = 0;
 
 		for i in 0..4 {
-			let player_index = (self.last_ply_leader + i) %4;
+			let player_index = (self.last_ply_leader + i) % 4;
 			let c = self.ply[player_index as usize].unwrap();
-			value += c.value();
+			value += self::value(&c);
 			if i == 0 {
 				color = Some(c.color());
 				color_is_trump = c.color() == self.trump_card.color();
 				current_leader = player_index;
-				leader_rank = c.rank();
+				leader_rank = rank(&c);
 			} else {
 				if !color_is_trump && c.color() == self.trump_card.color() {
 					if leader_cutted {
-						if leader_rank < c.rank() {
-							leader_rank = c.rank();
+						if leader_rank < rank(&c) {
+							leader_rank = rank(&c);
 							current_leader = player_index;
 						}
 					} else {
 						leader_cutted = true;
-						leader_rank = c.rank();
+						leader_rank = rank(&c);
 						current_leader = player_index;
 					}
 				} else {
 					if !leader_cutted {
-						if c.color() == color.unwrap() && leader_rank < c.rank() {
-							leader_rank = c.rank();
+						if c.color() == color.unwrap() && leader_rank < rank(&c) {
+							leader_rank = rank(&c);
 							current_leader = player_index;
 						}
 					}

@@ -4,7 +4,7 @@ use egui::{Color32, Stroke, StrokeKind};
 
 use kudchuet::ai::move_search::{UniformRolloutPolicy, MCTS};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::board_app::GenericGameApp;
 use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, GameDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{
@@ -277,9 +277,8 @@ where
 const SQRT_3: f32 = 1.7320508;
 
 #[derive(Default)]
-struct HexBoardDrawer(DefaultBoardDrawer<Hex>);
+pub struct HexBoardDrawer(DefaultBoardDrawer<Hex>);
 impl GameDrawer<Hex> for HexBoardDrawer {
-
 	fn get_style(&self) -> &BoardStyle {
 		self.0.get_style()
 	}
@@ -293,6 +292,34 @@ impl GameDrawer<Hex> for HexBoardDrawer {
 	}
 	fn full_reset(&mut self) {
 		self.0.full_reset();
+	}
+
+	fn get_selected(&self) -> Option<u16> {
+		self.0.get_selected()
+	}
+
+	fn set_selected(&mut self, selected: Option<u16>) {
+		self.0.set_selected(selected);
+	}
+
+	fn clear_selection(&mut self) {
+		self.0.clear_selection();
+	}
+
+	fn get_legal_highlights(&self) -> &Vec<u16> {
+		self.0.get_legal_highlights()
+	}
+
+	fn set_legal_highlights(&mut self, legal_highlights: Vec<u16>) {
+		self.0.set_legal_highlights(legal_highlights);
+	}
+
+	fn get_played_highlights(&self) -> &Vec<u16> {
+		self.0.get_played_highlights()
+	}
+
+	fn set_played_highlights(&mut self, played_highlights: Vec<u16>) {
+		self.0.set_played_highlights(played_highlights);
 	}
 
 	fn draw(
@@ -330,34 +357,6 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 		sq_drawer: Box<dyn kudchuet::gui::board_drawer::PieceDrawer<Hex>>,
 	) {
 		self.0.set_piece_drawer(sq_drawer);
-	}
-
-	fn get_selected(&self) -> Option<u16> {
-		self.0.get_selected()
-	}
-
-	fn set_selected(&mut self, selected: Option<u16>) {
-		self.0.set_selected(selected);
-	}
-
-	fn clear_selection(&mut self) {
-		self.0.clear_selection();
-	}
-
-	fn get_legal_highlights(&self) -> &Vec<u16> {
-		self.0.get_legal_highlights()
-	}
-
-	fn set_legal_highlights(&mut self, legal_highlights: Vec<u16>) {
-		self.0.set_legal_highlights(legal_highlights);
-	}
-
-	fn get_played_highlights(&self) -> &Vec<u16> {
-		self.0.get_played_highlights()
-	}
-
-	fn set_played_highlights(&mut self, played_highlights: Vec<u16>) {
-		self.0.set_played_highlights(played_highlights);
 	}
 
 	fn coords_to_pixel(
@@ -427,14 +426,14 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 		(cell_size, board_width, board_height)
 	}
 }
-pub fn create_board() -> GenericBoardApp<Hex> {
+pub fn create_board() -> GenericGameApp<Hex, HexBoardDrawer> {
 	let ai_provider: Vec<Box<dyn AIEngineProvider<Hex>>> = vec![
 		Box::new(MoveSearcherBuilder::new("Material", HexMaterialEval, 4)),
 		Box::new(AIBuilder::<Hex, MCTS<Hex, UniformRolloutPolicy<Hex>>>::new(
 			"MCTS",
 		)),
 	];
-	let mut board = GenericBoardApp::new(Hex::new(), ai_provider);
+	let mut board = GenericGameApp::new(Hex::new(), ai_provider);
 	board.game_drawer = Box::new(HexBoardDrawer::default());
 	board
 		.game_drawer

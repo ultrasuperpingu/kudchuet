@@ -242,7 +242,7 @@ pub fn create_board() -> GenericBoardApp<ThreeMusketeers> {
 		Box::new(MoveSearcherBuilder::new(
 			"Simple",
 			ThreeMusketeersEvalSimple::new(),
-			4,
+			10,
 		)),
 		Box::new(AIBuilder::<ThreeMusketeers, MCTS<ThreeMusketeers, UniformRolloutPolicy<ThreeMusketeers>>>::new(
 			"MCTS",

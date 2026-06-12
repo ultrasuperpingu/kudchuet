@@ -250,6 +250,7 @@ impl SquareDrawer<ChineseCheckers> for ChineseCheckerSquareDrawer {
 	}
 }
 pub fn create_board() -> GenericBoardApp<ChineseCheckers> {
+	use kudchuet::gui::board_drawer::BoardDrawer;
 	let ai_provider = MoveSearcherBuilder::new("Material", ChineseCheckersMaterialEval, 4);
 	let mut board = GenericBoardApp::new(ChineseCheckers::new(6), vec![Box::new(ai_provider)]);
 	board

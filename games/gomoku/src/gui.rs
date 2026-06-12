@@ -191,6 +191,7 @@ impl SquareDrawer<Gomoku> for GobanSquareDrawer {
 	}
 }
 pub fn create_board() -> GenericBoardApp<Gomoku> {
+	use kudchuet::gui::board_drawer::BoardDrawer;
 	let engines: Vec<Box<dyn AIEngineProvider<Gomoku>>> = vec![
 		Box::new(MoveSearcherBuilder::new("Dumb", GomokuEvalDumb, 4)),
 		Box::new(MoveSearcherBuilder::new("Simple", GomokuEvalSimple, 4)),

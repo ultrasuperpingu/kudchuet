@@ -314,6 +314,7 @@ where
 }
 
 pub mod ai;
+pub mod cards;
 pub mod gui;
 pub mod utils;
 pub mod sgf;
