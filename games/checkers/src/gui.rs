@@ -2,7 +2,7 @@ use eframe::egui;
 use egui::{Color32, Stroke, StrokeKind};
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::{GUIGame, GUIMove};
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 use kudchuet::gui::shapes::Shape;
 use kudchuet::{
 	gui::{

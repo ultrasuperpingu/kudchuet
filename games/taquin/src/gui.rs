@@ -1,5 +1,5 @@
 use egui::Color32;
-use kudchuet::{ai::{AIBuilder, AIEngineProvider, move_search::astar::AStar}, gui::{BoardGame, BoardMove, BoardStyle, DefaultSettings, EGUIPieceType, GUIGame, board_app::GenericBoardApp, shapes::StrokeData}};
+use kudchuet::{ai::{AIBuilder, AIEngineProvider, move_search::astar::AStar}, gui::{BoardGame, BoardMove, BoardStyle, DefaultSettings, EGUIPieceType, GUIGame, game_app::GenericBoardApp, shapes::StrokeData}};
 
 use crate::rules::{Move, Taquin};
 

@@ -10,7 +10,7 @@ use kudchuet::gui::{CheckerBoardMod, CoordMod};
 use super::game::ReversiEval;
 use crate::bitboard::Bitboard8x8;
 use crate::rules::{Cell, Reversi};
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 
 impl GUIMove<Reversi> for (u8, u8) {
 	fn click_sequence(&self, _state: &Reversi) -> Vec<<Reversi as GUIGame>::Click> {

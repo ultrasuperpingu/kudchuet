@@ -8,7 +8,7 @@ use kudchuet::gui::shapes::Shape;
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType, GUIGame, GUIMove};
 
 use crate::{bitboard::Bitboard6x5, rules::YotePlayer};
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 
 use super::game::YoteMaterialEval;
 use super::rules::{Move, Yote};

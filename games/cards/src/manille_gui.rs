@@ -5,7 +5,7 @@ use eframe::egui;
 use egui::{Color32, Rect};
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::cards::playing_cards32::PlayingCard32;
-use kudchuet::gui::board_app::GenericGameApp;
+use kudchuet::gui::game_app::GameApp;
 use kudchuet::gui::{BoardStyle, CoordMod, GUIGame, GUIMove};
 
 use crate::manille::{Manille, Move};
@@ -129,11 +129,11 @@ impl CardGame for Manille {
 		CardBoard { zones }
 	}
 }
-pub fn create_board() -> GenericGameApp<Manille, DefaultCardGameDrawer<Manille, PlayingCard32>> {
+pub fn create_board() -> GameApp<Manille, DefaultCardGameDrawer<Manille, PlayingCard32>> {
 	let engines: Vec<Box<dyn AIEngineProvider<Manille>>> = vec![Box::new(
 		MoveSearcherBuilder::new("Cheating Material", ManilleMaterialEval, 8),
 	)];
-	let mut board = GenericGameApp::new(Manille::default(), engines);
+	let mut board = GameApp::new(Manille::default(), engines);
 	board.game_drawer = Box::new(DefaultCardGameDrawer::default());
 	board.max_depth = 13;
 	board.depth = 8;

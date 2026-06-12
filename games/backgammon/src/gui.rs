@@ -2,7 +2,7 @@ use eframe::egui;
 use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke, StrokeKind};
 
 use kudchuet::ai::MoveSearcherBuilder;
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 use kudchuet::gui::{

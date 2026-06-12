@@ -6,7 +6,7 @@ use egui::{Color32, Stroke};
 use egui_field_editor::EguiInspect;
 use kudchuet::Player;
 use kudchuet::ai::MoveSearcherBuilder;
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::SquareDrawer;
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{

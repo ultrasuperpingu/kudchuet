@@ -1,19 +1,15 @@
-use egui::{Rect, pos2};
 use kudchuet::{
-	Player,
-	ai::move_search::{Evaluator, Game},
-	gui::{BoardStyle, DefaultSettings, GUIGame, GUIMove},
+	gui::{BoardStyle, DefaultSettings, GUIGame},
 	utils::fibo_hash_64,
 };
 
-use kudchuet::gui::CardGame;
-use kudchuet::gui::card_view::{CardBoard, CardGameClick, CardSetLayout, CardZone};
 use kudchuet::cards::{
 	ordered_card_set::OrderedCardSet54,
 	playing_cards::{CardSet, CardSuit, PlayingCard},
 	playing_cards54::PlayingCard54,
 	unordered_card_set::UnorderedCardSet54,
 };
+use kudchuet::gui::card_view::CardGameClick;
 use std::fmt;
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
@@ -25,7 +21,7 @@ pub struct Freecell {
 	saved_tableau: Option<[OrderedCardSet54; 8]>,
 	saved_foundation: Option<[UnorderedCardSet54; 4]>,
 	saved_free_cells: Option<[Option<PlayingCard54>; 4]>,
-	h: u64,
+	pub(crate) h: u64,
 }
 impl Default for Freecell {
 	fn default() -> Self {
@@ -352,7 +348,7 @@ impl Freecell {
 			}
 		}
 	}
-	fn max_movables_cards(&self) -> usize {
+	pub fn max_movables_cards(&self) -> usize {
 		let free_cell_count = self.free_cells.iter().filter(|c| c.is_none()).count();
 		let empty_columns = self.tableau.iter().filter(|c| c.is_empty()).count();
 
@@ -581,99 +577,6 @@ impl Freecell {
 	}
 }
 
-impl Game for Freecell {
-	type S = Self;
-
-	type M = Move;
-
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> kudchuet::GameOutcome {
-		state.legal_moves_inplace(moves);
-		if moves.len() == 0 {
-			if state
-				.tableau
-				.iter()
-				.all(|a| a.is_empty() && state.free_cells.iter().all(|c| c.is_none()))
-			{
-				kudchuet::GameOutcome::PLAYER1
-			} else {
-				kudchuet::GameOutcome::PLAYER2
-			}
-		} else {
-			kudchuet::GameOutcome::OnGoing
-		}
-	}
-	fn filter_moves(_state: &Self::S, moves: &mut Vec<Self::M>) {
-		// todo: retain only one move to empty column
-		let mut seen = [false; 8];
-
-		moves.retain(|m| match m {
-			Move::TableauToFreeCell { from, .. } => {
-				if seen[*from] {
-					false
-				} else {
-					seen[*from] = true;
-					true
-				}
-			}
-			_ => true,
-		});
-	}
-	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
-		state.play_unchecked(m);
-		None
-	}
-	fn undo(state: &mut Self::S, m: Self::M) {
-		state.undo_unchecked(m);
-	}
-
-	fn get_outcome(state: &Self::S) -> kudchuet::GameOutcome {
-		let moves = state.legal_moves();
-		if moves.len() == 0 {
-			if state
-				.tableau
-				.iter()
-				.all(|a| a.is_empty() && state.free_cells.iter().all(|c| c.is_none()))
-			{
-				kudchuet::GameOutcome::PLAYER1
-			} else {
-				kudchuet::GameOutcome::PLAYER2
-			}
-		} else {
-			kudchuet::GameOutcome::OnGoing
-		}
-	}
-	fn get_hash(state: &Self::S) -> u64 {
-		//let mut hasher = DefaultHasher::new();
-		//state.hash(&mut hasher);
-		//hasher.finish()
-		state.h
-	}
-
-	fn get_current_player(_state: &Self::S) -> kudchuet::Player {
-		Player::PLAYER1
-	}
-	fn get_next_player(_state: &Self::S) -> Player {
-		Player::PLAYER1
-	}
-	fn notation(_state: &Self::S, _move: Self::M) -> Option<String> {
-		match _move {
-			Move::TableauToTableau { from, to, count } => {
-				Some(format!("{}-{} ({})", from, to, count))
-			}
-			Move::TableauToFreeCell { from, cell } => Some(format!("{}-free({})", from, cell)),
-			Move::FreeCellToTableau { cell, to } => Some(format!("free({})-{}", cell, to)),
-			Move::TableauToFoundation {
-				from,
-				foundation: _,
-			} => Some(format!("{}-f", from)),
-			Move::FreeCellToFoundation {
-				cell,
-				foundation: _,
-			} => Some(format!("free({})-f", cell)),
-			Move::Finish => Some("end".into()),
-		}
-	}
-}
 impl GUIGame for Freecell {
 	type Click = CardGameClick<PlayingCard54>;
 	type Settings = DefaultSettings;
@@ -683,178 +586,6 @@ impl GUIGame for Freecell {
 		1
 	}
 }
-impl CardGame for Freecell {
-	type Card = PlayingCard54;
-
-	#[allow(refining_impl_trait)]
-	fn build_board(&self) -> CardBoard<OrderedCardSet54, PlayingCard54> {
-		let mut zones = vec![];
-
-		let x_step = 0.08;
-		let base_y_top = 0.05;
-		//let base_y_mid = 0.15;
-		let base_y_bottom = 0.4;
-
-		for (i, col) in self.foundations.iter().enumerate() {
-			zones.push(CardZone {
-				id: i as u8 + 4,
-				set: OrderedCardSet54::from_iter(*col),
-				layout: CardSetLayout::Stack,
-				//origin: pos2(0.60 + i as f32 * x_step, base_y_top),
-				rect: Rect::from_min_max(
-					pos2(0.60 + i as f32 * x_step, base_y_top),
-					pos2(0.60 + (i + 1) as f32 * x_step, 0.35),
-				),
-				rotation: 0.0,
-				card_spacing: 0.0,
-				face_up: true,
-				face_up_predicat: None,
-				draw_empty: true,
-				zone_only: true,
-			});
-		}
-
-		for (i, cell) in self.free_cells.iter().enumerate() {
-			zones.push(CardZone {
-				id: i as u8,
-				set: OrderedCardSet54::from_iter(cell.clone()),
-				layout: CardSetLayout::Stack,
-				//origin: pos2(0.05 + i as f32 * x_step, base_y_top),
-				rect: Rect::from_min_max(
-					pos2(0.05 + i as f32 * x_step, base_y_top),
-					pos2(0.05 + (i + 1) as f32 * x_step, 0.35),
-				),
-				rotation: 0.0,
-				card_spacing: 0.03,
-				face_up: true,
-				face_up_predicat: None,
-				draw_empty: true,
-				zone_only: true,
-			});
-		}
-
-		let len = self.tableau.len();
-		let column_width = 0.94 / len as f32;
-		for (i, col) in self.tableau.iter().enumerate() {
-			zones.push(CardZone {
-				id: i as u8 + 8,
-				set: col.clone(),
-				layout: CardSetLayout::Vertical,
-				//origin: pos2(0.05 + i as f32 * 0.08, base_y_bottom),
-				rect: Rect::from_min_max(
-					pos2(0.03 + i as f32 * column_width, base_y_bottom),
-					pos2(0.03 + (i + 1) as f32 * column_width, 1.0),
-				),
-				rotation: 0.0,
-				card_spacing: 25.0,
-				face_up: true,
-				face_up_predicat: None,
-				draw_empty: true,
-				zone_only: false,
-			});
-		}
-		CardBoard { zones }
-	}
-}
-
-impl GUIMove<Freecell> for Move {
-	fn click_sequence(&self, state: &Freecell) -> Vec<<Freecell as GUIGame>::Click> {
-		let mut res = vec![];
-		match self {
-			Move::TableauToTableau { from, to, count } => {
-				let len = state.tableau[*from].len();
-				let card_from = state.tableau[*from].iter().nth(len - *count).unwrap();
-				let to = if let Some(card) = state.tableau[*to].iter().last() {
-					CardGameClick::Card(*card)
-				} else {
-					CardGameClick::CardZone(*to as u8 + 8)
-				};
-				res.push(CardGameClick::Card(*card_from));
-				res.push(to);
-			}
-			Move::TableauToFreeCell { from, cell } => {
-				let card_from = state.tableau[*from].iter().last().unwrap();
-				res.push(CardGameClick::Card(*card_from));
-				res.push(CardGameClick::CardZone(*cell as u8));
-			}
-			Move::FreeCellToTableau { cell, to } => {
-				let to = if let Some(card) = state.tableau[*to].iter().last() {
-					CardGameClick::Card(*card)
-				} else {
-					CardGameClick::CardZone(*to as u8 + 8)
-				};
-				res.push(CardGameClick::CardZone(*cell as u8));
-				res.push(to);
-			}
-			Move::TableauToFoundation { from, foundation } => {
-				let card_from = state.tableau[*from].iter().last().unwrap();
-				res.push(CardGameClick::Card(*card_from));
-				res.push(CardGameClick::CardZone(*foundation as u8 + 4));
-			}
-			Move::FreeCellToFoundation { cell, foundation } => {
-				res.push(CardGameClick::CardZone(*cell as u8));
-				res.push(CardGameClick::CardZone(*foundation as u8 + 4));
-			}
-			Move::Finish => {}
-		}
-		res
-	}
-}
-#[derive(Eq, PartialEq, Debug, Default, Copy, Clone)]
-pub struct FreecellEval;
-impl Evaluator for FreecellEval {
-	type G = Freecell;
-
-	fn evaluate_for(
-		&self,
-		s: &<Self::G as Game>::S,
-		_p: Player,
-	) -> kudchuet::ai::move_search::Evaluation {
-		let foundation_count: usize = s.foundations.iter().map(|c| c.len()).sum();
-		let foundation_mean = foundation_count as f32 / 4.0;
-
-		let mut foundation_variability: f32 = s
-			.foundations
-			.iter()
-			.map(|c| {
-				let l = c.len() as f32;
-				(l - foundation_mean) * (l - foundation_mean)
-			})
-			.sum();
-		foundation_variability /= 4.0;
-		let max_movable = s.max_movables_cards();
-		let mut misorder: i16 = 0;
-		let mut ordered_bonus: i16 = 0;
-		for column in &s.tableau {
-			if column.is_empty() {
-				continue;
-			}
-			let ordered = max_ordered_suffix(column);
-			let unordered_count = column.len() - ordered;
-			misorder += unordered_count as i16 * 11;
-			ordered_bonus += ordered as i16 * 5;
-			if unordered_count == 0 {
-				let rank = rank(column.0[0]);
-				ordered_bonus += rank as i16 * 13;
-			}
-			let unordered = &column.0[0..unordered_count];
-			for (i, c) in unordered.iter().enumerate() {
-				let rank = rank(*c);
-				if rank < 6 {
-					misorder += (ordered + i) as i16;
-				}
-			}
-		}
-		if misorder == 0 {
-			ordered_bonus = 0;
-		}
-		max_movable.min(12) as i16 * 71 + foundation_count as i16 * 191
-			- (foundation_variability * 23.0) as i16
-			- misorder as i16 * 3
-			+ ordered_bonus
-	}
-}
-
 #[cfg(test)]
 mod tests {
 
@@ -867,7 +598,10 @@ mod tests {
 		utils::{fibo_hash_64, inv_fibo_hash_64},
 	};
 
-	use crate::freecell::{Freecell, FreecellEval, Move, max_ordered_suffix};
+	use crate::{
+		game::FreecellEval,
+		rules::{Freecell, Move, max_ordered_suffix},
+	};
 
 	#[test]
 	fn test_legal_moves() {
@@ -977,30 +711,5 @@ mod tests {
 		let mut tree = GameTree::<Freecell, ()>::from(freecell);
 		tree.expand_to_depth(0, 80);
 		//println!("{:?}", freecell.result());
-	}
-
-	#[test]
-	#[cfg(not(target_arch = "wasm32"))]
-	fn test_gui() -> eframe::Result<()> {
-		//use crate::gui::card_app::CardApp;
-		use kudchuet::{
-			ai::{AIEngineProvider, MoveSearcherBuilder},
-			gui::{game_app::GameApp, card_view::DefaultCardGameDrawer},
-		};
-		use winit::platform::windows::EventLoopBuilderExtWindows;
-
-		let engines: Vec<Box<dyn AIEngineProvider<Freecell>>> = vec![Box::new(
-			MoveSearcherBuilder::new("Simple", FreecellEval, 5),
-		)];
-
-		let mut board = GameApp::new(Freecell::new(), engines);
-		board.game_drawer = Box::new(DefaultCardGameDrawer::default());
-		board.max_depth = 13;
-		board.depth = 8;
-		let mut options = eframe::NativeOptions::default();
-		options.event_loop_builder = Some(Box::new(|builder| {
-			builder.with_any_thread(true);
-		}));
-		eframe::run_native("Freecell", options, Box::new(|_cc| Ok(Box::new(board))))
 	}
 }

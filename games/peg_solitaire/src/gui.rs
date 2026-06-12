@@ -4,7 +4,7 @@ use kudchuet::{
 	ai::{AIBuilder, AIEngineProvider, move_search::astar::AStar},
 	gui::{
 		BoardGame, BoardMove, BoardStyle, DefaultSettings, EGUIPieceType, GUIGame,
-		board_app::GenericBoardApp, shapes::StrokeData,
+		game_app::GenericBoardApp, shapes::StrokeData,
 	},
 };
 

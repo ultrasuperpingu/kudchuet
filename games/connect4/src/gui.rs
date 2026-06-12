@@ -8,7 +8,7 @@ use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, G
 
 use super::game::ConnectFourEval;
 
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 
 use super::rules::{Cell, Column, ConnectFour};
 

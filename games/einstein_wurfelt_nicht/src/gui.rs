@@ -3,7 +3,7 @@ use egui::{Color32, Stroke, StrokeKind};
 
 use kudchuet::ai::move_search::{UniformRolloutPolicy, MCTS};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 use kudchuet::gui::board_drawer::{DefaultSquareDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData, TextData};
 use kudchuet::gui::{

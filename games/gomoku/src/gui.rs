@@ -21,7 +21,7 @@ use kudchuet::gui::{
 	board_drawer::SquareDrawer,
 };
 
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 
 impl GUIMove<Gomoku> for Move {
 	fn click_sequence(&self, _state: &Gomoku) -> Vec<<Gomoku as GUIGame>::Click> {

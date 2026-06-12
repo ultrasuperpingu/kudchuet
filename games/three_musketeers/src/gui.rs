@@ -16,7 +16,7 @@ use kudchuet::{
 	},
 };
 
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 //use super::{game::ThreeMusketeersEvalAdvance};
 
 impl GUIGame for ThreeMusketeers {
@@ -79,9 +79,6 @@ impl GUIMove<ThreeMusketeers> for Move {
 		} else {
 			vec![self.to()]
 		}
-	}
-	fn played_highlights(&self, state: &ThreeMusketeers) -> Vec<u16> {
-		self.click_sequence(state)
 	}
 
 	fn handle_clicks_interaction(

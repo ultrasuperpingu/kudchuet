@@ -3,7 +3,7 @@ use egui_field_editor::{EguiInspect, EguiInspector, add_button};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::external_engine::ExternalEngineEntry;
 use crate::ai::move_search::interface::Game;
-use crate::gui::board_app::GenericGameApp;
+use crate::gui::game_app::GameApp;
 use crate::gui::board_drawer::GameDrawer;
 use crate::gui::{GUIGame, GUIMove};
 
@@ -19,7 +19,7 @@ pub(super) enum RightTab {
 const LABEL_RATIO: f32 = 0.4;
 
 impl<G: GUIGame + Sync + Send + 'static, Drawer: GameDrawer<G> + Default + 'static>
-	GenericGameApp<G, Drawer>
+	GameApp<G, Drawer>
 where
 	G::M: GUIMove<G> + Send,
 {

@@ -10,7 +10,7 @@ use kudchuet::gui::{
 
 use crate::bitboard::Bitboard7x7;
 use crate::rules::Action;
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 
 use super::game::DiaballikEvalMaterial;
 

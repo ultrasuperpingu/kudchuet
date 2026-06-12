@@ -7,7 +7,7 @@ use kudchuet::{GameOutcome, Player};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, EGUIPieceType, GUIGame, GUIMove};
 use kudchuet::gui::shapes::{Shape, StrokeData};
 
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 use crate::rules::Board;
 
 use super::game::HareAndHoundsEval;

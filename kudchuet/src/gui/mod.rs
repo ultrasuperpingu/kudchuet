@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use self::options_panel::RightTab;
 use super::{GameOutcome, Player};
 
-pub mod board_app;
+pub mod game_app;
 pub mod board_drawer;
 pub mod game_state_manager;
 pub mod input_handler;
@@ -230,10 +230,6 @@ pub trait GUIGame: Game<S = Self> + Default + Clone // Self::M: BoardMove<Self> 
 pub trait GUIMove<G: GUIGame>: Debug + Copy {
 
 	fn click_sequence(&self, state: &G) -> Vec<G::Click>;
-
-	fn played_highlights(&self, state: &G) -> Vec<G::Click> {
-		self.click_sequence(state)
-	}
 
 	fn compute_intermediate_state(&self, _state: &G, _clicks: &[G::Click]) -> Option<G> {
 		None

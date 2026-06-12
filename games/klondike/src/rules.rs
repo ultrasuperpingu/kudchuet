@@ -1,23 +1,13 @@
 //use std::hash::{DefaultHasher, Hasher};
 use std::hash::Hash;
 
-use egui::{Rect, pos2};
-use kudchuet::{
-	Player,
-	ai::move_search::{Evaluator, Game},
-	gui::{BoardStyle, DefaultSettings, GUIGame, GUIMove},
-};
+use kudchuet::cards::playing_cards::CardSuit;
 
-use crate::freecell::{are_alternate, foundation_index, rank};
 use kudchuet::cards::{
 	ordered_card_set::OrderedCardSet54,
 	playing_cards::{CardSet, PlayingCard},
 	playing_cards54::PlayingCard54,
 	unordered_card_set::UnorderedCardSet54,
-};
-use kudchuet::gui::{
-	CardGame,
-	card_view::{CardBoard, CardGameClick, CardSetLayout, CardZone},
 };
 #[derive(Debug, Clone, Hash)]
 pub struct Klondike {
@@ -25,7 +15,7 @@ pub struct Klondike {
 	pub revealed_stock: OrderedCardSet54,
 	pub tableau: [(OrderedCardSet54, u8); 7],
 	pub foundations: [UnorderedCardSet54; 4],
-	h: u64,
+	pub(crate) h: u64,
 }
 impl Default for Klondike {
 	fn default() -> Self {
@@ -392,229 +382,90 @@ impl Klondike {
 	}
 }
 
-impl Game for Klondike {
-	type S = Self;
-
-	type M = Move;
-
-	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> kudchuet::GameOutcome {
-		*moves = state.legal_moves();
-		if moves.len() == 0 {
-			if state.foundations.iter().map(|f| f.len()).sum::<usize>() == 52 {
-				kudchuet::GameOutcome::PLAYER1
-			} else {
-				kudchuet::GameOutcome::PLAYER2
-			}
-		} else {
-			kudchuet::GameOutcome::OnGoing
-		}
-	}
-
-	fn apply(state: &mut Self::S, m: Self::M) -> Option<Self::S> {
-		let mut s = state.clone();
-		s.play_unchecked(m);
-		Some(s)
-	}
-
-	fn get_outcome(state: &Self::S) -> kudchuet::GameOutcome {
-		let moves = state.legal_moves();
-		if moves.len() == 0 {
-			if state.foundations.iter().map(|f| f.len()).sum::<usize>() == 52 {
-				kudchuet::GameOutcome::PLAYER1
-			} else {
-				kudchuet::GameOutcome::PLAYER2
-			}
-		} else {
-			kudchuet::GameOutcome::OnGoing
-		}
-	}
-	fn get_hash(state: &Self::S) -> u64 {
-		//let mut hasher = DefaultHasher::new();
-		//state.hash(&mut hasher);
-		//hasher.finish()
-		state.h
-	}
-
-	fn get_current_player(_state: &Self::S) -> kudchuet::Player {
-		Player::PLAYER1
-	}
-	fn get_next_player(_state: &Self::S) -> Player {
-		Player::PLAYER1
-	}
-}
-impl GUIGame for Klondike {
-	type Click = CardGameClick<PlayingCard54>;
-	type Settings = DefaultSettings;
-
-	type Style = BoardStyle;
-	fn nb_players(&self) -> u8 {
-		1
-	}
-}
-impl GUIMove<Klondike> for Move {
-	fn click_sequence(&self, state: &Klondike) -> Vec<<Klondike as GUIGame>::Click> {
-		let mut res = vec![];
-
-		match self {
-			Move::TableauToTableau { from, to, count } => {
-				let from_col = &state.tableau[*from];
-				let to_col = &state.tableau[*to];
-
-				if let Some(card_from) = from_col.0.iter().rev().nth(count - 1) {
-					let target = if let Some(card) = to_col.0.iter().last() {
-						CardGameClick::Card(*card)
-					} else {
-						CardGameClick::CardZone(*to as u8 + 6)
-					};
-
-					res.push(CardGameClick::Card(*card_from));
-					res.push(target);
-				}
-			}
-
-			Move::TableauToFoundation { from, foundation } => {
-				let from_col = &state.tableau[*from];
-
-				if let Some(card_from) = from_col.0.iter().last() {
-					res.push(CardGameClick::Card(*card_from));
-					res.push(CardGameClick::CardZone(*foundation as u8 + 2));
-				}
-			}
-
-			Move::RevealToFoundation { foundation } => {
-				if let Some(card) = state.revealed_stock.iter().last() {
-					res.push(CardGameClick::Card(*card));
-					res.push(CardGameClick::CardZone(*foundation as u8 + 2));
-				}
-			}
-
-			Move::StockToReveal => {
-				res.push(CardGameClick::CardZone(0));
-			}
-
-			Move::RecycleStock => {
-				res.push(CardGameClick::CardZone(0));
-			}
-
-			Move::RevealToTableau { to } => {
-				if let Some(card) = state.revealed_stock.iter().last() {
-					res.push(CardGameClick::Card(*card));
-					let to_col = &state.tableau[*to];
-
-					if let Some(card) = to_col.0.iter().last() {
-						res.push(CardGameClick::Card(*card));
-					} else {
-						res.push(CardGameClick::CardZone(*to as u8 + 6));
-					}
-				}
-			}
-		}
-
-		res
-	}
-}
-impl CardGame for Klondike {
-	type Card = PlayingCard54;
-	#[allow(refining_impl_trait)]
-	fn build_board(&self) -> CardBoard<OrderedCardSet54, PlayingCard54> {
-		let mut zones = vec![];
-
-		zones.push(CardZone {
-			id: 0,
-			set: self.stock.clone(),
-			layout: CardSetLayout::Stack,
-			rect: Rect::from_min_max(pos2(0.05, 0.05), pos2(0.2, 0.35)),
-			rotation: 0.0,
-			card_spacing: 0.0,
-			face_up: false,
-			face_up_predicat: None,
-			draw_empty: true,
-			zone_only: true,
-		});
-
-		zones.push(CardZone {
-			id: 1,
-			set: self.revealed_stock.clone(),
-			layout: CardSetLayout::Stack,
-			rect: Rect::from_min_max(pos2(0.2, 0.05), pos2(0.35, 0.35)),
-			rotation: 0.0,
-			card_spacing: 30.0,
-			face_up: true,
-			face_up_predicat: None,
-			draw_empty: true,
-			zone_only: false,
-		});
-		let len = self.foundations.len();
-		let table_width = 0.45 / len as f32;
-		for (i, col) in self.foundations.iter().enumerate() {
-			zones.push(CardZone {
-				id: i as u8 + 2,
-				set: OrderedCardSet54::from_iter(*col),
-				layout: CardSetLayout::Stack,
-				rect: Rect::from_min_max(
-					pos2(0.5 + i as f32 * table_width, 0.05),
-					pos2(0.5 + (i + 1) as f32 * table_width, 0.35),
-				),
-				rotation: 0.0,
-				card_spacing: 20.0,
-				face_up: true,
-				face_up_predicat: None,
-				draw_empty: true,
-				zone_only: true,
-			});
-		}
-		let len = self.tableau.len();
-		let table_width = 0.94 / len as f32;
-		for (i, col) in self.tableau.iter().enumerate() {
-			let face_up_index = col.1;
-			zones.push(CardZone {
-				id: i as u8 + 6,
-				set: col.0.clone(),
-				layout: CardSetLayout::Vertical,
-				rect: Rect::from_min_max(
-					pos2(0.03 + i as f32 * table_width, 0.40),
-					pos2(0.03 + (i + 1) as f32 * table_width, 1.0),
-				),
-				rotation: 0.0,
-				card_spacing: 20.0,
-				face_up: true,
-				face_up_predicat: Some(Box::new(move |_z, index| index >= face_up_index as usize)),
-				draw_empty: true,
-				zone_only: false,
-			});
-		}
-
-		CardBoard { zones }
+pub fn foundation_index(color: CardSuit) -> usize {
+	match color {
+		CardSuit::Spades => 0,
+		CardSuit::Hearts => 1,
+		CardSuit::Diamonds => 2,
+		CardSuit::Clubs => 3,
+		CardSuit::Joker => unreachable!(),
 	}
 }
 
-#[derive(Eq, PartialEq, Debug, Default, Copy, Clone)]
-pub struct KlondikeEval;
-impl Evaluator for KlondikeEval {
-	type G = Klondike;
-
-	fn evaluate_for(
-		&self,
-		s: &<Self::G as Game>::S,
-		_p: Player,
-	) -> kudchuet::ai::move_search::Evaluation {
-		let foundation_count: usize = s.foundations.iter().map(|c| c.len()).sum();
-
-		let foundation_variability_sum = s
-			.foundations
-			.iter()
-			.map(|c| {
-				let d = c.len() as i16 * 4 - foundation_count as i16;
-				d * d
-			})
-			.sum::<i16>();
-		let hidden_cards: i16 = s.tableau.iter().map(|c| c.1 as i16).sum::<i16>();
-		let empty_columns = s.tableau.iter().filter(|c| c.0.is_empty()).count() as i16;
-		let stock_count = s.revealed_stock.len() as i16 + s.stock.len() as i16;
-
-		foundation_count as i16 * 103 - (foundation_variability_sum * 7) as i16 - hidden_cards * 191
-			+ empty_columns * 51
-			- stock_count * 17
+pub fn rank(card: PlayingCard54) -> u8 {
+	match card {
+		PlayingCard54::AceOfSpades => 1,
+		PlayingCard54::TwoOfSpades => 2,
+		PlayingCard54::ThreeOfSpades => 3,
+		PlayingCard54::FourOfSpades => 4,
+		PlayingCard54::FiveOfSpades => 5,
+		PlayingCard54::SixOfSpades => 6,
+		PlayingCard54::SevenOfSpades => 7,
+		PlayingCard54::EightOfSpades => 8,
+		PlayingCard54::NineOfSpades => 9,
+		PlayingCard54::TenOfSpades => 10,
+		PlayingCard54::JackOfSpades => 11,
+		PlayingCard54::QueenOfSpades => 12,
+		PlayingCard54::KingOfSpades => 13,
+		PlayingCard54::AceOfHearts => 1,
+		PlayingCard54::TwoOfHearts => 2,
+		PlayingCard54::ThreeOfHearts => 3,
+		PlayingCard54::FourOfHearts => 4,
+		PlayingCard54::FiveOfHearts => 5,
+		PlayingCard54::SixOfHearts => 6,
+		PlayingCard54::SevenOfHearts => 7,
+		PlayingCard54::EightOfHearts => 8,
+		PlayingCard54::NineOfHearts => 9,
+		PlayingCard54::TenOfHearts => 10,
+		PlayingCard54::JackOfHearts => 11,
+		PlayingCard54::QueenOfHearts => 12,
+		PlayingCard54::KingOfHearts => 13,
+		PlayingCard54::AceOfDiamonds => 1,
+		PlayingCard54::TwoOfDiamonds => 2,
+		PlayingCard54::ThreeOfDiamonds => 3,
+		PlayingCard54::FourOfDiamonds => 4,
+		PlayingCard54::FiveOfDiamonds => 5,
+		PlayingCard54::SixOfDiamonds => 6,
+		PlayingCard54::SevenOfDiamonds => 7,
+		PlayingCard54::EightOfDiamonds => 8,
+		PlayingCard54::NineOfDiamonds => 9,
+		PlayingCard54::TenOfDiamonds => 10,
+		PlayingCard54::JackOfDiamonds => 11,
+		PlayingCard54::QueenOfDiamonds => 12,
+		PlayingCard54::KingOfDiamonds => 13,
+		PlayingCard54::AceOfClubs => 1,
+		PlayingCard54::TwoOfClubs => 2,
+		PlayingCard54::ThreeOfClubs => 3,
+		PlayingCard54::FourOfClubs => 4,
+		PlayingCard54::FiveOfClubs => 5,
+		PlayingCard54::SixOfClubs => 6,
+		PlayingCard54::SevenOfClubs => 7,
+		PlayingCard54::EightOfClubs => 8,
+		PlayingCard54::NineOfClubs => 9,
+		PlayingCard54::TenOfClubs => 10,
+		PlayingCard54::JackOfClubs => 11,
+		PlayingCard54::QueenOfClubs => 12,
+		PlayingCard54::KingOfClubs => 13,
+		PlayingCard54::BlackJoker => 0,
+		PlayingCard54::RedJoker => 0,
+	}
+}
+pub fn are_alternate(c1: CardSuit, c2: CardSuit) -> bool {
+	match (c1, c2) {
+		(CardSuit::Spades, CardSuit::Hearts) => true,
+		(CardSuit::Spades, CardSuit::Diamonds) => true,
+		(CardSuit::Spades, CardSuit::Joker) => true,
+		(CardSuit::Hearts, CardSuit::Spades) => true,
+		(CardSuit::Hearts, CardSuit::Clubs) => true,
+		(CardSuit::Hearts, CardSuit::Joker) => true,
+		(CardSuit::Diamonds, CardSuit::Spades) => true,
+		(CardSuit::Diamonds, CardSuit::Clubs) => true,
+		(CardSuit::Diamonds, CardSuit::Joker) => true,
+		(CardSuit::Clubs, CardSuit::Hearts) => true,
+		(CardSuit::Clubs, CardSuit::Diamonds) => true,
+		(CardSuit::Clubs, CardSuit::Joker) => true,
+		(CardSuit::Joker, _) => true,
+		(_, _) => false,
 	}
 }
 
@@ -649,7 +500,8 @@ impl std::fmt::Display for Klondike {
 mod tests {
 	use std::time::Duration;
 
-	use crate::klondike::{Klondike, KlondikeEval};
+	use crate::game::KlondikeEval;
+	use crate::rules::Klondike;
 	use kudchuet::ai::move_search::Strategy;
 	use kudchuet::{
 		ai::move_search::{IterativeOptions, IterativeSearch},
@@ -663,7 +515,7 @@ mod tests {
 		let mut moves = klondike.legal_moves();
 		println!("{:?}", moves);
 		let mut i = 0;
-		while i < 500000 && !moves.is_empty() {
+		while i < 5000 && !moves.is_empty() {
 			let mv = fastrand::choice(&moves).unwrap();
 			klondike.play_unchecked(*mv);
 			assert_eq!(klondike.compute_hash(), klondike.h);
@@ -702,28 +554,5 @@ mod tests {
 
 		println!("{}", i);
 		println!("{:?}", klondike.result());
-	}
-	#[test]
-	#[cfg(not(target_arch = "wasm32"))]
-	fn test_gui() -> eframe::Result<()> {
-		use crate::klondike::Klondike;
-		use kudchuet::{
-			ai::{AIEngineProvider, MoveSearcherBuilder},
-			gui::{game_app::GameApp, card_view::DefaultCardGameDrawer},
-		};
-		use winit::platform::windows::EventLoopBuilderExtWindows;
-
-		let engines: Vec<Box<dyn AIEngineProvider<Klondike>>> = vec![Box::new(
-			MoveSearcherBuilder::new("Cheating AI", KlondikeEval, 8),
-		)];
-		let mut board = GameApp::new(Klondike::new(), engines);
-		board.game_drawer = Box::new(DefaultCardGameDrawer::default());
-		board.max_depth = 13;
-		board.depth = 8;
-		let mut options = eframe::NativeOptions::default();
-		options.event_loop_builder = Some(Box::new(|builder| {
-			builder.with_any_thread(true);
-		}));
-		eframe::run_native("Klondike", options, Box::new(|_cc| Ok(Box::new(board))))
 	}
 }

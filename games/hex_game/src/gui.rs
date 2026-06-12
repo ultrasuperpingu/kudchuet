@@ -4,7 +4,7 @@ use egui::{Color32, Stroke, StrokeKind};
 
 use kudchuet::ai::move_search::{UniformRolloutPolicy, MCTS};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::board_app::GenericGameApp;
+use kudchuet::gui::game_app::GameApp;
 use kudchuet::gui::board_drawer::{BoardDrawer, DefaultBoardDrawer, GameDrawer, SquareDrawer};
 use kudchuet::gui::shapes::{Shape, StrokeData};
 use kudchuet::gui::{
@@ -426,14 +426,14 @@ impl BoardDrawer<Hex> for HexBoardDrawer {
 		(cell_size, board_width, board_height)
 	}
 }
-pub fn create_board() -> GenericGameApp<Hex, HexBoardDrawer> {
+pub fn create_board() -> GameApp<Hex, HexBoardDrawer> {
 	let ai_provider: Vec<Box<dyn AIEngineProvider<Hex>>> = vec![
 		Box::new(MoveSearcherBuilder::new("Material", HexMaterialEval, 4)),
 		Box::new(AIBuilder::<Hex, MCTS<Hex, UniformRolloutPolicy<Hex>>>::new(
 			"MCTS",
 		)),
 	];
-	let mut board = GenericGameApp::new(Hex::new(), ai_provider);
+	let mut board = GameApp::new(Hex::new(), ai_provider);
 	board.game_drawer = Box::new(HexBoardDrawer::default());
 	board
 		.game_drawer

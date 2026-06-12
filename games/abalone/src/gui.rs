@@ -6,7 +6,7 @@ use eframe::egui;
 use egui::{Color32, Rect, Stroke, Vec2};
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::board_app::GenericGameApp;
+use kudchuet::gui::game_app::GameApp;
 use kudchuet::gui::board_drawer::{
 	BoardDrawer, DefaultBoardDrawer, GameDrawer, PieceDrawer, SquareDrawer,
 };
@@ -342,11 +342,11 @@ impl BoardDrawer<Abalone> for AbaloneBoardDrawer<Abalone> {
 		self.0.set_piece_drawer(sq_drawer)
 	}
 }
-pub fn create_board() -> GenericGameApp<Abalone, AbaloneBoardDrawer<Abalone>> {
+pub fn create_board() -> GameApp<Abalone, AbaloneBoardDrawer<Abalone>> {
 	let engines: Vec<Box<dyn AIEngineProvider<Abalone>>> = vec![Box::new(
 		MoveSearcherBuilder::new("Material", AbaloneMaterialEval, 4),
 	)];
-	let mut board = GenericGameApp::new(Abalone::default(), engines);
+	let mut board = GameApp::new(Abalone::default(), engines);
 	board.game_drawer = Box::new(AbaloneBoardDrawer(DefaultBoardDrawer::new()));
 	board.max_depth = 6;
 	board.depth = 4;

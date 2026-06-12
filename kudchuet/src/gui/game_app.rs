@@ -14,8 +14,8 @@ use super::input_handler::{DefaultInputHandler, MoveResult};
 use super::{GameOutcome, Player};
 use crate::gui::GUIMove;
 
-pub type GenericBoardApp<G> = GenericGameApp<G, DefaultBoardDrawer<G>>;
-pub struct GenericGameApp<G: GUIGame + Sync + Send, Drawer: GameDrawer<G>>
+pub type GenericBoardApp<G> = GameApp<G, DefaultBoardDrawer<G>>;
+pub struct GameApp<G: GUIGame + Sync + Send, Drawer: GameDrawer<G>>
 where
 	G::M: GUIMove<G> + Send,
 {
@@ -38,7 +38,7 @@ where
 }
 
 impl<G: GUIGame + Clone + Sync + Send + 'static, Drawer: GameDrawer<G> + Default + 'static> eframe::App
-	for GenericGameApp<G, Drawer>
+	for GameApp<G, Drawer>
 where
 	G::M: GUIMove<G> + Send,
 {
@@ -129,7 +129,7 @@ where
 }
 
 impl<G: GUIGame + Clone + Sync + Send + 'static, Drawer: GameDrawer<G> + Default + 'static>
-	GenericGameApp<G, Drawer>
+	GameApp<G, Drawer>
 where
 	G::M: GUIMove<G> + Send,
 {
@@ -191,9 +191,9 @@ where
 
 	pub(super) fn apply_move(&mut self, mv: G::M) {
 		println!("playing {mv:?}");
-		self.game_state_manager.apply_move(mv);
 		self.game_drawer
-			.set_played_highlights(mv.played_highlights(self.game()));
+			.set_played_highlights(mv.click_sequence(self.game()));
+		self.game_state_manager.apply_move(mv);
 		self.game_drawer.clear_selection();
 		self.input_handler
 			.reset(self.game_drawer.as_mut(), &self.game_state_manager)

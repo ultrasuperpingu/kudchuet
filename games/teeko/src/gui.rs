@@ -13,17 +13,15 @@ use kudchuet::{
 	gui::{BoardGame, BoardMove, BoardStyle, CheckerBoardMod, CoordMod, EGUIPieceType},
 };
 
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 //use super::{game::ThreeMusketeersEvalAdvance};
 
 impl GUIMove<Teeko> for Move {
 	fn click_sequence(&self, _state: &Teeko) -> Vec<<Teeko as GUIGame>::Click> {
 		self.click_sequence_board_move_default(_state)
 	}
-	fn played_highlights(&self, state: &Teeko) -> Vec<u16> {
-		self.click_sequence(state)
-	}
 }
+
 impl BoardMove<Teeko> for Move {
 	fn from(&self) -> Option<u16> {
 		self.from.map(|m| m as u16)
@@ -76,7 +74,7 @@ impl GUIGame for Teeko {
 			_ => unreachable!(),
 		}
 	}
-	
+
 	fn position_to_string(&self) -> Option<String> {
 		Some(self.to_fen())
 	}
@@ -142,7 +140,6 @@ impl BoardGame for Teeko {
 	fn coords_from_index(index: u16) -> (u8, u8) {
 		Bitboard5x5::coords_from_index(index as usize)
 	}
-	
 }
 
 pub fn create_board() -> GenericBoardApp<Teeko> {

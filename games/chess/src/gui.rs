@@ -2,7 +2,7 @@ use eframe::egui;
 use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
-use kudchuet::gui::board_app::GenericBoardApp;
+use kudchuet::gui::game_app::GenericBoardApp;
 use kudchuet::gui::shapes::{Shape, TextData};
 use kudchuet::gui::{BoardGame, BoardMove, BoardStyle, CoordMod, DefaultSettings, EGUIPieceType, GUIGame, GUIMove};
 
