@@ -1,8 +1,11 @@
+#[cfg(not(target_arch = "wasm32"))]
 use std::sync::Arc;
 
+#[cfg(not(target_arch = "wasm32"))]
 use eframe::NativeOptions;
+#[cfg(not(target_arch = "wasm32"))]
 use egui::IconData;
-
+#[cfg(not(target_arch = "wasm32"))]
 pub fn get_native_default_option() -> NativeOptions {
 	let mut options = eframe::NativeOptions::default();
 	options.viewport.icon = Some(Arc::new(IconData {

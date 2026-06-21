@@ -12,7 +12,7 @@ impl Game for Klondike {
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> kudchuet::GameOutcome {
 		*moves = state.legal_moves();
-		if moves.len() == 0 {
+		if moves.is_empty() {
 			if state.foundations.iter().map(|f| f.len()).sum::<usize>() == 52 {
 				kudchuet::GameOutcome::PLAYER1
 			} else {
@@ -31,7 +31,7 @@ impl Game for Klondike {
 
 	fn get_outcome(state: &Self::S) -> kudchuet::GameOutcome {
 		let moves = state.legal_moves();
-		if moves.len() == 0 {
+		if moves.is_empty() {
 			if state.foundations.iter().map(|f| f.len()).sum::<usize>() == 52 {
 				kudchuet::GameOutcome::PLAYER1
 			} else {
@@ -79,7 +79,7 @@ impl Evaluator for KlondikeEval {
 		let empty_columns = s.tableau.iter().filter(|c| c.0.is_empty()).count() as i16;
 		let stock_count = s.revealed_stock.len() as i16 + s.stock.len() as i16;
 
-		foundation_count as i16 * 103 - (foundation_variability_sum * 7) as i16 - hidden_cards * 191
+		foundation_count as i16 * 103 - (foundation_variability_sum * 7) - hidden_cards * 191
 			+ empty_columns * 51
 			- stock_count * 17
 	}

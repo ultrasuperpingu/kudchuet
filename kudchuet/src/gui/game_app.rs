@@ -46,7 +46,7 @@ where
 		if !self.inited {
 			self.ai_engine_manager.load_engines_parameters(ctx);
 			self.game_drawer.load_style(ctx);
-			egui_extras::install_image_loaders(&ctx);
+			egui_extras::install_image_loaders(ctx);
 			self.inited = true;
 		}
 	}
@@ -190,13 +190,12 @@ where
 	}
 
 	pub(super) fn apply_move(&mut self, mv: G::M) {
-		println!("playing {mv:?}");
 		self.game_drawer
 			.set_played_highlights(mv.click_sequence(self.game()));
 		self.game_state_manager.apply_move(mv);
 		self.game_drawer.clear_selection();
 		self.input_handler
-			.reset(self.game_drawer.as_mut(), &self.game_state_manager)
+			.reset(self.game_drawer.as_mut(), &self.game_state_manager);
 	}
 
 	fn ask_select_between_multiple_moves(

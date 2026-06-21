@@ -1,9 +1,13 @@
-
 use klondike::gui::create_board;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
-	let options = eframe::NativeOptions::default();
+	use winit::platform::windows::EventLoopBuilderExtWindows;
+	//let options = eframe::NativeOptions::default();
+	let mut options = eframe::NativeOptions::default();
+	options.event_loop_builder = Some(Box::new(|builder| {
+		builder.with_any_thread(true);
+	}));
 	eframe::run_native(
 		"Klondike",
 		options,

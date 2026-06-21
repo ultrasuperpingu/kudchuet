@@ -4,7 +4,7 @@ use kudchuet::{
 	cards::{ordered_card_set::OrderedCardSet54, playing_cards54::PlayingCard54},
 	gui::{
 		CardGame, GUIGame, GUIMove,
-		card_view::{CardBoard, CardGameClick, CardSetLayout, CardZone, DefaultCardGameDrawer},
+		card_game_drawer::{CardBoard, CardGameClick, CardSetLayout, CardZone, DefaultCardGameDrawer},
 		game_app::GameApp,
 	},
 };
@@ -48,7 +48,7 @@ impl CardGame for Freecell {
 		for (i, cell) in self.free_cells.iter().enumerate() {
 			zones.push(CardZone {
 				id: i as u8,
-				set: OrderedCardSet54::from_iter(cell.clone()),
+				set: OrderedCardSet54::from_iter(*cell),
 				layout: CardSetLayout::Stack,
 				//origin: pos2(0.05 + i as f32 * x_step, base_y_top),
 				rect: Rect::from_min_max(

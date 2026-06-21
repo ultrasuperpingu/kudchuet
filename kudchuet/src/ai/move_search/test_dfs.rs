@@ -80,9 +80,8 @@ where
 	let mut moves = vec![];
 	let res = G::generate_and_filter_moves(state, &mut moves);
 
-	match handler.before_iteration(state, hash, &mut context, res) {
-		Some(res) => return res,
-		None => {}
+	if let Some(res) = handler.before_iteration(state, hash, &mut context, res) {
+		return res;
 	}
 	for mv in moves {
 		match handler.on_child_recursing(state, hash, mv, depth, &mut context) {

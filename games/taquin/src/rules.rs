@@ -361,7 +361,7 @@ impl<const W: usize, const H: usize, const NB: usize> Taquin<W, H, NB> {
 			let mut j = 0;
 			while j < H {
 				let tile = self.content[i][j] as usize;
-				h ^= Self::ZOBRIST_KEYS.content[i][j][tile as usize];
+				h ^= Self::ZOBRIST_KEYS.content[i][j][tile];
 				j += 1;
 			}
 			i += 1;
@@ -377,12 +377,12 @@ impl<const W: usize, const H: usize, const NB: usize> Taquin<W, H, NB> {
 		let tile = self.content[fx][fy] as usize;
 
 		// remove tile from old position
-		self.hash ^= Self::ZOBRIST_KEYS.content[fx][fy][tile as usize];
+		self.hash ^= Self::ZOBRIST_KEYS.content[fx][fy][tile];
 		self.hash ^= Self::ZOBRIST_KEYS.content[fx][fy][0];
 
 		// place tile in blank position
 		self.hash ^= Self::ZOBRIST_KEYS.content[bx][by][0];
-		self.hash ^= Self::ZOBRIST_KEYS.content[bx][by][tile as usize];
+		self.hash ^= Self::ZOBRIST_KEYS.content[bx][by][tile];
 
 		// update blank implicitly
 	}

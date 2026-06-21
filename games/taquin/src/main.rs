@@ -29,7 +29,7 @@ fn main() {
 			.start(
 				canvas,
 				eframe::WebOptions::default(),
-				Box::new(|_cc| Ok(Box::new(create_board()))),
+				Box::new(|_cc| Ok(Box::new(create_board::<4, 4, { 4 * 4 }>()))),
 			)
 			.await
 			.expect("failed to start eframe");

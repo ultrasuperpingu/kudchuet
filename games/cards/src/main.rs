@@ -1,4 +1,4 @@
-use cards::manille_gui::create_board;
+use cards::gui::create_board;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {

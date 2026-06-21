@@ -68,7 +68,7 @@ impl Heuristic for Solitaire {
 	type G = Solitaire;
 
 	fn heuristic(&self, state: &Solitaire) -> u32 {
-		state.board.count() as u32
+		state.board.count()
 		//0
 	}
 }

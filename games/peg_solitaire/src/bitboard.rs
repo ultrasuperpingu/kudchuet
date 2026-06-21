@@ -40,7 +40,7 @@ impl SolitaireBoard {
 		while i < Self::NB_SQUARES {
 			if Self::MASK.get_at_index(i) {
 				let (x, y) = Self::coords_from_index(i);
-				table[i] = Self::jumps(x as u8, y as u8);
+				table[i] = Self::jumps(x, y);
 			}
 			i += 1;
 		}

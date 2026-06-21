@@ -31,7 +31,7 @@ where
 	) -> Vec<(u64, <E::G as Game>::M)> {
 		//let mut tree= GameTree::from(state);
 		let hash = E::G::get_hash(state);
-		let root_player = E::G::get_current_player(&state);
+		let root_player = E::G::get_current_player(state);
 
 		let mut states = NHHashMap::<u64, <E::G as Game>::S>::default();
 		states.insert(hash, state.clone());

@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::ai::move_search::interface::Game;
 use crate::cards::playing_cards::{CardSet, PlayingCard};
-use crate::gui::card_view::{CardBoard, CardGameClick};
+use crate::gui::card_game_drawer::{CardBoard, CardGameClick};
 use crate::gui::shapes::StrokeData;
 use crate::gui::{input_handler::MoveResult, shapes::Shape};
 use egui::{Color32, ImageSource, Stroke};
@@ -20,7 +20,7 @@ pub mod input_handler;
 pub mod options_panel;
 pub mod shapes;
 pub mod utils;
-pub mod card_view;
+pub mod card_game_drawer;
 pub mod cards;
 
 #[derive(EguiInspect, Clone, PartialEq, Eq, Copy, Debug, Serialize, Deserialize)]

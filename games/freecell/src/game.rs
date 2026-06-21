@@ -13,7 +13,7 @@ impl Game for Freecell {
 
 	fn generate_moves(state: &Self::S, moves: &mut Vec<Self::M>) -> kudchuet::GameOutcome {
 		state.legal_moves_inplace(moves);
-		if moves.len() == 0 {
+		if moves.is_empty() {
 			if state
 				.tableau
 				.iter()
@@ -53,7 +53,7 @@ impl Game for Freecell {
 
 	fn get_outcome(state: &Self::S) -> kudchuet::GameOutcome {
 		let moves = state.legal_moves();
-		if moves.len() == 0 {
+		if moves.is_empty() {
 			if state
 				.tableau
 				.iter()
@@ -179,7 +179,7 @@ impl Evaluator for FreecellEval {
 		}
 		max_movable.min(12) as i16 * 71 + foundation_count as i16 * 191
 			- (foundation_variability * 23.0) as i16
-			- misorder as i16 * 3
+			- misorder * 3
 			+ ordered_bonus
 	}
 }

@@ -555,4 +555,24 @@ mod tests {
 		println!("{}", i);
 		println!("{:?}", klondike.result());
 	}
+	#[test]
+	#[cfg(not(target_arch = "wasm32"))]
+	fn test_gui() {
+		use winit::platform::windows::EventLoopBuilderExtWindows;
+
+		use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
+		use kudchuet::gui::{game_app::GameApp, card_game_drawer::DefaultCardGameDrawer};
+		let engines: Vec<Box<dyn AIEngineProvider<Klondike>>> = vec![Box::new(
+			MoveSearcherBuilder::new("Cheating AI", KlondikeEval, 8),
+		)];
+		let mut board = GameApp::new(Klondike::new(), engines);
+		board.game_drawer = Box::new(DefaultCardGameDrawer::default());
+		board.max_depth = 13;
+		board.depth = 8;
+		let mut options = eframe::NativeOptions::default();
+		options.event_loop_builder = Some(Box::new(|builder| {
+			builder.with_any_thread(true);
+		}));
+		eframe::run_native("Klondike", options, Box::new(|_cc| Ok(Box::new(board))));
+	}
 }

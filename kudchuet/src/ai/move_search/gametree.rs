@@ -503,6 +503,9 @@ where
 	pub fn len(&self) -> usize {
 		self.nodes.len()
 	}
+	pub fn is_empty(&self) -> bool {
+		self.nodes.is_empty()
+	}
 	pub fn nb_states(&self) -> usize {
 		self.state_to_node.len()
 	}

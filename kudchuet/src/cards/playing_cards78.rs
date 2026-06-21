@@ -100,9 +100,8 @@ impl std::fmt::Display for PlayingCard78 {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let v = *self as u8;
 
-		match v {
-			77 => return write!(f, "Exc"),
-			_ => {}
+		if v == 77 {
+			return write!(f, "Exc");
 		}
 		if v < 14 * 4 {
 			let suit = match v / 14 {
@@ -152,7 +151,7 @@ impl PlayingCard78 {
 			// SAFETY:
 			// repr(u8) guarantees discriminant layout
 			// and we checked bounds.
-			Some(unsafe { std::mem::transmute(v) })
+			Some(unsafe { std::mem::transmute::<u8, Self>(v) })
 		} else {
 			None
 		}

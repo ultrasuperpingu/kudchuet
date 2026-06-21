@@ -5,7 +5,7 @@ use kudchuet::{
 	ai::move_search::{Evaluation, Evaluator, Game},
 };
 
-use crate::manille::{Manille, Move};
+use crate::rules::{Manille, Move};
 
 impl Game for Manille {
 	type S = Manille;
@@ -80,7 +80,7 @@ impl ManilleMaterialEval {
 impl Evaluator for ManilleMaterialEval {
 	type G = Manille;
 	fn evaluate_for(&self, state: &Manille, p: Player) -> Evaluation {
-		if p.0 % 2 == 0 {
+		if p.0.is_multiple_of(2) {
 			state.scores[0] as Evaluation - state.scores[1] as Evaluation
 		} else {
 			state.scores[1] as Evaluation - state.scores[0] as Evaluation
@@ -109,7 +109,7 @@ impl Evaluator for ManilleTestEval {
 			.iter()
 			.enumerate()
 			.filter(|(i, _)| (*i as u8 % 2) == team)
-			.map(|(_, hand)| hand.iter().map(|c| crate::manille::value(&c) as i32).sum::<i32>())
+			.map(|(_, hand)| hand.iter().map(|c| crate::rules::value(&c) as i32).sum::<i32>())
 			.sum();
 
 		let opp_value: i32 = state
@@ -117,7 +117,7 @@ impl Evaluator for ManilleTestEval {
 			.iter()
 			.enumerate()
 			.filter(|(i, _)| (*i as u8 % 2) != team)
-			.map(|(_, hand)| hand.iter().map(|c| crate::manille::value(&c) as i32).sum::<i32>())
+			.map(|(_, hand)| hand.iter().map(|c| crate::rules::value(&c) as i32).sum::<i32>())
 			.sum();
 
 		(score_diff * 100 + (hand_value - opp_value)) as Evaluation
@@ -146,7 +146,7 @@ impl Evaluator for ManilleTestEval {
 //    18        25849116        1.2s     22165.6
 #[cfg(test)]
 mod tests {
-	use crate::manille::Manille;
+	use crate::rules::Manille;
 	use kudchuet::ai::move_search::util::perft;
 
 	#[test]

@@ -9,7 +9,7 @@ use kudchuet::cards::{
 	playing_cards54::PlayingCard54,
 	unordered_card_set::UnorderedCardSet54,
 };
-use kudchuet::gui::card_view::CardGameClick;
+use kudchuet::gui::card_game_drawer::CardGameClick;
 use std::fmt;
 //use std::hash::{DefaultHasher, Hash, Hasher};
 
@@ -554,7 +554,7 @@ impl Freecell {
 				h ^= Self::ZOBRIST.free_cells[i][c.index() as usize];
 			}
 		}
-		for (_i, content) in self.foundations.iter().enumerate() {
+		for content in self.foundations.iter() {
 			//h ^= Self::ZOBRIST.foundations[i] ^ content.0;
 			h ^= fibo_hash_64(content.0);
 		}

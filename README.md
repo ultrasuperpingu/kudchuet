@@ -7,7 +7,7 @@
 Kudchuet is a Rust framework for building board games, AI engines, and graphical game UIs using `egui`.
 
 It provides:
-- a generic board game abstraction
+- a generic board or card game abstraction
 - pluggable AI engines (minimax, internal, external UCI engines)
 - a modular UI system for rendering boards and pieces
 - async AI move computation support
@@ -15,19 +15,17 @@ It provides:
 
 ## Live demos
 
-- Chess: https://ultrasuperpingu.github.io/kudchuet/chess
-- Chinese Checkers: https://ultrasuperpingu.github.io/kudchuet/chinese_checkers
-- Three Musketeers: https://ultrasuperpingu.github.io/kudchuet/three_musketeers
-- Backgammon: https://ultrasuperpingu.github.io/kudchuet/backgammon
+https://www.kudchuet.fr
 
 ## Features
 
 ### Board game framework
-Define any turn-based board game by implementing:
+Define any turn-based game by implementing:
 
-- `BoardGame`
-- `BoardMove`
-- optional rendering traits (`BoardDrawer`, `SquareDrawer`)
+- `GUIGame`
+- `GUIMove`
+- optional rendering traits (`GameDrawer`)
+- specific rendering traits (`BoardDrawer`, `SquareDrawer`, `CardDrawer`)
 
 ---
 
@@ -46,6 +44,7 @@ Kudchuet supports multiple AI backends:
 
 ### Custom rendering
 You can override board rendering using ```BoardDrawer```, ```PieceDrawer``` and ```SquareDrawer```. Default implmentations of those are already really expressive but you can reimplement those and implement really specifc features.
+The same stands for override card rendering using ```CardDrawer```
 
 ## Example games
 
@@ -61,6 +60,7 @@ Kudchuet includes multiple fully playable example implementations:
 - Diaballik
 - Yote
 
+
 ### Non Grid Board games
 - Awale
 
@@ -69,6 +69,14 @@ Kudchuet includes multiple fully playable example implementations:
 - Hare and Hounds
 - Three Musketeers
 - Neutron
+
+### Singleplayer games
+- Peg Solitaire
+- Taquin
+
+### Patience Cards games
+- Klondike
+- Freecell
 
 ### Dice / probabilistic games
 - Backgammon

@@ -118,9 +118,7 @@ where
 impl<C> From<C> for OrderedCardSet<C> {
 	#[inline]
 	fn from(card: C) -> Self {
-		let mut vec = Vec::new();
-		vec.push(card);
-		Self(vec)
+		Self(vec![card])
 	}
 }
 impl<C> Default for OrderedCardSet<C> {
@@ -296,18 +294,17 @@ where
 		//if from.len() < nb as usize {
 		//	return Err("Not enough cards in the deck".into());
 		//}
-//
+		//
 		//let mut result = Vec::<C>::new();
-//
+		//
 		//for _ in 0..nb {
 		//	let idx = fastrand::usize(..from.0.len());
 		//	result.push(from.0.swap_remove(idx));
 		//}
-//
+		//
 		//Ok(Self(result))
 		from.draw_random(nb)
 	}
-
 }
 
 impl OrderedCardSet32 {
@@ -448,7 +445,9 @@ impl From<UnorderedCardSet78> for OrderedCardSet78 {
 mod tests {
 	use crate::cards::{
 		ordered_card_set::{OrderedCardSet32, OrderedCardSet54},
-		playing_cards::{PlayingCard}, playing_cards32::PlayingCard32, playing_cards54::PlayingCard54,
+		playing_cards::PlayingCard,
+		playing_cards32::PlayingCard32,
+		playing_cards54::PlayingCard54,
 	};
 
 	#[test]

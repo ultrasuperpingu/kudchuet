@@ -24,7 +24,6 @@ use crate::ai::move_search::ybw::ParallelSearch;
 use crate::ai::uci::UciValue;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::uci::UciValue;
-#[cfg(not(target_arch = "wasm32"))]
 use crate::gui::GUIGame;
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
@@ -181,22 +180,39 @@ where
 		//opts.max_time = self.get_max_time().as_secs_f32();
 		//opts.threads = self.parallel_options().num_threads;
 		//opts.table_megabyte_size = self.options().table_byte_size / 1024 / 1024;
-		let mut opts=HashMap::new();
-		opts
-			.insert("Mtdf".into(), UciValue::Bool(self.options().get_mtdf()));
-		opts.insert("Hash".into(), UciValue::Spin(self.options().table_byte_size as i64 / 1024 / 1024, Some(0), None));
-		opts.insert("Threads".into(), UciValue::Spin(self.parallel_options().num_threads.unwrap_or(0) as i64, Some(0), None));
-		opts
-			.insert("Timeout".into(), UciValue::Spin(self.get_max_time().as_millis() as i64, Some(0), None));
-		opts
-			.insert("Depth".into(), UciValue::Spin(self.get_max_depth() as i64, Some(0), None));
+		let mut opts = HashMap::new();
+		opts.insert("Mtdf".into(), UciValue::Bool(self.options().get_mtdf()));
+		opts.insert(
+			"Hash".into(),
+			UciValue::Spin(
+				self.options().table_byte_size as i64 / 1024 / 1024,
+				Some(0),
+				None,
+			),
+		);
+		opts.insert(
+			"Threads".into(),
+			UciValue::Spin(
+				self.parallel_options().num_threads.unwrap_or(0) as i64,
+				Some(0),
+				None,
+			),
+		);
+		opts.insert(
+			"Timeout".into(),
+			UciValue::Spin(self.get_max_time().as_millis() as i64, Some(0), None),
+		);
+		opts.insert(
+			"Depth".into(),
+			UciValue::Spin(self.get_max_depth() as i64, Some(0), None),
+		);
 		opts
 	}
 
 	fn set_options(&mut self, opts: &HashMap<String, UciValue>) {
 		println!("reset_with_options {:?}", opts);
 		let mut hash_size = 128;
-		if let Some(&UciValue::Spin(hash,_,_)) = opts.get("Hash") {
+		if let Some(&UciValue::Spin(hash, _, _)) = opts.get("Hash") {
 			hash_size = hash;
 		}
 		let mut iter =
@@ -207,17 +223,17 @@ where
 		}
 		let mut par = ParallelOptions::new();
 		par.num_threads = None;
-		if let Some(&UciValue::Spin(threads,_,_)) = opts.get("Threads") {
+		if let Some(&UciValue::Spin(threads, _, _)) = opts.get("Threads") {
 			par.num_threads = Some(threads as usize)
 		}
-		
+
 		*self = ParallelSearch::new(E::default(), iter, par);
 		let mut timeout = 0;
 		let mut depth = 5;
-		if let Some(&UciValue::Spin(itimeout,_,_)) = opts.get("Timeout") {
+		if let Some(&UciValue::Spin(itimeout, _, _)) = opts.get("Timeout") {
 			timeout = itimeout as u64;
 		}
-		if let Some(&UciValue::Spin(idepth,_,_)) = opts.get("Depth") {
+		if let Some(&UciValue::Spin(idepth, _, _)) = opts.get("Depth") {
 			depth = idepth as u64;
 		}
 		if timeout == 0 {
@@ -234,7 +250,6 @@ where
 	fn stop_signal(&self) -> SearchStopSignal {
 		self.stop_signal()
 	}
-
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -253,14 +268,24 @@ where
 		opts.uci
 			.insert("Mtdf".into(), UciValue::Bool(self.options().get_mtdf()));
 		opts*/
-		let mut opts=HashMap::new();
-		opts
-			.insert("Mtdf".into(), UciValue::Bool(self.options().get_mtdf()));
-		opts.insert("Hash".into(), UciValue::Spin(self.options().table_byte_size as i64 / 1024 / 1024, Some(0), None));
-		opts
-			.insert("Timeout".into(), UciValue::Spin(self.get_max_time().as_millis() as i64, Some(0), None));
-		opts
-			.insert("Depth".into(), UciValue::Spin(self.get_max_depth() as i64, Some(0), None));
+		let mut opts = HashMap::new();
+		opts.insert("Mtdf".into(), UciValue::Bool(self.options().get_mtdf()));
+		opts.insert(
+			"Hash".into(),
+			UciValue::Spin(
+				self.options().table_byte_size as i64 / 1024 / 1024,
+				Some(0),
+				None,
+			),
+		);
+		opts.insert(
+			"Timeout".into(),
+			UciValue::Spin(self.get_max_time().as_millis() as i64, Some(0), None),
+		);
+		opts.insert(
+			"Depth".into(),
+			UciValue::Spin(self.get_max_depth() as i64, Some(0), None),
+		);
 		opts
 	}
 	fn set_options(&mut self, opts: &HashMap<String, UciValue>) {
@@ -287,7 +312,6 @@ where
 pub fn new_move_searcher_static<G, T>(evaluator: T, initial_depth: u8) -> MoveSearcher<T>
 where
 	G: GUIGame + Send + Sync + 'static,
-	//G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
 	G::M: Copy + Send + Sync + Eq + 'static,
 	T: Evaluator<G = G> + Default + Clone + Send + Sync + 'static,
 {
@@ -301,8 +325,8 @@ where
 #[cfg(target_arch = "wasm32")]
 pub fn new_move_searcher_static<G, T>(evaluator: T, initial_depth: u8) -> MoveSearcher<T>
 where
-	G: BoardGame + Send + Sync + 'static,
-	G::M: BoardMove<G> + Copy + Send + Sync + Eq + 'static,
+	G: GUIGame + Send + Sync + 'static,
+	G::M: Copy + Send + Sync + Eq + 'static,
 	T: Evaluator<G = G> + Default + Clone + Send + Sync + 'static,
 {
 	let mut searcher = IterativeSearch::new(
@@ -316,5 +340,5 @@ where
 pub mod ai;
 pub mod cards;
 pub mod gui;
-pub mod utils;
 pub mod sgf;
+pub mod utils;

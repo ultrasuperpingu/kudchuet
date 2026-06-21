@@ -748,8 +748,8 @@ impl Checkers10 {
 			if moves.len() == before_count {
 				moves.push(m);
 			} else {
-				for j in before_count..moves.len() {
-					moves[j] = m.merge(&moves[j]);
+				for mj in moves.iter_mut().skip(before_count) {
+					*mj = m.merge(mj);
 				}
 			}
 		}

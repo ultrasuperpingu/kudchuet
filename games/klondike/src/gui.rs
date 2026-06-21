@@ -1,13 +1,15 @@
+use crate::game::KlondikeEval;
+use crate::rules::{Klondike, Move};
 use egui::{Rect, pos2};
 use kudchuet::{
 	ai::{AIEngineProvider, MoveSearcherBuilder},
 	cards::{ordered_card_set::OrderedCardSet54, playing_cards54::PlayingCard54},
 	gui::{
-		BoardStyle, CardGame, DefaultSettings, GUIGame, GUIMove, card_view::{CardBoard, CardGameClick, CardSetLayout, CardZone, DefaultCardGameDrawer}, game_app::GameApp
+		BoardStyle, CardGame, DefaultSettings, GUIGame, GUIMove,
+		card_game_drawer::{CardBoard, CardGameClick, CardSetLayout, CardZone, DefaultCardGameDrawer},
+		game_app::GameApp,
 	},
 };
-use crate::game::KlondikeEval;
-use crate::rules::{Klondike, Move};
 
 impl GUIGame for Klondike {
 	type Click = CardGameClick<PlayingCard54>;
@@ -164,4 +166,17 @@ pub fn create_board() -> GameApp<Klondike, DefaultCardGameDrawer<Klondike, Playi
 	board.max_depth = 13;
 	board.depth = 8;
 	board
+	/*use winit::platform::windows::EventLoopBuilderExtWindows;
+	let engines: Vec<Box<dyn AIEngineProvider<Klondike>>> = vec![Box::new(
+		MoveSearcherBuilder::new("Cheating AI", KlondikeEval, 8),
+	)];
+	let mut board = GameApp::new(Klondike::new(), engines);
+	board.game_drawer = Box::new(DefaultCardGameDrawer::default());
+	board.max_depth = 13;
+	board.depth = 8;
+	let mut options = eframe::NativeOptions::default();
+	options.event_loop_builder = Some(Box::new(|builder| {
+		builder.with_any_thread(true);
+	}));
+	eframe::run_native("Klondike", options, Box::new(|_cc| Ok(Box::new(board))))*/
 }

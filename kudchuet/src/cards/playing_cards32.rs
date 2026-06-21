@@ -92,7 +92,7 @@ impl PlayingCard32 {
 			// SAFETY:
 			// repr(u8) guarantees discriminant layout
 			// and we checked bounds.
-			Some(unsafe { std::mem::transmute(v) })
+			Some(unsafe { std::mem::transmute::<u8, Self>(v) })
 		} else {
 			None
 		}

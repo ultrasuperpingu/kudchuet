@@ -338,11 +338,7 @@ impl ParallelOptions {
 }
 
 pub trait RolloutPolicy<G: Game>: Default + Copy {
-	fn select_move(
-		&self,
-		state: &mut G::S,
-		move_scratch: &Vec<G::M>,
-	) -> G::M;
+	fn select_move(&self, state: &mut G::S, move_scratch: &[G::M]) -> G::M;
 }
 pub struct UniformRolloutPolicy<G: Game> {
 	game_type: std::marker::PhantomData<G>,
@@ -356,12 +352,12 @@ impl<G: Game> Default for UniformRolloutPolicy<G> {
 }
 impl<G: Game> Clone for UniformRolloutPolicy<G> {
 	fn clone(&self) -> Self {
-		Self { game_type: self.game_type.clone() }
+		*self
 	}
 }
 impl<G: Game> Copy for UniformRolloutPolicy<G> {}
 impl<G: Game> RolloutPolicy<G> for UniformRolloutPolicy<G> {
-	fn select_move(&self, _state: &mut G::S, moves: &Vec<G::M>) -> G::M {
+	fn select_move(&self, _state: &mut G::S, moves: &[G::M]) -> G::M {
 		*fastrand::choice(moves).unwrap()
 	}
 }
@@ -389,7 +385,7 @@ where
 				}
 				ch_mv
 			} else {
-				&policy.select_move(&mut sim_state, &mut moves)
+				&policy.select_move(&mut sim_state, &moves)
 			};
 			if let Some(state) = G::apply(&mut sim_state, *m) {
 				sim_state = state;
