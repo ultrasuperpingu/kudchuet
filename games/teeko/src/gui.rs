@@ -1,4 +1,4 @@
-use eframe::egui;
+use kudchuet::egui;
 use egui::Color32;
 use kudchuet::ai::move_search::{MCTS, UniformRolloutPolicy};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};

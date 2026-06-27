@@ -2,7 +2,7 @@ use crate::bitboard::Bitboard5x5;
 use crate::game::NeutronMaterialEval;
 use crate::rules::{Move, Neutron, Piece};
 use bitboard::Bitboard;
-use eframe::egui;
+use kudchuet::egui;
 use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};

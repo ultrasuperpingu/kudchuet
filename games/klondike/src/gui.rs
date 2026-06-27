@@ -1,6 +1,6 @@
 use crate::game::KlondikeEval;
 use crate::rules::{Klondike, Move};
-use egui::{Rect, pos2};
+use kudchuet::egui::{Rect, pos2};
 use kudchuet::{
 	ai::{AIEngineProvider, MoveSearcherBuilder},
 	cards::{ordered_card_set::OrderedCardSet54, playing_cards54::PlayingCard54},

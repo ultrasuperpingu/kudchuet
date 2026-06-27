@@ -1,7 +1,7 @@
 use crate::bitboard::ChineseCheckerBoard;
 use crate::game::ChineseCheckersMaterialEval;
 use crate::rules::{ChineseCheckers, ChineseCheckersPlayer, Move};
-use eframe::egui;
+use kudchuet::egui;
 use egui::{Color32, Stroke};
 use egui_field_editor::EguiInspect;
 use kudchuet::Player;

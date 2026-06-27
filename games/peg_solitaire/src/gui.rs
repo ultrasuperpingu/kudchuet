@@ -1,5 +1,5 @@
 use bitboard::Bitboard;
-use eframe::egui::{Color32, Stroke, StrokeKind};
+use kudchuet::egui::{Color32, Stroke, StrokeKind};
 use kudchuet::{
 	ai::{AIBuilder, AIEngineProvider, move_search::astar::AStar},
 	gui::{

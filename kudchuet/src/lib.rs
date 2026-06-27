@@ -25,6 +25,8 @@ use crate::ai::uci::UciValue;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ai::uci::UciValue;
 use crate::gui::GUIGame;
+pub use eframe;
+pub use egui;
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PlayerType {

@@ -1,5 +1,5 @@
 use bitboard::Bitboard;
-use eframe::egui;
+use kudchuet::egui;
 use egui::Color32;
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};

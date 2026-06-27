@@ -1,8 +1,8 @@
 use teeko::gui::create_board;
 
 #[cfg(not(target_arch = "wasm32"))]
-fn main() -> eframe::Result<()> {
-	eframe::run_native(
+fn main() -> kudchuet::eframe::Result<()> {
+	kudchuet::eframe::run_native(
 		"Teeko",
 		kudchuet::gui::utils::get_native_default_option(),
 		Box::new(|_cc| Ok(Box::new(create_board()))),

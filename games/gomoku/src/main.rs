@@ -2,10 +2,10 @@ use gomoku::gui::create_board;
 
 
 #[cfg(not(target_arch = "wasm32"))]
-fn main() -> eframe::Result<()> {
-	eframe::run_native(
+fn main() -> kudchuet::eframe::Result<()> {
+	kudchuet::eframe::run_native(
 		"Gomoku",
-		eframe::NativeOptions::default(),
+		kudchuet::eframe::NativeOptions::default(),
 		Box::new(|_cc| Ok(Box::new(create_board()))),
 	)
 }

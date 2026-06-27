@@ -569,10 +569,10 @@ mod tests {
 		board.game_drawer = Box::new(DefaultCardGameDrawer::default());
 		board.max_depth = 13;
 		board.depth = 8;
-		let mut options = eframe::NativeOptions::default();
+		let mut options = kudchuet::eframe::NativeOptions::default();
 		options.event_loop_builder = Some(Box::new(|builder| {
 			builder.with_any_thread(true);
 		}));
-		eframe::run_native("Klondike", options, Box::new(|_cc| Ok(Box::new(board))));
+		kudchuet::eframe::run_native("Klondike", options, Box::new(|_cc| Ok(Box::new(board))));
 	}
 }

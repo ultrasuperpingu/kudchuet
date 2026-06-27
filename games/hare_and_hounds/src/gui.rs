@@ -1,4 +1,4 @@
-use eframe::egui;
+use kudchuet::egui;
 use egui::{Color32, Rect};
 use kudchuet::ai::{AIBuilder, AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::ai::move_search::perfect_solver::PerfectSolver;

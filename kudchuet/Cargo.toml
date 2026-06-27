@@ -9,10 +9,10 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 eframe = "0.35"
 egui = { version = "0.35", features=["persistence"] }
-#egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor.git", features=["filepicker"] }
-egui_field_editor = {path="../../egui_inspect/egui_field_editor", features=["filepicker"] }
-#egui_field_editor = "0.5"
 egui_extras = { version = "0.35", features=["all_loaders"] }
+#egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor.git", features=["filepicker"] }
+#egui_field_editor = {path="../../egui_inspect/egui_field_editor", features=["filepicker"] }
+egui_field_editor = "0.6"
 
 priority-queue = "2.7"
 instant = { version = "0.1", features = ["wasm-bindgen"] }

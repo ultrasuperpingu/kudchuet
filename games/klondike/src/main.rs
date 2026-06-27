@@ -1,14 +1,14 @@
 use klondike::gui::create_board;
 
 #[cfg(not(target_arch = "wasm32"))]
-fn main() -> eframe::Result<()> {
+fn main() -> kudchuet::eframe::Result<()> {
 	use winit::platform::windows::EventLoopBuilderExtWindows;
 	//let options = eframe::NativeOptions::default();
-	let mut options = eframe::NativeOptions::default();
+	let mut options = kudchuet::eframe::NativeOptions::default();
 	options.event_loop_builder = Some(Box::new(|builder| {
 		builder.with_any_thread(true);
 	}));
-	eframe::run_native(
+	kudchuet::eframe::run_native(
 		"Klondike",
 		options,
 		Box::new(|_cc| Ok(Box::new(create_board()))),

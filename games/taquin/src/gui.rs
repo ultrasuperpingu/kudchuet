@@ -1,4 +1,4 @@
-use egui::Color32;
+use kudchuet::egui::Color32;
 use kudchuet::{ai::{AIBuilder, AIEngineProvider, move_search::astar::AStar}, gui::{BoardGame, BoardMove, BoardStyle, DefaultSettings, EGUIPieceType, GUIGame, game_app::GenericBoardApp, shapes::StrokeData}};
 
 use crate::rules::{Move, Taquin};
@@ -41,11 +41,11 @@ impl EGUIPieceType for Tile {
 					size: 0.8,
 				}),
 				stroke: Some(StrokeData {
-					stroke: egui::Stroke {
+					stroke: kudchuet::egui::Stroke {
 						width: 1.0,
 						color: Color32::BLACK,
 					},
-					kind: egui::StrokeKind::Inside,
+					kind: kudchuet::egui::StrokeKind::Inside,
 				}),
 			}
 		}

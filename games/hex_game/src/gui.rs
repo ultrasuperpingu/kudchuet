@@ -1,5 +1,5 @@
 use bitboard::Bitboard;
-use eframe::egui::{self, Painter, Pos2, Rect, Vec2};
+use kudchuet::egui::{self, Painter, Pos2, Rect, Vec2};
 use egui::{Color32, Stroke, StrokeKind};
 
 use kudchuet::ai::move_search::{UniformRolloutPolicy, MCTS};

@@ -1,4 +1,4 @@
-use eframe::egui;
+use kudchuet::egui;
 use egui::{Color32, Stroke, StrokeKind};
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};
 use kudchuet::gui::{GUIGame, GUIMove};

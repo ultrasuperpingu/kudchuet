@@ -1,4 +1,4 @@
-use eframe::egui;
+use kudchuet::{eframe, egui};
 
 use crate::game::AwaleMaterialEval;
 use kudchuet::{

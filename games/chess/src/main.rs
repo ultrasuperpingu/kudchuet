@@ -4,7 +4,7 @@ extern crate kudchuet;
 
 
 #[cfg(not(target_arch = "wasm32"))]
-fn main() -> eframe::Result<()> {
+fn main() -> kudchuet::eframe::Result<()> {
 	
 	use kudchuet::ai::cli_engine::UCILikeCLIEngine;
 	use kudchuet::new_move_searcher_static;
@@ -18,9 +18,9 @@ fn main() -> eframe::Result<()> {
 		cli_engine.process().unwrap();
 		Ok(())
 	} else {
-		eframe::run_native(
+		kudchuet::eframe::run_native(
 			"Chess",
-			eframe::NativeOptions::default(),
+			kudchuet::eframe::NativeOptions::default(),
 			Box::new(|_cc| Ok(Box::new(create_board()))),
 		)
 	}

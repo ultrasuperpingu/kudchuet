@@ -1,5 +1,5 @@
 use crate::bitboard::Bitboard9x13;
-use eframe::egui;
+use kudchuet::egui;
 use egui::{Align2, Color32, FontId, Rect, Vec2};
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};

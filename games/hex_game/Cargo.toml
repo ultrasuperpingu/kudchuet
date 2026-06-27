@@ -9,7 +9,6 @@ bitboard = {path="../../bitboards/bitboard"}
 bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 #bitboard = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
 #bitboard_proc_macro = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
-eframe = { version = "0.35", features=["persistence"] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 

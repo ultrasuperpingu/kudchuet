@@ -1,7 +1,7 @@
 use crate::bitboard::Bitboard5x5;
 use crate::game::BaghChalMaterialEval;
 use bitboard::Bitboard;
-use eframe::egui;
+use kudchuet::egui;
 use egui::{Color32, Rect, Stroke, StrokeKind};
 use kudchuet::Player;
 use kudchuet::ai::{AIEngineProvider, MoveSearcherBuilder};

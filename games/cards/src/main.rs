@@ -13,6 +13,8 @@ fn main() -> eframe::Result<()> {
 
 #[cfg(target_arch = "wasm32")]
 use eframe::web_sys;
+#[cfg(not(target_arch = "wasm32"))]
+use kudchuet::eframe;
 #[cfg(target_arch = "wasm32")]
 fn main() {
 	use wasm_bindgen::JsCast;

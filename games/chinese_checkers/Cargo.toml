@@ -4,15 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-eframe = { version = "0.35", features=["persistence"] }
 kudchuet = { path = "../../kudchuet" }
 bitboard = {path="../../bitboards/bitboard"}
 bitboard_proc_macro = {path="../../bitboards/bitboard_proc_macro"}
 #bitboard = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
 #bitboard_proc_macro = {git = "https://github.com/ultrasuperpingu/bitboards.git"}
 #egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor.git", features=["filepicker"] }
-egui_field_editor = {path="../../../egui_inspect/egui_field_editor", features=["filepicker"] }
-#egui_field_editor = "0.6"
+#egui_field_editor = {path="../../../egui_inspect/egui_field_editor", features=["filepicker"] }
+egui_field_editor = "0.6"
 
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

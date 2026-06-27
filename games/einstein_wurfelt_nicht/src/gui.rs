@@ -1,4 +1,4 @@
-use eframe::egui::{self, Rect};
+use kudchuet::egui::{self, Rect};
 use egui::{Color32, Stroke, StrokeKind};
 
 use kudchuet::ai::move_search::{UniformRolloutPolicy, MCTS};

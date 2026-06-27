@@ -1,4 +1,4 @@
-use eframe::egui;
+use kudchuet::egui;
 use egui::{Color32, Stroke};
 use kudchuet::ai::move_search::UniformRolloutPolicy;
 use kudchuet::gui::{GUIGame, GUIMove};

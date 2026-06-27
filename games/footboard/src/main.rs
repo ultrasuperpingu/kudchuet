@@ -3,9 +3,9 @@ use footboard::gui::create_board;
 
 
 #[cfg(not(target_arch = "wasm32"))]
-fn main() -> eframe::Result<()> {
-	let options = eframe::NativeOptions::default();
-	eframe::run_native(
+fn main() -> kudchuet::eframe::Result<()> {
+	let options = kudchuet::eframe::NativeOptions::default();
+	kudchuet::eframe::run_native(
 		"Footboard",
 		options,
 		Box::new(|_cc| Ok(Box::new(create_board()))),

@@ -1,4 +1,4 @@
-use eframe::egui;
+use kudchuet::egui;
 use egui::{Align2, Color32, FontId, Pos2, Rect, Stroke, StrokeKind};
 
 use kudchuet::ai::MoveSearcherBuilder;
