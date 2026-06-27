@@ -1,5 +1,5 @@
 use bitboard::Bitboard;
-use egui::{Color32, Stroke};
+use eframe::egui::{Color32, Stroke, StrokeKind};
 use kudchuet::{
 	ai::{AIBuilder, AIEngineProvider, move_search::astar::AStar},
 	gui::{
@@ -35,7 +35,7 @@ impl GUIGame for Solitaire {
 					width: 1.1,
 					color: Color32::BLACK,
 				},
-				kind: egui::StrokeKind::Inside,
+				kind: StrokeKind::Inside,
 			}),
 		});
 		style.mirrored = true;
@@ -55,7 +55,7 @@ impl EGUIPieceType for Tile {
 					width: 1.1,
 					color: Color32::BLACK,
 				},
-				kind: egui::StrokeKind::Inside,
+				kind: StrokeKind::Inside,
 			}),
 		}
 	}

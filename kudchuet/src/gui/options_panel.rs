@@ -29,7 +29,7 @@ where
 				.resizable(true)
 				.default_size(200.0)
 				.size_range(100.0..=800.0)
-				.show_inside(ui, |ui| {
+				.show(ui, |ui| {
 					ui.vertical(|ui| {
 						ui.heading(match tab {
 							RightTab::GameSettings => "🎾 Game Settings",
@@ -176,7 +176,7 @@ where
 			.resizable(false)
 			.exact_size(40.0)
 			.frame(egui::Frame::NONE.inner_margin(4.0))
-			.show_inside(ui, |ui| {
+			.show(ui, |ui| {
 				ui.vertical_centered(|ui| {
 					ui.add_space(10.0);
 

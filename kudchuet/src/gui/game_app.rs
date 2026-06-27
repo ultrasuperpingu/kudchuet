@@ -52,7 +52,7 @@ where
 	}
 	fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
 		self.draw_options_panels(ui);
-		egui::CentralPanel::default().show_inside(ui, |ui| {
+		egui::CentralPanel::default().show(ui, |ui| {
 			let result = self.draw_header_panel(ui);
 			ui.separator();
 			let computer_playing = self.is_current_player_computer();

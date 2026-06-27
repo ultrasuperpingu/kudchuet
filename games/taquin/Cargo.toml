@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-eframe = { version = "0.34", features=["persistence"] }
-egui = { version = "0.34" }
-egui_extras = { version = "0.34", features=["all_loaders"] }
+eframe = { version = "0.35", features=["persistence"] }
+egui = { version = "0.35" }
+#egui_extras = { version = "0.35", features=["all_loaders"] }
 kudchuet = { path = "../../kudchuet" }
 fastrand = "2.4"
-egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor.git", features=["filepicker"] }
+#egui_field_editor = {git = "https://github.com/ultrasuperpingu/egui_field_editor.git", features=["filepicker"] }
 #egui_field_editor = {path="../../egui_inspect/egui_field_editor", features=["filepicker"] }
 #egui_field_editor = "0.5"
 
